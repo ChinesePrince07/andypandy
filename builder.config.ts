@@ -65,12 +65,6 @@ export interface BuilderConfig {
       // Worker 数量
       workerCount: number
     }
-
-    // 内存使用限制（MB）
-    memoryLimit: number
-
-    // 是否启用缓存
-    enableCache: boolean
   }
 }
 
@@ -112,8 +106,6 @@ export const defaultBuilderConfig: BuilderConfig = {
       useClusterMode: true,
       workerConcurrency: 2,
     },
-    memoryLimit: 512, // 512MB
-    enableCache: true,
   },
 }
 
