@@ -21,7 +21,7 @@ const heicCache: LRUCache<string, ConversionResult> = new LRUCache<
   string,
   ConversionResult
 >(
-  5, // Smaller cache size for images as they might be larger
+  10, // Smaller cache size for images as they might be larger
   (value, key, reason) => {
     try {
       URL.revokeObjectURL(value.url)
@@ -33,18 +33,13 @@ const heicCache: LRUCache<string, ConversionResult> = new LRUCache<
 )
 
 /**
- * 生成文件的缓存键
+ * 生成文件的缓存键（基于 src）
  */
-function generateCacheKey(
-  file: File | Blob,
-  options: HeicConversionOptions,
-): string {
-  const { size } = file
-  const { type } = file
+function generateCacheKey(src: string, options: HeicConversionOptions): string {
   const quality = options.quality || 1
   const format = options.format || 'image/jpeg'
-  // 使用文件大小、类型和转换选项生成唯一键
-  return `${type}-${size}-${quality}-${format}`
+  // 使用文件 src 和转换选项生成唯一键
+  return `${src}-${quality}-${format}`
 }
 
 /**
@@ -72,17 +67,18 @@ export const isBrowserSupportHeic = () => {
  */
 export async function convertHeicImage(
   file: File | Blob,
+  src: string,
   options: HeicConversionOptions = {},
 ): Promise<ConversionResult> {
   const { quality = 1, format = 'image/jpeg' } = options
 
   // 生成缓存键
-  const cacheKey = generateCacheKey(file, options)
+  const cacheKey = generateCacheKey(src, options)
 
   // 检查缓存
   const cachedResult = heicCache.get(cacheKey)
   if (cachedResult) {
-    console.info('Using cached HEIC conversion result')
+    console.info('Using cached HEIC conversion result', cachedResult)
     return cachedResult
   }
 
@@ -159,12 +155,12 @@ export function getHeicCacheStats(): {
 }
 
 /**
- * 根据文件和选项移除特定的 HEIC 缓存项
+ * 根据 src 和选项移除特定的 HEIC 缓存项
  */
-export function removeHeicCacheByFile(
-  file: File | Blob,
+export function removeHeicCacheBySrc(
+  src: string,
   options: HeicConversionOptions = {},
 ): boolean {
-  const cacheKey = generateCacheKey(file, options)
+  const cacheKey = generateCacheKey(src, options)
   return heicCache.delete(cacheKey)
 }

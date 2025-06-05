@@ -203,7 +203,7 @@ export class ImageLoaderManager {
       })
 
       if (shouldHeicTransformed) {
-        return await this.processHeicImage(blob, callbacks)
+        return await this.processHeicImage(blob, originalUrl, callbacks)
       } else {
         return this.processRegularImage(blob, originalUrl, callbacks) // 传递原始 URL
       }
@@ -216,6 +216,7 @@ export class ImageLoaderManager {
 
   private async processHeicImage(
     blob: Blob,
+    originalUrl: string,
     callbacks: LoadingCallbacks,
   ): Promise<ImageLoadResult> {
     const { onError: _onError, onLoadingStateUpdate } = callbacks
@@ -230,7 +231,7 @@ export class ImageLoaderManager {
       // 动态导入 heic-converter 模块
       const { convertHeicImage } = await import('~/lib/heic-converter')
 
-      const conversionResult = await convertHeicImage(blob)
+      const conversionResult = await convertHeicImage(blob, originalUrl)
 
       // Hide loading indicator
       onLoadingStateUpdate?.({
@@ -271,7 +272,7 @@ export class ImageLoaderManager {
     // 检查缓存
     const cachedResult = regularImageCache.get(cacheKey)
     if (cachedResult) {
-      console.info('Using cached regular image result')
+      console.info('Using cached regular image result', cachedResult)
 
       // Hide loading indicator
       onLoadingStateUpdate?.({

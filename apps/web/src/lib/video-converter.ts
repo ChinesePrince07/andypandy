@@ -30,37 +30,6 @@ const videoCache: LRUCache<string, ConversionResult> = new LRUCache<
   }
 })
 
-// Export cache management functions
-export function getVideoCacheSize(): number {
-  return videoCache.size()
-}
-
-export function clearVideoCache(): void {
-  videoCache.clear()
-}
-
-export function getCachedVideo(url: string): ConversionResult | undefined {
-  return videoCache.get(url)
-}
-
-/**
- * Remove a specific video from cache and clean up its blob URL
- */
-export function removeCachedVideo(url: string): boolean {
-  return videoCache.delete(url)
-}
-
-/**
- * Get detailed cache statistics for debugging
- */
-export function getVideoCacheStats(): {
-  size: number
-  maxSize: number
-  keys: string[]
-} {
-  return videoCache.getStats()
-}
-
 // 检查 WebCodecs 支持
 export function isWebCodecsSupported(): boolean {
   return (
