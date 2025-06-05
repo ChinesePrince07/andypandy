@@ -50,6 +50,12 @@ export class WebGLImageViewerEngine {
   private lastTouchY = 0
   private touchTapTimeout: ReturnType<typeof setTimeout> | null = null
 
+  // 拖拽状态追踪和优化
+  private dragStartTime = 0
+  private dragUpdateThrottleId: number | null = null
+  private isDragOptimized = false // 是否启用拖拽优化模式
+  private lastDragUpdateTime = 0
+
   // Animation state
   private isAnimating = false
   private animationStartTime = 0
@@ -194,9 +200,9 @@ export class WebGLImageViewerEngine {
       this.maxMemoryBudget = 128 * 1024 * 1024 // 128MB (更保守)
       this.maxConcurrentLODs = 2 // 更少的 LOD 级别
       this.memoryPressureThreshold = 0.6 // 更低的压力阈值
-      // 移动设备瓦片配置
-      this.tileSize = 256 // 更小的瓦片尺寸
-      this.maxTilesInMemory = 8 // 更少的瓦片数量
+      // 移动设备瓦片配置 - 针对拖拽优化
+      this.tileSize = 256 // 更小的瓦片尺寸，减少加载时间
+      this.maxTilesInMemory = 15 // 增加瓦片缓存，支持更流畅的拖拽
     }
 
     // 初始缩放将在图片加载时正确设置，这里先保持默认值
@@ -660,6 +666,170 @@ export class WebGLImageViewerEngine {
     this.loadRequiredTiles()
   }
 
+  // 强制更新可见瓦片 - 用于关键操作后确保完整覆盖
+  private forceUpdateVisibleTiles() {
+    if (!this.originalImage || !this.useTiledRendering) return
+
+    console.info('Force updating visible tiles')
+
+    // 清理可能过时的瓦片信息
+    const currentLOD = this.selectOptimalLOD()
+    this.cleanupTilesWithDifferentLOD(currentLOD)
+
+    // 立即更新瓦片
+    this.updateVisibleTiles()
+
+    // 短暂延迟后再次更新，确保加载完整
+    setTimeout(() => {
+      this.updateVisibleTiles()
+    }, 50)
+  }
+
+  // 拖拽优化的瓦片更新方法
+  private updateVisibleTilesThrottled() {
+    if (!this.originalImage || !this.useTiledRendering) return
+
+    const now = performance.now()
+
+    // 拖拽时使用节流更新，避免过于频繁的瓦片计算
+    if (this.isDragging) {
+      const throttleDelay = 50 // 50ms节流，约20fps更新率
+
+      if (now - this.lastDragUpdateTime < throttleDelay) {
+        // 清除之前的节流调用
+        if (this.dragUpdateThrottleId !== null) {
+          cancelAnimationFrame(this.dragUpdateThrottleId)
+        }
+
+        // 安排下次更新
+        this.dragUpdateThrottleId = requestAnimationFrame(() => {
+          this.dragUpdateThrottleId = null
+          this.updateVisibleTiles()
+          this.lastDragUpdateTime = performance.now()
+        })
+        return
+      }
+
+      this.lastDragUpdateTime = now
+    }
+
+    // 立即更新瓦片
+    this.updateVisibleTiles()
+
+    // 如果是拖拽优化模式，进行预测性加载
+    if (this.isDragOptimized && this.isDragging) {
+      this.predictiveLoadTiles()
+    }
+  }
+
+  // 预测性瓦片加载 - 根据拖拽方向预加载瓦片
+  private predictiveLoadTiles() {
+    if (!this.isDragging || !this.isDragOptimized) return
+
+    // 计算拖拽方向（简化版本，基于当前视口扩展）
+    const viewport = this.calculateViewport()
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+
+    // 移动端使用更激进的预测加载
+    const predictiveBuffer = this.tileSize * (isMobile ? 1 : 1.5)
+
+    // 扩展视口范围用于预测加载
+    const predictiveTileRange = {
+      startX: Math.max(
+        0,
+        Math.floor((viewport.left - predictiveBuffer) / this.tileSize),
+      ),
+      endX: Math.min(
+        Math.ceil(this.imageWidth / this.tileSize) - 1,
+        Math.floor((viewport.right + predictiveBuffer) / this.tileSize),
+      ),
+      startY: Math.max(
+        0,
+        Math.floor((viewport.top - predictiveBuffer) / this.tileSize),
+      ),
+      endY: Math.min(
+        Math.ceil(this.imageHeight / this.tileSize) - 1,
+        Math.floor((viewport.bottom + predictiveBuffer) / this.tileSize),
+      ),
+    }
+
+    // 为预测范围内的瓦片设置较低优先级
+    const currentTime = performance.now()
+    const lodLevel = this.selectOptimalLOD()
+
+    for (
+      let y = predictiveTileRange.startY;
+      y <= predictiveTileRange.endY;
+      y++
+    ) {
+      for (
+        let x = predictiveTileRange.startX;
+        x <= predictiveTileRange.endX;
+        x++
+      ) {
+        const tileKey = `${x}-${y}-${lodLevel}`
+
+        // 只处理不在当前活跃范围内的瓦片
+        if (
+          !this.activeTiles.has(tileKey) &&
+          !this.tileCache.has(tileKey) &&
+          !this.tileLoadPromises.has(tileKey)
+        ) {
+          // 计算较低的优先级
+          const centerX =
+            (predictiveTileRange.startX + predictiveTileRange.endX) / 2
+          const centerY =
+            (predictiveTileRange.startY + predictiveTileRange.endY) / 2
+          const distance = Math.hypot(x - centerX, y - centerY)
+          const priority = 500 - distance // 比正常瓦片优先级低
+
+          if (!this.tiles.has(tileKey)) {
+            const tileWidth = Math.min(
+              this.tileSize,
+              this.imageWidth - x * this.tileSize,
+            )
+            const tileHeight = Math.min(
+              this.tileSize,
+              this.imageHeight - y * this.tileSize,
+            )
+
+            this.tiles.set(tileKey, {
+              x,
+              y,
+              level: lodLevel,
+              priority,
+              lastAccessed: currentTime,
+              isLoading: false,
+              width: tileWidth,
+              height: tileHeight,
+            })
+          }
+        }
+      }
+    }
+
+    // 限制预测性加载不要占用太多资源
+    if (this.tileLoadPromises.size < 2) {
+      // 只在当前加载任务较少时进行预测加载
+      // 按优先级加载1-2个预测瓦片
+      const predictiveTilesToLoad = Array.from(this.tiles.entries())
+        .filter(
+          ([tileKey, tile]) =>
+            !this.activeTiles.has(tileKey) &&
+            !this.tileCache.has(tileKey) &&
+            !this.tileLoadPromises.has(tileKey) &&
+            tile.level === lodLevel &&
+            tile.priority < 1000, // 只加载预测瓦片（优先级 < 1000）
+        )
+        .sort(([, a], [, b]) => b.priority - a.priority)
+        .slice(0, isMobile ? 1 : 2) // 移动端更保守
+
+      for (const [tileKey, tile] of predictiveTilesToLoad) {
+        this.loadTile(tileKey, tile)
+      }
+    }
+  }
+
   private calculateViewport() {
     // 计算当前视口在图片坐标系中的范围
     const viewportWidth = this.canvasWidth / this.scale
@@ -690,9 +860,20 @@ export class WebGLImageViewerEngine {
     right: number
     bottom: number
   }) {
-    // 计算需要的瓦片范围，包括一些缓冲区（移动设备使用更小的缓冲区）
+    // 计算需要的瓦片范围，包括一些缓冲区
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
-    const buffer = this.tileSize * (isMobile ? 0.25 : 0.5) // 移动设备25%缓冲区
+
+    // 根据拖拽状态调整缓冲区大小
+    let bufferMultiplier: number
+    if (this.isDragging && this.isDragOptimized) {
+      // 拖拽时增加缓冲区，特别是移动端
+      bufferMultiplier = isMobile ? 0.75 : 1 // 移动设备拖拽时75%缓冲区
+    } else {
+      // 静止时使用较小缓冲区
+      bufferMultiplier = isMobile ? 0.5 : 0.75 // 移动设备静止时50%缓冲区
+    }
+
+    const buffer = this.tileSize * bufferMultiplier
 
     const startX = Math.max(
       0,
@@ -742,11 +923,53 @@ export class WebGLImageViewerEngine {
         const tileKey = `${x}-${y}-${lodLevel}`
         newActiveTiles.add(tileKey)
 
-        // 计算瓦片优先级（距离视口中心越近优先级越高）
-        const centerX = (tileRange.startX + tileRange.endX) / 2
-        const centerY = (tileRange.startY + tileRange.endY) / 2
-        const distance = Math.hypot(x - centerX, y - centerY)
-        const priority = 1000 - distance
+        // 改进瓦片优先级计算，确保视口内的瓦片都有高优先级
+        const viewport = this.calculateViewport()
+
+        // 计算瓦片在图片坐标系中的位置
+        const tileLeft = x * this.tileSize
+        const tileTop = y * this.tileSize
+        const tileRight = Math.min(tileLeft + this.tileSize, this.imageWidth)
+        const tileBottom = Math.min(tileTop + this.tileSize, this.imageHeight)
+
+        // 计算瓦片中心点
+        const tileCenterX = (tileLeft + tileRight) / 2
+        const tileCenterY = (tileTop + tileBottom) / 2
+
+        // 检查瓦片是否在视口内
+        const isInViewport =
+          tileRight > viewport.left &&
+          tileLeft < viewport.right &&
+          tileBottom > viewport.top &&
+          tileTop < viewport.bottom
+
+        let priority: number
+        if (isInViewport) {
+          // 视口内的瓦片使用距离视口中心的距离计算高优先级
+          const viewportCenterX = (viewport.left + viewport.right) / 2
+          const viewportCenterY = (viewport.top + viewport.bottom) / 2
+          const distance = Math.hypot(
+            tileCenterX - viewportCenterX,
+            tileCenterY - viewportCenterY,
+          )
+
+          // 视口内瓦片优先级范围：1500-2000（确保高于视口外瓦片）
+          const maxDistance = Math.hypot(
+            viewport.width / 2,
+            viewport.height / 2,
+          )
+          const normalizedDistance = Math.min(distance / maxDistance, 1)
+          priority = 2000 - normalizedDistance * 500
+        } else {
+          // 视口外的瓦片（缓冲区）使用较低优先级
+          const tileRangeCenterX = (tileRange.startX + tileRange.endX) / 2
+          const tileRangeCenterY = (tileRange.startY + tileRange.endY) / 2
+          const distance = Math.hypot(
+            x - tileRangeCenterX,
+            y - tileRangeCenterY,
+          )
+          priority = 1000 - distance
+        }
 
         // 更新或创建瓦片信息
         if (!this.tiles.has(tileKey)) {
@@ -836,9 +1059,27 @@ export class WebGLImageViewerEngine {
       .map((tileKey) => ({ key: tileKey, tile: this.tiles.get(tileKey)! }))
       .sort((a, b) => b.tile.priority - a.tile.priority)
 
-    // 限制同时加载的瓦片数量（移动设备更保守）
+    // 限制同时加载的瓦片数量，拖拽时增加并发数
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
-    const maxConcurrentLoads = isMobile ? 2 : 4
+    let maxConcurrentLoads: number
+
+    // 检查是否有高优先级瓦片需要加载（通常是动画后的视口内瓦片）
+    const hasHighPriorityTiles = tilesToLoad.some(
+      ({ tile }) => tile.priority > 1500,
+    )
+
+    if (this.isDragging && this.isDragOptimized) {
+      // 拖拽时增加并发加载数量
+      maxConcurrentLoads = isMobile ? 4 : 6
+    } else if (hasHighPriorityTiles) {
+      // 有高优先级瓦片时（如双击后），临时增加并发数
+      maxConcurrentLoads = isMobile ? 5 : 8
+      console.info('High priority tiles detected, increasing concurrent loads')
+    } else {
+      // 静止时使用较保守的并发数
+      maxConcurrentLoads = isMobile ? 3 : 5
+    }
+
     const currentLoads = this.tileLoadPromises.size
     const availableSlots = maxConcurrentLoads - currentLoads
 
@@ -1644,10 +1885,17 @@ export class WebGLImageViewerEngine {
     // 移动设备使用更保守的LOD策略
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
 
+    // 添加调试信息
+    console.info(
+      `Selecting LOD for tiles: scale=${this.scale.toFixed(3)}, pixelDensity=${pixelDensity.toFixed(3)}`,
+    )
+
     if (isMobile) {
-      // 移动设备LOD策略：更注重性能
-      if (pixelDensity >= 4) {
+      // 移动设备LOD策略：更注重性能，但确保足够的质量
+      if (pixelDensity >= 8) {
         return 6 // 8x quality for very high zoom
+      } else if (pixelDensity >= 4) {
+        return 6 // 8x quality for very high zoom (提高阈值)
       } else if (pixelDensity >= 2) {
         return 5 // 4x quality for high zoom
       } else if (pixelDensity >= 1) {
@@ -1907,8 +2155,16 @@ export class WebGLImageViewerEngine {
       this.translateY = this.targetTranslateY
       this.render()
       this.notifyZoomChange()
-      // 动画完成后触发 LOD 更新
-      this.debouncedLODUpdate()
+
+      // 动画完成后进行完整的更新
+      if (this.useTiledRendering) {
+        // 使用强制更新确保视口完全覆盖
+        this.forceUpdateVisibleTiles()
+        console.info('Animation completed, forced tile update initiated')
+      } else {
+        // 传统 LOD 系统
+        this.debouncedLODUpdate()
+      }
     }
   }
 
@@ -2217,8 +2473,6 @@ export class WebGLImageViewerEngine {
     this.canvas.addEventListener('mouseup', this.boundHandleMouseUp)
     this.canvas.addEventListener('wheel', this.boundHandleWheel)
     this.canvas.addEventListener('dblclick', this.boundHandleDoubleClick)
-
-    // Touch events
     this.canvas.addEventListener('touchstart', this.boundHandleTouchStart)
     this.canvas.addEventListener('touchmove', this.boundHandleTouchMove)
     this.canvas.addEventListener('touchend', this.boundHandleTouchEnd)
@@ -2245,6 +2499,18 @@ export class WebGLImageViewerEngine {
     this.isDragging = true
     this.lastMouseX = e.clientX
     this.lastMouseY = e.clientY
+
+    // 启动拖拽优化模式
+    this.dragStartTime = performance.now()
+    this.isDragOptimized = false // 延迟启用优化，避免误触
+
+    // 100ms后启用拖拽优化
+    setTimeout(() => {
+      if (this.isDragging) {
+        this.isDragOptimized = true
+        console.info('Drag optimization enabled')
+      }
+    }, 100)
   }
 
   private handleMouseMove(e: MouseEvent) {
@@ -2262,14 +2528,40 @@ export class WebGLImageViewerEngine {
     this.constrainImagePosition()
     this.render()
 
-    // 瓦片模式下需要更新可见瓦片
+    // 瓦片模式下需要更新可见瓦片（使用节流版本）
     if (this.useTiledRendering) {
-      this.updateVisibleTiles()
+      this.updateVisibleTilesThrottled()
     }
   }
 
   private handleMouseUp() {
+    if (!this.isDragging) return
+
     this.isDragging = false
+
+    // 清理拖拽优化状态
+    this.isDragOptimized = false
+
+    // 清理节流更新
+    if (this.dragUpdateThrottleId !== null) {
+      cancelAnimationFrame(this.dragUpdateThrottleId)
+      this.dragUpdateThrottleId = null
+    }
+
+    // 拖拽结束后立即进行一次完整的瓦片更新，确保显示质量
+    if (this.useTiledRendering) {
+      setTimeout(() => {
+        this.updateVisibleTiles()
+        console.info('Final tile update after drag end')
+      }, 50) // 短暂延迟，让渲染稳定
+    }
+
+    // 记录拖拽持续时间用于调试
+    const dragDuration = performance.now() - this.dragStartTime
+    if (dragDuration > 200) {
+      // 只记录较长的拖拽
+      console.info(`Drag completed: ${dragDuration.toFixed(0)}ms`)
+    }
   }
 
   private handleWheel(e: WheelEvent) {
@@ -2380,6 +2672,23 @@ export class WebGLImageViewerEngine {
         )
         this.isOriginalSize = true
       }
+
+      // 对于瓦片系统，预先清理不匹配的LOD瓦片
+      if (this.useTiledRendering) {
+        console.info(
+          'Double-click detected, preparing tile system for zoom change',
+        )
+
+        // 稍微延迟清理，让动画开始
+        setTimeout(() => {
+          const newLOD = this.selectOptimalLOD()
+          if (newLOD !== this.currentLOD) {
+            console.info(
+              `Preparing for LOD change: ${this.currentLOD} -> ${newLOD}`,
+            )
+          }
+        }, 50)
+      }
     } else {
       // Zoom mode - 使用动画版本以确保LOD暂停机制生效
       this.zoomAt(x, y, this.config.doubleClick.step, true)
@@ -2420,6 +2729,18 @@ export class WebGLImageViewerEngine {
       this.lastTouchTime = now
       this.lastTouchX = touch.clientX
       this.lastTouchY = touch.clientY
+
+      // 启动拖拽优化模式（触摸设备上更快启用）
+      this.dragStartTime = performance.now()
+      this.isDragOptimized = false
+
+      // 移动设备50ms后启用拖拽优化（比鼠标更快）
+      setTimeout(() => {
+        if (this.isDragging) {
+          this.isDragOptimized = true
+          console.info('Touch drag optimization enabled')
+        }
+      }, 50)
     } else if (e.touches.length === 2 && !this.config.pinch.disabled) {
       this.isDragging = false
       const touch1 = e.touches[0]
@@ -2450,6 +2771,11 @@ export class WebGLImageViewerEngine {
 
       this.constrainImagePosition()
       this.render()
+
+      // 瓦片模式下需要更新可见瓦片（使用节流版本）
+      if (this.useTiledRendering) {
+        this.updateVisibleTilesThrottled()
+      }
     } else if (e.touches.length === 2 && !this.config.pinch.disabled) {
       const touch1 = e.touches[0]
       const touch2 = e.touches[1]
@@ -2472,6 +2798,9 @@ export class WebGLImageViewerEngine {
   }
 
   private handleTouchEnd(_e: TouchEvent) {
+    // 如果之前在拖拽，执行拖拽结束的清理工作
+    const wasDragging = this.isDragging
+
     this.isDragging = false
     this.lastTouchDistance = 0
 
@@ -2479,6 +2808,33 @@ export class WebGLImageViewerEngine {
     if (this.touchTapTimeout) {
       clearTimeout(this.touchTapTimeout)
       this.touchTapTimeout = null
+    }
+
+    // 拖拽结束清理（与鼠标拖拽类似）
+    if (wasDragging) {
+      // 清理拖拽优化状态
+      this.isDragOptimized = false
+
+      // 清理节流更新
+      if (this.dragUpdateThrottleId !== null) {
+        cancelAnimationFrame(this.dragUpdateThrottleId)
+        this.dragUpdateThrottleId = null
+      }
+
+      // 拖拽结束后立即进行一次完整的瓦片更新
+      if (this.useTiledRendering) {
+        setTimeout(() => {
+          this.updateVisibleTiles()
+          console.info('Final tile update after touch drag end')
+        }, 50)
+      }
+
+      // 记录拖拽持续时间
+      const dragDuration = performance.now() - this.dragStartTime
+      if (dragDuration > 100) {
+        // 触摸拖拽阈值更低
+        console.info(`Touch drag completed: ${dragDuration.toFixed(0)}ms`)
+      }
     }
   }
 
@@ -2530,7 +2886,7 @@ export class WebGLImageViewerEngine {
 
       // 瓦片模式下需要更新可见瓦片
       if (this.useTiledRendering) {
-        this.updateVisibleTiles()
+        this.updateVisibleTilesThrottled()
       }
     }
   }
@@ -2597,6 +2953,14 @@ export class WebGLImageViewerEngine {
     if (this.renderThrottleId !== null) {
       cancelAnimationFrame(this.renderThrottleId)
       this.renderThrottleId = null
+    }
+
+    // 清理拖拽相关的资源
+    this.isDragging = false
+    this.isDragOptimized = false
+    if (this.dragUpdateThrottleId !== null) {
+      cancelAnimationFrame(this.dragUpdateThrottleId)
+      this.dragUpdateThrottleId = null
     }
 
     // 清理 LOD 更新防抖相关的资源
