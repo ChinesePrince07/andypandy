@@ -79,9 +79,6 @@ export const LoadingIndicator = ({
                       {loadingState.codecInfo}
                     </p>
                   )}
-                  <span className="text-xs text-white/60 tabular-nums">
-                    {Math.round(loadingState.loadingProgress)}%
-                  </span>
                 </>
               ) : (
                 <>

@@ -69,7 +69,7 @@ export const ProgressiveImage = ({
 
   const thumbnailRef = useRef<HTMLImageElement>(null)
   const transformRef = useRef<WebGLImageViewerRef>(null)
-  const thumbnailAnimateController = useAnimationControls()
+
   const loadingIndicatorRef = useRef<LoadingIndicatorRef>(null)
   const imageLoaderManagerRef = useRef<ImageLoaderManager | null>(null)
 
@@ -139,11 +139,11 @@ export const ProgressiveImage = ({
     [onZoomChange],
   )
 
+  const [isThumbnailLoaded, setIsThumbnailLoaded] = useState(false)
+
   const handleThumbnailLoad = useCallback(() => {
-    thumbnailAnimateController.start({
-      opacity: 1,
-    })
-  }, [thumbnailAnimateController])
+    setIsThumbnailLoaded(true)
+  }, [])
 
   const showContextMenu = useShowContextMenu()
 
@@ -167,16 +167,15 @@ export const ProgressiveImage = ({
     <div className={clsxm('relative overflow-hidden', className)}>
       {/* 缩略图 */}
       {thumbnailSrc && (
-        <m.img
+        <img
           ref={thumbnailRef}
-          initial={{ opacity: 0 }}
-          exit={{ opacity: 0 }}
           src={thumbnailSrc}
           key={thumbnailSrc}
           alt={alt}
-          transition={Spring.presets.smooth}
-          className="absolute inset-0 h-full w-full object-contain"
-          animate={thumbnailAnimateController}
+          className={clsxm(
+            'absolute inset-0 h-full w-full object-contain transition-opacity duration-300',
+            isThumbnailLoaded ? 'opacity-100' : 'opacity-0',
+          )}
           onLoad={handleThumbnailLoad}
         />
       )}
