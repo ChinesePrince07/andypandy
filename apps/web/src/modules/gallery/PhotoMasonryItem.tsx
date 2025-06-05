@@ -240,6 +240,7 @@ export const PhotoMasonryItem = ({
         width,
         height: calculatedHeight,
       }}
+      data-photo-id={data.id}
       onClick={handleClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}

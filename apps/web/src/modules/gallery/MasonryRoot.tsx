@@ -3,11 +3,13 @@ import { AnimatePresence, m } from 'motion/react'
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { gallerySettingAtom } from '~/atoms/app'
-import { RootPortal } from '~/components/ui/portal'
+import { DateRangeIndicator } from '~/components/ui/date-range-indicator'
 import { useScrollViewElement } from '~/components/ui/scroll-areas/hooks'
 import { useMobile } from '~/hooks/useMobile'
 import { usePhotos, usePhotoViewer } from '~/hooks/usePhotoViewer'
 import { useTypeScriptHappyCallback } from '~/hooks/useTypeScriptCallback'
+import { useVisiblePhotosDateRange } from '~/hooks/useVisiblePhotosDateRange'
+import { clsxm } from '~/lib/cn'
 import { Spring } from '~/lib/spring'
 import type { PhotoManifest } from '~/types/photo'
 
@@ -27,8 +29,11 @@ const FIRST_SCREEN_ITEMS_COUNT = 30
 export const MasonryRoot = () => {
   const { sortOrder, selectedTags } = useAtomValue(gallerySettingAtom)
   const hasAnimatedRef = useRef(false)
+  const [showFloatingActions, setShowFloatingActions] = useState(false)
 
   const photos = usePhotos()
+  const { dateRange, handleRender } = useVisiblePhotosDateRange(photos)
+  const scrollElement = useScrollViewElement()
 
   const photoViewer = usePhotoViewer()
   const handleAnimationComplete = useCallback(() => {
@@ -36,40 +41,84 @@ export const MasonryRoot = () => {
   }, [])
   const isMobile = useMobile()
 
+  // 监听滚动，控制浮动组件的显示
+  useEffect(() => {
+    if (!scrollElement) return
+
+    const handleScroll = () => {
+      const { scrollTop } = scrollElement
+      setShowFloatingActions(scrollTop > 500)
+    }
+
+    scrollElement.addEventListener('scroll', handleScroll, { passive: true })
+    return () => {
+      scrollElement.removeEventListener('scroll', handleScroll)
+    }
+  }, [scrollElement])
+
   return (
-    <div className="p-1 lg:p-0 [&_*]:!select-none">
-      <FloatingActionBar />
-      {isMobile && <MasonryHeaderMasonryItem className="mb-1" />}
-      <Masonry<MasonryItemType>
-        key={`${sortOrder}-${selectedTags.join(',')}`}
-        items={useMemo(
-          () => (isMobile ? photos : [MasonryHeaderItem.default, ...photos]),
-          [photos, isMobile],
-        )}
-        render={useCallback(
-          (props) => (
-            <MasonryItem
-              {...props}
-              onPhotoClick={photoViewer.openViewer}
-              photos={photos}
-              hasAnimated={hasAnimatedRef.current}
-              onAnimationComplete={handleAnimationComplete}
-            />
-          ),
-          [handleAnimationComplete, photoViewer.openViewer, photos],
-        )}
-        columnWidth={isMobile ? 150 : 300}
-        columnGutter={4}
-        rowGutter={4}
-        itemHeightEstimate={400}
-        itemKey={useTypeScriptHappyCallback((data, _index) => {
-          if (data instanceof MasonryHeaderItem) {
-            return 'header'
-          }
-          return (data as PhotoManifest).id
-        }, [])}
-      />
-    </div>
+    <>
+      {/* 桌面端：左右分布 */}
+      {!isMobile && (
+        <>
+          <DateRangeIndicator
+            dateRange={dateRange.formattedRange}
+            location={dateRange.location}
+            isVisible={showFloatingActions && !!dateRange.formattedRange}
+          />
+          <FloatingActionBar showFloatingActions={showFloatingActions} />
+        </>
+      )}
+
+      {/* 移动端：垂直堆叠 */}
+      {isMobile && showFloatingActions && !!dateRange.formattedRange && (
+        <div className="fixed top-0 right-0 left-0 z-50">
+          <DateRangeIndicator
+            dateRange={dateRange.formattedRange}
+            location={dateRange.location}
+            isVisible={true}
+            className="relative top-0 left-0"
+          />
+          <div className="flex justify-end">
+            <FloatingActionBar showFloatingActions={true} />
+          </div>
+        </div>
+      )}
+
+      <div className="p-1 lg:p-0 [&_*]:!select-none">
+        {isMobile && <MasonryHeaderMasonryItem className="mb-1" />}
+        <Masonry<MasonryItemType>
+          key={`${sortOrder}-${selectedTags.join(',')}`}
+          items={useMemo(
+            () => (isMobile ? photos : [MasonryHeaderItem.default, ...photos]),
+            [photos, isMobile],
+          )}
+          render={useCallback(
+            (props) => (
+              <MasonryItem
+                {...props}
+                onPhotoClick={photoViewer.openViewer}
+                photos={photos}
+                hasAnimated={hasAnimatedRef.current}
+                onAnimationComplete={handleAnimationComplete}
+              />
+            ),
+            [handleAnimationComplete, photoViewer.openViewer, photos],
+          )}
+          onRender={handleRender}
+          columnWidth={isMobile ? 150 : 300}
+          columnGutter={4}
+          rowGutter={4}
+          itemHeightEstimate={400}
+          itemKey={useTypeScriptHappyCallback((data, _index) => {
+            if (data instanceof MasonryHeaderItem) {
+              return 'header'
+            }
+            return (data as PhotoManifest).id
+          }, [])}
+        />
+      </div>
+    </>
   )
 }
 
@@ -154,42 +203,48 @@ export const MasonryItem = memo(
   },
 )
 
-const FloatingActionBar = () => {
-  const [showFloatingActions, setShowFloatingActions] = useState(false)
-  const scrollElement = useScrollViewElement()
+const FloatingActionBar = ({
+  showFloatingActions,
+}: {
+  showFloatingActions: boolean
+}) => {
+  const isMobile = useMobile()
 
-  useEffect(() => {
-    if (!scrollElement) return
-
-    const handleScroll = () => {
-      const { scrollTop } = scrollElement
-
-      setShowFloatingActions(scrollTop > 500)
-    }
-
-    scrollElement.addEventListener('scroll', handleScroll, { passive: true })
-    return () => {
-      scrollElement.removeEventListener('scroll', handleScroll)
-    }
-  }, [scrollElement])
-
+  const variants = isMobile
+    ? {
+        initial: {
+          opacity: 0,
+        },
+        animate: { opacity: 1 },
+      }
+    : {
+        initial: {
+          opacity: 0,
+          x: 20,
+          y: 0,
+          scale: 0.95,
+        },
+        animate: { opacity: 1, x: 0, y: 0, scale: 1 },
+      }
   return (
     <AnimatePresence>
-      <RootPortal>
-        {showFloatingActions && (
-          <m.div
-            initial={{ opacity: 0, y: -20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            transition={Spring.presets.snappy}
-            className="fixed top-4 left-4 z-50"
-          >
-            <div className="border-material-opaque rounded-xl border bg-black/60 p-3 shadow-2xl backdrop-blur-[70px]">
-              <ActionGroup />
-            </div>
-          </m.div>
-        )}
-      </RootPortal>
+      {showFloatingActions && (
+        <m.div
+          variants={variants}
+          initial="initial"
+          animate="animate"
+          exit="initial"
+          transition={Spring.presets.snappy}
+          className={clsxm(
+            'border-material-opaque rounded-xl border bg-black/60 p-3 shadow-2xl backdrop-blur-[70px]',
+            isMobile
+              ? 'rounded-t-none rounded-br-none -translate-y-px'
+              : 'fixed top-4 right-4 z-50 lg:top-6 lg:right-6',
+          )}
+        >
+          <ActionGroup />
+        </m.div>
+      )}
     </AnimatePresence>
   )
 }
