@@ -52,6 +52,17 @@ export default defineConfig({
       siteUrl: siteConfig.url,
     }),
     process.env.analyzer && analyzer(),
+    {
+      name: 'html-transform',
+      transformIndexHtml: {
+        enforce: 'pre',
+        transform(html: string) {
+          return html
+            .replaceAll('{{TITLE}}', siteConfig.title)
+            .replaceAll('{{DESCRIPTION}}', siteConfig.description)
+        },
+      },
+    },
   ],
   define: {
     APP_DEV_CWD: JSON.stringify(process.cwd()),
