@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Photo Gallery</title>
+  </head>
+  <body>
+    <div id="root">
+      <!-- Splash Screen - 现代黑色调设计 -->
+      <div
+        id="splash-screen"
+        style="
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          background: #0a0a0a;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          z-index: 9999;
+          font-family:
+            'Inter',
+            -apple-system,
+            BlinkMacSystemFont,
+            'Segoe UI',
+            'Roboto',
+            sans-serif;
+          overflow: hidden;
+        "
+      >
+        <!-- 几何背景装饰 -->
+        <div
+          style="
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+              radial-gradient(
+                circle at 20% 30%,
+                rgba(64, 64, 64, 0.1) 0%,
+                transparent 50%
+              ),
+              radial-gradient(
+                circle at 80% 70%,
+                rgba(64, 64, 64, 0.08) 0%,
+                transparent 50%
+              ),
+              radial-gradient(
+                circle at 40% 80%,
+                rgba(96, 96, 96, 0.05) 0%,
+                transparent 50%
+              );
+          "
+        ></div>
+
+        <!-- 网格背景 -->
+        <div
+          style="
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.02;
+            background-image:
+              linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+              linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0.1) 1px,
+                transparent 1px
+              );
+            background-size: 30px 30px;
+            animation: gridMove 20s linear infinite;
+          "
+        ></div>
+
+        <!-- 动态光线效果 -->
+        <div
+          style="
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(
+              from 0deg,
+              transparent,
+              rgba(255, 255, 255, 0.01),
+              transparent,
+              rgba(255, 255, 255, 0.02),
+              transparent
+            );
+            animation: rotate 30s linear infinite;
+          "
+        ></div>
+
+        <!-- 主要内容 -->
+        <div
+          style="
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2.5rem;
+            text-align: center;
+          "
+        >
+          <!-- Logo Container -->
+          <div
+            style="
+              position: relative;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            "
+          >
+            <!-- Logo 背景光晕 -->
+            <div
+              style="
+                position: absolute;
+                width: 8rem;
+                height: 8rem;
+                background: radial-gradient(
+                  circle,
+                  rgba(255, 255, 255, 0.1) 0%,
+                  transparent 70%
+                );
+                border-radius: 50%;
+                animation: glowPulse 3s ease-in-out infinite;
+              "
+            ></div>
+
+            <!-- Logo -->
+            <div
+              style="
+                width: 4.5rem;
+                height: 4.5rem;
+                background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+                border: 1px solid #333;
+                border-radius: 1.5rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow:
+                  0 0 0 1px rgba(255, 255, 255, 0.05),
+                  0 8px 32px rgba(0, 0, 0, 0.4),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.1);
+                animation: logoFloat 4s ease-in-out infinite;
+                backdrop-filter: blur(10px);
+              "
+            >
+              <!-- 现代化相机图标 -->
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#e5e5e5"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M3 9a2 2 0 0 1 2-2h.93a2 2 0 0 0 1.664-.89l.812-1.22A2 2 0 0 1 10.07 4h3.86a2 2 0 0 1 1.664.89l.812 1.22A2 2 0 0 0 18.07 7H19a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9z"
+                />
+                <circle cx="12" cy="13" r="3" />
+                <circle cx="12" cy="13" r="1" fill="#e5e5e5" />
+              </svg>
+            </div>
+          </div>
+
+          <!-- 应用标题 -->
+          <div style="display: flex; flex-direction: column; gap: 1rem">
+            <h1
+              style="
+                font-size: 2.25rem;
+                font-weight: 700;
+                letter-spacing: -0.025em;
+                color: #ffffff;
+                margin: 0;
+                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+                animation: titleSlide 1s ease-out;
+              "
+            >
+              Photo Gallery
+            </h1>
+            <div
+              style="
+                width: 3rem;
+                height: 2px;
+                background: linear-gradient(
+                  90deg,
+                  transparent,
+                  #666,
+                  transparent
+                );
+                margin: 0 auto;
+                animation: lineGrow 1.5s ease-out both;
+              "
+            ></div>
+            <p
+              style="
+                color: #a3a3a3;
+                font-size: 0.95rem;
+                margin: 0;
+                font-weight: 400;
+                letter-spacing: 0.025em;
+                animation: subtitleFade 1.5s ease-out both;
+                opacity: 0;
+              "
+            >
+              Capturing moments, creating memories
+            </p>
+          </div>
+
+          <!-- 现代加载动画 -->
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              gap: 1.5rem;
+              margin-top: 1.5rem;
+            "
+          >
+            <!-- 进度条 -->
+            <div
+              style="
+                width: 12rem;
+                height: 2px;
+                background: #1a1a1a;
+                border-radius: 1px;
+                overflow: hidden;
+                position: relative;
+              "
+            >
+              <div
+                style="
+                  width: 30%;
+                  height: 100%;
+                  background: linear-gradient(
+                    90deg,
+                    transparent,
+                    #666,
+                    #999,
+                    #666,
+                    transparent
+                  );
+                  animation: progressMove 2s ease-in-out infinite;
+                "
+              ></div>
+            </div>
+
+            <!-- 加载文字 -->
+            <p
+              style="
+                color: #666;
+                font-size: 0.8rem;
+                margin: 0;
+                font-weight: 500;
+                letter-spacing: 0.05em;
+                animation: loadingText 2s ease-in-out infinite;
+              "
+            >
+              LOADING
+            </p>
+          </div>
+        </div>
+
+        <!-- CSS 动画 -->
+        <style>
+          @keyframes gridMove {
+            0% {
+              transform: translate(0, 0);
+            }
+            100% {
+              transform: translate(30px, 30px);
+            }
+          }
+
+          @keyframes rotate {
+            0% {
+              transform: rotate(0deg);
+            }
+            100% {
+              transform: rotate(360deg);
+            }
+          }
+
+          @keyframes glowPulse {
+            0%,
+            100% {
+              opacity: 0.3;
+              transform: scale(1);
+            }
+            50% {
+              opacity: 0.6;
+              transform: scale(1.1);
+            }
+          }
+
+          @keyframes logoFloat {
+            0%,
+            100% {
+              transform: translateY(0) scale(1);
+            }
+            50% {
+              transform: translateY(-8px) scale(1.02);
+            }
+          }
+
+          @keyframes titleSlide {
+            0% {
+              opacity: 0;
+              transform: translateY(20px);
+            }
+            100% {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+
+          @keyframes lineGrow {
+            0% {
+              width: 0;
+              opacity: 0;
+            }
+            100% {
+              width: 3rem;
+              opacity: 1;
+            }
+          }
+
+          @keyframes subtitleFade {
+            0% {
+              opacity: 0;
+              transform: translateY(10px);
+            }
+            100% {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+
+          @keyframes progressMove {
+            0% {
+              transform: translateX(-100%);
+            }
+            100% {
+              transform: translateX(400%);
+            }
+          }
+
+          @keyframes loadingText {
+            0%,
+            100% {
+              opacity: 0.4;
+            }
+            50% {
+              opacity: 1;
+            }
+          }
+
+          /* 响应式设计 */
+          @media (max-width: 640px) {
+            #splash-screen h1 {
+              font-size: 1.875rem;
+            }
+            #splash-screen p {
+              font-size: 0.875rem;
+            }
+            #splash-screen [style*='width: 12rem'] {
+              width: 10rem !important;
+            }
+          }
+
+          @media (max-width: 480px) {
+            #splash-screen h1 {
+              font-size: 1.5rem;
+            }
+            #splash-screen [style*='gap: 2.5rem'] {
+              gap: 2rem !important;
+            }
+          }
+        </style>
+      </div>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

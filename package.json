@@ -1,0 +1,56 @@
+{
+  "name": "@photo-gallery/monorepo",
+  "type": "module",
+  "version": "0.0.1",
+  "private": true,
+  "packageManager": "pnpm@10.11.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/innei/photo-gallery"
+  },
+  "scripts": {
+    "build": "pnpm --filter @photo-gallery/web build",
+    "build:update-remote-repo": "sh scripts/build-update-remote-repo.sh",
+    "dev": "pnpm --filter @photo-gallery/web dev",
+    "extract:font": "tsx scripts/extract-font-glyphs.ts",
+    "format": "prettier --write \"src/**/*.ts\" ",
+    "lint": "eslint --fix",
+    "preinstall": "sh scripts/preinstall.sh",
+    "prepare": "simple-git-hooks",
+    "test:svg-font": "tsx scripts/test-svg-text.ts"
+  },
+  "dependencies": {
+    "@t3-oss/env-core": "0.13.6",
+    "dotenv": "16.5.0",
+    "zod": "3.25.51"
+  },
+  "devDependencies": {
+    "@innei/prettier": "0.15.0",
+    "eslint": "9.28.0",
+    "eslint-config-hyoban": "4.0.7",
+    "lint-staged": "16.1.0",
+    "opentype.js": "1.3.4",
+    "prettier": "3.5.3",
+    "sharp": "0.34.2",
+    "simple-git-hooks": "2.13.0",
+    "tailwindcss": "4.1.8",
+    "tsx": "4.19.4",
+    "typescript": "5.8.3",
+    "vite": "6.3.5",
+    "vite-bundle-analyzer": "0.22.0",
+    "vite-plugin-babel": "1.3.1",
+    "vite-plugin-checker": "0.9.3",
+    "vite-tsconfig-paths": "5.1.4"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "pnpm exec lint-staged"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "prettier --ignore-path ./.gitignore --write "
+    ],
+    "*.{js,ts,cjs,mjs,jsx,tsx,json}": [
+      "eslint --fix"
+    ]
+  }
+}
