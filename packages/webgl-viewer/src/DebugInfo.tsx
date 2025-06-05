@@ -27,6 +27,69 @@ interface DebugInfoProps {
 }
 
 /**
+ * 可折叠的调试信息分组组件
+ */
+const CollapsibleSection: React.FC<{
+  title: string
+  defaultExpanded?: boolean
+  children: React.ReactNode
+}> = ({ title, defaultExpanded = false, children }) => {
+  const [expanded, setExpanded] = useState(defaultExpanded)
+
+  return (
+    <div style={{ marginBottom: '8px' }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          cursor: 'pointer',
+          padding: '2px 0',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
+          marginBottom: expanded ? '4px' : '0',
+        }}
+        onClick={() => setExpanded(!expanded)}
+      >
+        <span
+          style={{
+            marginRight: '6px',
+            fontSize: '10px',
+            transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)',
+            transition: 'transform 0.2s ease',
+          }}
+        >
+          ▶
+        </span>
+        <span style={{ fontWeight: 'bold', fontSize: '11px' }}>{title}</span>
+      </div>
+      {expanded && (
+        <div style={{ paddingLeft: '16px', fontSize: '11px' }}>{children}</div>
+      )}
+    </div>
+  )
+}
+
+/**
+ * 状态指示器组件
+ */
+const StatusIndicator: React.FC<{ color: string; label: string }> = ({
+  color,
+  label,
+}) => (
+  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+    <span
+      style={{
+        width: '6px',
+        height: '6px',
+        borderRadius: '50%',
+        backgroundColor: color,
+        display: 'inline-block',
+      }}
+    />
+    {label}
+  </span>
+)
+
+/**
  * 调试信息显示组件
  *
  * 在开发模式下显示WebGL图片查看器的详细状态信息，
@@ -37,41 +100,9 @@ interface DebugInfoProps {
  */
 const DebugInfoComponent = ({ ref }: DebugInfoProps) => {
   // 调试信息状态，包含所有需要显示的调试数据
-  const [debugInfo, setDebugInfo] = useState<DebugInfo>({
-    scale: 1,
-    relativeScale: 1,
-    translateX: 0,
-    translateY: 0,
-    currentLOD: 0,
-    lodLevels: 0,
-    canvasSize: { width: 0, height: 0 },
-    imageSize: { width: 0, height: 0 },
-    fitToScreenScale: 1,
-    userMaxScale: 1,
-    effectiveMaxScale: 1,
-    originalSizeScale: 1,
-    renderCount: 0,
-    maxTextureSize: 0,
-    quality: 'unknown',
-    isLoading: false,
-    memory: {
-      textures: 0,
-      estimated: 0,
-      runtime: 0,
-      budget: 0,
-      pressure: 0,
-      activeLODs: 0,
-      maxConcurrentLODs: 0,
-    },
-    tiling: {
-      enabled: false,
-      tileSize: 0,
-      activeTiles: 0,
-      cachedTiles: 0,
-      maxTiles: 0,
-      loadingTiles: 0,
-    },
-  })
+  const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null)
+
+  const [collapsed, setCollapsed] = useState(false)
 
   // 暴露更新调试信息的方法给父组件
   useImperativeHandle(
@@ -86,107 +117,235 @@ const DebugInfoComponent = ({ ref }: DebugInfoProps) => {
     ),
   )
 
+  // 获取质量状态颜色
+  const getQualityColor = (quality: string) => {
+    switch (quality) {
+      case 'high': {
+        return '#4ade80'
+      }
+      case 'medium': {
+        return '#fbbf24'
+      }
+      case 'low': {
+        return '#f87171'
+      }
+      default: {
+        return '#94a3b8'
+      }
+    }
+  }
+
+  // 获取内存压力颜色
+  const getMemoryPressureColor = (pressure: number) => {
+    if (pressure < 50) return '#4ade80'
+    if (pressure < 80) return '#fbbf24'
+    return '#f87171'
+  }
+
+  if (!debugInfo) return null
+
   return (
     <div
       style={{
         position: 'absolute',
         top: '10px',
         left: '10px',
-        background: 'rgba(0, 0, 0, 0.8)',
+        background: 'rgba(0, 0, 0, 0.9)',
         color: 'white',
-        padding: '10px',
-        borderRadius: '4px',
-        fontSize: '12px',
+        padding: '8px',
+        borderRadius: '6px',
+        fontSize: '11px',
         fontFamily: 'monospace',
-        lineHeight: '1.4',
-        pointerEvents: 'none',
+        lineHeight: '1.3',
+        pointerEvents: 'auto',
         zIndex: 1000,
-        minWidth: '200px',
+        minWidth: '240px',
+        maxWidth: '300px',
+        backdropFilter: 'blur(4px)',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
       }}
     >
-      {/* 调试面板标题 */}
-      <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>
-        WebGL Debug Info
-      </div>
-
-      {/* 缩放相关信息 */}
-      <div>Scale: {debugInfo.scale.toFixed(3)}</div>
-      <div>Relative Scale: {debugInfo.relativeScale.toFixed(3)}</div>
-
-      {/* 位置信息 */}
-      <div>
-        Translate: ({debugInfo.translateX.toFixed(1)},{' '}
-        {debugInfo.translateY.toFixed(1)})
-      </div>
-
-      {/* Canvas和设备信息 */}
-      <div>
-        Canvas Size: {debugInfo.canvasSize.width}×{debugInfo.canvasSize.height}
-      </div>
-      <div>Device Pixel Ratio: {window.devicePixelRatio || 1}</div>
-
-      {/* 图像信息 */}
-      <div>
-        Image: {debugInfo.imageSize.width}×{debugInfo.imageSize.height}
-      </div>
-
-      {/* LOD信息 */}
-      <div>
-        Current LOD: {debugInfo.currentLOD} / {debugInfo.lodLevels - 1}
-      </div>
-      <div>Max Texture Size: {debugInfo.maxTextureSize}</div>
-
-      {/* 质量和Loading状态 */}
-      <div>
-        Quality:{' '}
-        <span
-          style={{
-            color:
-              debugInfo.quality === 'high'
-                ? '#4ade80'
-                : debugInfo.quality === 'medium'
-                  ? '#fbbf24'
-                  : debugInfo.quality === 'low'
-                    ? '#f87171'
-                    : '#94a3b8',
-          }}
-        >
-          {debugInfo.quality}
+      {/* 调试面板标题和折叠按钮 */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '8px',
+          paddingBottom: '4px',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
+        }}
+      >
+        <span style={{ fontWeight: 'bold', fontSize: '12px' }}>
+          WebGL Debug
         </span>
-      </div>
-      <div>
-        Status:{' '}
-        <span
+        <button
+          type="button"
           style={{
-            color: debugInfo.isLoading ? '#fbbf24' : '#4ade80',
+            background: 'none',
+            border: 'none',
+            color: 'white',
+            cursor: 'pointer',
+            fontSize: '10px',
+            padding: '2px 4px',
+            borderRadius: '2px',
+            opacity: 0.7,
           }}
+          onClick={() => setCollapsed(!collapsed)}
+          onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+          onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.7')}
         >
-          {debugInfo.isLoading ? 'Loading Texture...' : 'Ready'}
-        </span>
+          {collapsed ? '📈' : '📉'}
+        </button>
       </div>
 
-      {/* 缩放限制信息 */}
-      <div>Fit Scale: {debugInfo.fitToScreenScale.toFixed(3)}</div>
-      <div>User Max Scale: {debugInfo.userMaxScale.toFixed(3)}</div>
-      <div>Effective Max Scale: {debugInfo.effectiveMaxScale.toFixed(3)}</div>
-      <div>Original Size Scale: {debugInfo.originalSizeScale.toFixed(3)}</div>
-      <div>Memory Usage: {debugInfo.memory.textures.toFixed(2)} MiB</div>
-      <div>
-        Estimated Memory Usage: {debugInfo.memory.estimated.toFixed(2)} MiB
-      </div>
-      <div>
-        Runtime Memory Usage: {debugInfo.memory.runtime?.toFixed(2)} MiB
-      </div>
-      <div>Memory Budget: {debugInfo.memory.budget.toFixed(2)} MiB</div>
-      <div>Memory Pressure: {debugInfo.memory.pressure.toFixed(1)}%</div>
-      <div>Active LODs: {debugInfo.memory.activeLODs}</div>
-      <div>Max Concurrent LODs: {debugInfo.memory.maxConcurrentLODs}</div>
-      <div>Tiling Enabled: {debugInfo.tiling.enabled ? 'Yes' : 'No'}</div>
-      <div>Tile Size: {debugInfo.tiling.tileSize}</div>
-      <div>Active Tiles: {debugInfo.tiling.activeTiles}</div>
-      <div>Cached Tiles: {debugInfo.tiling.cachedTiles}</div>
-      <div>Max Tiles: {debugInfo.tiling.maxTiles}</div>
-      <div>Loading Tiles: {debugInfo.tiling.loadingTiles}</div>
+      {!collapsed && (
+        <>
+          {/* 核心状态信息 - 始终显示 */}
+          <div style={{ marginBottom: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>Scale:</span>
+              <span>{debugInfo.scale.toFixed(2)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>LOD:</span>
+              <span>
+                {debugInfo.currentLOD} / {debugInfo.lodLevels - 1}
+              </span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>Quality:</span>
+              <StatusIndicator
+                color={getQualityColor(debugInfo.quality)}
+                label={debugInfo.quality}
+              />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>Status:</span>
+              <StatusIndicator
+                color={debugInfo.isLoading ? '#fbbf24' : '#4ade80'}
+                label={debugInfo.isLoading ? 'Loading' : 'Ready'}
+              />
+            </div>
+          </div>
+
+          {/* 位置和变换信息 */}
+          <CollapsibleSection title="Transform">
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>Relative Scale:</span>
+              <span>{debugInfo.relativeScale.toFixed(3)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>Position:</span>
+              <span>
+                ({debugInfo.translateX.toFixed(0)},{' '}
+                {debugInfo.translateY.toFixed(0)})
+              </span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>Fit Scale:</span>
+              <span>{debugInfo.fitToScreenScale.toFixed(3)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>Max Scale:</span>
+              <span>{debugInfo.effectiveMaxScale.toFixed(3)}</span>
+            </div>
+          </CollapsibleSection>
+
+          {/* 画布和图像信息 */}
+          <CollapsibleSection title="Image Info">
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>Canvas:</span>
+              <span>
+                {debugInfo.canvasSize.width}×{debugInfo.canvasSize.height}
+              </span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>Image:</span>
+              <span>
+                {debugInfo.imageSize.width}×{debugInfo.imageSize.height}
+              </span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>DPR:</span>
+              <span>{window.devicePixelRatio || 1}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>Max Texture:</span>
+              <span>{debugInfo.maxTextureSize}</span>
+            </div>
+          </CollapsibleSection>
+
+          {/* 内存信息 */}
+          <CollapsibleSection title="Memory">
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>Textures:</span>
+              <span>{debugInfo.memory.textures.toFixed(1)} MB</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>Estimated:</span>
+              <span>{debugInfo.memory.estimated.toFixed(1)} MB</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>Budget:</span>
+              <span>{debugInfo.memory.budget.toFixed(1)} MB</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>Pressure:</span>
+              <StatusIndicator
+                color={getMemoryPressureColor(debugInfo.memory.pressure)}
+                label={`${debugInfo.memory.pressure.toFixed(1)}%`}
+              />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>Active LODs:</span>
+              <span>
+                {debugInfo.memory.activeLODs} /{' '}
+                {debugInfo.memory.maxConcurrentLODs}
+              </span>
+            </div>
+          </CollapsibleSection>
+
+          {/* 瓦片信息 */}
+          {debugInfo.tiling.enabled && (
+            <CollapsibleSection title="Tiling">
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>Tile Size:</span>
+                <span>{debugInfo.tiling.tileSize}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>Active:</span>
+                <span>{debugInfo.tiling.activeTiles}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>Cached:</span>
+                <span>{debugInfo.tiling.cachedTiles}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>Loading:</span>
+                <span>{debugInfo.tiling.loadingTiles}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>Max:</span>
+                <span>{debugInfo.tiling.maxTiles}</span>
+              </div>
+            </CollapsibleSection>
+          )}
+        </>
+      )}
+
+      {/* 折叠状态下的简化显示 */}
+      {collapsed && (
+        <div style={{ fontSize: '10px', opacity: 0.8 }}>
+          <div>
+            Scale: {debugInfo.scale.toFixed(2)} | LOD: {debugInfo.currentLOD} |{' '}
+            <StatusIndicator
+              color={getQualityColor(debugInfo.quality)}
+              label={debugInfo.quality}
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
