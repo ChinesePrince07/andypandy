@@ -4,7 +4,7 @@ import 'swiper/css'
 import 'swiper/css/navigation'
 
 import { AnimatePresence, m } from 'motion/react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { Blurhash } from 'react-blurhash'
 import type { Swiper as SwiperType } from 'swiper'
 import { Keyboard, Navigation, Virtual } from 'swiper/modules'
@@ -376,22 +376,28 @@ export const PhotoViewer = ({
                   )}
                 </div>
 
-                <GalleryThumbnail
-                  currentIndex={currentIndex}
-                  photos={photos}
-                  onIndexChange={onIndexChange}
-                />
+                <Suspense>
+                  <GalleryThumbnail
+                    currentIndex={currentIndex}
+                    photos={photos}
+                    onIndexChange={onIndexChange}
+                  />
+                </Suspense>
               </div>
 
               {/* ExifPanel - 在桌面端始终显示，在移动端根据状态显示 */}
 
-              {(!isMobile || showExifPanel) && (
-                <ExifPanel
-                  currentPhoto={currentPhoto}
-                  exifData={currentPhoto.exif}
-                  onClose={isMobile ? () => setShowExifPanel(false) : undefined}
-                />
-              )}
+              <Suspense>
+                {(!isMobile || showExifPanel) && (
+                  <ExifPanel
+                    currentPhoto={currentPhoto}
+                    exifData={currentPhoto.exif}
+                    onClose={
+                      isMobile ? () => setShowExifPanel(false) : undefined
+                    }
+                  />
+                )}
+              </Suspense>
             </div>
           </div>
         )}

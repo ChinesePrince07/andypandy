@@ -1,10 +1,25 @@
 import { m } from 'motion/react'
 import type { FC } from 'react'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { useMobile } from '~/hooks/useMobile'
 import { clsxm } from '~/lib/cn'
 import type { PhotoManifest } from '~/types/photo'
+
+const thumbnailSize = {
+  mobile: 48,
+  desktop: 64,
+}
+
+const thumbnailGapSize = {
+  mobile: 8,
+  desktop: 12,
+}
+
+const thumbnailPaddingSize = {
+  mobile: 12,
+  desktop: 16,
+}
 
 export const GalleryThumbnail: FC<{
   currentIndex: number
@@ -12,17 +27,38 @@ export const GalleryThumbnail: FC<{
   onIndexChange: (index: number) => void
 }> = ({ currentIndex, photos, onIndexChange }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
-  const thumbnailRefs = useRef<(HTMLButtonElement | null)[]>([])
+
   const isMobile = useMobile()
+
+  const [scrollContainerWidth, setScrollContainerWidth] = useState(0)
 
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current
-    const currentThumbnail = thumbnailRefs.current[currentIndex]
+    if (scrollContainer) {
+      setScrollContainerWidth(scrollContainer.clientWidth)
+      const handleResize = () => {
+        setScrollContainerWidth(scrollContainer.clientWidth)
+      }
+      scrollContainer.addEventListener('resize', handleResize)
+      return () => {
+        scrollContainer.removeEventListener('resize', handleResize)
+      }
+    }
+  }, [])
 
-    if (scrollContainer && currentThumbnail) {
-      const containerWidth = scrollContainer.clientWidth
-      const thumbnailLeft = currentThumbnail.offsetLeft
-      const thumbnailWidth = currentThumbnail.clientWidth
+  useEffect(() => {
+    const scrollContainer = scrollContainerRef.current
+
+    if (scrollContainer) {
+      const containerWidth = scrollContainerWidth
+      const thumbnailLeft =
+        currentIndex *
+          (isMobile ? thumbnailSize.mobile : thumbnailSize.desktop) +
+        (isMobile ? thumbnailGapSize.mobile : thumbnailGapSize.desktop) *
+          currentIndex
+      const thumbnailWidth = isMobile
+        ? thumbnailSize.mobile
+        : thumbnailSize.desktop
 
       const scrollLeft = thumbnailLeft - containerWidth / 2 + thumbnailWidth / 2
 
@@ -31,7 +67,7 @@ export const GalleryThumbnail: FC<{
         behavior: 'smooth',
       })
     }
-  }, [currentIndex])
+  }, [currentIndex, isMobile, scrollContainerWidth])
 
   // 处理鼠标滚轮事件，映射为横向滚动
   useEffect(() => {
@@ -67,21 +103,28 @@ export const GalleryThumbnail: FC<{
       <div className="bg-material-medium backdrop-blur-[70px]">
         <div
           ref={scrollContainerRef}
-          className={`gallery-thumbnail-container flex ${isMobile ? 'gap-2' : 'gap-3'} overflow-x-auto ${isMobile ? 'p-3' : 'p-4'} scrollbar-none`}
+          className={`gallery-thumbnail-container scrollbar-none flex overflow-x-auto`}
+          style={{
+            gap: isMobile ? thumbnailGapSize.mobile : thumbnailGapSize.desktop,
+            padding: isMobile
+              ? thumbnailPaddingSize.mobile
+              : thumbnailPaddingSize.desktop,
+          }}
         >
           {photos.map((photo, index) => (
             <button
               type="button"
               key={photo.id}
-              ref={(el) => {
-                thumbnailRefs.current[index] = el
-              }}
               className={clsxm(
-                `flex-shrink-0 ${isMobile ? 'w-12 h-12' : 'w-16 h-16'} rounded-lg overflow-hidden ring-2 transition-all contain-intrinsic-size`,
+                `flex-shrink-0 rounded-lg overflow-hidden ring-2 transition-all contain-intrinsic-size`,
                 index === currentIndex
                   ? 'ring-accent scale-110'
                   : 'ring-transparent hover:ring-accent',
               )}
+              style={{
+                width: isMobile ? thumbnailSize.mobile : thumbnailSize.desktop,
+                height: isMobile ? thumbnailSize.mobile : thumbnailSize.desktop,
+              }}
               onClick={() => onIndexChange(index)}
             >
               <img
