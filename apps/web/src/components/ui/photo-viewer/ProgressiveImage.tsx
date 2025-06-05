@@ -1,6 +1,5 @@
 import type { WebGLImageViewerRef } from '@photo-gallery/webgl-viewer'
 import { WebGLImageViewer } from '@photo-gallery/webgl-viewer'
-import { m, useAnimationControls } from 'motion/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
@@ -12,7 +11,6 @@ import {
 import { clsxm } from '~/lib/cn'
 import { canUseWebGL } from '~/lib/feature'
 import { ImageLoaderManager } from '~/lib/image-loader-manager'
-import { Spring } from '~/lib/spring'
 
 import { LivePhoto } from './LivePhoto'
 import type { LoadingIndicatorRef } from './LoadingIndicator'
