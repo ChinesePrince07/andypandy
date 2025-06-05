@@ -54,6 +54,23 @@ const DebugInfoComponent = ({ ref }: DebugInfoProps) => {
     maxTextureSize: 0,
     quality: 'unknown',
     isLoading: false,
+    memory: {
+      textures: 0,
+      estimated: 0,
+      runtime: 0,
+      budget: 0,
+      pressure: 0,
+      activeLODs: 0,
+      maxConcurrentLODs: 0,
+    },
+    tiling: {
+      enabled: false,
+      tileSize: 0,
+      activeTiles: 0,
+      cachedTiles: 0,
+      maxTiles: 0,
+      loadingTiles: 0,
+    },
   })
 
   // 暴露更新调试信息的方法给父组件
@@ -153,6 +170,23 @@ const DebugInfoComponent = ({ ref }: DebugInfoProps) => {
       <div>User Max Scale: {debugInfo.userMaxScale.toFixed(3)}</div>
       <div>Effective Max Scale: {debugInfo.effectiveMaxScale.toFixed(3)}</div>
       <div>Original Size Scale: {debugInfo.originalSizeScale.toFixed(3)}</div>
+      <div>Memory Usage: {debugInfo.memory.textures.toFixed(2)} MiB</div>
+      <div>
+        Estimated Memory Usage: {debugInfo.memory.estimated.toFixed(2)} MiB
+      </div>
+      <div>
+        Runtime Memory Usage: {debugInfo.memory.runtime?.toFixed(2)} MiB
+      </div>
+      <div>Memory Budget: {debugInfo.memory.budget.toFixed(2)} MiB</div>
+      <div>Memory Pressure: {debugInfo.memory.pressure.toFixed(1)}%</div>
+      <div>Active LODs: {debugInfo.memory.activeLODs}</div>
+      <div>Max Concurrent LODs: {debugInfo.memory.maxConcurrentLODs}</div>
+      <div>Tiling Enabled: {debugInfo.tiling.enabled ? 'Yes' : 'No'}</div>
+      <div>Tile Size: {debugInfo.tiling.tileSize}</div>
+      <div>Active Tiles: {debugInfo.tiling.activeTiles}</div>
+      <div>Cached Tiles: {debugInfo.tiling.cachedTiles}</div>
+      <div>Max Tiles: {debugInfo.tiling.maxTiles}</div>
+      <div>Loading Tiles: {debugInfo.tiling.loadingTiles}</div>
     </div>
   )
 }

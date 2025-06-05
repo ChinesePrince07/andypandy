@@ -74,4 +74,21 @@ export interface DebugInfo {
   maxTextureSize: number
   quality: 'high' | 'medium' | 'low' | 'unknown'
   isLoading: boolean
+  memory: {
+    textures: number // MiB
+    estimated: number // MiB
+    runtime?: number // MiB (如果可用)
+    budget: number // MiB
+    pressure: number // 百分比
+    activeLODs: number
+    maxConcurrentLODs: number
+  }
+  tiling: {
+    enabled: boolean
+    tileSize?: number
+    activeTiles?: number
+    cachedTiles?: number
+    maxTiles?: number
+    loadingTiles?: number
+  }
 }

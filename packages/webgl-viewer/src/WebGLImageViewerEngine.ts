@@ -1,10 +1,22 @@
 import { LOD_LEVELS } from './constants'
-import type { WebGLImageViewerProps } from './interface'
+import type { DebugInfo, WebGLImageViewerProps } from './interface'
 import {
   createShader,
   FRAGMENT_SHADER_SOURCE,
   VERTEX_SHADER_SOURCE,
 } from './shaders'
+
+// 瓦片信息类型
+interface TileInfo {
+  x: number // 瓦片在网格中的 x 坐标
+  y: number // 瓦片在网格中的 y 坐标
+  level: number // LOD 级别
+  priority: number // 优先级 (距离视口中心越近优先级越高)
+  lastAccessed: number // 最后访问时间 (用于LRU缓存)
+  isLoading: boolean // 是否正在加载
+  width: number // 瓦片实际宽度
+  height: number // 瓦片实际高度
+}
 
 // WebGL Image Viewer implementation class
 export class WebGLImageViewerEngine {
@@ -55,13 +67,23 @@ export class WebGLImageViewerEngine {
   private lastRenderTime = 0
   private renderThrottleDelay = 16 // ~60fps
 
-  // LOD (Level of Detail) texture management
+  // Tiled texture management for large images
   private originalImage: HTMLImageElement | null = null
-  private lodTextures = new Map<number, WebGLTexture>() // LOD level -> texture
+  private lodTextures = new Map<number, WebGLTexture>() // LOD level -> texture (for small images)
   private currentLOD = 0
   private lodUpdateDebounceId: ReturnType<typeof setTimeout> | null = null
   private lodUpdateDelay = 200 // ms
   private maxTextureSize = 0 // WebGL maximum texture size
+
+  // Tiling system for large images
+  private useTiledRendering = false
+  private tileSize = 512 // 瓦片大小 (像素)
+  private maxTilesInMemory = 16 // 最大同时存在的瓦片数
+  private tiles = new Map<string, TileInfo>() // tileKey -> TileInfo
+  private tileCache = new Map<string, WebGLTexture>() // tileKey -> texture
+  private activeTiles = new Set<string>() // 当前活跃的瓦片
+  private tilesToLoad = new Set<string>() // 待加载的瓦片
+  private tileLoadPromises = new Map<string, Promise<WebGLTexture | null>>() // 加载中的瓦片
 
   // Web Worker for LOD processing
   private lodWorker: Worker | null = null
@@ -113,10 +135,19 @@ export class WebGLImageViewerEngine {
   private currentQuality: 'high' | 'medium' | 'low' | 'unknown' = 'unknown'
   private isLoadingTexture = true
 
+  // 内存管理
+  private memoryUsage = {
+    textures: 0, // 纹理占用的内存 (bytes)
+    estimated: 0, // 估算的总内存占用 (bytes)
+  }
+  private maxMemoryBudget = 512 * 1024 * 1024 // 512MB 内存预算
+  private memoryPressureThreshold = 0.8 // 80% 内存使用率触发清理
+  private maxConcurrentLODs = 3 // 最大同时存在的 LOD 级别数
+
   constructor(
     canvas: HTMLCanvasElement,
     config: Required<WebGLImageViewerProps>,
-    onDebugUpdate?: React.RefObject<(debugInfo: any) => void>,
+    onDebugUpdate?: React.RefObject<(debugInfo: DebugInfo) => void>,
   ) {
     this.canvas = canvas
     this.config = config
@@ -144,8 +175,9 @@ export class WebGLImageViewerEngine {
     // 获取 WebGL 最大纹理尺寸
     this.maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE)
 
-    // 在移动设备上记录一些有用的调试信息
-    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+    // 在移动设备上记录一些有用的调试信息并调整内存预算
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+    if (isMobile) {
       console.info('WebGL Image Viewer - Mobile device detected')
       console.info('Max texture size:', this.maxTextureSize)
       console.info('Device pixel ratio:', window.devicePixelRatio || 1)
@@ -157,6 +189,14 @@ export class WebGLImageViewerEngine {
       )
       console.info('WebGL renderer:', gl.getParameter(gl.RENDERER))
       console.info('WebGL vendor:', gl.getParameter(gl.VENDOR))
+
+      // 移动设备使用更保守的内存预算
+      this.maxMemoryBudget = 128 * 1024 * 1024 // 128MB (更保守)
+      this.maxConcurrentLODs = 2 // 更少的 LOD 级别
+      this.memoryPressureThreshold = 0.6 // 更低的压力阈值
+      // 移动设备瓦片配置
+      this.tileSize = 256 // 更小的瓦片尺寸
+      this.maxTilesInMemory = 8 // 更少的瓦片数量
     }
 
     // 初始缩放将在图片加载时正确设置，这里先保持默认值
@@ -346,6 +386,36 @@ export class WebGLImageViewerEngine {
           this.imageWidth = image.width
           this.imageHeight = image.height
 
+          // 估算内存需求并决定渲染策略
+          const imagePixels = image.width * image.height
+          const baseMemoryMB = (imagePixels * 4) / (1024 * 1024) // RGBA 基础内存
+          const estimatedMaxMemoryMB = baseMemoryMB * 3 // 估算最多需要的内存（多个LOD级别）
+
+          console.info(`Image loaded: ${image.width}×${image.height}`)
+          console.info(`Base memory requirement: ${baseMemoryMB.toFixed(1)} MB`)
+          console.info(
+            `Estimated max memory: ${estimatedMaxMemoryMB.toFixed(1)} MB`,
+          )
+          console.info(
+            `Memory budget: ${(this.maxMemoryBudget / 1024 / 1024).toFixed(1)} MB`,
+          )
+
+          // 决定是否使用瓦片渲染
+          const maxDimension = Math.max(image.width, image.height)
+          const shouldUseTiling =
+            estimatedMaxMemoryMB > this.maxMemoryBudget / (1024 * 1024) ||
+            imagePixels > 50 * 1024 * 1024 || // 50M 像素
+            maxDimension > 8192 // 任一边超过 8K
+
+          if (shouldUseTiling) {
+            this.useTiledRendering = true
+            console.info(`🧩 Using tiled rendering for large image`)
+            console.info(`Tile size: ${this.tileSize}×${this.tileSize}`)
+            console.info(`Max tiles in memory: ${this.maxTilesInMemory}`)
+          } else {
+            console.info(`📄 Using standard LOD rendering`)
+          }
+
           // 先设置正确的缩放值，再创建纹理
           if (this.config.centerOnInit) {
             this.fitImageToScreen()
@@ -382,7 +452,12 @@ export class WebGLImageViewerEngine {
   private async createTexture(image: HTMLImageElement) {
     this.originalImage = image
     await this.createOriginalImageBitmap()
-    this.initializeLODTextures()
+
+    if (this.useTiledRendering) {
+      await this.initializeTiledSystem()
+    } else {
+      this.initializeLODTextures()
+    }
   }
 
   private async createOriginalImageBitmap() {
@@ -411,8 +486,533 @@ export class WebGLImageViewerEngine {
     })
   }
 
+  // 内存管理相关方法
+  private updateTextureMemoryUsage(
+    texture: WebGLTexture,
+    imageBitmap: ImageBitmap | ImageData | HTMLCanvasElement | OffscreenCanvas,
+    lodLevel: number,
+    tileKey?: string,
+  ) {
+    let width: number, height: number
+
+    if (imageBitmap instanceof ImageData) {
+      width = imageBitmap.width
+      height = imageBitmap.height
+    } else if (imageBitmap instanceof ImageBitmap) {
+      width = imageBitmap.width
+      height = imageBitmap.height
+    } else if (
+      imageBitmap instanceof HTMLCanvasElement ||
+      imageBitmap instanceof OffscreenCanvas
+    ) {
+      width = imageBitmap.width
+      height = imageBitmap.height
+    } else {
+      return
+    }
+
+    // RGBA 纹理，每个像素 4 字节
+    const textureMemory = width * height * 4
+    this.memoryUsage.textures += textureMemory
+
+    const memoryType = tileKey ? `Tile ${tileKey}` : `LOD ${lodLevel}`
+    console.info(
+      `${memoryType} texture memory: ${(textureMemory / 1024 / 1024).toFixed(2)} MiB, Total: ${(this.memoryUsage.textures / 1024 / 1024).toFixed(2)} MiB`,
+    )
+
+    // 检查内存压力（只在瓦片模式下自动清理）
+    if (this.useTiledRendering) {
+      this.checkMemoryPressure()
+    }
+  }
+
+  private checkMemoryPressure() {
+    const memoryPressureRatio = this.memoryUsage.textures / this.maxMemoryBudget
+
+    if (memoryPressureRatio > this.memoryPressureThreshold) {
+      console.warn(
+        `Memory pressure detected: ${(memoryPressureRatio * 100).toFixed(1)}% of budget used`,
+      )
+      this.cleanupOldLODTextures()
+    }
+  }
+
+  private cleanupOldLODTextures() {
+    const lodLevels = Array.from(this.lodTextures.keys()).sort((a, b) => b - a)
+
+    // 保留当前 LOD 和相邻的几个级别
+    const keepLevels = new Set([
+      this.currentLOD,
+      Math.max(0, this.currentLOD - 1),
+      Math.min(LOD_LEVELS.length - 1, this.currentLOD + 1),
+    ])
+
+    let removed = 0
+    for (const level of lodLevels) {
+      if (removed >= this.maxConcurrentLODs || this.lodTextures.size <= 2) {
+        break
+      }
+
+      if (!keepLevels.has(level)) {
+        const texture = this.lodTextures.get(level)
+        if (texture) {
+          this.gl.deleteTexture(texture)
+          this.lodTextures.delete(level)
+
+          // 估算释放的内存（基于LOD级别）
+          const lodConfig = LOD_LEVELS[level]
+          if (this.originalImage) {
+            const lodWidth = Math.max(
+              1,
+              Math.round(this.originalImage.width * lodConfig.scale),
+            )
+            const lodHeight = Math.max(
+              1,
+              Math.round(this.originalImage.height * lodConfig.scale),
+            )
+            const freedMemory = lodWidth * lodHeight * 4
+            this.memoryUsage.textures = Math.max(
+              0,
+              this.memoryUsage.textures - freedMemory,
+            )
+
+            console.info(
+              `Cleaned up LOD ${level}, freed ${(freedMemory / 1024 / 1024).toFixed(2)} MiB`,
+            )
+          }
+
+          removed++
+        }
+      }
+    }
+
+    if (removed > 0) {
+      console.info(
+        `Memory cleanup completed. Current usage: ${(this.memoryUsage.textures / 1024 / 1024).toFixed(2)} MiB`,
+      )
+
+      // 在移动设备上，如果内存压力仍然很高，建议浏览器进行垃圾回收
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+      if (
+        isMobile &&
+        this.memoryUsage.textures / this.maxMemoryBudget > 0.7 && // 手动触发垃圾回收（如果支持）
+        'gc' in window &&
+        typeof (window as any).gc === 'function'
+      ) {
+        ;(window as any).gc()
+        console.info('Manual garbage collection triggered')
+      }
+    }
+  }
+
+  private getEstimatedTotalMemoryUsage(): number {
+    let total = this.memoryUsage.textures
+
+    // 估算原始图片和 ImageBitmap 的内存占用
+    if (this.originalImage) {
+      total += this.originalImage.width * this.originalImage.height * 4
+    }
+    if (this.originalImageBitmap) {
+      total +=
+        this.originalImageBitmap.width * this.originalImageBitmap.height * 4
+    }
+
+    this.memoryUsage.estimated = total
+    return total
+  }
+
+  private getRuntimeMemoryUsage(): number {
+    // 尝试获取实际内存使用情况
+    if ('memory' in performance && (performance as any).memory) {
+      return (performance as any).memory.usedJSHeapSize
+    }
+    return 0
+  }
+
+  // 瓦片系统核心方法
+  private cleanupTiledSystem() {
+    // 清理所有瓦片纹理
+    for (const texture of this.tileCache.values()) {
+      this.gl.deleteTexture(texture)
+    }
+    this.tileCache.clear()
+    this.tiles.clear()
+    this.activeTiles.clear()
+    this.tilesToLoad.clear()
+    this.tileLoadPromises.clear()
+
+    console.info('Tiled system cleaned up')
+  }
+
+  private updateVisibleTiles() {
+    if (!this.originalImage || !this.useTiledRendering) return
+
+    // 计算当前视口在图片坐标系中的位置
+    const viewport = this.calculateViewport()
+
+    // 计算需要的瓦片范围
+    const tileRange = this.calculateTileRange(viewport)
+
+    // 更新活跃瓦片集合
+    this.updateActiveTiles(tileRange)
+
+    // 异步加载需要的瓦片
+    this.loadRequiredTiles()
+  }
+
+  private calculateViewport() {
+    // 计算当前视口在图片坐标系中的范围
+    const viewportWidth = this.canvasWidth / this.scale
+    const viewportHeight = this.canvasHeight / this.scale
+
+    // 视口中心在图片坐标系中的位置
+    const centerX = this.imageWidth / 2 - this.translateX / this.scale
+    const centerY = this.imageHeight / 2 - this.translateY / this.scale
+
+    const left = Math.max(0, centerX - viewportWidth / 2)
+    const top = Math.max(0, centerY - viewportHeight / 2)
+    const right = Math.min(this.imageWidth, centerX + viewportWidth / 2)
+    const bottom = Math.min(this.imageHeight, centerY + viewportHeight / 2)
+
+    return {
+      left,
+      top,
+      right,
+      bottom,
+      width: right - left,
+      height: bottom - top,
+    }
+  }
+
+  private calculateTileRange(viewport: {
+    left: number
+    top: number
+    right: number
+    bottom: number
+  }) {
+    // 计算需要的瓦片范围，包括一些缓冲区（移动设备使用更小的缓冲区）
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+    const buffer = this.tileSize * (isMobile ? 0.25 : 0.5) // 移动设备25%缓冲区
+
+    const startX = Math.max(
+      0,
+      Math.floor((viewport.left - buffer) / this.tileSize),
+    )
+    const endX = Math.min(
+      Math.ceil(this.imageWidth / this.tileSize) - 1,
+      Math.floor((viewport.right + buffer) / this.tileSize),
+    )
+
+    const startY = Math.max(
+      0,
+      Math.floor((viewport.top - buffer) / this.tileSize),
+    )
+    const endY = Math.min(
+      Math.ceil(this.imageHeight / this.tileSize) - 1,
+      Math.floor((viewport.bottom + buffer) / this.tileSize),
+    )
+
+    return { startX, endX, startY, endY }
+  }
+
+  private updateActiveTiles(tileRange: {
+    startX: number
+    endX: number
+    startY: number
+    endY: number
+  }) {
+    const newActiveTiles = new Set<string>()
+    const currentTime = performance.now()
+
+    // 确定当前缩放级别对应的 LOD
+    const lodLevel = this.selectOptimalLOD()
+
+    // 检查LOD是否改变，如果改变需要清理旧的瓦片
+    if (lodLevel !== this.currentLOD) {
+      console.info(
+        `LOD changed from ${this.currentLOD} to ${lodLevel}, cleaning old tiles`,
+      )
+      this.cleanupTilesWithDifferentLOD(lodLevel)
+      this.currentLOD = lodLevel
+    }
+
+    // 生成需要的瓦片
+    for (let y = tileRange.startY; y <= tileRange.endY; y++) {
+      for (let x = tileRange.startX; x <= tileRange.endX; x++) {
+        const tileKey = `${x}-${y}-${lodLevel}`
+        newActiveTiles.add(tileKey)
+
+        // 计算瓦片优先级（距离视口中心越近优先级越高）
+        const centerX = (tileRange.startX + tileRange.endX) / 2
+        const centerY = (tileRange.startY + tileRange.endY) / 2
+        const distance = Math.hypot(x - centerX, y - centerY)
+        const priority = 1000 - distance
+
+        // 更新或创建瓦片信息
+        if (!this.tiles.has(tileKey)) {
+          const tileWidth = Math.min(
+            this.tileSize,
+            this.imageWidth - x * this.tileSize,
+          )
+          const tileHeight = Math.min(
+            this.tileSize,
+            this.imageHeight - y * this.tileSize,
+          )
+
+          this.tiles.set(tileKey, {
+            x,
+            y,
+            level: lodLevel,
+            priority,
+            lastAccessed: currentTime,
+            isLoading: false,
+            width: tileWidth,
+            height: tileHeight,
+          })
+        } else {
+          const tile = this.tiles.get(tileKey)!
+          tile.priority = priority
+          tile.lastAccessed = currentTime
+        }
+      }
+    }
+
+    // 更新活跃瓦片集合
+    this.activeTiles = newActiveTiles
+
+    // 清理不再需要的瓦片
+    this.cleanupUnusedTiles()
+  }
+
+  // 清理不同LOD级别的瓦片
+  private cleanupTilesWithDifferentLOD(currentLOD: number) {
+    const tilesToRemove: string[] = []
+
+    // 找到所有不是当前LOD级别的瓦片
+    for (const [tileKey, tile] of this.tiles.entries()) {
+      if (tile.level !== currentLOD) {
+        tilesToRemove.push(tileKey)
+      }
+    }
+
+    // 清理这些瓦片
+    for (const tileKey of tilesToRemove) {
+      const texture = this.tileCache.get(tileKey)
+      const tile = this.tiles.get(tileKey)
+
+      if (texture && tile) {
+        this.gl.deleteTexture(texture)
+        this.tileCache.delete(tileKey)
+
+        // 更新内存统计
+        const freedMemory = tile.width * tile.height * 4
+        this.memoryUsage.textures = Math.max(
+          0,
+          this.memoryUsage.textures - freedMemory,
+        )
+
+        console.info(
+          `Cleaned up LOD ${tile.level} tile ${tileKey}, freed ${(freedMemory / 1024 / 1024).toFixed(2)} MiB`,
+        )
+      }
+
+      this.tiles.delete(tileKey)
+    }
+
+    if (tilesToRemove.length > 0) {
+      console.info(
+        `Cleaned up ${tilesToRemove.length} tiles with different LOD levels`,
+      )
+    }
+  }
+
+  private loadRequiredTiles() {
+    // 按优先级排序需要加载的瓦片
+    const tilesToLoad = Array.from(this.activeTiles)
+      .filter(
+        (tileKey) =>
+          !this.tileCache.has(tileKey) && !this.tileLoadPromises.has(tileKey),
+      )
+      .map((tileKey) => ({ key: tileKey, tile: this.tiles.get(tileKey)! }))
+      .sort((a, b) => b.tile.priority - a.tile.priority)
+
+    // 限制同时加载的瓦片数量（移动设备更保守）
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+    const maxConcurrentLoads = isMobile ? 2 : 4
+    const currentLoads = this.tileLoadPromises.size
+    const availableSlots = maxConcurrentLoads - currentLoads
+
+    for (let i = 0; i < Math.min(tilesToLoad.length, availableSlots); i++) {
+      const { key: tileKey, tile } = tilesToLoad[i]
+      this.loadTile(tileKey, tile)
+    }
+  }
+
+  private async loadTile(tileKey: string, tile: TileInfo) {
+    if (this.tileLoadPromises.has(tileKey)) return
+
+    tile.isLoading = true
+
+    const loadPromise = this.createTileTexture(tile)
+    this.tileLoadPromises.set(tileKey, loadPromise)
+
+    try {
+      const texture = await loadPromise
+      if (texture && this.activeTiles.has(tileKey)) {
+        this.tileCache.set(tileKey, texture)
+        console.info(`Loaded tile ${tileKey}`)
+
+        // 如果这是视口中心的瓦片，立即重新渲染
+        this.render()
+      }
+    } catch (error) {
+      console.error(`Failed to load tile ${tileKey}:`, error)
+    } finally {
+      tile.isLoading = false
+      this.tileLoadPromises.delete(tileKey)
+    }
+  }
+
+  private async createTileTexture(
+    tile: TileInfo,
+  ): Promise<WebGLTexture | null> {
+    if (!this.originalImageBitmap) return null
+
+    try {
+      // 检查内存压力，如果太高则拒绝创建
+      const memoryPressure = this.memoryUsage.textures / this.maxMemoryBudget
+      if (memoryPressure > 0.9) {
+        console.warn(
+          `Memory pressure too high (${(memoryPressure * 100).toFixed(1)}%), skipping tile creation`,
+        )
+        return null
+      }
+
+      // 计算瓦片在原图中的位置和大小
+      const sourceX = tile.x * this.tileSize
+      const sourceY = tile.y * this.tileSize
+      const sourceWidth = Math.min(this.tileSize, this.imageWidth - sourceX)
+      const sourceHeight = Math.min(this.tileSize, this.imageHeight - sourceY)
+
+      // 根据 LOD 级别调整输出尺寸
+      const lodConfig = LOD_LEVELS[tile.level]
+      const outputWidth = Math.max(1, Math.round(sourceWidth * lodConfig.scale))
+      const outputHeight = Math.max(
+        1,
+        Math.round(sourceHeight * lodConfig.scale),
+      )
+
+      // 限制瓦片纹理最大尺寸（移动设备更严格）
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+      const maxTileSize = isMobile ? 512 : 1024
+
+      let finalWidth = outputWidth
+      let finalHeight = outputHeight
+
+      if (outputWidth > maxTileSize || outputHeight > maxTileSize) {
+        const scale = Math.min(
+          maxTileSize / outputWidth,
+          maxTileSize / outputHeight,
+        )
+        finalWidth = Math.round(outputWidth * scale)
+        finalHeight = Math.round(outputHeight * scale)
+      }
+
+      // 使用 Canvas 创建瓦片纹理（iOS Safari 对 OffscreenCanvas 支持不佳）
+      const canvas = document.createElement('canvas')
+      canvas.width = finalWidth
+      canvas.height = finalHeight
+      const ctx = canvas.getContext('2d')!
+
+      // 设置渲染质量
+      ctx.imageSmoothingEnabled = true
+      ctx.imageSmoothingQuality = lodConfig.scale >= 1 ? 'high' : 'medium'
+
+      // 绘制瓦片区域
+      ctx.drawImage(
+        this.originalImageBitmap,
+        sourceX,
+        sourceY,
+        sourceWidth,
+        sourceHeight,
+        0,
+        0,
+        finalWidth,
+        finalHeight,
+      )
+
+      // 创建 WebGL 纹理（不使用内存追踪版本，避免双重计算）
+      const tileKey = `${tile.x}-${tile.y}-${tile.level}`
+      const texture = this.createTextureRaw(canvas, tile.level)
+
+      // 添加瓦片专用的内存追踪
+      if (texture) {
+        this.updateTextureMemoryUsage(texture, canvas, tile.level, tileKey)
+      }
+
+      return texture
+    } catch (error) {
+      console.error('Failed to create tile texture:', error)
+      // 如果创建瓦片失败，触发内存清理
+      this.cleanupUnusedTiles()
+      return null
+    }
+  }
+
+  private cleanupUnusedTiles() {
+    if (this.tileCache.size <= this.maxTilesInMemory) return
+
+    // 找到不再活跃的瓦片
+    const unusedTiles = Array.from(this.tileCache.keys())
+      .filter((tileKey) => !this.activeTiles.has(tileKey))
+      .map((tileKey) => ({ key: tileKey, tile: this.tiles.get(tileKey)! }))
+      .sort((a, b) => a.tile.lastAccessed - b.tile.lastAccessed) // 按最后访问时间排序
+
+    // 删除最久未使用的瓦片
+    const tilesToRemove = Math.min(
+      unusedTiles.length,
+      this.tileCache.size - this.maxTilesInMemory + 2,
+    )
+
+    for (let i = 0; i < tilesToRemove; i++) {
+      const { key: tileKey, tile } = unusedTiles[i]
+      const texture = this.tileCache.get(tileKey)
+      if (texture) {
+        this.gl.deleteTexture(texture)
+        this.tileCache.delete(tileKey)
+
+        // 更新内存统计
+        const freedMemory = tile.width * tile.height * 4
+        this.memoryUsage.textures = Math.max(
+          0,
+          this.memoryUsage.textures - freedMemory,
+        )
+
+        this.tiles.delete(tileKey)
+        console.info(
+          `Cleaned up unused tile ${tileKey}, freed ${(freedMemory / 1024 / 1024).toFixed(2)} MiB`,
+        )
+      }
+    }
+  }
+
   // 高性能纹理创建（无错误检查）
   private createTextureOptimized(
+    imageBitmap: ImageBitmap | ImageData | HTMLCanvasElement | OffscreenCanvas,
+    lodLevel: number,
+  ): WebGLTexture | null {
+    const texture = this.createTextureRaw(imageBitmap, lodLevel)
+
+    // 计算并更新纹理内存占用
+    if (texture) {
+      this.updateTextureMemoryUsage(texture, imageBitmap, lodLevel)
+    }
+
+    return texture
+  }
+
+  // 原始纹理创建（无内存追踪）
+  private createTextureRaw(
     imageBitmap: ImageBitmap | ImageData | HTMLCanvasElement | OffscreenCanvas,
     lodLevel: number,
   ): WebGLTexture | null {
@@ -565,9 +1165,130 @@ export class WebGLImageViewerEngine {
     // 调度批量错误检查（避免阻塞主线程）
     this.scheduleErrorCheck()
 
+    // 计算并更新纹理内存占用
+    this.updateTextureMemoryUsage(texture, imageBitmap, lodLevel)
+
     return texture
   }
 
+  // 初始化瓦片系统
+  private async initializeTiledSystem() {
+    if (!this.originalImage) return
+
+    console.info('Initializing tiled rendering system...')
+
+    // 清理现有资源
+    this.cleanupTiledSystem()
+
+    // 创建低分辨率的全图纹理作为背景
+    await this.createBackgroundTexture()
+
+    // 延迟加载视口内的瓦片，让背景纹理先显示
+    setTimeout(() => {
+      this.updateVisibleTiles()
+    }, 100)
+  }
+
+  // 创建低分辨率背景纹理
+  private async createBackgroundTexture() {
+    if (!this.originalImage || !this.originalImageBitmap) return
+
+    try {
+      // 移动设备使用更保守的背景尺寸
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+      const maxBackgroundSize = isMobile ? 1024 : 2048
+      const aspectRatio = this.originalImage.width / this.originalImage.height
+
+      let bgWidth: number, bgHeight: number
+      if (aspectRatio > 1) {
+        bgWidth = Math.min(maxBackgroundSize, this.originalImage.width)
+        bgHeight = Math.round(bgWidth / aspectRatio)
+      } else {
+        bgHeight = Math.min(maxBackgroundSize, this.originalImage.height)
+        bgWidth = Math.round(bgHeight * aspectRatio)
+      }
+
+      // 进一步限制内存使用
+      const estimatedMemory = (bgWidth * bgHeight * 4) / (1024 * 1024)
+      if (estimatedMemory > 32) {
+        // 限制背景纹理不超过32MB
+        const scale = Math.sqrt(32 / estimatedMemory)
+        bgWidth = Math.round(bgWidth * scale)
+        bgHeight = Math.round(bgHeight * scale)
+      }
+
+      console.info(
+        `Creating background texture: ${bgWidth}×${bgHeight} (${((bgWidth * bgHeight * 4) / 1024 / 1024).toFixed(1)}MB)`,
+      )
+
+      // 直接创建背景纹理，不使用LOD系统
+      const backgroundTexture = await this.createSmallBackgroundTexture(
+        bgWidth,
+        bgHeight,
+      )
+      if (backgroundTexture) {
+        this.texture = backgroundTexture
+        this.render()
+        console.info('Background texture loaded')
+      }
+    } catch (error) {
+      console.error('Failed to create background texture:', error)
+      // 如果背景纹理创建失败，继续但没有背景
+      console.warn('Continuing without background texture')
+    }
+  }
+
+  // 创建小尺寸背景纹理
+  private async createSmallBackgroundTexture(
+    width: number,
+    height: number,
+  ): Promise<WebGLTexture | null> {
+    if (!this.originalImageBitmap) return null
+
+    try {
+      // 使用 Canvas 创建缩略图（iOS Safari 兼容性更好）
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')!
+
+      // 设置高质量缩放
+      ctx.imageSmoothingEnabled = true
+      ctx.imageSmoothingQuality = 'high'
+
+      // 绘制缩放后的图像
+      ctx.drawImage(
+        this.originalImageBitmap,
+        0,
+        0,
+        this.originalImage!.width,
+        this.originalImage!.height,
+        0,
+        0,
+        width,
+        height,
+      )
+
+      // 创建纹理（不使用内存追踪，因为这是背景纹理）
+      const texture = this.createTextureRaw(canvas, 0)
+
+      // 手动追踪背景纹理内存
+      if (texture) {
+        const memoryUsage = width * height * 4
+        this.memoryUsage.textures += memoryUsage
+        console.info(
+          `Background texture memory: ${(memoryUsage / 1024 / 1024).toFixed(2)} MiB`,
+        )
+      }
+
+      return texture
+    } catch (error) {
+      console.error('Failed to create small background texture:', error)
+      return null
+    }
+  }
+
+  // 传统 LOD 系统初始化
   private async initializeLODTextures() {
     if (!this.originalImage) return
 
@@ -575,6 +1296,15 @@ export class WebGLImageViewerEngine {
     this.cleanupLODTextures()
 
     try {
+      // 根据图片大小调整加载策略
+      const imagePixels = this.originalImage.width * this.originalImage.height
+      const isLargeImage = imagePixels > 50 * 1024 * 1024 // 50M 像素
+      const isHugeImage = imagePixels > 100 * 1024 * 1024 // 100M 像素
+
+      console.info(
+        `Image size: ${this.originalImage.width}×${this.originalImage.height} (${(imagePixels / 1024 / 1024).toFixed(1)}M pixels)`,
+      )
+
       // 渐进式加载策略：先加载低质量纹理以快速显示，然后异步升级到高质量
 
       // 1. 立即创建最低质量纹理 (LOD 0: 最低分辨率)
@@ -587,7 +1317,15 @@ export class WebGLImageViewerEngine {
         console.info('Initial low-quality texture loaded')
       }
 
+      // 对于超大图片，使用更保守的策略
+      if (isHugeImage) {
+        // 超大图片只在必要时创建更高质量的纹理
+        console.info('Huge image detected, using conservative loading strategy')
+        return
+      }
+
       // 2. 异步创建中等质量纹理 (LOD 2: 中等分辨率)
+      const mediumDelay = isLargeImage ? 100 : 50
       setTimeout(async () => {
         if (this.lodUpdateSuspended) return
 
@@ -606,29 +1344,31 @@ export class WebGLImageViewerEngine {
         } catch (error) {
           console.error('Failed to create medium quality texture:', error)
         }
-      }, 50)
+      }, mediumDelay)
 
-      // 3. 异步创建高质量纹理 (LOD 3: 原始分辨率)
-      setTimeout(async () => {
-        if (this.lodUpdateSuspended) return
+      // 3. 对于大图片，延迟更久才创建高质量纹理
+      if (!isLargeImage) {
+        setTimeout(async () => {
+          if (this.lodUpdateSuspended) return
 
-        try {
-          const baseTexture = await this.createLODTexture(3)
-          if (baseTexture && !this.lodUpdateSuspended) {
-            this.lodTextures.set(3, baseTexture)
-            // 根据当前缩放选择合适的 LOD
-            const optimalLOD = this.selectOptimalLOD()
-            if (optimalLOD >= 3) {
-              this.currentLOD = 3
-              this.texture = baseTexture
-              this.render()
-              console.info('Upgraded to high-quality texture')
+          try {
+            const baseTexture = await this.createLODTexture(3)
+            if (baseTexture && !this.lodUpdateSuspended) {
+              this.lodTextures.set(3, baseTexture)
+              // 根据当前缩放选择合适的 LOD
+              const optimalLOD = this.selectOptimalLOD()
+              if (optimalLOD >= 3) {
+                this.currentLOD = 3
+                this.texture = baseTexture
+                this.render()
+                console.info('Upgraded to high-quality texture')
+              }
             }
+          } catch (error) {
+            console.error('Failed to create high quality texture:', error)
           }
-        } catch (error) {
-          console.error('Failed to create high quality texture:', error)
-        }
-      }, 100)
+        }, 200)
+      }
     } catch (error) {
       console.error('Failed to initialize LOD textures:', error)
     }
@@ -827,17 +1567,43 @@ export class WebGLImageViewerEngine {
     const { gl } = this
 
     // 删除所有现有的 LOD 纹理
-    for (const [_level, texture] of this.lodTextures) {
+    for (const [level, texture] of this.lodTextures) {
       gl.deleteTexture(texture)
+
+      // 释放内存统计
+      if (this.originalImage) {
+        const lodConfig = LOD_LEVELS[level]
+        const lodWidth = Math.max(
+          1,
+          Math.round(this.originalImage.width * lodConfig.scale),
+        )
+        const lodHeight = Math.max(
+          1,
+          Math.round(this.originalImage.height * lodConfig.scale),
+        )
+        const freedMemory = lodWidth * lodHeight * 4
+        this.memoryUsage.textures = Math.max(
+          0,
+          this.memoryUsage.textures - freedMemory,
+        )
+      }
     }
     this.lodTextures.clear()
 
     // 清理主纹理引用
     this.texture = null
+
+    // 重置内存统计
+    this.memoryUsage.textures = 0
   }
 
   private selectOptimalLOD(): number {
     if (!this.originalImage) return 3 // 默认使用原始分辨率
+
+    // 瓦片模式下使用不同的LOD选择逻辑
+    if (this.useTiledRendering) {
+      return this.selectOptimalLODForTiles()
+    }
 
     const fitToScreenScale = this.getFitToScreenScale()
     const relativeScale = this.scale / fitToScreenScale
@@ -867,9 +1633,61 @@ export class WebGLImageViewerEngine {
     return LOD_LEVELS.length - 1
   }
 
+  // 瓦片模式专用的LOD选择逻辑
+  private selectOptimalLODForTiles(): number {
+    if (!this.originalImage) return 3
+
+    // 计算当前显示的每像素密度
+    // 如果缩放比例 >= 1，说明显示的像素密度等于或超过原图
+    const pixelDensity = this.scale
+
+    // 移动设备使用更保守的LOD策略
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+
+    if (isMobile) {
+      // 移动设备LOD策略：更注重性能
+      if (pixelDensity >= 4) {
+        return 6 // 8x quality for very high zoom
+      } else if (pixelDensity >= 2) {
+        return 5 // 4x quality for high zoom
+      } else if (pixelDensity >= 1) {
+        return 4 // 2x quality for original size
+      } else if (pixelDensity >= 0.5) {
+        return 3 // 1x quality for medium zoom
+      } else if (pixelDensity >= 0.25) {
+        return 2 // 0.5x quality for low zoom
+      } else {
+        return 1 // 0.25x quality for very low zoom
+      }
+    } else {
+      // 桌面设备LOD策略：更注重质量
+      if (pixelDensity >= 8) {
+        return 7 // 16x quality for extreme zoom
+      } else if (pixelDensity >= 4) {
+        return 6 // 8x quality for very high zoom
+      } else if (pixelDensity >= 2) {
+        return 5 // 4x quality for high zoom
+      } else if (pixelDensity >= 1) {
+        return 4 // 2x quality for original size
+      } else if (pixelDensity >= 0.5) {
+        return 3 // 1x quality for medium zoom
+      } else if (pixelDensity >= 0.25) {
+        return 2 // 0.5x quality for low zoom
+      } else {
+        return 1 // 0.25x quality for very low zoom
+      }
+    }
+  }
+
   private async updateLOD() {
     // 如果 LOD 更新被暂停，直接返回
     if (this.lodUpdateSuspended) {
+      return
+    }
+
+    // 瓦片渲染模式下更新可见瓦片
+    if (this.useTiledRendering) {
+      this.updateVisibleTiles()
       return
     }
 
@@ -883,6 +1701,16 @@ export class WebGLImageViewerEngine {
     let targetTexture = this.lodTextures.get(optimalLOD)
 
     if (!targetTexture) {
+      // 在创建新纹理前检查内存压力
+      const memoryPressureRatio =
+        this.memoryUsage.textures / this.maxMemoryBudget
+      if (memoryPressureRatio > this.memoryPressureThreshold) {
+        console.warn(
+          `Memory pressure too high (${(memoryPressureRatio * 100).toFixed(1)}%), skipping LOD ${optimalLOD} creation`,
+        )
+        return
+      }
+
       try {
         // 异步创建新的 LOD 纹理
         const newTexture = await this.createLODTexture(optimalLOD)
@@ -902,7 +1730,7 @@ export class WebGLImageViewerEngine {
       console.info(`Switched to LOD ${optimalLOD}`)
       this.render()
 
-      // 预加载相邻的LOD级别以提供更流畅的体验
+      // 预加载相邻的LOD级别以提供更流畅的体验（但要考虑内存压力）
       this.preloadAdjacentLODs(optimalLOD)
     }
   }
@@ -915,11 +1743,31 @@ export class WebGLImageViewerEngine {
         return
       }
 
+      // 检查内存压力和并发LOD限制
+      const memoryPressureRatio =
+        this.memoryUsage.textures / this.maxMemoryBudget
+      if (memoryPressureRatio > this.memoryPressureThreshold * 0.8) {
+        console.info(
+          `Memory pressure too high for preloading (${(memoryPressureRatio * 100).toFixed(1)}%)`,
+        )
+        return
+      }
+
+      if (this.lodTextures.size >= this.maxConcurrentLODs) {
+        console.info(
+          `Max concurrent LODs reached (${this.lodTextures.size}/${this.maxConcurrentLODs})`,
+        )
+        return
+      }
+
       try {
-        // 预加载下一个更高质量的 LOD
+        // 预加载下一个更高质量的 LOD（优先级更高）
         if (currentLOD < LOD_LEVELS.length - 1) {
           const nextLOD = currentLOD + 1
-          if (!this.lodTextures.has(nextLOD)) {
+          if (
+            !this.lodTextures.has(nextLOD) &&
+            this.lodTextures.size < this.maxConcurrentLODs
+          ) {
             const texture = await this.createLODTexture(nextLOD)
             if (texture && !this.lodUpdateSuspended) {
               this.lodTextures.set(nextLOD, texture)
@@ -928,7 +1776,7 @@ export class WebGLImageViewerEngine {
         }
 
         // 预加载下一个更低质量的LOD（用于快速缩小）
-        if (currentLOD > 0) {
+        if (currentLOD > 0 && this.lodTextures.size < this.maxConcurrentLODs) {
           const prevLOD = currentLOD - 1
           if (!this.lodTextures.has(prevLOD)) {
             const texture = await this.createLODTexture(prevLOD)
@@ -1179,9 +2027,25 @@ export class WebGLImageViewerEngine {
     gl.clearColor(0, 0, 0, 0)
     gl.clear(gl.COLOR_BUFFER_BIT)
 
-    if (!this.texture) return
-
     gl.useProgram(this.program)
+
+    if (this.useTiledRendering) {
+      this.renderTiles()
+    } else {
+      this.renderSingleTexture()
+    }
+
+    // Update debug info if enabled
+    if (this.config.debug && this.onDebugUpdate) {
+      this.updateDebugInfo()
+    }
+  }
+
+  // 渲染单一纹理（传统模式）
+  private renderSingleTexture() {
+    const { gl } = this
+
+    if (!this.texture) return
 
     // Set transformation matrix
     const matrixLocation = gl.getUniformLocation(this.program, 'u_matrix')
@@ -1194,11 +2058,77 @@ export class WebGLImageViewerEngine {
     gl.bindTexture(gl.TEXTURE_2D, this.texture)
 
     gl.drawArrays(gl.TRIANGLES, 0, 6)
+  }
 
-    // Update debug info if enabled
-    if (this.config.debug && this.onDebugUpdate) {
-      this.updateDebugInfo()
+  // 渲染瓦片（瓦片模式）
+  private renderTiles() {
+    const { gl } = this
+
+    // 首先渲染背景纹理（如果有）
+    if (this.texture) {
+      this.renderSingleTexture()
     }
+
+    // 然后渲染高质量瓦片
+    const matrixLocation = gl.getUniformLocation(this.program, 'u_matrix')
+    const imageLocation = gl.getUniformLocation(this.program, 'u_image')
+    gl.uniform1i(imageLocation, 0)
+    gl.activeTexture(gl.TEXTURE0)
+
+    // 渲染所有活跃的瓦片
+    for (const tileKey of this.activeTiles) {
+      const texture = this.tileCache.get(tileKey)
+      const tile = this.tiles.get(tileKey)
+
+      if (texture && tile) {
+        // 计算瓦片的变换矩阵
+        const tileMatrix = this.createTileMatrix(tile)
+        gl.uniformMatrix3fv(matrixLocation, false, tileMatrix)
+
+        gl.bindTexture(gl.TEXTURE_2D, texture)
+        gl.drawArrays(gl.TRIANGLES, 0, 6)
+      }
+    }
+  }
+
+  // 创建瓦片专用的变换矩阵
+  private createTileMatrix(tile: TileInfo): Float32Array {
+    // 计算瓦片在图片中的位置和尺寸
+    const tileX = tile.x * this.tileSize
+    const tileY = tile.y * this.tileSize
+    const tileImageWidth = tile.width
+    const tileImageHeight = tile.height
+
+    // 计算瓦片在Canvas中的位置和尺寸
+    const scaledTileWidth = tileImageWidth * this.scale
+    const scaledTileHeight = tileImageHeight * this.scale
+
+    const scaleX = scaledTileWidth / this.canvasWidth
+    const scaleY = scaledTileHeight / this.canvasHeight
+
+    // 计算瓦片相对于图片中心的偏移
+    const tileCenterX = tileX + tileImageWidth / 2
+    const tileCenterY = tileY + tileImageHeight / 2
+    const imageCenterX = this.imageWidth / 2
+    const imageCenterY = this.imageHeight / 2
+
+    const offsetX = (tileCenterX - imageCenterX) * this.scale
+    const offsetY = (tileCenterY - imageCenterY) * this.scale
+
+    const translateX = ((this.translateX + offsetX) * 2) / this.canvasWidth
+    const translateY = (-(this.translateY + offsetY) * 2) / this.canvasHeight
+
+    return new Float32Array([
+      scaleX,
+      0,
+      0,
+      0,
+      scaleY,
+      0,
+      translateX,
+      translateY,
+      1,
+    ])
   }
 
   private updateDebugInfo() {
@@ -1212,12 +2142,23 @@ export class WebGLImageViewerEngine {
     const userMaxScale = fitToScreenScale * this.config.maxScale
     const effectiveMaxScale = Math.max(userMaxScale, originalSizeScale)
 
+    // 获取内存使用信息
+    const estimatedTotal = this.getEstimatedTotalMemoryUsage()
+    const runtimeMemory = this.getRuntimeMemoryUsage()
+    const textureMemoryMiB = this.memoryUsage.textures / (1024 * 1024)
+    const estimatedTotalMiB = estimatedTotal / (1024 * 1024)
+    const runtimeMemoryMiB = runtimeMemory / (1024 * 1024)
+    const memoryBudgetMiB = this.maxMemoryBudget / (1024 * 1024)
+    const memoryPressureRatio = this.memoryUsage.textures / this.maxMemoryBudget
+
     this.onDebugUpdate.current({
       scale: this.scale,
       relativeScale,
       translateX: this.translateX,
       translateY: this.translateY,
-      currentLOD: this.currentLOD,
+      currentLOD: this.useTiledRendering
+        ? this.selectOptimalLOD()
+        : this.currentLOD,
       lodLevels: LOD_LEVELS.length,
       canvasSize: { width: this.canvasWidth, height: this.canvasHeight },
       imageSize: { width: this.imageWidth, height: this.imageHeight },
@@ -1229,6 +2170,30 @@ export class WebGLImageViewerEngine {
       maxTextureSize: this.maxTextureSize,
       quality: this.currentQuality,
       isLoading: this.isLoadingTexture,
+      // 内存使用信息 (MiB 单位)
+      memory: {
+        textures: Number(textureMemoryMiB.toFixed(2)),
+        estimated: Number(estimatedTotalMiB.toFixed(2)),
+        runtime:
+          runtimeMemory > 0 ? Number(runtimeMemoryMiB.toFixed(2)) : undefined,
+        budget: Number(memoryBudgetMiB.toFixed(2)),
+        pressure: Number((memoryPressureRatio * 100).toFixed(1)), // 百分比
+        activeLODs: this.useTiledRendering ? 0 : this.lodTextures.size,
+        maxConcurrentLODs: this.maxConcurrentLODs,
+      },
+      // 瓦片渲染信息
+      tiling: this.useTiledRendering
+        ? {
+            enabled: true,
+            tileSize: this.tileSize,
+            activeTiles: this.activeTiles.size,
+            cachedTiles: this.tileCache.size,
+            maxTiles: this.maxTilesInMemory,
+            loadingTiles: this.tileLoadPromises.size,
+          }
+        : {
+            enabled: false,
+          },
     })
   }
 
@@ -1296,6 +2261,11 @@ export class WebGLImageViewerEngine {
 
     this.constrainImagePosition()
     this.render()
+
+    // 瓦片模式下需要更新可见瓦片
+    if (this.useTiledRendering) {
+      this.updateVisibleTiles()
+    }
   }
 
   private handleMouseUp() {
@@ -1557,6 +2527,11 @@ export class WebGLImageViewerEngine {
       if (!this.lodUpdateSuspended) {
         this.debouncedLODUpdate()
       }
+
+      // 瓦片模式下需要更新可见瓦片
+      if (this.useTiledRendering) {
+        this.updateVisibleTiles()
+      }
     }
   }
 
@@ -1666,7 +2641,15 @@ export class WebGLImageViewerEngine {
     }
 
     // 清理 WebGL 资源
-    this.cleanupLODTextures()
+    if (this.useTiledRendering) {
+      this.cleanupTiledSystem()
+    } else {
+      this.cleanupLODTextures()
+    }
+
+    // 重置内存统计
+    this.memoryUsage.textures = 0
+    this.memoryUsage.estimated = 0
   }
 
   private notifyLoadingStateChange(isLoading: boolean, message?: string) {

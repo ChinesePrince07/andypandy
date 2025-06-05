@@ -194,7 +194,7 @@ export const ProgressiveImage = ({
         />
       )}
 
-      {highResLoaded && blobSrc && (
+      {highResLoaded && blobSrc && isCurrentImage && (
         <WebGLImageViewer
           ref={transformRef}
           src={blobSrc}
@@ -302,14 +302,17 @@ export const ProgressiveImage = ({
       )}
 
       {/* Live Photo 组件 */}
-      {isLivePhoto && livePhotoVideoUrl && imageLoaderManagerRef.current && (
-        <LivePhoto
-          videoUrl={livePhotoVideoUrl}
-          imageLoaderManager={imageLoaderManagerRef.current}
-          loadingIndicatorRef={loadingIndicatorRef}
-          isCurrentImage={isCurrentImage}
-        />
-      )}
+      {isLivePhoto &&
+        livePhotoVideoUrl &&
+        isCurrentImage &&
+        imageLoaderManagerRef.current && (
+          <LivePhoto
+            videoUrl={livePhotoVideoUrl}
+            imageLoaderManager={imageLoaderManagerRef.current}
+            loadingIndicatorRef={loadingIndicatorRef}
+            isCurrentImage={isCurrentImage}
+          />
+        )}
 
       {/* 备用图片（当 WebGL 不可用时） */}
       {!canUseWebGL && highResLoaded && blobSrc && (
