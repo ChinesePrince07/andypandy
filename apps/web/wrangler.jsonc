@@ -1,0 +1,5 @@
+{
+  "name": "iris-web",
+  "compatibility_date": "2025-06-05",
+  "pages_build_output_dir": "./dist"
+}
