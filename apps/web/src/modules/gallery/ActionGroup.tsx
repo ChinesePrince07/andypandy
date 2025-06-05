@@ -1,5 +1,6 @@
 import { siteConfig } from '@config'
 import { useAtom } from 'jotai'
+import { useRef, useState } from 'react'
 
 import { gallerySettingAtom } from '~/atoms/app'
 import { Button } from '~/components/ui/button'
@@ -10,7 +11,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
+import { Slider } from '~/components/ui/slider'
 import { photoLoader } from '~/data/photos'
+import { useMobile } from '~/hooks/useMobile'
 
 const allTags = photoLoader.getAllTags()
 
@@ -111,6 +114,8 @@ export const ActionGroup = () => {
         </DropdownMenuContent>
       </DropdownMenu>
 
+      <AdjustColumnsButton />
+
       {/* 排序按钮 */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -149,5 +154,98 @@ export const ActionGroup = () => {
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
+  )
+}
+
+const AdjustColumnsButton = () => {
+  const [gallerySetting, setGallerySetting] = useAtom(gallerySettingAtom)
+  const isMobile = useMobile()
+
+  const setColumns = (columns: number | 'auto') => {
+    setGallerySetting({
+      ...gallerySetting,
+      columns,
+    })
+  }
+  // 根据设备类型提供不同的列数范围
+  const columnRange = isMobile
+    ? { min: 2, max: 4 } // 移动端适合的列数范围
+    : { min: 2, max: 8 } // 桌面端适合的列数范围
+  const dropdownMenuTriggerRef = useRef<HTMLButtonElement>(null)
+
+  const [triggerRectPosition, setTriggerRectPosition] = useState<{
+    top: number
+    left: number
+    height: number
+    width: number
+  } | null>(null)
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      <Button
+        onClick={(e) => {
+          const rect = e.currentTarget.getBoundingClientRect()
+          setTriggerRectPosition({
+            top: rect.top,
+            left: rect.left,
+            height: rect.height,
+            width: rect.width,
+          })
+
+          setOpen(true)
+        }}
+        variant="ghost"
+        size="sm"
+        className="relative h-10 w-10 rounded-full border-0 bg-gray-100 transition-all duration-200 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700"
+        title="列数设置"
+      >
+        <i className="i-mingcute-grid-line text-base text-gray-600 dark:text-gray-300" />
+        {gallerySetting.columns !== 'auto' && (
+          <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-xs font-medium text-white shadow-sm">
+            {gallerySetting.columns}
+          </span>
+        )}
+      </Button>
+
+      {/* 列数控制按钮 */}
+      <DropdownMenu
+        open={open}
+        onOpenChange={(open) => {
+          if (!open) {
+            setTriggerRectPosition(null)
+          }
+          setOpen(open)
+        }}
+      >
+        <DropdownMenuTrigger
+          className={'fixed'}
+          style={
+            triggerRectPosition
+              ? {
+                  top: triggerRectPosition.top,
+                  left: triggerRectPosition.left,
+                  height: triggerRectPosition.height,
+                  width: triggerRectPosition.width,
+                }
+              : undefined
+          }
+          ref={dropdownMenuTriggerRef}
+        />
+
+        <DropdownMenuContent align="center" className="w-80 p-2">
+          <DropdownMenuLabel className="mb-3">列数设置</DropdownMenuLabel>
+
+          <div className="px-2">
+            <Slider
+              value={gallerySetting.columns}
+              onChange={setColumns}
+              min={columnRange.min}
+              max={columnRange.max}
+              autoLabel="自动"
+            />
+          </div>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </>
   )
 }

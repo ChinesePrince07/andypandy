@@ -27,9 +27,10 @@ type MasonryItemType = PhotoManifest | MasonryHeaderItem
 const FIRST_SCREEN_ITEMS_COUNT = 30
 
 export const MasonryRoot = () => {
-  const { sortOrder, selectedTags } = useAtomValue(gallerySettingAtom)
+  const { columns } = useAtomValue(gallerySettingAtom)
   const hasAnimatedRef = useRef(false)
   const [showFloatingActions, setShowFloatingActions] = useState(false)
+  const [containerWidth, setContainerWidth] = useState(0)
 
   const photos = usePhotos()
   const { dateRange, handleRender } = useVisiblePhotosDateRange(photos)
@@ -40,6 +41,38 @@ export const MasonryRoot = () => {
     hasAnimatedRef.current = true
   }, [])
   const isMobile = useMobile()
+
+  // 监听容器宽度变化
+  useEffect(() => {
+    const updateContainerWidth = () => {
+      setContainerWidth(window.innerWidth)
+    }
+
+    updateContainerWidth()
+    window.addEventListener('resize', updateContainerWidth)
+
+    return () => {
+      window.removeEventListener('resize', updateContainerWidth)
+    }
+  }, [])
+
+  // 动态计算列宽
+  const columnWidth = useMemo(() => {
+    if (columns === 'auto') {
+      return isMobile ? 150 : 300 // 自动模式使用默认列宽
+    }
+
+    // 自定义列数模式：根据容器宽度和列数计算列宽
+    const availableWidth = containerWidth - (isMobile ? 8 : 32) // 移动端和桌面端的 padding 不同
+    const gutter = 4 // 列间距
+    const calculatedWidth = (availableWidth - (columns - 1) * gutter) / columns
+
+    // 根据设备类型设置最小和最大列宽
+    const minWidth = isMobile ? 120 : 200
+    const maxWidth = isMobile ? 250 : 500
+
+    return Math.max(Math.min(calculatedWidth, maxWidth), minWidth)
+  }, [isMobile, columns, containerWidth])
 
   // 监听滚动，控制浮动组件的显示
   useEffect(() => {
@@ -88,7 +121,6 @@ export const MasonryRoot = () => {
       <div className="p-1 lg:p-0 [&_*]:!select-none">
         {isMobile && <MasonryHeaderMasonryItem className="mb-1" />}
         <Masonry<MasonryItemType>
-          key={`${sortOrder}-${selectedTags.join(',')}`}
           items={useMemo(
             () => (isMobile ? photos : [MasonryHeaderItem.default, ...photos]),
             [photos, isMobile],
@@ -106,7 +138,7 @@ export const MasonryRoot = () => {
             [handleAnimationComplete, photoViewer.openViewer, photos],
           )}
           onRender={handleRender}
-          columnWidth={isMobile ? 150 : 300}
+          columnWidth={columnWidth}
           columnGutter={4}
           rowGutter={4}
           itemHeightEstimate={400}
