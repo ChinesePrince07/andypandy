@@ -352,7 +352,7 @@ export async function generateOGImage(options: OGImageOptions) {
           <rect width="100%" height="100%" fill="url(#bg)"/>
           <rect width="100%" height="100%" fill="url(#accent)"/>
           <rect width="100%" height="100%" fill="url(#grid)" />
-          
+
           ${simpleTitleSVG}
           ${simpleDescriptionSVG}
           ${simpleFooterSVG}

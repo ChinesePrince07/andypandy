@@ -99,11 +99,17 @@ const CHARACTERS = [
   '<',
   '>',
   '|',
+  '\\',
+  '~',
+  '`',
+  "'",
+  '{',
+  '}',
 ]
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
 // 常见的无衬线字体路径（优先使用 TTF 格式）
 const HELVETICA_FONT_PATHS = [
-  join(__dirname, './SF-Pro-Rounded-Regular.ttf'),
+  join(__dirname, './SF-Pro-Display-Medium.ttf'),
   '/System/Library/Fonts/SFCompact.ttf',
   '/System/Library/Fonts/Geneva.ttf',
   '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf',
