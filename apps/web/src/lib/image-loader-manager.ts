@@ -223,6 +223,7 @@ export class ImageLoaderManager {
     // 如果是 HEIC 格式，进行转换
     onLoadingStateUpdate?.({
       isConverting: true,
+      conversionMessage: 'HEIC/HEIF 图片格式转换中...',
     })
 
     try {

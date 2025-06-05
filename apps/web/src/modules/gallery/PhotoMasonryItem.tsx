@@ -306,7 +306,7 @@ export const PhotoMasonryItem = ({
           {isConvertingVideo ? (
             <div className="flex items-center gap-1 px-1">
               <i className="i-mingcute-loading-line animate-spin" />
-              <span>转换中</span>
+              <span>视频转码中</span>
             </div>
           ) : (
             <>
