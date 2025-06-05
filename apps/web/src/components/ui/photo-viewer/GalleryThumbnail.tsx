@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 
 import { useMobile } from '~/hooks/useMobile'
 import { clsxm } from '~/lib/cn'
+import { nextFrame } from '~/lib/dom'
 import type { PhotoManifest } from '~/types/photo'
 
 const thumbnailSize = {
@@ -61,10 +62,11 @@ export const GalleryThumbnail: FC<{
         : thumbnailSize.desktop
 
       const scrollLeft = thumbnailLeft - containerWidth / 2 + thumbnailWidth / 2
-
-      scrollContainer.scrollTo({
-        left: scrollLeft,
-        behavior: 'smooth',
+      nextFrame(() => {
+        scrollContainer.scrollTo({
+          left: scrollLeft,
+          behavior: 'smooth',
+        })
       })
     }
   }, [currentIndex, isMobile, scrollContainerWidth])
