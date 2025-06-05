@@ -19,7 +19,7 @@
   "devDependencies": {
     "@types/react": "19.1.6",
     "nbump": "2.1.2",
-    "tsdown": "0.12.6"
+    "tsdown": "0.12.7"
   },
   "publishConfig": {
     "access": "public",
