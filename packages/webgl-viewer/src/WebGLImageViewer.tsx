@@ -40,6 +40,7 @@ export const WebGLImageViewer = ({
   velocityAnimation = defaultVelocityAnimation,
   onZoomChange,
   onImageCopied,
+  onLoadingStateChange,
   debug = false,
   ...divProps
 }: WebGLImageViewerProps &
@@ -75,6 +76,7 @@ export const WebGLImageViewer = ({
       velocityAnimation: { ...defaultVelocityAnimation, ...velocityAnimation },
       onZoomChange: onZoomChange || (() => {}),
       onImageCopied: onImageCopied || (() => {}),
+      onLoadingStateChange: onLoadingStateChange || (() => {}),
       debug: debug || false,
     }),
     [
@@ -94,6 +96,7 @@ export const WebGLImageViewer = ({
       velocityAnimation,
       onZoomChange,
       onImageCopied,
+      onLoadingStateChange,
       debug,
     ],
   )

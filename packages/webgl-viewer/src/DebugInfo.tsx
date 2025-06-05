@@ -6,7 +6,7 @@
  */
 
 import * as React from 'react'
-import { useCallback,useImperativeHandle, useState } from 'react'
+import { useCallback, useImperativeHandle, useState } from 'react'
 
 import type { DebugInfo } from './interface'
 
@@ -52,6 +52,8 @@ const DebugInfoComponent = ({ ref }: DebugInfoProps) => {
     originalSizeScale: 1,
     renderCount: 0,
     maxTextureSize: 0,
+    quality: 'unknown',
+    isLoading: false,
   })
 
   // 暴露更新调试信息的方法给父组件
@@ -116,6 +118,35 @@ const DebugInfoComponent = ({ ref }: DebugInfoProps) => {
         Current LOD: {debugInfo.currentLOD} / {debugInfo.lodLevels - 1}
       </div>
       <div>Max Texture Size: {debugInfo.maxTextureSize}</div>
+
+      {/* 质量和Loading状态 */}
+      <div>
+        Quality:{' '}
+        <span
+          style={{
+            color:
+              debugInfo.quality === 'high'
+                ? '#4ade80'
+                : debugInfo.quality === 'medium'
+                  ? '#fbbf24'
+                  : debugInfo.quality === 'low'
+                    ? '#f87171'
+                    : '#94a3b8',
+          }}
+        >
+          {debugInfo.quality}
+        </span>
+      </div>
+      <div>
+        Status:{' '}
+        <span
+          style={{
+            color: debugInfo.isLoading ? '#fbbf24' : '#4ade80',
+          }}
+        >
+          {debugInfo.isLoading ? 'Loading Texture...' : 'Ready'}
+        </span>
+      </div>
 
       {/* 缩放限制信息 */}
       <div>Fit Scale: {debugInfo.fitToScreenScale.toFixed(3)}</div>

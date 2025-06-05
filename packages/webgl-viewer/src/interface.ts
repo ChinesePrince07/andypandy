@@ -43,6 +43,11 @@ export interface WebGLImageViewerProps {
   velocityAnimation?: VelocityAnimationConfig
   onZoomChange?: (originalScale: number, relativeScale: number) => void
   onImageCopied?: () => void
+  onLoadingStateChange?: (
+    isLoading: boolean,
+    message?: string,
+    quality?: 'high' | 'medium' | 'low' | 'unknown',
+  ) => void
   debug?: boolean
 }
 export interface WebGLImageViewerRef {
@@ -67,4 +72,6 @@ export interface DebugInfo {
   originalSizeScale: number
   renderCount: number
   maxTextureSize: number
+  quality: 'high' | 'medium' | 'low' | 'unknown'
+  isLoading: boolean
 }

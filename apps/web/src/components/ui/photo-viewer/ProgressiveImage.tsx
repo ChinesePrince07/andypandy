@@ -137,6 +137,22 @@ export const ProgressiveImage = ({
     [onZoomChange],
   )
 
+  const handleWebGLLoadingStateChange = useCallback(
+    (
+      isLoading: boolean,
+      message?: string,
+      quality?: 'high' | 'medium' | 'low' | 'unknown',
+    ) => {
+      loadingIndicatorRef.current?.updateLoadingState({
+        isVisible: isLoading,
+        isWebGLLoading: isLoading,
+        webglMessage: message,
+        webglQuality: quality,
+      })
+    },
+    [],
+  )
+
   const [isThumbnailLoaded, setIsThumbnailLoaded] = useState(false)
 
   const handleThumbnailLoad = useCallback(() => {
@@ -190,6 +206,7 @@ export const ProgressiveImage = ({
           centerOnInit={true}
           smooth={true}
           onZoomChange={onTransformed}
+          onLoadingStateChange={handleWebGLLoadingStateChange}
           debug={import.meta.env.DEV}
           onContextMenu={(e) =>
             showContextMenu(

@@ -1,6 +1,10 @@
 import { LOD_LEVELS } from './constants'
 import type { WebGLImageViewerProps } from './interface'
-import { createShader, FRAGMENT_SHADER_SOURCE, VERTEX_SHADER_SOURCE  } from './shaders'
+import {
+  createShader,
+  FRAGMENT_SHADER_SOURCE,
+  VERTEX_SHADER_SOURCE,
+} from './shaders'
 
 // WebGL Image Viewer implementation class
 export class WebGLImageViewerEngine {
@@ -44,6 +48,7 @@ export class WebGLImageViewerEngine {
   private startTranslateY = 0
   private targetTranslateX = 0
   private targetTranslateY = 0
+  private lodUpdateSuspended = false // 是否暂停 LOD 更新
 
   // Throttle state for render
   private renderThrottleId: number | null = null
@@ -58,10 +63,27 @@ export class WebGLImageViewerEngine {
   private lodUpdateDelay = 200 // ms
   private maxTextureSize = 0 // WebGL maximum texture size
 
+  // Web Worker for LOD processing
+  private lodWorker: Worker | null = null
+  private pendingLODRequests = new Map<
+    string,
+    {
+      lodLevel: number
+      resolve: (texture: WebGLTexture | null) => void
+      reject: (error: Error) => void
+    }
+  >()
+  private originalImageBitmap: ImageBitmap | null = null
+
   // Configuration
   private config: Required<WebGLImageViewerProps>
   private onZoomChange?: (originalScale: number, relativeScale: number) => void
   private onImageCopied?: () => void
+  private onLoadingStateChange?: (
+    isLoading: boolean,
+    message?: string,
+    quality?: 'high' | 'medium' | 'low' | 'unknown',
+  ) => void
   private onDebugUpdate?: React.RefObject<(debugInfo: any) => void>
 
   // Bound event handlers for proper cleanup
@@ -75,6 +97,22 @@ export class WebGLImageViewerEngine {
   private boundHandleTouchEnd: (e: TouchEvent) => void
   private boundResizeCanvas: () => void
 
+  // 双缓冲纹理管理
+  private frontTexture: WebGLTexture | null = null
+  private backTexture: WebGLTexture | null = null
+  private isPreparingTexture = false
+  private pendingTextureSwitch: {
+    texture: WebGLTexture
+    lodLevel: number
+  } | null = null
+
+  // 批量错误检查
+  private errorCheckScheduled = false
+
+  // 当前质量和loading状态
+  private currentQuality: 'high' | 'medium' | 'low' | 'unknown' = 'unknown'
+  private isLoadingTexture = true
+
   constructor(
     canvas: HTMLCanvasElement,
     config: Required<WebGLImageViewerProps>,
@@ -84,7 +122,12 @@ export class WebGLImageViewerEngine {
     this.config = config
     this.onZoomChange = config.onZoomChange
     this.onImageCopied = config.onImageCopied
+    this.onLoadingStateChange = config.onLoadingStateChange
     this.onDebugUpdate = onDebugUpdate
+
+    // 设置初始loading状态
+    this.isLoadingTexture = true
+    this.notifyLoadingStateChange(true, 'WebGL 初始化中...')
 
     const gl = canvas.getContext('webgl', {
       alpha: true,
@@ -132,12 +175,74 @@ export class WebGLImageViewerEngine {
 
     this.setupCanvas()
     this.initWebGL()
+    this.initLODWorker()
     this.setupEventListeners()
+
+    // 初始化完成，清除loading状态
+    this.isLoadingTexture = false
+    this.notifyLoadingStateChange(false)
   }
 
   private setupCanvas() {
     this.resizeCanvas()
     window.addEventListener('resize', this.boundResizeCanvas)
+  }
+
+  private initLODWorker() {
+    try {
+      // 创建 LOD Worker
+      this.lodWorker = new Worker(new URL('lodWorker.ts', import.meta.url), {
+        type: 'module',
+      })
+
+      // 监听 Worker 消息
+      this.lodWorker.onmessage = (event) => {
+        const { type, payload } = event.data
+
+        if (type === 'LOD_CREATED') {
+          const { id, imageBitmap, width, height } = payload
+          const request = this.pendingLODRequests.get(id)
+
+          if (request) {
+            // 在主线程中创建 WebGL 纹理
+            const texture = this.createWebGLTextureFromImageBitmap(
+              imageBitmap,
+              width,
+              height,
+              request.lodLevel,
+            )
+            this.pendingLODRequests.delete(id)
+            request.resolve(texture)
+
+            // 清理 ImageBitmap
+            imageBitmap.close()
+          }
+        } else if (type === 'LOD_ERROR') {
+          const { id, error } = payload
+          const request = this.pendingLODRequests.get(id)
+
+          if (request) {
+            this.pendingLODRequests.delete(id)
+            request.reject(new Error(error))
+          }
+        }
+      }
+
+      this.lodWorker.onerror = (error) => {
+        console.error('LOD Worker error:', error)
+        // 清理所有待处理的请求
+        for (const [_id, request] of this.pendingLODRequests) {
+          request.reject(new Error('Worker error'))
+        }
+        this.pendingLODRequests.clear()
+      }
+    } catch (error) {
+      console.warn(
+        'Failed to initialize LOD Worker, falling back to main thread processing:',
+        error,
+      )
+      this.lodWorker = null
+    }
   }
 
   private resizeCanvas() {
@@ -160,8 +265,10 @@ export class WebGLImageViewerEngine {
       // 窗口大小改变时，需要重新约束缩放倍数和位置
       this.constrainScaleAndPosition()
       this.render()
-      // canvas 尺寸变化时也需要检查 LOD 更新
-      this.debouncedLODUpdate()
+      // canvas 尺寸变化时也需要检查 LOD 更新，但在动画期间不更新
+      if (!this.lodUpdateSuspended) {
+        this.debouncedLODUpdate()
+      }
       // 通知缩放变化
       this.notifyZoomChange()
     }
@@ -228,109 +335,442 @@ export class WebGLImageViewerEngine {
 
   async loadImage(url: string) {
     this.originalImageSrc = url
+    this.isLoadingTexture = true // 开始加载图片
+    this.notifyLoadingStateChange(true, '图片加载中...')
     const image = new Image()
     image.crossOrigin = 'anonymous'
 
     return new Promise<void>((resolve, reject) => {
-      image.onload = () => {
-        this.imageWidth = image.width
-        this.imageHeight = image.height
+      image.onload = async () => {
+        try {
+          this.imageWidth = image.width
+          this.imageHeight = image.height
 
-        // 先设置正确的缩放值，再创建纹理
-        if (this.config.centerOnInit) {
-          this.fitImageToScreen()
-        } else {
-          // 即使不居中，也需要将相对缩放转换为绝对缩放
-          const fitToScreenScale = this.getFitToScreenScale()
-          this.scale = fitToScreenScale * this.config.initialScale
+          // 先设置正确的缩放值，再创建纹理
+          if (this.config.centerOnInit) {
+            this.fitImageToScreen()
+          } else {
+            // 即使不居中，也需要将相对缩放转换为绝对缩放
+            const fitToScreenScale = this.getFitToScreenScale()
+            this.scale = fitToScreenScale * this.config.initialScale
+          }
+
+          this.notifyLoadingStateChange(true, '创建纹理中...')
+          await this.createTexture(image)
+          this.imageLoaded = true
+          this.isLoadingTexture = false // 图片加载完成
+          this.notifyLoadingStateChange(false)
+          this.render()
+          this.notifyZoomChange() // 通知初始缩放值
+          resolve()
+        } catch (error) {
+          this.isLoadingTexture = false // 加载失败也要清除状态
+          this.notifyLoadingStateChange(false)
+          reject(error)
         }
-
-        this.createTexture(image)
-        this.imageLoaded = true
-        this.render()
-        this.notifyZoomChange() // 通知初始缩放值
-        resolve()
       }
 
-      image.onerror = () => reject(new Error('Failed to load image'))
+      image.onerror = () => {
+        this.isLoadingTexture = false // 加载失败清除状态
+        this.notifyLoadingStateChange(false)
+        reject(new Error('Failed to load image'))
+      }
       image.src = url
     })
   }
 
-  private createTexture(image: HTMLImageElement) {
+  private async createTexture(image: HTMLImageElement) {
     this.originalImage = image
+    await this.createOriginalImageBitmap()
     this.initializeLODTextures()
   }
 
-  private initializeLODTextures() {
+  private async createOriginalImageBitmap() {
+    if (!this.originalImage) return
+
+    try {
+      // 使用 createImageBitmap 避免阻塞主线程的 getImageData 操作
+      this.originalImageBitmap = await createImageBitmap(this.originalImage)
+    } catch (error) {
+      console.error('Failed to create ImageBitmap:', error)
+      this.originalImageBitmap = null
+    }
+  }
+
+  // 批量错误检查，避免频繁调用 getError
+  private scheduleErrorCheck() {
+    if (!this.config.debug || this.errorCheckScheduled) return
+
+    this.errorCheckScheduled = true
+    requestAnimationFrame(() => {
+      this.errorCheckScheduled = false
+      const error = this.gl.getError()
+      if (error !== this.gl.NO_ERROR) {
+        console.error('WebGL error detected:', error)
+      }
+    })
+  }
+
+  // 高性能纹理创建（无错误检查）
+  private createTextureOptimized(
+    imageBitmap: ImageBitmap | ImageData | HTMLCanvasElement | OffscreenCanvas,
+    lodLevel: number,
+  ): WebGLTexture | null {
+    const { gl } = this
+    const lodConfig = LOD_LEVELS[lodLevel]
+
+    const texture = gl.createTexture()
+    if (!texture) return null
+
+    gl.bindTexture(gl.TEXTURE_2D, texture)
+
+    // 设置纹理参数
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+
+    // 根据 LOD 级别选择过滤方式
+    if (lodConfig.scale >= 4) {
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+    } else if (lodConfig.scale >= 1) {
+      const isPixelArt =
+        this.originalImage &&
+        (this.originalImage.width < 512 || this.originalImage.height < 512)
+      if (isPixelArt) {
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+      } else {
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+      }
+    } else {
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+    }
+
+    // 直接上传纹理数据（无错误检查）
+    if (imageBitmap instanceof ImageData) {
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.RGBA,
+        gl.RGBA,
+        gl.UNSIGNED_BYTE,
+        imageBitmap,
+      )
+    } else {
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.RGBA,
+        gl.RGBA,
+        gl.UNSIGNED_BYTE,
+        imageBitmap as any,
+      )
+    }
+
+    return texture
+  }
+
+  private createWebGLTextureFromImageBitmap(
+    imageBitmap: ImageBitmap,
+    width: number,
+    height: number,
+    lodLevel: number,
+  ): WebGLTexture | null {
+    const lodConfig = LOD_LEVELS[lodLevel]
+
+    try {
+      // 使用优化版本的纹理创建（生产模式下跳过错误检查）
+      const texture = this.config.debug
+        ? this.createTextureWithDebug(imageBitmap, lodLevel)
+        : this.createTextureOptimized(imageBitmap, lodLevel)
+
+      if (!texture) {
+        console.error(`Failed to create LOD ${lodLevel} texture`)
+        return null
+      }
+
+      console.info(
+        `Created LOD ${lodLevel} texture: ${width}×${height} (scale: ${lodConfig.scale}) from ImageBitmap`,
+      )
+      return texture
+    } catch (error) {
+      console.error(`Error creating LOD ${lodLevel} texture:`, error)
+      return null
+    } finally {
+      // 清除loading状态
+      this.isLoadingTexture = false
+      this.notifyLoadingStateChange(false)
+    }
+  }
+
+  private createTextureWithDebug(
+    imageBitmap: ImageBitmap | ImageData | HTMLCanvasElement | OffscreenCanvas,
+    lodLevel: number,
+  ): WebGLTexture | null {
+    const { gl } = this
+    const lodConfig = LOD_LEVELS[lodLevel]
+
+    const texture = gl.createTexture()
+    if (!texture) return null
+
+    gl.bindTexture(gl.TEXTURE_2D, texture)
+
+    // 设置纹理参数
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+
+    // 根据 LOD 级别选择过滤方式
+    if (lodConfig.scale >= 4) {
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+    } else if (lodConfig.scale >= 1) {
+      const isPixelArt =
+        this.originalImage &&
+        (this.originalImage.width < 512 || this.originalImage.height < 512)
+      if (isPixelArt) {
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+      } else {
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+      }
+    } else {
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+    }
+
+    // 直接上传纹理数据
+    if (imageBitmap instanceof ImageData) {
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.RGBA,
+        gl.RGBA,
+        gl.UNSIGNED_BYTE,
+        imageBitmap,
+      )
+    } else {
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.RGBA,
+        gl.RGBA,
+        gl.UNSIGNED_BYTE,
+        imageBitmap as any,
+      )
+    }
+
+    // 调度批量错误检查（避免阻塞主线程）
+    this.scheduleErrorCheck()
+
+    return texture
+  }
+
+  private async initializeLODTextures() {
     if (!this.originalImage) return
 
     // 清理现有的 LOD 纹理
     this.cleanupLODTextures()
 
-    // 创建基础 LOD 纹理（LOD 3: 原始分辨率）
-    this.createLODTexture(3)
-    this.currentLOD = 3
-    this.texture = this.lodTextures.get(3) || null
+    try {
+      // 渐进式加载策略：先加载低质量纹理以快速显示，然后异步升级到高质量
+
+      // 1. 立即创建最低质量纹理 (LOD 0: 最低分辨率)
+      const lowQualityTexture = await this.createLODTexture(0)
+      if (lowQualityTexture) {
+        this.lodTextures.set(0, lowQualityTexture)
+        this.currentLOD = 0
+        this.texture = lowQualityTexture
+        this.render()
+        console.info('Initial low-quality texture loaded')
+      }
+
+      // 2. 异步创建中等质量纹理 (LOD 2: 中等分辨率)
+      setTimeout(async () => {
+        if (this.lodUpdateSuspended) return
+
+        try {
+          const mediumTexture = await this.createLODTexture(2)
+          if (mediumTexture && !this.lodUpdateSuspended) {
+            this.lodTextures.set(2, mediumTexture)
+            // 如果当前 LOD 还是 0，升级到 2
+            if (this.currentLOD <= 2) {
+              this.currentLOD = 2
+              this.texture = mediumTexture
+              this.render()
+              console.info('Upgraded to medium-quality texture')
+            }
+          }
+        } catch (error) {
+          console.error('Failed to create medium quality texture:', error)
+        }
+      }, 50)
+
+      // 3. 异步创建高质量纹理 (LOD 3: 原始分辨率)
+      setTimeout(async () => {
+        if (this.lodUpdateSuspended) return
+
+        try {
+          const baseTexture = await this.createLODTexture(3)
+          if (baseTexture && !this.lodUpdateSuspended) {
+            this.lodTextures.set(3, baseTexture)
+            // 根据当前缩放选择合适的 LOD
+            const optimalLOD = this.selectOptimalLOD()
+            if (optimalLOD >= 3) {
+              this.currentLOD = 3
+              this.texture = baseTexture
+              this.render()
+              console.info('Upgraded to high-quality texture')
+            }
+          }
+        } catch (error) {
+          console.error('Failed to create high quality texture:', error)
+        }
+      }, 100)
+    } catch (error) {
+      console.error('Failed to initialize LOD textures:', error)
+    }
   }
 
-  private createLODTexture(lodLevel: number): WebGLTexture | null {
-    if (!this.originalImage || lodLevel < 0 || lodLevel >= LOD_LEVELS.length) {
+  private async createLODTexture(
+    lodLevel: number,
+  ): Promise<WebGLTexture | null> {
+    if (
+      !this.originalImage ||
+      !this.originalImageBitmap ||
+      lodLevel < 0 ||
+      lodLevel >= LOD_LEVELS.length
+    ) {
       return null
     }
 
-    const { gl } = this
+    // 设置loading状态
+    this.isLoadingTexture = true
+    this.notifyLoadingStateChange(true, `创建 LOD ${lodLevel} 纹理中...`)
+
     const lodConfig = LOD_LEVELS[lodLevel]
 
-    try {
-      // 计算 LOD 纹理尺寸
-      const lodWidth = Math.max(
-        1,
-        Math.round(this.originalImage.width * lodConfig.scale),
-      )
-      const lodHeight = Math.max(
-        1,
-        Math.round(this.originalImage.height * lodConfig.scale),
-      )
+    // 计算 LOD 纹理尺寸
+    const lodWidth = Math.max(
+      1,
+      Math.round(this.originalImage.width * lodConfig.scale),
+    )
+    const lodHeight = Math.max(
+      1,
+      Math.round(this.originalImage.height * lodConfig.scale),
+    )
 
-      // 动态计算合理的纹理尺寸上限
-      // 对于超高分辨率图片，允许更大的纹理尺寸
+    // 计算最大纹理尺寸限制
+    let { maxTextureSize } = this
+    if (lodConfig.scale >= 4) {
+      maxTextureSize = Math.min(this.maxTextureSize, 16384)
+    } else if (lodConfig.scale >= 2) {
+      maxTextureSize = Math.min(this.maxTextureSize, 8192)
+    } else if (lodConfig.scale >= 1) {
+      maxTextureSize = Math.min(this.maxTextureSize, 8192)
+    } else {
+      maxTextureSize = Math.min(this.maxTextureSize, 4096)
+    }
 
-      // 基于视口大小和设备像素比动态调整最大纹理尺寸
-      let { maxTextureSize } = this
+    // 确保纹理尺寸不超过限制
+    let finalWidth = lodWidth
+    let finalHeight = lodHeight
 
-      // 对于高 LOD 级别，允许更大的纹理尺寸
-      if (lodConfig.scale >= 4) {
-        // 对于 4x 及以上的 LOD，使用更大的纹理尺寸限制
-        maxTextureSize = Math.min(this.maxTextureSize, 16384)
-      } else if (lodConfig.scale >= 2) {
-        // 对于 2x LOD，使用中等纹理尺寸限制
-        maxTextureSize = Math.min(this.maxTextureSize, 8192)
-      } else if (lodConfig.scale >= 1) {
-        // 对于 1x LOD，使用标准纹理尺寸限制
-        maxTextureSize = Math.min(this.maxTextureSize, 8192)
+    if (lodWidth > maxTextureSize || lodHeight > maxTextureSize) {
+      const aspectRatio = lodWidth / lodHeight
+      if (aspectRatio > 1) {
+        finalWidth = maxTextureSize
+        finalHeight = Math.round(maxTextureSize / aspectRatio)
       } else {
-        // 对于低分辨率 LOD，使用较小的纹理尺寸限制以节省内存
-        maxTextureSize = Math.min(this.maxTextureSize, 4096)
+        finalHeight = maxTextureSize
+        finalWidth = Math.round(maxTextureSize * aspectRatio)
       }
+    }
 
-      // 确保纹理尺寸不超过限制，但优先保持宽高比
-      let finalWidth = lodWidth
-      let finalHeight = lodHeight
+    // 确定渲染质量
+    let quality: 'high' | 'medium' | 'low'
+    if (lodConfig.scale >= 2) {
+      quality = 'high'
+    } else if (lodConfig.scale >= 1) {
+      quality = 'high'
+    } else {
+      quality = 'medium'
+    }
 
-      if (lodWidth > maxTextureSize || lodHeight > maxTextureSize) {
-        const aspectRatio = lodWidth / lodHeight
-        if (aspectRatio > 1) {
-          // 宽图
-          finalWidth = maxTextureSize
-          finalHeight = Math.round(maxTextureSize / aspectRatio)
-        } else {
-          // 高图
-          finalHeight = maxTextureSize
-          finalWidth = Math.round(maxTextureSize * aspectRatio)
+    // 更新当前质量
+    this.currentQuality = quality
+
+    let result: WebGLTexture | null = null
+
+    try {
+      // 如果有 Worker，使用 Worker 处理
+      if (this.lodWorker) {
+        try {
+          const id = `lod-${lodLevel}-${Date.now()}-${Math.random()}`
+
+          result = await new Promise<WebGLTexture | null>((resolve, reject) => {
+            this.pendingLODRequests.set(id, { lodLevel, resolve, reject })
+
+            // 为每次请求创建新的 ImageBitmap，避免转移后无法重用
+            createImageBitmap(this.originalImageBitmap!)
+              .then((imageBitmapCopy) => {
+                // 发送处理请求到 Worker，传递 ImageBitmap
+                this.lodWorker!.postMessage(
+                  {
+                    type: 'CREATE_LOD',
+                    payload: {
+                      id,
+                      imageBitmap: imageBitmapCopy,
+                      targetWidth: finalWidth,
+                      targetHeight: finalHeight,
+                      quality,
+                    },
+                  },
+                  [imageBitmapCopy],
+                )
+              })
+              .catch((error) => {
+                this.pendingLODRequests.delete(id)
+                reject(error)
+              })
+          })
+        } catch (error) {
+          console.error('Failed to send LOD request to worker:', error)
+          // 降级到主线程处理
         }
       }
 
+      // 降级到主线程处理
+      if (!result) {
+        result = this.createLODTextureOnMainThread(
+          lodLevel,
+          finalWidth,
+          finalHeight,
+          quality,
+        )
+      }
+    } finally {
+      // 清除loading状态
+      this.isLoadingTexture = false
+      this.notifyLoadingStateChange(false)
+    }
+
+    return result
+  }
+
+  private createLODTextureOnMainThread(
+    lodLevel: number,
+    finalWidth: number,
+    finalHeight: number,
+    quality: 'high' | 'medium' | 'low',
+  ): WebGLTexture | null {
+    if (!this.originalImage) return null
+
+    const lodConfig = LOD_LEVELS[lodLevel]
+
+    try {
       // 创建离屏 canvas
       const offscreenCanvas = document.createElement('canvas')
       const offscreenCtx = offscreenCanvas.getContext('2d')!
@@ -338,19 +778,16 @@ export class WebGLImageViewerEngine {
       offscreenCanvas.width = finalWidth
       offscreenCanvas.height = finalHeight
 
-      // 根据 LOD 级别选择渲染质量
-      if (lodConfig.scale >= 2) {
-        // 高分辨率 LOD，使用最高质量渲染
+      // 设置渲染质量
+      if (quality === 'high') {
         offscreenCtx.imageSmoothingEnabled = true
         offscreenCtx.imageSmoothingQuality = 'high'
-      } else if (lodConfig.scale >= 1) {
-        // 原始分辨率 LOD，使用高质量渲染
-        offscreenCtx.imageSmoothingEnabled = true
-        offscreenCtx.imageSmoothingQuality = 'high'
-      } else {
-        // 低分辨率 LOD，使用中等质量渲染以提高性能
+      } else if (quality === 'medium') {
         offscreenCtx.imageSmoothingEnabled = true
         offscreenCtx.imageSmoothingQuality = 'medium'
+      } else {
+        offscreenCtx.imageSmoothingEnabled = true
+        offscreenCtx.imageSmoothingQuality = 'low'
       }
 
       // 绘制图像到目标尺寸
@@ -366,64 +803,18 @@ export class WebGLImageViewerEngine {
         finalHeight,
       )
 
-      // 创建 WebGL 纹理
-      const texture = gl.createTexture()
+      // 使用优化版本的纹理创建（生产模式下跳过错误检查）
+      const texture = this.config.debug
+        ? this.createTextureWithDebug(offscreenCanvas, lodLevel)
+        : this.createTextureOptimized(offscreenCanvas, lodLevel)
+
       if (!texture) {
         console.error(`Failed to create LOD ${lodLevel} texture`)
         return null
       }
 
-      gl.bindTexture(gl.TEXTURE_2D, texture)
-
-      // 设置纹理参数
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-
-      // 根据 LOD 级别和图像特性选择过滤方式
-      if (lodConfig.scale >= 4) {
-        // 超高分辨率纹理，使用线性过滤获得最佳质量
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-      } else if (lodConfig.scale >= 1) {
-        // 原始及以上分辨率，根据图像类型选择
-        const isPixelArt =
-          this.originalImage.width < 512 || this.originalImage.height < 512
-        if (isPixelArt) {
-          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-        } else {
-          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-        }
-      } else {
-        // 低分辨率纹理，使用线性过滤避免锯齿
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-      }
-
-      // 上传纹理数据
-      gl.texImage2D(
-        gl.TEXTURE_2D,
-        0,
-        gl.RGBA,
-        gl.RGBA,
-        gl.UNSIGNED_BYTE,
-        offscreenCanvas,
-      )
-
-      // 检查 WebGL 错误
-      const error = gl.getError()
-      if (error !== gl.NO_ERROR) {
-        console.error(`WebGL error creating LOD ${lodLevel} texture:`, error)
-        gl.deleteTexture(texture)
-        return null
-      }
-
-      // 存储纹理
-      this.lodTextures.set(lodLevel, texture)
-
       console.info(
-        `Created LOD ${lodLevel} texture: ${finalWidth}×${finalHeight} (scale: ${lodConfig.scale}, original: ${lodWidth}×${lodHeight})`,
+        `Created LOD ${lodLevel} texture: ${finalWidth}×${finalHeight} (scale: ${lodConfig.scale}) on main thread`,
       )
       return texture
     } catch (error) {
@@ -476,7 +867,12 @@ export class WebGLImageViewerEngine {
     return LOD_LEVELS.length - 1
   }
 
-  private updateLOD() {
+  private async updateLOD() {
+    // 如果 LOD 更新被暂停，直接返回
+    if (this.lodUpdateSuspended) {
+      return
+    }
+
     const optimalLOD = this.selectOptimalLOD()
 
     if (optimalLOD === this.currentLOD) {
@@ -487,17 +883,24 @@ export class WebGLImageViewerEngine {
     let targetTexture = this.lodTextures.get(optimalLOD)
 
     if (!targetTexture) {
-      // 创建新的 LOD 纹理
-      const newTexture = this.createLODTexture(optimalLOD)
-      if (newTexture) {
-        targetTexture = newTexture
+      try {
+        // 异步创建新的 LOD 纹理
+        const newTexture = await this.createLODTexture(optimalLOD)
+        if (newTexture && !this.lodUpdateSuspended) {
+          targetTexture = newTexture
+          this.lodTextures.set(optimalLOD, newTexture)
+        }
+      } catch (error) {
+        console.error(`Failed to create LOD ${optimalLOD}:`, error)
+        return
       }
     }
 
-    if (targetTexture) {
+    if (targetTexture && !this.lodUpdateSuspended) {
       this.currentLOD = optimalLOD
       this.texture = targetTexture
       console.info(`Switched to LOD ${optimalLOD}`)
+      this.render()
 
       // 预加载相邻的LOD级别以提供更流畅的体验
       this.preloadAdjacentLODs(optimalLOD)
@@ -506,26 +909,46 @@ export class WebGLImageViewerEngine {
 
   private preloadAdjacentLODs(currentLOD: number) {
     // 异步预加载相邻的LOD级别
-    setTimeout(() => {
-      // 预加载下一个更高质量的 LOD
-      if (currentLOD < LOD_LEVELS.length - 1) {
-        const nextLOD = currentLOD + 1
-        if (!this.lodTextures.has(nextLOD)) {
-          this.createLODTexture(nextLOD)
-        }
+    setTimeout(async () => {
+      // 如果 LOD 更新被暂停，不进行预加载
+      if (this.lodUpdateSuspended) {
+        return
       }
 
-      // 预加载下一个更低质量的LOD（用于快速缩小）
-      if (currentLOD > 0) {
-        const prevLOD = currentLOD - 1
-        if (!this.lodTextures.has(prevLOD)) {
-          this.createLODTexture(prevLOD)
+      try {
+        // 预加载下一个更高质量的 LOD
+        if (currentLOD < LOD_LEVELS.length - 1) {
+          const nextLOD = currentLOD + 1
+          if (!this.lodTextures.has(nextLOD)) {
+            const texture = await this.createLODTexture(nextLOD)
+            if (texture && !this.lodUpdateSuspended) {
+              this.lodTextures.set(nextLOD, texture)
+            }
+          }
         }
+
+        // 预加载下一个更低质量的LOD（用于快速缩小）
+        if (currentLOD > 0) {
+          const prevLOD = currentLOD - 1
+          if (!this.lodTextures.has(prevLOD)) {
+            const texture = await this.createLODTexture(prevLOD)
+            if (texture && !this.lodUpdateSuspended) {
+              this.lodTextures.set(prevLOD, texture)
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error preloading adjacent LODs:', error)
       }
     }, 100) // 延迟 100ms 以避免阻塞主要渲染
   }
 
   private debouncedLODUpdate() {
+    // 如果 LOD 更新被暂停，则直接返回
+    if (this.lodUpdateSuspended) {
+      return
+    }
+
     // 清除之前的防抖调用
     if (this.lodUpdateDebounceId !== null) {
       clearTimeout(this.lodUpdateDebounceId)
@@ -534,8 +957,11 @@ export class WebGLImageViewerEngine {
     // 设置新的防抖调用
     this.lodUpdateDebounceId = setTimeout(() => {
       this.lodUpdateDebounceId = null
-      this.updateLOD()
-      this.render()
+      // 再次检查是否被暂停
+      if (!this.lodUpdateSuspended) {
+        this.updateLOD()
+        this.render()
+      }
     }, this.lodUpdateDelay)
   }
 
@@ -566,6 +992,7 @@ export class WebGLImageViewerEngine {
     animationTime?: number,
   ) {
     this.isAnimating = true
+    this.lodUpdateSuspended = true // 暂停 LOD 更新
     this.animationStartTime = performance.now()
     this.animationDuration =
       animationTime ||
@@ -625,6 +1052,7 @@ export class WebGLImageViewerEngine {
       requestAnimationFrame(() => this.animate())
     } else {
       this.isAnimating = false
+      this.lodUpdateSuspended = false // 恢复 LOD 更新
       // Ensure final values are exactly the target values
       this.scale = this.targetScale
       this.translateX = this.targetTranslateX
@@ -799,6 +1227,8 @@ export class WebGLImageViewerEngine {
       originalSizeScale,
       renderCount: performance.now(),
       maxTextureSize: this.maxTextureSize,
+      quality: this.currentQuality,
+      isLoading: this.isLoadingTexture,
     })
   }
 
@@ -845,6 +1275,7 @@ export class WebGLImageViewerEngine {
 
     // Stop any ongoing animation when user starts interacting
     this.isAnimating = false
+    this.lodUpdateSuspended = false // 恢复 LOD 更新
 
     this.isDragging = true
     this.lastMouseX = e.clientX
@@ -874,7 +1305,13 @@ export class WebGLImageViewerEngine {
   private handleWheel(e: WheelEvent) {
     e.preventDefault()
 
-    if (this.isAnimating || this.config.wheel.wheelDisabled) return
+    if (this.config.wheel.wheelDisabled) return
+
+    // 如果有正在进行的动画，停止并恢复 LOD 更新
+    if (this.isAnimating) {
+      this.isAnimating = false
+      this.lodUpdateSuspended = false
+    }
 
     const rect = this.canvas.getBoundingClientRect()
     const mouseX = e.clientX - rect.left
@@ -914,6 +1351,7 @@ export class WebGLImageViewerEngine {
   private performDoubleClickAction(x: number, y: number) {
     // Stop any ongoing animation
     this.isAnimating = false
+    this.lodUpdateSuspended = false // 确保 LOD 更新状态正确
 
     if (this.config.doubleClick.mode === 'toggle') {
       const fitToScreenScale = this.getFitToScreenScale()
@@ -973,15 +1411,20 @@ export class WebGLImageViewerEngine {
         this.isOriginalSize = true
       }
     } else {
-      // Zoom mode
-      this.zoomAt(x, y, this.config.doubleClick.step)
+      // Zoom mode - 使用动画版本以确保LOD暂停机制生效
+      this.zoomAt(x, y, this.config.doubleClick.step, true)
     }
   }
 
   private handleTouchStart(e: TouchEvent) {
     e.preventDefault()
 
-    if (this.isAnimating) return
+    // 如果有正在进行的动画，停止并恢复 LOD 更新
+    if (this.isAnimating) {
+      this.isAnimating = false
+      this.lodUpdateSuspended = false
+      return
+    }
 
     if (e.touches.length === 1 && !this.config.panning.disabled) {
       const touch = e.touches[0]
@@ -1110,7 +1553,10 @@ export class WebGLImageViewerEngine {
       this.constrainImagePosition()
       this.render()
       this.notifyZoomChange()
-      this.debouncedLODUpdate()
+      // 只有在不是暂停状态时才触发LOD更新
+      if (!this.lodUpdateSuspended) {
+        this.debouncedLODUpdate()
+      }
     }
   }
 
@@ -1168,6 +1614,10 @@ export class WebGLImageViewerEngine {
     this.removeEventListeners()
     window.removeEventListener('resize', this.boundResizeCanvas)
 
+    // 停止动画并恢复 LOD 更新状态
+    this.isAnimating = false
+    this.lodUpdateSuspended = false
+
     // 清理节流相关的资源
     if (this.renderThrottleId !== null) {
       cancelAnimationFrame(this.renderThrottleId)
@@ -1186,7 +1636,42 @@ export class WebGLImageViewerEngine {
       this.touchTapTimeout = null
     }
 
+    // 清理双缓冲纹理
+    if (this.frontTexture) {
+      this.gl.deleteTexture(this.frontTexture)
+      this.frontTexture = null
+    }
+    if (this.backTexture) {
+      this.gl.deleteTexture(this.backTexture)
+      this.backTexture = null
+    }
+    this.pendingTextureSwitch = null
+
+    // 清理 Web Worker
+    if (this.lodWorker) {
+      this.lodWorker.terminate()
+      this.lodWorker = null
+    }
+
+    // 清理待处理的请求
+    for (const [_id, request] of this.pendingLODRequests) {
+      request.reject(new Error('WebGL viewer destroyed'))
+    }
+    this.pendingLODRequests.clear()
+
+    // 清理 ImageBitmap
+    if (this.originalImageBitmap) {
+      this.originalImageBitmap.close()
+      this.originalImageBitmap = null
+    }
+
     // 清理 WebGL 资源
     this.cleanupLODTextures()
+  }
+
+  private notifyLoadingStateChange(isLoading: boolean, message?: string) {
+    if (this.onLoadingStateChange) {
+      this.onLoadingStateChange(isLoading, message, this.currentQuality)
+    }
   }
 }

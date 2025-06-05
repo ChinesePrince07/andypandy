@@ -11,7 +11,8 @@
   },
   "main": "./src/index.ts",
   "scripts": {
-    "build": "tsdown"
+    "build": "tsdown",
+    "type-check": "tsc --noEmit"
   },
   "peerDependencies": {
     "react": ">=19.0.0"

@@ -12,6 +12,11 @@ interface LoadingState {
   totalBytes: number
   conversionMessage?: string // 视频转换消息
   codecInfo?: string // 编码器信息
+
+  // WebGL 相关状态
+  isWebGLLoading?: boolean // WebGL 纹理是否正在加载
+  webglMessage?: string // WebGL 加载消息
+  webglQuality?: 'high' | 'medium' | 'low' | 'unknown' // WebGL 纹理质量
 }
 
 interface LoadingIndicatorRef {
@@ -28,6 +33,9 @@ const initialLoadingState: LoadingState = {
   totalBytes: 0,
   conversionMessage: undefined,
   codecInfo: undefined,
+  isWebGLLoading: false,
+  webglMessage: undefined,
+  webglQuality: 'unknown',
 }
 
 export const LoadingIndicator = ({
@@ -70,6 +78,7 @@ export const LoadingIndicator = ({
             </div>
             <div className="flex min-w-0 flex-col gap-0.5">
               {loadingState.isConverting ? (
+                // 视频转换状态
                 <>
                   <p className="text-xs font-medium text-white tabular-nums">
                     {loadingState.conversionMessage || '转换中...'}
@@ -80,7 +89,35 @@ export const LoadingIndicator = ({
                     </p>
                   )}
                 </>
+              ) : loadingState.isWebGLLoading ? (
+                // WebGL 加载状态
+                <>
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs font-medium text-white">
+                      {loadingState.webglMessage || 'WebGL 纹理加载中'}
+                    </p>
+                    {loadingState.webglQuality !== 'unknown' && (
+                      <span
+                        className="text-xs tabular-nums"
+                        style={{
+                          color:
+                            loadingState.webglQuality === 'high'
+                              ? '#4ade80'
+                              : loadingState.webglQuality === 'medium'
+                                ? '#fbbf24'
+                                : loadingState.webglQuality === 'low'
+                                  ? '#f87171'
+                                  : '#94a3b8',
+                        }}
+                      >
+                        {loadingState.webglQuality}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-white/70">正在构建高质量纹理...</p>
+                </>
               ) : (
+                // 图片加载状态
                 <>
                   <div className="flex items-center gap-2">
                     <p className="text-xs font-medium text-white">
