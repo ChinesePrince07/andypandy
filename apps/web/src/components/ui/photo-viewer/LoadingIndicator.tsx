@@ -1,6 +1,5 @@
 import { useCallback, useImperativeHandle, useState } from 'react'
 
-
 interface LoadingState {
   isVisible: boolean
   isConverting: boolean
@@ -50,7 +49,12 @@ export const LoadingIndicator = ({
     useCallback(
       () => ({
         updateLoadingState: (partialState: Partial<LoadingState>) => {
-          setLoadingState((prev) => ({ ...prev, ...partialState }))
+          setLoadingState((prev) => {
+            if (partialState.isVisible === false) {
+              return initialLoadingState
+            }
+            return { ...prev, ...partialState }
+          })
         },
         resetLoadingState: () => {
           setLoadingState(initialLoadingState)

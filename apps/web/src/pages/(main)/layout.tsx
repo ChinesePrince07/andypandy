@@ -2,7 +2,6 @@ import { siteConfig } from '@config'
 import clsx from 'clsx'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useEffect, useRef } from 'react'
-import { Freeze } from 'react-freeze'
 import { Outlet, useParams, useSearchParams } from 'react-router'
 
 import { gallerySettingAtom } from '~/atoms/app'
@@ -33,17 +32,15 @@ export const Component = () => {
         />
       )}
 
-      <Freeze freeze={isOpen}>
-        <ScrollArea
-          rootClassName={clsx(
-            'h-svh w-full transition-opacity duration-300',
-            isOpen ? 'pointer-events-none opacity-0 delay-300' : 'opacity-100',
-          )}
-          viewportClassName="size-full"
-        >
-          <MasonryRoot />
-        </ScrollArea>
-      </Freeze>
+      <ScrollArea
+        rootClassName={clsx(
+          'h-svh w-full transition-opacity duration-300',
+          isOpen ? 'pointer-events-none opacity-0 delay-300' : 'opacity-100',
+        )}
+        viewportClassName="size-full"
+      >
+        <MasonryRoot />
+      </ScrollArea>
 
       <Outlet />
     </>
