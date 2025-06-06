@@ -123,6 +123,7 @@ export class WebGLImageViewerEngine {
 
   // 按需LOD管理 - 只保留当前需要的一个LOD
   private currentlyCreatingLOD: number | null = null // 正在创建的LOD级别，避免重复创建
+  private scalingAlreadySet = false // 标记缩放是否已经设置，避免重复设置
 
   // Bound event handlers for proper cleanup
   private boundHandleMouseDown: (e: MouseEvent) => void
@@ -394,56 +395,66 @@ export class WebGLImageViewerEngine {
     gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, 0)
   }
 
-  async loadImage(url: string) {
+  async loadImage(
+    url: string,
+    preknownWidth?: number,
+    preknownHeight?: number,
+  ) {
     this.originalImageSrc = url
     this.isLoadingTexture = true // 开始加载图片
     this.notifyLoadingStateChange(true, '图片加载中...')
+
+    // 如果提供了预知的尺寸，可以立即设置图片尺寸并准备渲染策略
+    if (preknownWidth && preknownHeight) {
+      this.imageWidth = preknownWidth
+      this.imageHeight = preknownHeight
+
+      // 立即设置正确的缩放和渲染策略
+      this.setupInitialScaling()
+      this.scalingAlreadySet = true // 标记缩放已设置
+      this.determineRenderingStrategy()
+
+      console.info(
+        `Using preknown dimensions: ${preknownWidth}×${preknownHeight}`,
+      )
+      console.info('Starting parallel image loading for texture creation...')
+    }
+
     const image = new Image()
     image.crossOrigin = 'anonymous'
 
     return new Promise<void>((resolve, reject) => {
       image.onload = async () => {
         try {
-          this.imageWidth = image.width
-          this.imageHeight = image.height
+          // 如果没有预知尺寸，现在获取
+          if (!preknownWidth || !preknownHeight) {
+            this.imageWidth = image.width
+            this.imageHeight = image.height
 
-          // 估算内存需求并决定渲染策略
-          const imagePixels = image.width * image.height
-          const baseMemoryMB = (imagePixels * 4) / (1024 * 1024) // RGBA 基础内存
-          const estimatedMaxMemoryMB = baseMemoryMB * 3 // 估算最多需要的内存（多个LOD级别）
-
-          console.info(`Image loaded: ${image.width}×${image.height}`)
-          console.info(`Base memory requirement: ${baseMemoryMB.toFixed(1)} MB`)
-          console.info(
-            `Estimated max memory: ${estimatedMaxMemoryMB.toFixed(1)} MB`,
-          )
-          console.info(
-            `Memory budget: ${(this.maxMemoryBudget / 1024 / 1024).toFixed(1)} MB`,
-          )
-
-          // 决定是否使用瓦片渲染
-          const maxDimension = Math.max(image.width, image.height)
-          const shouldUseTiling =
-            estimatedMaxMemoryMB > this.maxMemoryBudget / (1024 * 1024) ||
-            imagePixels > 50 * 1024 * 1024 || // 50M 像素
-            maxDimension > 8192 // 任一边超过 8K
-
-          if (shouldUseTiling) {
-            this.useTiledRendering = true
-            console.info(`🧩 Using tiled rendering for large image`)
-            console.info(`Tile size: ${this.tileSize}×${this.tileSize}`)
-            console.info(`Max tiles in memory: ${this.maxTilesInMemory}`)
+            // 设置缩放和渲染策略
+            if (!this.scalingAlreadySet) {
+              this.setupInitialScaling()
+              this.scalingAlreadySet = true
+            }
+            this.determineRenderingStrategy()
           } else {
-            console.info(`📄 Using standard LOD rendering`)
-          }
+            // 验证预知尺寸是否正确
+            if (
+              image.width !== preknownWidth ||
+              image.height !== preknownHeight
+            ) {
+              console.warn(
+                `Preknown dimensions mismatch: expected ${preknownWidth}×${preknownHeight}, actual ${image.width}×${image.height}`,
+              )
+              this.imageWidth = image.width
+              this.imageHeight = image.height
 
-          // 先设置正确的缩放值，再创建纹理
-          if (this.config.centerOnInit) {
-            this.fitImageToScreen()
-          } else {
-            // 即使不居中，也需要将相对缩放转换为绝对缩放
-            const fitToScreenScale = this.getFitToScreenScale()
-            this.scale = fitToScreenScale * this.config.initialScale
+              // 重新设置缩放和渲染策略
+              this.setupInitialScaling()
+              this.scalingAlreadySet = true
+              this.determineRenderingStrategy()
+            }
+            // 如果尺寸匹配，不需要重新设置缩放，只进行纹理创建
           }
 
           this.notifyLoadingStateChange(true, '创建纹理中...')
@@ -468,6 +479,47 @@ export class WebGLImageViewerEngine {
       }
       image.src = url
     })
+  }
+
+  private setupInitialScaling() {
+    // 先设置正确的缩放值
+    if (this.config.centerOnInit) {
+      this.fitImageToScreen()
+    } else {
+      // 即使不居中，也需要将相对缩放转换为绝对缩放
+      const fitToScreenScale = this.getFitToScreenScale()
+      this.scale = fitToScreenScale * this.config.initialScale
+    }
+  }
+
+  private determineRenderingStrategy() {
+    // 估算内存需求并决定渲染策略
+    const imagePixels = this.imageWidth * this.imageHeight
+    const baseMemoryMB = (imagePixels * 4) / (1024 * 1024) // RGBA 基础内存
+    const estimatedMaxMemoryMB = baseMemoryMB * 3 // 估算最多需要的内存（多个LOD级别）
+
+    console.info(`Image loaded: ${this.imageWidth}×${this.imageHeight}`)
+    console.info(`Base memory requirement: ${baseMemoryMB.toFixed(1)} MB`)
+    console.info(`Estimated max memory: ${estimatedMaxMemoryMB.toFixed(1)} MB`)
+    console.info(
+      `Memory budget: ${(this.maxMemoryBudget / 1024 / 1024).toFixed(1)} MB`,
+    )
+
+    // 决定是否使用瓦片渲染
+    const maxDimension = Math.max(this.imageWidth, this.imageHeight)
+    const shouldUseTiling =
+      estimatedMaxMemoryMB > this.maxMemoryBudget / (1024 * 1024) ||
+      imagePixels > 50 * 1024 * 1024 || // 50M 像素
+      maxDimension > 8192 // 任一边超过 8K
+
+    if (shouldUseTiling) {
+      this.useTiledRendering = true
+      console.info(`🧩 Using tiled rendering for large image`)
+      console.info(`Tile size: ${this.tileSize}×${this.tileSize}`)
+      console.info(`Max tiles in memory: ${this.maxTilesInMemory}`)
+    } else {
+      console.info(`📄 Using standard LOD rendering`)
+    }
   }
 
   private async createTexture(image: HTMLImageElement) {
@@ -3037,6 +3089,7 @@ export class WebGLImageViewerEngine {
 
     // 清理按需LOD创建状态
     this.currentlyCreatingLOD = null
+    this.scalingAlreadySet = false
 
     // 清理 ImageBitmap
     if (this.originalImageBitmap) {

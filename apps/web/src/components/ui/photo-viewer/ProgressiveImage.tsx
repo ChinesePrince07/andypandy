@@ -46,6 +46,8 @@ export const ProgressiveImage = ({
   thumbnailSrc,
 
   alt,
+  width,
+  height,
   className,
 
   onError,
@@ -199,6 +201,8 @@ export const ProgressiveImage = ({
           ref={transformRef}
           src={blobSrc}
           className="absolute inset-0 h-full w-full"
+          width={width}
+          height={height}
           initialScale={1}
           minScale={minZoom}
           maxScale={maxZoom}

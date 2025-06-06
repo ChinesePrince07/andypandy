@@ -53,36 +53,6 @@ export const PhotoViewer = ({
     }
   }, [isOpen])
 
-  // 计算图片的适配尺寸
-  const getImageDisplaySize = () => {
-    if (!currentPhoto) return { width: 0, height: 0 }
-
-    const viewportWidth = window.innerWidth
-    const viewportHeight = window.innerHeight
-
-    // 在移动设备上调整最大尺寸
-    const maxWidth = isMobile ? viewportWidth * 0.95 : viewportWidth * 0.9
-    const maxHeight = isMobile ? viewportHeight * 0.8 : viewportHeight * 0.9
-
-    const imageAspectRatio = currentPhoto.width / currentPhoto.height
-    const maxAspectRatio = maxWidth / maxHeight
-
-    let displayWidth: number
-    let displayHeight: number
-
-    if (imageAspectRatio > maxAspectRatio) {
-      // 图片更宽，以宽度为准
-      displayWidth = Math.min(maxWidth, currentPhoto.width)
-      displayHeight = displayWidth / imageAspectRatio
-    } else {
-      // 图片更高，以高度为准
-      displayHeight = Math.min(maxHeight, currentPhoto.height)
-      displayWidth = displayHeight * imageAspectRatio
-    }
-
-    return { width: displayWidth, height: displayHeight }
-  }
-
   // 预加载相邻图片
   useEffect(() => {
     if (!isOpen) return
@@ -175,7 +145,7 @@ export const PhotoViewer = ({
     }
   }, [isOpen, handlePrevious, handleNext, onClose, showExifPanel])
 
-  const imageSize = getImageDisplaySize()
+  // const imageSize = getImageDisplaySize() // 已改为直接使用原始尺寸优化WebGL加载
 
   if (!currentPhoto) return null
 
@@ -323,10 +293,10 @@ export const PhotoViewer = ({
                               thumbnailSrc={photo.thumbnailUrl}
                               alt={photo.title}
                               width={
-                                isCurrentImage ? imageSize.width : undefined
+                                isCurrentImage ? currentPhoto.width : undefined
                               }
                               height={
-                                isCurrentImage ? imageSize.height : undefined
+                                isCurrentImage ? currentPhoto.height : undefined
                               }
                               className="h-full w-full object-contain"
                               enablePan={

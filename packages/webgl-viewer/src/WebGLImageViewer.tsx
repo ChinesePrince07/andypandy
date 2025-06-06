@@ -26,6 +26,8 @@ export const WebGLImageViewer = ({
   ref,
   src,
   className = '',
+  width,
+  height,
   initialScale = 1,
   minScale = 0.1,
   maxScale = 10,
@@ -56,6 +58,8 @@ export const WebGLImageViewer = ({
     () => ({
       src,
       className,
+      width: width || 0,
+      height: height || 0,
       initialScale,
       minScale,
       maxScale,
@@ -82,6 +86,8 @@ export const WebGLImageViewer = ({
     [
       src,
       className,
+      width,
+      height,
       initialScale,
       minScale,
       maxScale,
@@ -118,7 +124,12 @@ export const WebGLImageViewer = ({
         config,
         debug ? setDebugInfo : undefined,
       )
-      webGLImageViewerEngine.loadImage(src).catch(console.error)
+      // 如果提供了尺寸，传递给loadImage进行优化
+      const preknownWidth = config.width > 0 ? config.width : undefined
+      const preknownHeight = config.height > 0 ? config.height : undefined
+      webGLImageViewerEngine
+        .loadImage(src, preknownWidth, preknownHeight)
+        .catch(console.error)
       viewerRef.current = webGLImageViewerEngine
     } catch (error) {
       console.error('Failed to initialize WebGL Image Viewer:', error)
