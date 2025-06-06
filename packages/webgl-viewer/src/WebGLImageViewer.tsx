@@ -18,6 +18,7 @@ import {
 import DebugInfoComponent from './DebugInfo'
 import type { WebGLImageViewerProps, WebGLImageViewerRef } from './interface'
 import { WebGLImageViewerEngine } from './WebGLImageViewerEngine'
+import { WebGLImageViewerEngine2 } from './WebGLImageViewerEngine2'
 
 /**
  * WebGL图像查看器组件
@@ -50,7 +51,9 @@ export const WebGLImageViewer = ({
     ref?: React.RefObject<WebGLImageViewerRef | null>
   }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const viewerRef = useRef<WebGLImageViewerEngine | null>(null)
+  const viewerRef = useRef<
+    WebGLImageViewerEngine | WebGLImageViewerEngine2 | null
+  >(null)
 
   const setDebugInfo = useRef((() => {}) as (debugInfo: any) => void)
 
@@ -117,13 +120,30 @@ export const WebGLImageViewer = ({
   useEffect(() => {
     if (!canvasRef.current) return
 
-    let webGLImageViewerEngine: WebGLImageViewerEngine | null = null
-    try {
+    let webGLImageViewerEngine:
+      | WebGLImageViewerEngine
+      | WebGLImageViewerEngine2
+      | null = null
+
+    const totalPixel = config.width * config.height
+
+    // 60_000_000
+    if (totalPixel > 60_000_000) {
+      console.info('Using WebGLImageViewerEngine2')
+      webGLImageViewerEngine = new WebGLImageViewerEngine2(
+        canvasRef.current,
+        config,
+        debug ? setDebugInfo : undefined,
+      )
+    } else {
+      console.info('Using WebGLImageViewerEngine')
       webGLImageViewerEngine = new WebGLImageViewerEngine(
         canvasRef.current,
         config,
         debug ? setDebugInfo : undefined,
       )
+    }
+    try {
       // 如果提供了尺寸，传递给loadImage进行优化
       const preknownWidth = config.width > 0 ? config.width : undefined
       const preknownHeight = config.height > 0 ? config.height : undefined
