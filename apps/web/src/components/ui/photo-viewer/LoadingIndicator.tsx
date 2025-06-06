@@ -1,7 +1,5 @@
-import { AnimatePresence, m } from 'motion/react'
 import { useCallback, useImperativeHandle, useState } from 'react'
 
-import { Spring } from '~/lib/spring'
 
 interface LoadingState {
   isVisible: boolean
@@ -62,84 +60,78 @@ export const LoadingIndicator = ({
     ),
   )
 
+  if (!loadingState.isVisible) {
+    return null
+  }
+
   return (
-    <AnimatePresence>
-      {loadingState.isVisible && (
-        <m.div
-          className="pointer-events-none absolute right-4 bottom-4 z-10 rounded-xl border border-white/10 bg-black/80 px-3 py-2 backdrop-blur-sm"
-          initial={{ opacity: 0, scale: 0.8, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.8, y: 20 }}
-          transition={Spring.presets.snappy}
-        >
-          <div className="flex items-center gap-3 text-white">
-            <div className="relative">
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-            </div>
-            <div className="flex min-w-0 flex-col gap-0.5">
-              {loadingState.isConverting ? (
-                // 视频转换状态
-                <>
-                  <p className="text-xs font-medium text-white tabular-nums">
-                    {loadingState.conversionMessage || '转换中...'}
-                  </p>
-                  {loadingState.codecInfo && (
-                    <p className="text-xs text-white/70 tabular-nums">
-                      {loadingState.codecInfo}
-                    </p>
-                  )}
-                </>
-              ) : loadingState.isWebGLLoading ? (
-                // WebGL 加载状态
-                <>
-                  <div className="flex items-center gap-2">
-                    <p className="text-xs font-medium text-white">
-                      {loadingState.webglMessage || 'WebGL 纹理加载中'}
-                    </p>
-                    {loadingState.webglQuality !== 'unknown' && (
-                      <span
-                        className="text-xs tabular-nums"
-                        style={{
-                          color:
-                            loadingState.webglQuality === 'high'
-                              ? '#4ade80'
-                              : loadingState.webglQuality === 'medium'
-                                ? '#fbbf24'
-                                : loadingState.webglQuality === 'low'
-                                  ? '#f87171'
-                                  : '#94a3b8',
-                        }}
-                      >
-                        {loadingState.webglQuality}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-white/70">正在构建高质量纹理...</p>
-                </>
-              ) : (
-                // 图片加载状态
-                <>
-                  <div className="flex items-center gap-2">
-                    <p className="text-xs font-medium text-white">
-                      {loadingState.isHeicFormat ? 'HEIC' : '加载中'}
-                    </p>
-                    <span className="text-xs text-white/60 tabular-nums">
-                      {Math.round(loadingState.loadingProgress)}%
-                    </span>
-                  </div>
-                  {loadingState.totalBytes > 0 && (
-                    <p className="text-xs text-white/70 tabular-nums">
-                      {(loadingState.loadedBytes / 1024 / 1024).toFixed(1)}MB /{' '}
-                      {(loadingState.totalBytes / 1024 / 1024).toFixed(1)}MB
-                    </p>
-                  )}
-                </>
+    <div className="pointer-events-none absolute right-4 bottom-4 z-10 rounded-xl border border-white/10 bg-black/80 px-3 py-2 backdrop-blur-sm">
+      <div className="flex items-center gap-3 text-white">
+        <div className="relative">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+        </div>
+        <div className="flex min-w-0 flex-col gap-0.5">
+          {loadingState.isConverting ? (
+            // 视频转换状态
+            <>
+              <p className="text-xs font-medium text-white tabular-nums">
+                {loadingState.conversionMessage || '转换中...'}
+              </p>
+              {loadingState.codecInfo && (
+                <p className="text-xs text-white/70 tabular-nums">
+                  {loadingState.codecInfo}
+                </p>
               )}
-            </div>
-          </div>
-        </m.div>
-      )}
-    </AnimatePresence>
+            </>
+          ) : loadingState.isWebGLLoading ? (
+            // WebGL 加载状态
+            <>
+              <div className="flex items-center gap-2">
+                <p className="text-xs font-medium text-white">
+                  {loadingState.webglMessage || 'WebGL 纹理加载中'}
+                </p>
+                {loadingState.webglQuality !== 'unknown' && (
+                  <span
+                    className="text-xs tabular-nums"
+                    style={{
+                      color:
+                        loadingState.webglQuality === 'high'
+                          ? '#4ade80'
+                          : loadingState.webglQuality === 'medium'
+                            ? '#fbbf24'
+                            : loadingState.webglQuality === 'low'
+                              ? '#f87171'
+                              : '#94a3b8',
+                    }}
+                  >
+                    {loadingState.webglQuality}
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-white/70">正在构建高质量纹理...</p>
+            </>
+          ) : (
+            // 图片加载状态
+            <>
+              <div className="flex items-center gap-2">
+                <p className="text-xs font-medium text-white">
+                  {loadingState.isHeicFormat ? 'HEIC' : '加载中'}
+                </p>
+                <span className="text-xs text-white/60 tabular-nums">
+                  {Math.round(loadingState.loadingProgress)}%
+                </span>
+              </div>
+              {loadingState.totalBytes > 0 && (
+                <p className="text-xs text-white/70 tabular-nums">
+                  {(loadingState.loadedBytes / 1024 / 1024).toFixed(1)}MB /{' '}
+                  {(loadingState.totalBytes / 1024 / 1024).toFixed(1)}MB
+                </p>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
   )
 }
 
