@@ -114,6 +114,9 @@ export class WebGLImageViewerEngine {
   ) => void
   private onDebugUpdate?: React.RefObject<(debugInfo: any) => void>
 
+  // 按需LOD管理 - 只保留当前需要的一个LOD
+  private currentlyCreatingLOD: number | null = null // 正在创建的LOD级别，避免重复创建
+
   // Bound event handlers for proper cleanup
   private boundHandleMouseDown: (e: MouseEvent) => void
   private boundHandleMouseMove: (e: MouseEvent) => void
@@ -148,7 +151,7 @@ export class WebGLImageViewerEngine {
   }
   private maxMemoryBudget = 512 * 1024 * 1024 // 512MB 内存预算
   private memoryPressureThreshold = 0.8 // 80% 内存使用率触发清理
-  private maxConcurrentLODs = 3 // 最大同时存在的 LOD 级别数
+  private maxConcurrentLODs = 1 // 只保留当前需要的一个LOD
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -198,7 +201,7 @@ export class WebGLImageViewerEngine {
 
       // 移动设备使用更保守的内存预算
       this.maxMemoryBudget = 128 * 1024 * 1024 // 128MB (更保守)
-      this.maxConcurrentLODs = 2 // 更少的 LOD 级别
+      this.maxConcurrentLODs = 1 // 只保留当前LOD
       this.memoryPressureThreshold = 0.6 // 更低的压力阈值
       // 移动设备瓦片配置 - 针对拖拽优化
       this.tileSize = 256 // 更小的瓦片尺寸，减少加载时间
@@ -544,70 +547,11 @@ export class WebGLImageViewerEngine {
   }
 
   private cleanupOldLODTextures() {
-    const lodLevels = Array.from(this.lodTextures.keys()).sort((a, b) => b - a)
-
-    // 保留当前 LOD 和相邻的几个级别
-    const keepLevels = new Set([
-      this.currentLOD,
-      Math.max(0, this.currentLOD - 1),
-      Math.min(LOD_LEVELS.length - 1, this.currentLOD + 1),
-    ])
-
-    let removed = 0
-    for (const level of lodLevels) {
-      if (removed >= this.maxConcurrentLODs || this.lodTextures.size <= 2) {
-        break
-      }
-
-      if (!keepLevels.has(level)) {
-        const texture = this.lodTextures.get(level)
-        if (texture) {
-          this.gl.deleteTexture(texture)
-          this.lodTextures.delete(level)
-
-          // 估算释放的内存（基于LOD级别）
-          const lodConfig = LOD_LEVELS[level]
-          if (this.originalImage) {
-            const lodWidth = Math.max(
-              1,
-              Math.round(this.originalImage.width * lodConfig.scale),
-            )
-            const lodHeight = Math.max(
-              1,
-              Math.round(this.originalImage.height * lodConfig.scale),
-            )
-            const freedMemory = lodWidth * lodHeight * 4
-            this.memoryUsage.textures = Math.max(
-              0,
-              this.memoryUsage.textures - freedMemory,
-            )
-
-            console.info(
-              `Cleaned up LOD ${level}, freed ${(freedMemory / 1024 / 1024).toFixed(2)} MiB`,
-            )
-          }
-
-          removed++
-        }
-      }
-    }
-
-    if (removed > 0) {
-      console.info(
-        `Memory cleanup completed. Current usage: ${(this.memoryUsage.textures / 1024 / 1024).toFixed(2)} MiB`,
-      )
-
-      // 在移动设备上，如果内存压力仍然很高，建议浏览器进行垃圾回收
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
-      if (
-        isMobile &&
-        this.memoryUsage.textures / this.maxMemoryBudget > 0.7 && // 手动触发垃圾回收（如果支持）
-        'gc' in window &&
-        typeof (window as any).gc === 'function'
-      ) {
-        ;(window as any).gc()
-        console.info('Manual garbage collection triggered')
-      }
+    // 在单LOD策略下，直接清理所有LOD纹理
+    // 新的LOD会在createAndSetLOD中设置
+    if (this.lodTextures.size > 0) {
+      console.info(`Cleaning up ${this.lodTextures.size} old LOD textures`)
+      this.cleanupLODTextures()
     }
   }
 
@@ -1529,7 +1473,7 @@ export class WebGLImageViewerEngine {
     }
   }
 
-  // 传统 LOD 系统初始化
+  // 按需LOD系统初始化 - 只创建当前需要的LOD
   private async initializeLODTextures() {
     if (!this.originalImage) return
 
@@ -1537,81 +1481,54 @@ export class WebGLImageViewerEngine {
     this.cleanupLODTextures()
 
     try {
-      // 根据图片大小调整加载策略
       const imagePixels = this.originalImage.width * this.originalImage.height
-      const isLargeImage = imagePixels > 50 * 1024 * 1024 // 50M 像素
-      const isHugeImage = imagePixels > 100 * 1024 * 1024 // 100M 像素
-
       console.info(
         `Image size: ${this.originalImage.width}×${this.originalImage.height} (${(imagePixels / 1024 / 1024).toFixed(1)}M pixels)`,
       )
+      console.info('Using on-demand LOD strategy to minimize memory usage')
 
-      // 渐进式加载策略：先加载低质量纹理以快速显示，然后异步升级到高质量
+      // 确定当前缩放级别对应的最优LOD
+      const optimalLOD = this.selectOptimalLOD()
 
-      // 1. 立即创建最低质量纹理 (LOD 0: 最低分辨率)
-      const lowQualityTexture = await this.createLODTexture(0)
-      if (lowQualityTexture) {
-        this.lodTextures.set(0, lowQualityTexture)
-        this.currentLOD = 0
-        this.texture = lowQualityTexture
-        this.render()
-        console.info('Initial low-quality texture loaded')
-      }
-
-      // 对于超大图片，使用更保守的策略
-      if (isHugeImage) {
-        // 超大图片只在必要时创建更高质量的纹理
-        console.info('Huge image detected, using conservative loading strategy')
-        return
-      }
-
-      // 2. 异步创建中等质量纹理 (LOD 2: 中等分辨率)
-      const mediumDelay = isLargeImage ? 100 : 50
-      setTimeout(async () => {
-        if (this.lodUpdateSuspended) return
-
-        try {
-          const mediumTexture = await this.createLODTexture(2)
-          if (mediumTexture && !this.lodUpdateSuspended) {
-            this.lodTextures.set(2, mediumTexture)
-            // 如果当前 LOD 还是 0，升级到 2
-            if (this.currentLOD <= 2) {
-              this.currentLOD = 2
-              this.texture = mediumTexture
-              this.render()
-              console.info('Upgraded to medium-quality texture')
-            }
-          }
-        } catch (error) {
-          console.error('Failed to create medium quality texture:', error)
-        }
-      }, mediumDelay)
-
-      // 3. 对于大图片，延迟更久才创建高质量纹理
-      if (!isLargeImage) {
-        setTimeout(async () => {
-          if (this.lodUpdateSuspended) return
-
-          try {
-            const baseTexture = await this.createLODTexture(3)
-            if (baseTexture && !this.lodUpdateSuspended) {
-              this.lodTextures.set(3, baseTexture)
-              // 根据当前缩放选择合适的 LOD
-              const optimalLOD = this.selectOptimalLOD()
-              if (optimalLOD >= 3) {
-                this.currentLOD = 3
-                this.texture = baseTexture
-                this.render()
-                console.info('Upgraded to high-quality texture')
-              }
-            }
-          } catch (error) {
-            console.error('Failed to create high quality texture:', error)
-          }
-        }, 200)
-      }
+      // 只创建当前需要的LOD
+      await this.createAndSetLOD(optimalLOD)
     } catch (error) {
       console.error('Failed to initialize LOD textures:', error)
+    }
+  }
+
+  // 创建并设置指定的LOD，同时清理其他LOD
+  private async createAndSetLOD(targetLOD: number): Promise<void> {
+    if (!this.originalImage || this.currentlyCreatingLOD === targetLOD) return
+
+    // 防止重复创建
+    this.currentlyCreatingLOD = targetLOD
+
+    try {
+      console.info(`Creating LOD ${targetLOD} for current view`)
+
+      // 创建新的LOD纹理
+      const newTexture = await this.createLODTexture(targetLOD)
+
+      if (newTexture && !this.lodUpdateSuspended) {
+        // 立即清理所有现有的LOD纹理以释放内存
+        this.cleanupLODTextures()
+
+        // 设置新的LOD
+        this.lodTextures.set(targetLOD, newTexture)
+        this.currentLOD = targetLOD
+        this.texture = newTexture
+        this.render()
+
+        console.info(`Successfully switched to LOD ${targetLOD}`)
+      } else if (newTexture) {
+        // 如果LOD更新被暂停，清理刚创建的纹理
+        this.gl.deleteTexture(newTexture)
+      }
+    } catch (error) {
+      console.error(`Failed to create LOD ${targetLOD}:`, error)
+    } finally {
+      this.currentlyCreatingLOD = null
     }
   }
 
@@ -1945,99 +1862,11 @@ export class WebGLImageViewerEngine {
       return // 无需更新
     }
 
-    // 检查目标 LOD 纹理是否已存在
-    let targetTexture = this.lodTextures.get(optimalLOD)
-
-    if (!targetTexture) {
-      // 在创建新纹理前检查内存压力
-      const memoryPressureRatio =
-        this.memoryUsage.textures / this.maxMemoryBudget
-      if (memoryPressureRatio > this.memoryPressureThreshold) {
-        console.warn(
-          `Memory pressure too high (${(memoryPressureRatio * 100).toFixed(1)}%), skipping LOD ${optimalLOD} creation`,
-        )
-        return
-      }
-
-      try {
-        // 异步创建新的 LOD 纹理
-        const newTexture = await this.createLODTexture(optimalLOD)
-        if (newTexture && !this.lodUpdateSuspended) {
-          targetTexture = newTexture
-          this.lodTextures.set(optimalLOD, newTexture)
-        }
-      } catch (error) {
-        console.error(`Failed to create LOD ${optimalLOD}:`, error)
-        return
-      }
-    }
-
-    if (targetTexture && !this.lodUpdateSuspended) {
-      this.currentLOD = optimalLOD
-      this.texture = targetTexture
-      console.info(`Switched to LOD ${optimalLOD}`)
-      this.render()
-
-      // 预加载相邻的LOD级别以提供更流畅的体验（但要考虑内存压力）
-      this.preloadAdjacentLODs(optimalLOD)
-    }
+    // 按需创建新的LOD，并清理旧的LOD
+    await this.createAndSetLOD(optimalLOD)
   }
 
-  private preloadAdjacentLODs(currentLOD: number) {
-    // 异步预加载相邻的LOD级别
-    setTimeout(async () => {
-      // 如果 LOD 更新被暂停，不进行预加载
-      if (this.lodUpdateSuspended) {
-        return
-      }
-
-      // 检查内存压力和并发LOD限制
-      const memoryPressureRatio =
-        this.memoryUsage.textures / this.maxMemoryBudget
-      if (memoryPressureRatio > this.memoryPressureThreshold * 0.8) {
-        console.info(
-          `Memory pressure too high for preloading (${(memoryPressureRatio * 100).toFixed(1)}%)`,
-        )
-        return
-      }
-
-      if (this.lodTextures.size >= this.maxConcurrentLODs) {
-        console.info(
-          `Max concurrent LODs reached (${this.lodTextures.size}/${this.maxConcurrentLODs})`,
-        )
-        return
-      }
-
-      try {
-        // 预加载下一个更高质量的 LOD（优先级更高）
-        if (currentLOD < LOD_LEVELS.length - 1) {
-          const nextLOD = currentLOD + 1
-          if (
-            !this.lodTextures.has(nextLOD) &&
-            this.lodTextures.size < this.maxConcurrentLODs
-          ) {
-            const texture = await this.createLODTexture(nextLOD)
-            if (texture && !this.lodUpdateSuspended) {
-              this.lodTextures.set(nextLOD, texture)
-            }
-          }
-        }
-
-        // 预加载下一个更低质量的LOD（用于快速缩小）
-        if (currentLOD > 0 && this.lodTextures.size < this.maxConcurrentLODs) {
-          const prevLOD = currentLOD - 1
-          if (!this.lodTextures.has(prevLOD)) {
-            const texture = await this.createLODTexture(prevLOD)
-            if (texture && !this.lodUpdateSuspended) {
-              this.lodTextures.set(prevLOD, texture)
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Error preloading adjacent LODs:', error)
-      }
-    }, 100) // 延迟 100ms 以避免阻塞主要渲染
-  }
+  // 移除预加载逻辑，改为按需创建以节省内存
 
   private debouncedLODUpdate() {
     // 如果 LOD 更新被暂停，则直接返回
@@ -2436,6 +2265,7 @@ export class WebGLImageViewerEngine {
         pressure: Number((memoryPressureRatio * 100).toFixed(1)), // 百分比
         activeLODs: this.useTiledRendering ? 0 : this.lodTextures.size,
         maxConcurrentLODs: this.maxConcurrentLODs,
+        onDemandStrategy: !this.useTiledRendering, // 是否使用按需LOD策略
       },
       // 瓦片渲染信息
       tiling: this.useTiledRendering
@@ -2997,6 +2827,9 @@ export class WebGLImageViewerEngine {
       request.reject(new Error('WebGL viewer destroyed'))
     }
     this.pendingLODRequests.clear()
+
+    // 清理按需LOD创建状态
+    this.currentlyCreatingLOD = null
 
     // 清理 ImageBitmap
     if (this.originalImageBitmap) {
