@@ -263,7 +263,8 @@ export async function generateOGImage(options: OGImageOptions) {
         { x: 270, y: 70 },
       ]
 
-      for (let i = 0; i < Math.min(latestPhotos.length, photoCount); i++) {
+      const length = Math.min(latestPhotos.length, photoCount)
+      for (let i = length - 1; i >= 0; i--) {
         const photo = latestPhotos[i]
         const thumbnailBuffer = await downloadAndProcessThumbnail(
           photo.thumbnailUrl,
