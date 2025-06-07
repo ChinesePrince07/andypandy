@@ -1,4 +1,3 @@
-import type { WebGLImageViewerRef } from '@photo-gallery/webgl-viewer'
 import { WebGLImageViewer } from '@photo-gallery/webgl-viewer'
 import type { FC } from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -75,7 +74,8 @@ export const ProgressiveImage = ({
   const [error, setError] = useState(false)
 
   const thumbnailRef = useRef<HTMLImageElement>(null)
-  const transformRef = useRef<WebGLImageViewerRef>(null)
+
+  const [isHighResImageRendered, setIsHighResImageRendered] = useState(false)
 
   const loadingIndicatorRef = useRef<LoadingIndicatorRef>(null)
   const imageLoaderManagerRef = useRef<ImageLoaderManager | null>(null)
@@ -92,14 +92,10 @@ export const ProgressiveImage = ({
       setBlobSrc(null)
       setError(false)
       onBlobSrcChange?.(null)
+      setIsHighResImageRendered(false)
 
       // Reset loading indicator
       loadingIndicatorRef.current?.resetLoadingState()
-
-      // Reset transform when image changes
-      if (transformRef.current) {
-        transformRef.current.resetView()
-      }
     }
 
     const loadImage = async () => {
@@ -191,7 +187,7 @@ export const ProgressiveImage = ({
   return (
     <div className={clsxm('relative overflow-hidden', className)}>
       {/* 缩略图 */}
-      {thumbnailSrc && (
+      {thumbnailSrc && !isHighResImageRendered && (
         <img
           ref={thumbnailRef}
           src={thumbnailSrc}
@@ -210,7 +206,6 @@ export const ProgressiveImage = ({
         isCurrentImage &&
         (!isMobile ? (
           <WebGLImageViewer
-            ref={transformRef}
             src={blobSrc}
             className="absolute inset-0 h-full w-full"
             width={width}
@@ -323,6 +318,9 @@ export const ProgressiveImage = ({
             src={blobSrc}
             alt={alt}
             highResLoaded={highResLoaded}
+            onLoad={() => {
+              setIsHighResImageRendered(true)
+            }}
           />
         ))}
 
@@ -369,7 +367,8 @@ const DOMImageViewer: FC<{
   src: string
   alt: string
   highResLoaded: boolean
-}> = ({ onZoomChange, minZoom, maxZoom, src, alt, highResLoaded }) => {
+  onLoad?: () => void
+}> = ({ onZoomChange, minZoom, maxZoom, src, alt, highResLoaded, onLoad }) => {
   const onTransformed = useCallback(
     (
       ref: ReactZoomPanPinchRef,
@@ -403,12 +402,9 @@ const DOMImageViewer: FC<{
       }}
       doubleClick={{
         step: 2,
-
         mode: 'toggle',
         animationTime: 200,
-      }}
-      panning={{
-        velocityDisabled: true,
+        animationType: 'easeInOutCubic',
       }}
       limitToBounds={true}
       centerOnInit={true}
@@ -438,6 +434,7 @@ const DOMImageViewer: FC<{
           draggable={false}
           loading="eager"
           decoding="async"
+          onLoad={onLoad}
         />
       </TransformComponent>
     </TransformWrapper>
