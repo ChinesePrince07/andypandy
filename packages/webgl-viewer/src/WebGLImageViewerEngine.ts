@@ -6,6 +6,7 @@ import {
   isMobileDevice,
   LOD_LEVELS,
 } from './constants'
+import { ImageViewerEngineBase } from './ImageViewerEngineBase'
 import type { DebugInfo, WebGLImageViewerProps } from './interface'
 import {
   createShader,
@@ -26,7 +27,7 @@ interface TileInfo {
 }
 
 // WebGL Image Viewer implementation class
-export class WebGLImageViewerEngine {
+export class WebGLImageViewerEngine extends ImageViewerEngineBase {
   private canvas: HTMLCanvasElement
   private gl: WebGLRenderingContext
   private program!: WebGLProgram
@@ -166,6 +167,7 @@ export class WebGLImageViewerEngine {
     config: Required<WebGLImageViewerProps>,
     onDebugUpdate?: React.RefObject<(debugInfo: DebugInfo) => void>,
   ) {
+    super()
     this.canvas = canvas
     this.config = config
     this.onZoomChange = config.onZoomChange
@@ -2927,7 +2929,7 @@ export class WebGLImageViewerEngine {
     }
   }
 
-  private zoomAt(x: number, y: number, scaleFactor: number, animated = false) {
+  public zoomAt(x: number, y: number, scaleFactor: number, animated = false) {
     const newScale = this.scale * scaleFactor
     const fitToScreenScale = this.getFitToScreenScale()
 
