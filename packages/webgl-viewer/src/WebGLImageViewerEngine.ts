@@ -28,11 +28,11 @@ type TileKey = string // 格式：`${x}-${y}-${lodLevel}`
 
 // 简化的 LOD 级别
 const SIMPLE_LOD_LEVELS = [
-  { scale: 0.25, maxViewportScale: 0.5 }, // 极低质量
-  { scale: 0.5, maxViewportScale: 1 }, // 低质量
-  { scale: 1, maxViewportScale: 2 }, // 正常质量
-  { scale: 2, maxViewportScale: 4 }, // 高质量
-  { scale: 4, maxViewportScale: Infinity }, // 超高质量
+  { scale: 0.25 }, // 极低质量
+  { scale: 0.5 }, // 低质量
+  { scale: 1 }, // 正常质量
+  { scale: 2 }, // 高质量
+  { scale: 4 }, // 超高质量
 ] as const
 
 // 简化的 WebGL 图像查看器引擎
@@ -52,6 +52,7 @@ export class WebGLImageViewerEngine extends ImageViewerEngineBase {
   private imageHeight = 0
   private canvasWidth = 0
   private canvasHeight = 0
+  private devicePixelRatio = 1
 
   // 交互状态
   private isDragging = false
@@ -172,13 +173,13 @@ export class WebGLImageViewerEngine extends ImageViewerEngineBase {
 
   private resizeCanvas() {
     const rect = this.canvas.getBoundingClientRect()
-    const devicePixelRatio = window.devicePixelRatio || 1
+    this.devicePixelRatio = window.devicePixelRatio || 1
 
     this.canvasWidth = rect.width
     this.canvasHeight = rect.height
 
-    const actualWidth = Math.round(rect.width * devicePixelRatio)
-    const actualHeight = Math.round(rect.height * devicePixelRatio)
+    const actualWidth = Math.round(rect.width * this.devicePixelRatio)
+    const actualHeight = Math.round(rect.height * this.devicePixelRatio)
 
     this.canvas.width = actualWidth
     this.canvas.height = actualHeight
@@ -471,10 +472,18 @@ export class WebGLImageViewerEngine extends ImageViewerEngineBase {
     }
     if (!this.imageLoaded) return 1
 
-    // 简化的 LOD 选择逻辑
-    if (this.scale <= 0.75) return 0 // 低质量
-    if (this.scale <= 1.5) return 1 // 正常质量
-    return 2 // 高质量
+    const requiredScale = this.scale * this.devicePixelRatio
+
+    // 寻找最佳的 LOD 级别
+    // 我们希望找到一个 LOD 级别，它的缩放比例刚好大于或等于所需的缩放比例
+    for (const [i, SIMPLE_LOD_LEVEL] of SIMPLE_LOD_LEVELS.entries()) {
+      if (SIMPLE_LOD_LEVEL.scale >= requiredScale) {
+        return i
+      }
+    }
+
+    // 如果没有找到，返回最高质量的 LOD
+    return SIMPLE_LOD_LEVELS.length - 1
   }
 
   // 缓动函数
