@@ -5,15 +5,15 @@ import { photoLoader } from '../../../../../web/src/data/photos'
 
 export const runtime = 'edge'
 
-// 加载 Geist 字体
-const geistFontPromise = fetch(
-  new URL('Geist-Regular.ttf', import.meta.url),
-).then((res) => res.arrayBuffer())
-
 export const GET = async (
   request: NextRequest,
   { params }: { params: Promise<{ photoId: string }> },
 ) => {
+  // 加载 Geist 字体
+  const geistFontPromise = fetch(
+    new URL('Geist-Regular.ttf', import.meta.url),
+  ).then((res) => res.arrayBuffer())
+
   const { photoId } = await params
 
   const photo = photoLoader.getPhoto(photoId)
