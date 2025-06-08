@@ -13,36 +13,44 @@ export const GET = async (
 ) => {
   const { photoId } = await params
 
-  const indexHtml = await getIndexHtml()
-  const document = new DOMParser().parseFromString(indexHtml, 'text/html')
-
-  // Remove all twitter meta tags and open graph meta tags
-  document.head.childNodes.forEach((node) => {
-    if (node.nodeName === 'META') {
-      const $meta = node as HTMLMetaElement
-      if ($meta.getAttribute('name')?.startsWith('twitter:')) {
-        $meta.remove()
-      }
-      if ($meta.getAttribute('property')?.startsWith('og:')) {
-        $meta.remove()
-      }
-    }
-  })
-
   const photo = photoLoader.getPhoto(photoId)
   if (!photo) {
     return new Response('Photo not found', { status: 404 })
   }
+  const indexHtml = await getIndexHtml()
+  try {
+    const document = new DOMParser().parseFromString(indexHtml, 'text/html')
 
-  // Insert meta open graph tags and twitter meta tags
-  createAndInsertOpenGraphMeta(document, photo, request)
+    // Remove all twitter meta tags and open graph meta tags
+    document.head.childNodes.forEach((node) => {
+      if (node.nodeName === 'META') {
+        const $meta = node as HTMLMetaElement
+        if ($meta.getAttribute('name')?.startsWith('twitter:')) {
+          $meta.remove()
+        }
+        if ($meta.getAttribute('property')?.startsWith('og:')) {
+          $meta.remove()
+        }
+      }
+    })
+    // Insert meta open graph tags and twitter meta tags
+    createAndInsertOpenGraphMeta(document, photo, request)
 
-  return new Response(document.documentElement.outerHTML, {
-    headers: {
-      'Content-Type': 'text/html',
-      'X-SSR': '1',
-    },
-  })
+    return new Response(document.documentElement.outerHTML, {
+      headers: {
+        'Content-Type': 'text/html',
+        'X-SSR': '1',
+      },
+    })
+  } catch (error) {
+    console.error('Error generating SSR page:', error)
+    console.info('Falling back to static index.html')
+    console.info(error.message)
+
+    return new Response(indexHtml, {
+      headers: { 'Content-Type': 'text/html' },
+    })
+  }
 }
 
 const createAndInsertOpenGraphMeta = (
