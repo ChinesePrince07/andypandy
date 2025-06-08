@@ -1,0 +1,27 @@
+{
+  "name": "@photo-gallery/ssr",
+  "type": "module",
+  "version": "1.0.0",
+  "packageManager": "pnpm@10.11.1",
+  "description": "",
+  "author": "Innei",
+  "license": "ISC",
+  "main": "index.js",
+  "scripts": {
+    "build": "sh scripts/build.sh",
+    "build:jpg": "node scripts/webp-to-jpg.js",
+    "dev": "next dev",
+    "start": "next start"
+  },
+  "dependencies": {
+    "linkedom": "0.18.11",
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.15.30",
+    "@types/react": "19.1.6",
+    "@types/react-dom": "19.1.6",
+    "next": "15.3.3"
+  }
+}

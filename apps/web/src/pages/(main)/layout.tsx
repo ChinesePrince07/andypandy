@@ -1,5 +1,4 @@
 import { siteConfig } from '@config'
-import clsx from 'clsx'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useEffect, useRef } from 'react'
 import { Outlet, useParams, useSearchParams } from 'react-router'
@@ -14,7 +13,6 @@ export const Component = () => {
   useStateRestoreFromUrl()
   useSyncStateToUrl()
   useSyncStateToUrl()
-  const { isOpen } = usePhotoViewer()
 
   return (
     <>
@@ -33,10 +31,7 @@ export const Component = () => {
       )}
 
       <ScrollArea
-        rootClassName={clsx(
-          'h-svh w-full transition-opacity duration-300',
-          isOpen ? 'pointer-events-none opacity-0 delay-300' : 'opacity-100',
-        )}
+        rootClassName={'h-svh w-full transition-opacity duration-300'}
         viewportClassName="size-full"
       >
         <MasonryRoot />

@@ -1,5 +1,4 @@
-import type { PhotoManifest } from '~/types/photo'
-
+import type { PhotoManifest } from '../types/photo'
 import PhotosManifest from './photos-manifest.json'
 
 class PhotoLoader {
