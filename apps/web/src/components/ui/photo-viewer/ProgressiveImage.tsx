@@ -1,6 +1,13 @@
 import { WebGLImageViewer } from '@photo-gallery/webgl-viewer'
+import { AnimatePresence, m } from 'motion/react'
 import type { FC } from 'react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  startTransition,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
 import type {
   ReactZoomPanPinchRef,
   ReactZoomPanPinchState,
@@ -18,6 +25,7 @@ import { clsxm } from '~/lib/cn'
 import { canUseWebGL } from '~/lib/feature'
 import { ImageLoaderManager } from '~/lib/image-loader-manager'
 
+import { SlidingNumber } from '../number/SlidingNumber'
 import { LivePhoto } from './LivePhoto'
 import type { LoadingIndicatorRef } from './LoadingIndicator'
 import { LoadingIndicator } from './LoadingIndicator'
@@ -76,6 +84,11 @@ export const ProgressiveImage = ({
   const thumbnailRef = useRef<HTMLImageElement>(null)
 
   const [isHighResImageRendered, setIsHighResImageRendered] = useState(false)
+
+  // 缩放倍率提示相关状态
+  const [currentScale, setCurrentScale] = useState(1)
+  const [showScaleIndicator, setShowScaleIndicator] = useState(false)
+  const scaleIndicatorTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const loadingIndicatorRef = useRef<LoadingIndicatorRef>(null)
   const imageLoaderManagerRef = useRef<ImageLoaderManager | null>(null)
@@ -136,6 +149,22 @@ export const ProgressiveImage = ({
   const onTransformed = useCallback(
     (originalScale: number, relativeScale: number) => {
       const isZoomed = Math.abs(relativeScale - 1) > 0.01
+
+      // 更新缩放倍率并显示提示
+      startTransition(() => {
+        setCurrentScale(originalScale)
+        setShowScaleIndicator(true)
+      })
+
+      // 清除之前的定时器
+      if (scaleIndicatorTimeoutRef.current) {
+        clearTimeout(scaleIndicatorTimeoutRef.current)
+      }
+
+      // 设置新的定时器，500ms 后隐藏提示
+      scaleIndicatorTimeoutRef.current = setTimeout(() => {
+        setShowScaleIndicator(false)
+      }, 500)
 
       onZoomChange?.(isZoomed)
     },
@@ -356,6 +385,20 @@ export const ProgressiveImage = ({
           双击或双指缩放
         </div>
       )}
+
+      {/* 缩放倍率提示 */}
+      <AnimatePresence>
+        {showScaleIndicator && (
+          <m.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            className="pointer-events-none absolute bottom-4 left-4 z-20 flex items-center gap-0.5 rounded bg-black/50 px-3 py-1 text-lg text-white"
+          >
+            <SlidingNumber number={currentScale} decimalPlaces={1} />x
+          </m.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
