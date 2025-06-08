@@ -20,7 +20,7 @@ export const GET = async (
   document.head.childNodes.forEach((node) => {
     if (node.nodeName === 'META') {
       const $meta = node as HTMLMetaElement
-      if ($meta.getAttribute('property')?.startsWith('twitter:')) {
+      if ($meta.getAttribute('name')?.startsWith('twitter:')) {
         $meta.remove()
       }
       if ($meta.getAttribute('property')?.startsWith('og:')) {
@@ -50,21 +50,36 @@ const createAndInsertOpenGraphMeta = (
   photo: PhotoManifest,
   request: NextRequest,
 ) => {
-  const og = {
-    name: photo.id,
-    description: photo.description,
-    image: `${request.nextUrl.origin}/og/${photo.id}`,
+  // Open Graph meta tags
+  const ogTags = {
+    'og:type': 'website',
+    'og:title': photo.id,
+    'og:description': photo.description || '',
+    'og:image': `${request.nextUrl.origin}/og/${photo.id}`,
+    'og:url': `${request.nextUrl.origin}/${photo.id}`,
   }
 
-  for (const [key, value] of Object.entries(og)) {
+  for (const [property, content] of Object.entries(ogTags)) {
     const ogMeta = document.createElement('meta')
-    ogMeta.setAttribute('property', `og:${key}`)
-    ogMeta.setAttribute('content', value)
-    const twitterMeta = document.createElement('meta')
-    twitterMeta.setAttribute('name', `twitter:${key}`)
-    twitterMeta.setAttribute('content', value)
+    ogMeta.setAttribute('property', property)
+    ogMeta.setAttribute('content', content)
     document.head.append(ogMeta as unknown as Node)
+  }
+
+  // Twitter Card meta tags
+  const twitterTags = {
+    'twitter:card': 'summary_large_image',
+    'twitter:title': photo.id,
+    'twitter:description': photo.description || '',
+    'twitter:image': `${request.nextUrl.origin}/og/${photo.id}`,
+  }
+
+  for (const [name, content] of Object.entries(twitterTags)) {
+    const twitterMeta = document.createElement('meta')
+    twitterMeta.setAttribute('name', name)
+    twitterMeta.setAttribute('content', content)
     document.head.append(twitterMeta as unknown as Node)
   }
+
   return document
 }
