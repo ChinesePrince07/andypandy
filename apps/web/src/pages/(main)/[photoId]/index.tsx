@@ -2,11 +2,13 @@ import { RemoveScroll } from 'react-remove-scroll'
 
 import { PhotoViewer } from '~/components/ui/photo-viewer'
 import { RootPortal } from '~/components/ui/portal'
+import { useTitle } from '~/hooks/common'
 import { usePhotos, usePhotoViewer } from '~/hooks/usePhotoViewer'
 
 export const Component = () => {
   const photoViewer = usePhotoViewer()
   const photos = usePhotos()
+  useTitle(photos[photoViewer.currentIndex]?.title)
   return (
     <RootPortal>
       <RemoveScroll className="fixed inset-0 z-[9999]">

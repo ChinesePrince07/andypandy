@@ -309,6 +309,13 @@ export const GET = async (
             weight: 400,
           },
         ],
+        headers: {
+          // Cache 1 years
+          'Cache-Control':
+            'public, max-age=31536000, stale-while-revalidate=31536000',
+          'Cloudflare-CDN-Cache-Control':
+            'public, max-age=31536000, stale-while-revalidate=31536000',
+        },
       },
     )
   } catch (error) {
