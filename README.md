@@ -72,7 +72,6 @@ photo-gallery-site/
 │   │   │   └── worker/         # 并发处理
 │   │   ├── modules/            # 功能模块
 │   │   ├── pages/              # 页面组件
-│   │   └── data/               # 数据文件
 │   ├── public/                 # 静态资源
 │   └── scripts/                # 构建脚本
 ├── packages/webgl-viewer/       # WebGL 图像查看器

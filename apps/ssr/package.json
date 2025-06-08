@@ -18,6 +18,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@photo-gallery/data": "workspace:*",
     "linkedom": "0.18.11",
     "react": "19.1.0",
     "react-dom": "19.1.0"

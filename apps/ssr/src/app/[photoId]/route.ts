@@ -1,11 +1,16 @@
+import { photoLoader } from '@photo-gallery/data'
+import type { PhotoManifest } from '@photo-gallery/data/types'
 import { DOMParser } from 'linkedom'
-import type { HTMLDocument } from 'linkedom/types/html/document'
 import type { NextRequest } from 'next/server'
 
-import { photoLoader } from '../../../../web/src/data/photos'
-import type { PhotoManifest } from '../../../../web/src/types/photo'
 import { getIndexHtml } from '../../constants'
 
+type HtmlElement = ReturnType<typeof DOMParser.prototype.parseFromString>
+type OnlyHTMLDocument = HtmlElement extends infer T
+  ? T extends { [key: string]: any; head: any }
+    ? T
+    : never
+  : never
 export const runtime = 'edge'
 export const GET = async (
   request: NextRequest,
@@ -54,7 +59,7 @@ export const GET = async (
 }
 
 const createAndInsertOpenGraphMeta = (
-  document: HTMLDocument,
+  document: OnlyHTMLDocument,
   photo: PhotoManifest,
   request: NextRequest,
 ) => {
@@ -68,7 +73,7 @@ const createAndInsertOpenGraphMeta = (
   }
 
   for (const [property, content] of Object.entries(ogTags)) {
-    const ogMeta = document.createElement('meta')
+    const ogMeta = document.createElement('meta', {})
     ogMeta.setAttribute('property', property)
     ogMeta.setAttribute('content', content)
     document.head.append(ogMeta as unknown as Node)
@@ -83,7 +88,7 @@ const createAndInsertOpenGraphMeta = (
   }
 
   for (const [name, content] of Object.entries(twitterTags)) {
-    const twitterMeta = document.createElement('meta')
+    const twitterMeta = document.createElement('meta', {})
     twitterMeta.setAttribute('name', name)
     twitterMeta.setAttribute('content', content)
     document.head.append(twitterMeta as unknown as Node)

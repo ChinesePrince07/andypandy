@@ -1,5 +1,5 @@
-import type { PhotoManifest } from '../types/photo'
 import PhotosManifest from './photos-manifest.json'
+import type { PhotoManifest } from './types'
 
 class PhotoLoader {
   private photos: PhotoManifest[] = []

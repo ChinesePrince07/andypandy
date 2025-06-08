@@ -1,11 +1,11 @@
 import { siteConfig } from '@config'
+import { photoLoader } from '@photo-gallery/data'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useEffect, useRef } from 'react'
 import { Outlet, useParams, useSearchParams } from 'react-router'
 
 import { gallerySettingAtom } from '~/atoms/app'
 import { ScrollArea } from '~/components/ui/scroll-areas/ScrollArea'
-import { photoLoader } from '~/data/photos'
 import { usePhotoViewer } from '~/hooks/usePhotoViewer'
 import { MasonryRoot } from '~/modules/gallery/MasonryRoot'
 

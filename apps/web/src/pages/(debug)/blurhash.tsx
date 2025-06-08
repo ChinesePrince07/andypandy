@@ -1,6 +1,5 @@
+import { photoLoader } from '@photo-gallery/data'
 import { Blurhash } from 'react-blurhash'
-
-import { photoLoader } from '~/data/photos'
 
 export const Component = () => {
   const photos = photoLoader.getPhotos()

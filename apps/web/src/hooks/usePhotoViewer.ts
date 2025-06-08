@@ -1,9 +1,9 @@
+import { photoLoader } from '@photo-gallery/data'
 import { atom, useAtom, useAtomValue } from 'jotai'
 import { useCallback, useEffect, useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 
 import { gallerySettingAtom } from '~/atoms/app'
-import { photoLoader } from '~/data/photos'
 
 const openAtom = atom(false)
 const currentIndexAtom = atom(0)

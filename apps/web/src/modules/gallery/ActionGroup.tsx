@@ -1,4 +1,5 @@
 import { siteConfig } from '@config'
+import { photoLoader } from '@photo-gallery/data'
 import { repository } from '@pkg'
 import { useAtom } from 'jotai'
 import { useRef, useState } from 'react'
@@ -13,7 +14,6 @@ import {
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
 import { Slider } from '~/components/ui/slider'
-import { photoLoader } from '~/data/photos'
 import { useMobile } from '~/hooks/useMobile'
 
 const allTags = photoLoader.getAllTags()

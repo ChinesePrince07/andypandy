@@ -1,6 +1,6 @@
 import { siteConfig } from '@config'
+import { photoLoader } from '@photo-gallery/data'
 
-import { photoLoader } from '~/data/photos'
 import { clsxm } from '~/lib/cn'
 
 import { ActionGroup } from './ActionGroup'
