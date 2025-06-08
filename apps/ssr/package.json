@@ -10,7 +10,9 @@
   "scripts": {
     "build": "sh scripts/build.sh",
     "build:jpg": "node scripts/webp-to-jpg.js",
+    "build:next": "next build",
     "dev": "next dev",
+    "pages:build": "npx @cloudflare/next-on-pages",
     "start": "next start"
   },
   "dependencies": {
@@ -19,6 +21,7 @@
     "react-dom": "19.1.0"
   },
   "devDependencies": {
+    "@cloudflare/next-on-pages": "1.13.12",
     "@types/node": "22.15.30",
     "@types/react": "19.1.6",
     "@types/react-dom": "19.1.6",
