@@ -2,17 +2,14 @@ import { photoLoader } from '@photo-gallery/data'
 import { ImageResponse } from 'next/og'
 import type { NextRequest } from 'next/server'
 
+import geistFont from './Geist-Regular.ttf'
+
 export const runtime = 'edge'
 
 export const GET = async (
   request: NextRequest,
   { params }: { params: Promise<{ photoId: string }> },
 ) => {
-  // 加载 Geist 字体
-  const geistFontPromise = fetch(
-    new URL('Geist-Regular.ttf', import.meta.url),
-  ).then((res) => res.arrayBuffer())
-
   const { photoId } = await params
 
   const photo = photoLoader.getPhoto(photoId)
@@ -21,8 +18,6 @@ export const GET = async (
   }
 
   try {
-    // 加载 Geist 字体
-    const geistFont = await geistFontPromise
     // 格式化拍摄时间
     const dateTaken = photo.exif?.Photo?.DateTimeOriginal || photo.lastModified
     const formattedDate = dateTaken

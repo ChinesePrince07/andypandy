@@ -1,2 +1,4 @@
 public/**
 src/index.html
+src/index.html.ts
+.vercel

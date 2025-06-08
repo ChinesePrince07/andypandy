@@ -3,7 +3,7 @@ import type { PhotoManifest } from '@photo-gallery/data/types'
 import { DOMParser } from 'linkedom'
 import type { NextRequest } from 'next/server'
 
-import { getIndexHtml } from '../../constants'
+import indexHtml from '../../index.html'
 
 type HtmlElement = ReturnType<typeof DOMParser.prototype.parseFromString>
 type OnlyHTMLDocument = HtmlElement extends infer T
@@ -22,7 +22,7 @@ export const GET = async (
   if (!photo) {
     return new Response('Photo not found', { status: 404 })
   }
-  const indexHtml = await getIndexHtml()
+
   try {
     const document = new DOMParser().parseFromString(indexHtml, 'text/html')
 

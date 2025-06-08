@@ -2,7 +2,7 @@
   "name": "iris-ssr",
   "compatibility_date": "2024-09-23",
   "compatibility_flags": [
-    "nodejs_compat"
+    "nodejs_compat_v2"
   ],
   "pages_build_output_dir": ".vercel/output/static"
 }

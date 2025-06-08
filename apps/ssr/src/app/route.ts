@@ -1,8 +1,7 @@
-import { getIndexHtml } from '../constants'
+import indexHtml from '../index.html'
 
 export const runtime = 'edge'
 export const GET = async () => {
-  const indexHtml = await getIndexHtml()
   return new Response(indexHtml, {
     headers: {
       'Content-Type': 'text/html',
