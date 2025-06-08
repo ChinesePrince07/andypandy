@@ -35,7 +35,7 @@ export const GET = async (
   }
 
   // Insert meta open graph tags and twitter meta tags
-  createAndInsertOpenGraphMeta(document, photo)
+  createAndInsertOpenGraphMeta(document, photo, request)
 
   return new Response(document.documentElement.outerHTML, {
     headers: {
@@ -48,11 +48,12 @@ export const GET = async (
 const createAndInsertOpenGraphMeta = (
   document: HTMLDocument,
   photo: PhotoManifest,
+  request: NextRequest,
 ) => {
   const og = {
     name: photo.id,
     description: photo.description,
-    image: photo.originalUrl,
+    image: `${request.nextUrl.origin}/og/${photo.id}`,
   }
 
   for (const [key, value] of Object.entries(og)) {

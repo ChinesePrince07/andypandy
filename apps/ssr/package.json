@@ -11,8 +11,10 @@
     "build": "sh scripts/build.sh",
     "build:jpg": "node scripts/webp-to-jpg.js",
     "build:next": "next build",
+    "deploy": "npm run pages:build && wrangler pages deploy",
     "dev": "next dev",
-    "pages:build": "npx @cloudflare/next-on-pages",
+    "pages:build": "pnpm dlx @cloudflare/next-on-pages",
+    "preview": "npm run pages:build && wrangler pages dev",
     "start": "next start"
   },
   "dependencies": {
