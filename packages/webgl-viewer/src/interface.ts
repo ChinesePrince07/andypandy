@@ -79,26 +79,23 @@ export interface DebugInfo {
   memory: {
     textures: number // MiB
     estimated: number // MiB
-    runtime?: number // MiB (如果可用)
     budget: number // MiB
     pressure: number // 百分比
     activeLODs: number
     maxConcurrentLODs: number
     onDemandStrategy?: boolean // 是否使用按需策略
   }
-  tiling: {
-    enabled: boolean
-    tileSize?: number
-    activeTiles?: number
-    cachedTiles?: number
-    maxTiles?: number
-    loadingTiles?: number
-  }
-  visibleRegion?: {
-    // 当前可视区域信息
-    x: number
-    y: number
-    width: number
-    height: number
+  tileSystem?: {
+    cacheSize: number
+    visibleTiles: number
+    loadingTiles: number
+    pendingRequests: number
+    cacheLimit: number
+    maxTilesPerFrame: number
+    tileSize: number
+    cacheKeys: string[]
+    visibleKeys: string[]
+    loadingKeys: string[]
+    pendingKeys: string[]
   }
 }

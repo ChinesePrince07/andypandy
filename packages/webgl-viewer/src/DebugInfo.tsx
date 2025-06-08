@@ -1,8 +1,8 @@
 /**
- * WebGL图片查看器调试信息组件
+ * WebGL 图片查看器调试信息组件
  *
- * 该组件用于显示WebGL图片查看器的实时调试信息，
- * 包括缩放比例、位置、LOD级别、性能指标等。
+ * 该组件用于显示 WebGL 图片查看器的实时调试信息，
+ * 包括缩放比例、位置、LOD 级别、性能指标等。
  */
 
 import * as React from 'react'
@@ -92,11 +92,11 @@ const StatusIndicator: React.FC<{ color: string; label: string }> = ({
 /**
  * 调试信息显示组件
  *
- * 在开发模式下显示WebGL图片查看器的详细状态信息，
+ * 在开发模式下显示 WebGL 图片查看器的详细状态信息，
  * 帮助开发者诊断性能问题和调试功能。
  *
  * @param props 组件属性
- * @returns JSX元素
+ * @returns JSX 元素
  */
 const DebugInfoComponent = ({ ref }: DebugInfoProps) => {
   // 调试信息状态，包含所有需要显示的调试数据
@@ -140,6 +140,60 @@ const DebugInfoComponent = ({ ref }: DebugInfoProps) => {
     if (pressure < 50) return '#4ade80'
     if (pressure < 80) return '#fbbf24'
     return '#f87171'
+  }
+
+  // 新增：瓦片系统调试信息类型辅助
+  function renderTileSystem(tileSystem?: any) {
+    if (!tileSystem) return null
+    return (
+      <CollapsibleSection title="Tile System" defaultExpanded={false}>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <span>Cache Size:</span>
+          <span>
+            {tileSystem.cacheSize} / {tileSystem.cacheLimit}
+          </span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <span>Visible Tiles:</span>
+          <span>{tileSystem.visibleTiles}</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <span>Loading Tiles:</span>
+          <span>{tileSystem.loadingTiles}</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <span>Pending Requests:</span>
+          <span>{tileSystem.pendingRequests}</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <span>Tile Size:</span>
+          <span>{tileSystem.tileSize}</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <span>Max Tiles/Frame:</span>
+          <span>{tileSystem.maxTilesPerFrame}</span>
+        </div>
+        {/* 可选：显示部分 key 信息，避免过长 */}
+        <div style={{ fontSize: '10px', marginTop: 4, opacity: 0.7 }}>
+          <div>
+            Cache Keys: {tileSystem.cacheKeys?.slice(0, 3).join(', ')}
+            {tileSystem.cacheKeys?.length > 3 ? ' ...' : ''}
+          </div>
+          <div>
+            Visible Keys: {tileSystem.visibleKeys?.slice(0, 3).join(', ')}
+            {tileSystem.visibleKeys?.length > 3 ? ' ...' : ''}
+          </div>
+          <div>
+            Loading Keys: {tileSystem.loadingKeys?.slice(0, 3).join(', ')}
+            {tileSystem.loadingKeys?.length > 3 ? ' ...' : ''}
+          </div>
+          <div>
+            Pending Keys: {tileSystem.pendingKeys?.slice(0, 3).join(', ')}
+            {tileSystem.pendingKeys?.length > 3 ? ' ...' : ''}
+          </div>
+        </div>
+      </CollapsibleSection>
+    )
   }
 
   if (!debugInfo) return null
@@ -305,32 +359,8 @@ const DebugInfoComponent = ({ ref }: DebugInfoProps) => {
               </span>
             </div>
           </CollapsibleSection>
-
-          {/* 瓦片信息 */}
-          {debugInfo.tiling.enabled && (
-            <CollapsibleSection title="Tiling">
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>Tile Size:</span>
-                <span>{debugInfo.tiling.tileSize}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>Active:</span>
-                <span>{debugInfo.tiling.activeTiles}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>Cached:</span>
-                <span>{debugInfo.tiling.cachedTiles}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>Loading:</span>
-                <span>{debugInfo.tiling.loadingTiles}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>Max:</span>
-                <span>{debugInfo.tiling.maxTiles}</span>
-              </div>
-            </CollapsibleSection>
-          )}
+          {/* 新增：瓦片系统调试信息展示 */}
+          {renderTileSystem((debugInfo as any).tileSystem)}
         </>
       )}
 
@@ -350,7 +380,7 @@ const DebugInfoComponent = ({ ref }: DebugInfoProps) => {
   )
 }
 
-// 设置显示名称用于React DevTools
+// 设置显示名称用于 React DevTools
 DebugInfoComponent.displayName = 'DebugInfo'
 
 // 导出为默认和命名导出

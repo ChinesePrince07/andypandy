@@ -18,7 +18,6 @@ import {
 import DebugInfoComponent from './DebugInfo'
 import type { WebGLImageViewerProps, WebGLImageViewerRef } from './interface'
 import { WebGLImageViewerEngine } from './WebGLImageViewerEngine'
-import type { WebGLImageViewerEngine2 } from './WebGLImageViewerEngine2'
 
 /**
  * WebGL图像查看器组件
@@ -51,9 +50,7 @@ export const WebGLImageViewer = ({
     ref?: React.RefObject<WebGLImageViewerRef | null>
   }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const viewerRef = useRef<
-    WebGLImageViewerEngine | WebGLImageViewerEngine2 | null
-  >(null)
+  const viewerRef = useRef<WebGLImageViewerEngine | null>(null)
 
   const setDebugInfo = useRef((() => {}) as (debugInfo: any) => void)
 
