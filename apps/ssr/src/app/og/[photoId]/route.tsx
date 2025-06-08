@@ -319,6 +319,8 @@ export const GET = async (
     )
   } catch (error) {
     console.error('Failed to generate OG image:', error)
-    return new Response('Failed to generate image', { status: 500 })
+    return new Response(`Failed to generate image, ${error.message}`, {
+      status: 500,
+    })
   }
 }
