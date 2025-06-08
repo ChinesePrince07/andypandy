@@ -1,3 +1,4 @@
+import { siteConfig } from '@config'
 import { photoLoader } from '@photo-gallery/data'
 import { ImageResponse } from 'next/og'
 import type { NextRequest } from 'next/server'
@@ -338,7 +339,7 @@ export const GET = async (
                 fontFamily: 'Geist, SF Pro Display',
               }}
             >
-              {photo.description || 'Beautiful photography'}
+              {photo.description || siteConfig.name || site.title}
             </p>
 
             {/* 标签 */}
