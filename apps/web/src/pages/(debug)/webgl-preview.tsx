@@ -6,7 +6,7 @@ import { useBlobUrl } from '~/lib/blob-url-manager'
 
 export const Component = () => {
   const [file, setFile] = useState<File | null>(null)
-  const blobUrl = useBlobUrl(file)
+  const blobUrl = useBlobUrl(file) || '/test.jpg'
 
   return (
     <div className="relative flex h-svh w-full flex-col gap-4">

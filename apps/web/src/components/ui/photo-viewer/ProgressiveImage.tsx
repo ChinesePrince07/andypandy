@@ -1,6 +1,5 @@
 import { WebGLImageViewer } from '@photo-gallery/webgl-viewer'
 import { AnimatePresence, m } from 'motion/react'
-import type { FC } from 'react'
 import {
   startTransition,
   useCallback,
@@ -8,11 +7,6 @@ import {
   useRef,
   useState,
 } from 'react'
-import type {
-  ReactZoomPanPinchRef,
-  ReactZoomPanPinchState,
-} from 'react-zoom-pan-pinch'
-import { TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch'
 import { toast } from 'sonner'
 
 import {
@@ -20,7 +14,6 @@ import {
   MenuItemText,
   useShowContextMenu,
 } from '~/atoms/context-menu'
-import { useMobile } from '~/hooks/useMobile'
 import { clsxm } from '~/lib/cn'
 import { canUseWebGL } from '~/lib/feature'
 import { ImageLoaderManager } from '~/lib/image-loader-manager'
@@ -195,8 +188,6 @@ export const ProgressiveImage = ({
 
   const showContextMenu = useShowContextMenu()
 
-  const isMobile = useMobile()
-
   if (error) {
     return (
       <div
@@ -230,128 +221,113 @@ export const ProgressiveImage = ({
         />
       )}
 
-      {highResLoaded &&
-        blobSrc &&
-        isCurrentImage &&
-        (!isMobile ? (
-          <WebGLImageViewer
-            src={blobSrc}
-            className="absolute inset-0 h-full w-full"
-            width={width}
-            height={height}
-            initialScale={1}
-            minScale={minZoom}
-            maxScale={maxZoom}
-            limitToBounds={true}
-            centerOnInit={true}
-            smooth={true}
-            onZoomChange={onTransformed}
-            onLoadingStateChange={handleWebGLLoadingStateChange}
-            debug={import.meta.env.DEV}
-            onContextMenu={(e) =>
-              showContextMenu(
-                [
-                  new MenuItemText({
-                    label: '复制图片',
-                    click: async () => {
-                      const loadingToast = toast.loading('正在复制图片...')
+      {highResLoaded && blobSrc && isCurrentImage && (
+        <WebGLImageViewer
+          src={blobSrc}
+          className="absolute inset-0 h-full w-full"
+          width={width}
+          height={height}
+          initialScale={1}
+          minScale={minZoom}
+          maxScale={maxZoom}
+          limitToBounds={true}
+          centerOnInit={true}
+          smooth={true}
+          onZoomChange={onTransformed}
+          onLoadingStateChange={handleWebGLLoadingStateChange}
+          debug={import.meta.env.DEV}
+          onContextMenu={(e) =>
+            showContextMenu(
+              [
+                new MenuItemText({
+                  label: '复制图片',
+                  click: async () => {
+                    const loadingToast = toast.loading('正在复制图片...')
 
-                      try {
-                        // Create a canvas to convert the image to PNG
-                        const img = new Image()
-                        img.crossOrigin = 'anonymous'
+                    try {
+                      // Create a canvas to convert the image to PNG
+                      const img = new Image()
+                      img.crossOrigin = 'anonymous'
 
-                        await new Promise((resolve, reject) => {
-                          img.onload = resolve
-                          img.onerror = reject
-                          img.src = blobSrc
-                        })
+                      await new Promise((resolve, reject) => {
+                        img.onload = resolve
+                        img.onerror = reject
+                        img.src = blobSrc
+                      })
 
-                        const canvas = document.createElement('canvas')
-                        const ctx = canvas.getContext('2d')
-                        canvas.width = img.naturalWidth
-                        canvas.height = img.naturalHeight
+                      const canvas = document.createElement('canvas')
+                      const ctx = canvas.getContext('2d')
+                      canvas.width = img.naturalWidth
+                      canvas.height = img.naturalHeight
 
-                        ctx?.drawImage(img, 0, 0)
+                      ctx?.drawImage(img, 0, 0)
 
-                        // Convert to PNG blob
-                        await new Promise<void>((resolve, reject) => {
-                          canvas.toBlob(async (pngBlob) => {
-                            try {
-                              if (pngBlob) {
-                                await navigator.clipboard.write([
-                                  new ClipboardItem({
-                                    'image/png': pngBlob,
-                                  }),
-                                ])
-                                resolve()
-                              } else {
-                                reject(
-                                  new Error('Failed to convert image to PNG'),
-                                )
-                              }
-                            } catch (error) {
-                              reject(error)
+                      // Convert to PNG blob
+                      await new Promise<void>((resolve, reject) => {
+                        canvas.toBlob(async (pngBlob) => {
+                          try {
+                            if (pngBlob) {
+                              await navigator.clipboard.write([
+                                new ClipboardItem({
+                                  'image/png': pngBlob,
+                                }),
+                              ])
+                              resolve()
+                            } else {
+                              reject(
+                                new Error('Failed to convert image to PNG'),
+                              )
                             }
-                          }, 'image/png')
-                        })
+                          } catch (error) {
+                            reject(error)
+                          }
+                        }, 'image/png')
+                      })
 
+                      toast.dismiss(loadingToast)
+                      toast.success('图片已复制到剪贴板')
+                    } catch (error) {
+                      console.error('Failed to copy image:', error)
+
+                      // Fallback: try to copy the original blob
+                      try {
+                        const blob = await fetch(blobSrc).then((res) =>
+                          res.blob(),
+                        )
+                        await navigator.clipboard.write([
+                          new ClipboardItem({
+                            [blob.type]: blob,
+                          }),
+                        ])
                         toast.dismiss(loadingToast)
                         toast.success('图片已复制到剪贴板')
-                      } catch (error) {
-                        console.error('Failed to copy image:', error)
-
-                        // Fallback: try to copy the original blob
-                        try {
-                          const blob = await fetch(blobSrc).then((res) =>
-                            res.blob(),
-                          )
-                          await navigator.clipboard.write([
-                            new ClipboardItem({
-                              [blob.type]: blob,
-                            }),
-                          ])
-                          toast.dismiss(loadingToast)
-                          toast.success('图片已复制到剪贴板')
-                        } catch (fallbackError) {
-                          console.error(
-                            'Fallback copy also failed:',
-                            fallbackError,
-                          )
-                          toast.dismiss(loadingToast)
-                          toast.error('复制图片失败，请稍后重试')
-                        }
+                      } catch (fallbackError) {
+                        console.error(
+                          'Fallback copy also failed:',
+                          fallbackError,
+                        )
+                        toast.dismiss(loadingToast)
+                        toast.error('复制图片失败，请稍后重试')
                       }
-                    },
-                  }),
-                  MenuItemSeparator.default,
-                  new MenuItemText({
-                    label: '下载图片',
-                    click: () => {
-                      const a = document.createElement('a')
-                      a.href = blobSrc
-                      a.download = alt
-                      a.click()
-                    },
-                  }),
-                ],
-                e,
-              )
-            }
-          />
-        ) : (
-          <DOMImageViewer
-            onZoomChange={onZoomChange}
-            minZoom={minZoom}
-            maxZoom={maxZoom}
-            src={blobSrc}
-            alt={alt}
-            highResLoaded={highResLoaded}
-            onLoad={() => {
-              setIsHighResImageRendered(true)
-            }}
-          />
-        ))}
+                    }
+                  },
+                }),
+                MenuItemSeparator.default,
+                new MenuItemText({
+                  label: '下载图片',
+                  click: () => {
+                    const a = document.createElement('a')
+                    a.href = blobSrc
+                    a.download = alt
+                    a.click()
+                  },
+                }),
+              ],
+              e,
+            )
+          }
+        />
+      )}
 
       {/* Live Photo 组件 */}
       {isLivePhoto &&
@@ -403,83 +379,83 @@ export const ProgressiveImage = ({
   )
 }
 
-const DOMImageViewer: FC<{
-  onZoomChange?: (isZoomed: boolean) => any
-  minZoom: number
-  maxZoom: number
-  src: string
-  alt: string
-  highResLoaded: boolean
-  onLoad?: () => void
-}> = ({ onZoomChange, minZoom, maxZoom, src, alt, highResLoaded, onLoad }) => {
-  const onTransformed = useCallback(
-    (
-      ref: ReactZoomPanPinchRef,
-      state: Omit<ReactZoomPanPinchState, 'previousScale'>,
-    ) => {
-      // 当缩放比例不等于 1 时，认为图片被缩放了
-      const isZoomed = state.scale !== 1
-      onZoomChange?.(isZoomed)
-    },
-    [onZoomChange],
-  )
-  const transformRef = useRef<ReactZoomPanPinchRef>(null)
+// const DOMImageViewer: FC<{
+//   onZoomChange?: (isZoomed: boolean) => any
+//   minZoom: number
+//   maxZoom: number
+//   src: string
+//   alt: string
+//   highResLoaded: boolean
+//   onLoad?: () => void
+// }> = ({ onZoomChange, minZoom, maxZoom, src, alt, highResLoaded, onLoad }) => {
+//   const onTransformed = useCallback(
+//     (
+//       ref: ReactZoomPanPinchRef,
+//       state: Omit<ReactZoomPanPinchState, 'previousScale'>,
+//     ) => {
+//       // 当缩放比例不等于 1 时，认为图片被缩放了
+//       const isZoomed = state.scale !== 1
+//       onZoomChange?.(isZoomed)
+//     },
+//     [onZoomChange],
+//   )
+//   const transformRef = useRef<ReactZoomPanPinchRef>(null)
 
-  useEffect(() => {
-    if (transformRef.current) {
-      transformRef.current.resetTransform()
-    }
-  }, [src])
+//   useEffect(() => {
+//     if (transformRef.current) {
+//       transformRef.current.resetTransform()
+//     }
+//   }, [src])
 
-  return (
-    <TransformWrapper
-      ref={transformRef}
-      initialScale={1}
-      minScale={minZoom}
-      maxScale={maxZoom}
-      wheel={{
-        step: 0.1,
-      }}
-      pinch={{
-        step: 0.5,
-      }}
-      doubleClick={{
-        step: 2,
-        mode: 'toggle',
-        animationTime: 200,
-        animationType: 'easeInOutCubic',
-      }}
-      limitToBounds={true}
-      centerOnInit={true}
-      smooth={true}
-      alignmentAnimation={{
-        sizeX: 0,
-        sizeY: 0,
-        velocityAlignmentTime: 0.2,
-      }}
-      velocityAnimation={{
-        sensitivity: 1,
-        animationTime: 0.2,
-      }}
-      onTransformed={onTransformed}
-    >
-      <TransformComponent
-        wrapperClass="!w-full !h-full !absolute !inset-0"
-        contentClass="!w-full !h-full flex items-center justify-center"
-      >
-        <img
-          src={src || undefined}
-          alt={alt}
-          className={clsxm(
-            'absolute inset-0 w-full h-full object-contain',
-            highResLoaded ? 'opacity-100' : 'opacity-0',
-          )}
-          draggable={false}
-          loading="eager"
-          decoding="async"
-          onLoad={onLoad}
-        />
-      </TransformComponent>
-    </TransformWrapper>
-  )
-}
+//   return (
+//     <TransformWrapper
+//       ref={transformRef}
+//       initialScale={1}
+//       minScale={minZoom}
+//       maxScale={maxZoom}
+//       wheel={{
+//         step: 0.1,
+//       }}
+//       pinch={{
+//         step: 0.5,
+//       }}
+//       doubleClick={{
+//         step: 2,
+//         mode: 'toggle',
+//         animationTime: 200,
+//         animationType: 'easeInOutCubic',
+//       }}
+//       limitToBounds={true}
+//       centerOnInit={true}
+//       smooth={true}
+//       alignmentAnimation={{
+//         sizeX: 0,
+//         sizeY: 0,
+//         velocityAlignmentTime: 0.2,
+//       }}
+//       velocityAnimation={{
+//         sensitivity: 1,
+//         animationTime: 0.2,
+//       }}
+//       onTransformed={onTransformed}
+//     >
+//       <TransformComponent
+//         wrapperClass="!w-full !h-full !absolute !inset-0"
+//         contentClass="!w-full !h-full flex items-center justify-center"
+//       >
+//         <img
+//           src={src || undefined}
+//           alt={alt}
+//           className={clsxm(
+//             'absolute inset-0 w-full h-full object-contain',
+//             highResLoaded ? 'opacity-100' : 'opacity-0',
+//           )}
+//           draggable={false}
+//           loading="eager"
+//           decoding="async"
+//           onLoad={onLoad}
+//         />
+//       </TransformComponent>
+//     </TransformWrapper>
+//   )
+// }
