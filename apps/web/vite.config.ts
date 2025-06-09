@@ -7,6 +7,7 @@ import { codeInspectorPlugin } from 'code-inspector-plugin'
 import { defineConfig } from 'vite'
 import { analyzer } from 'vite-bundle-analyzer'
 import { checker } from 'vite-plugin-checker'
+import { createHtmlPlugin } from 'vite-plugin-html'
 import tsconfigPaths from 'vite-tsconfig-paths'
 
 import { siteConfig } from '../../config/site.config'
@@ -51,18 +52,26 @@ export default defineConfig({
       siteName: siteConfig.name,
       siteUrl: siteConfig.url,
     }),
-    process.env.analyzer && analyzer(),
-    {
-      name: 'html-transform',
-      transformIndexHtml: {
-        enforce: 'pre',
-        transform(html: string) {
-          return html
-            .replaceAll('{{TITLE}}', siteConfig.title)
-            .replaceAll('{{DESCRIPTION}}', siteConfig.description)
+    createHtmlPlugin({
+      minify: {
+        collapseWhitespace: true,
+        keepClosingSlash: true,
+        removeComments: true,
+        removeRedundantAttributes: true,
+        removeScriptTypeAttributes: true,
+        removeStyleLinkTypeAttributes: true,
+        useShortDoctype: true,
+        minifyCSS: true,
+        minifyJS: true,
+      },
+      inject: {
+        data: {
+          title: siteConfig.title,
+          description: siteConfig.description,
         },
       },
-    },
+    }),
+    process.env.analyzer && analyzer(),
   ],
   define: {
     APP_DEV_CWD: JSON.stringify(process.cwd()),
