@@ -97,7 +97,7 @@ const createAndInsertOpenGraphMeta = (
     'twitter:card': 'summary_large_image',
     'twitter:title': photo.id,
     'twitter:description': photo.description || '',
-    'twitter:image': `${request.nextUrl.origin}/og/${photo.id}`,
+    'twitter:image': `${realOrigin}/og/${photo.id}`,
   }
 
   for (const [name, content] of Object.entries(twitterTags)) {
