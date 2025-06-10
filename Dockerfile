@@ -23,11 +23,12 @@ COPY apps/ssr/package.json ./apps/ssr/package.json
 COPY packages/data/package.json ./packages/data/package.json
 
 COPY scripts ./scripts
+# Install all dependencies
+RUN pnpm install --frozen-lockfile
 COPY config.json ./
 COPY builder.config.json ./
 
-# Install all dependencies
-RUN pnpm install --frozen-lockfile
+
 
 # Copy all source code
 COPY . .
