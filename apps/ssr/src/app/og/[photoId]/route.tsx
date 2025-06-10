@@ -61,6 +61,19 @@ export const GET = async (
     }
 
     const exifInfo = formatExifInfo()
+    const thumbnailBuffer = await Promise.any([
+      fetch(
+        `http://localhost:3000${photo.thumbnailUrl.replace('.webp', '.jpg')}`,
+      ).then((res) => res.arrayBuffer()),
+      process.env.NEXT_PUBLIC_APP_URL
+        ? fetch(
+            `http://${process.env.NEXT_PUBLIC_APP_URL}${photo.thumbnailUrl.replace('.webp', '.jpg')}`,
+          ).then((res) => res.arrayBuffer())
+        : Promise.reject(),
+      fetch(
+        `http://${request.nextUrl.host}${photo.thumbnailUrl.replace('.webp', '.jpg')}`,
+      ).then((res) => res.arrayBuffer()),
+    ])
 
     return new ImageResponse(
       (
@@ -363,7 +376,8 @@ export const GET = async (
               }}
             >
               <img
-                src={`${request.nextUrl.origin}${photo.thumbnailUrl.replace('.webp', '.jpg')}`}
+                // @ts-expect-error
+                src={thumbnailBuffer}
                 style={{
                   width: '100%',
                   height: '100%',
