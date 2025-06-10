@@ -181,7 +181,6 @@ pnpm dev
   },
   "options": {
     "defaultConcurrency": 8,
-    "maxPhotos": 5000,
     "enableLivePhotoDetection": true,
     "showProgress": true,
     "showDetailedStats": true
@@ -215,8 +214,7 @@ pnpm dev
 
 #### 构建选项 (`options`)
 
-- `defaultConcurrency`: 默认并发数 (1-50)
-- `maxPhotos`: 最大照片数量限制
+- `defaultConcurrency`: 默认并发数
 - `enableLivePhotoDetection`: 启用 Live Photo 检测
 - `showProgress`: 显示构建进度
 - `showDetailedStats`: 显示详细统计信息

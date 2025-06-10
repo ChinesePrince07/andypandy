@@ -95,13 +95,6 @@ export class PhotoGalleryBuilder {
       const imageObjects = await this.storageManager.listImages()
       logger.main.info(`存储中找到 ${imageObjects.length} 张照片`)
 
-      // 检查照片数量限制
-      if (imageObjects.length > this.config.options.maxPhotos) {
-        logger.main.warn(
-          `⚠️ 照片数量 (${imageObjects.length}) 超过配置限制 (${this.config.options.maxPhotos})`,
-        )
-      }
-
       // 创建存储中存在的图片 key 集合，用于检测已删除的图片
       const s3ImageKeys = new Set(imageObjects.map((obj) => obj.key))
 

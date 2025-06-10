@@ -18,9 +18,6 @@ export interface BuilderConfig {
     // 默认并发限制
     defaultConcurrency: number
 
-    // 最大照片数量限制
-    maxPhotos: number
-
     // 支持的图片格式（可以覆盖默认的 SUPPORTED_FORMATS）
     supportedFormats?: Set<string>
 
@@ -87,7 +84,6 @@ export const defaultBuilderConfig: BuilderConfig = {
 
   options: {
     defaultConcurrency: 10,
-    maxPhotos: 10000,
     enableLivePhotoDetection: true,
     showProgress: true,
     showDetailedStats: true,
