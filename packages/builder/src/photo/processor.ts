@@ -4,6 +4,8 @@ import type { _Object } from '@aws-sdk/client-s3'
 import type { Exif } from 'exif-reader'
 import sharp from 'sharp'
 
+import { workdir } from '~/path.js'
+
 import { HEIC_FORMATS } from '../constants/index.js'
 import { extractExifData } from '../image/exif.js'
 import {
@@ -142,7 +144,7 @@ export async function processPhoto(
       try {
         const fs = await import('node:fs/promises')
         const thumbnailPath = path.join(
-          process.cwd(),
+          workdir,
           'public/thumbnails',
           `${photoId}.webp`,
         )

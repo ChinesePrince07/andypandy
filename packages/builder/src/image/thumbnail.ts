@@ -4,6 +4,8 @@ import { fileURLToPath } from 'node:url'
 
 import sharp from 'sharp'
 
+import { workdir } from '~/path.js'
+
 import type { Logger } from '../logger/index.js'
 import type { ThumbnailResult } from '../types/photo.js'
 import { generateBlurhash } from './blurhash.js'
@@ -15,8 +17,8 @@ const __dirname = path.dirname(__filename)
 export async function thumbnailExists(photoId: string): Promise<boolean> {
   try {
     const thumbnailPath = path.join(
-      __dirname,
-      '../../../public/thumbnails',
+      workdir,
+      'public/thumbnails',
       `${photoId}.webp`,
     )
     await fs.access(thumbnailPath)
@@ -42,7 +44,7 @@ export async function generateThumbnailAndBlurhash(
   const blurhashLog = workerLogger?.blurhash
 
   try {
-    const thumbnailDir = path.join(__dirname, '../../../public/thumbnails')
+    const thumbnailDir = path.join(workdir, 'public/thumbnails')
     await fs.mkdir(thumbnailDir, { recursive: true })
 
     const thumbnailPath = path.join(thumbnailDir, `${photoId}.webp`)

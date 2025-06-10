@@ -4,10 +4,6 @@
   "description": "Capturing beautiful moments in life, documenting daily warmth and emotions through my lens.",
   "url": "https://gallery.innei.in",
   "accentColor": "#007bff",
-  "ogImage": {
-    "width": 1200,
-    "height": 630
-  },
   "author": {
     "name": "Photo Gallery",
     "url": "https://innei.in/"

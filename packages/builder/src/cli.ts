@@ -2,16 +2,15 @@ import cluster from 'node:cluster'
 import { existsSync } from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
-import { fileURLToPath } from 'node:url'
 
 import { builderConfig } from '@builder'
 import { $ } from 'execa'
 
 import { defaultBuilder } from './builder/index.js'
 import { logger } from './logger/index.js'
+import { workdir } from './path.js'
 import { runAsWorker } from './runAsWorker.js'
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
 async function main() {
   // 检查是否作为 cluster worker 运行
   if (
@@ -26,7 +25,7 @@ async function main() {
   // 如果配置了远程仓库，则使用远程仓库
   if (builderConfig.repo.enable) {
     // 拉取远程仓库
-    const workdir = path.resolve(__dirname, '..', '..')
+
     const hasExist = existsSync(path.resolve(workdir, 'assets-git'))
     if (!hasExist) {
       await $({
@@ -128,7 +127,6 @@ async function main() {
       }
     }
     logger.main.info(`   默认并发数：${config.options.defaultConcurrency}`)
-    logger.main.info(`   最大照片数：${config.options.maxPhotos}`)
     logger.main.info(
       `   Live Photo 检测：${config.options.enableLivePhotoDetection ? '启用' : '禁用'}`,
     )

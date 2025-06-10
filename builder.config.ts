@@ -3,10 +3,10 @@ import { existsSync, readFileSync } from 'node:fs'
 import os from 'node:os'
 import { inspect } from 'node:util'
 
+import type { StorageConfig } from '@photo-gallery/builder'
 import consola from 'consola'
 import { merge } from 'es-toolkit'
 
-import type { StorageConfig } from './apps/web/src/core/storage/interfaces.js'
 import { env } from './env.js'
 
 export interface BuilderConfig {

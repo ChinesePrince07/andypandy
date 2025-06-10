@@ -4,7 +4,7 @@ export {
   defaultBuilder,
   PhotoGalleryBuilder,
 } from './builder/index.js'
-
+export type { StorageConfig } from './storage/interfaces.js'
 // 日志系统
 export { type Logger, logger, type WorkerLogger } from './logger/index.js'
 

@@ -10,7 +10,7 @@
   },
   "scripts": {
     "build": "pnpm --filter @photo-gallery/web build",
-    "build:manifest": "pnpm --filter @photo-gallery/web build:manifest",
+    "build:manifest": "pnpm --filter @photo-gallery/builder cli",
     "build:update-remote-repo": "sh scripts/build-update-remote-repo.sh",
     "dev": "pnpm --filter @photo-gallery/web dev",
     "extract:font": "tsx scripts/extract-font-glyphs.ts",
@@ -20,6 +20,7 @@
     "prepare": "simple-git-hooks"
   },
   "dependencies": {
+    "@photo-gallery/builder": "workspace:*",
     "@t3-oss/env-core": "0.13.8",
     "dotenv": "16.5.0",
     "es-toolkit": "1.39.3",

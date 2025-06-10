@@ -1,4 +1,3 @@
-
 import type { Logger } from '../logger/index.js'
 
 // 存储对象的通用接口

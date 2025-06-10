@@ -1,22 +1,17 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 
 import type { _Object } from '@aws-sdk/client-s3'
+
+import { workdir } from '~/path.js'
 
 import type { Logger } from '../logger/index.js'
 import type { PhotoManifestItem } from '../types/photo.js'
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
+const manifestPath = path.join(workdir, 'src/data/photos-manifest.json')
 
-// 读取现有的 manifest
 export async function loadExistingManifest(): Promise<PhotoManifestItem[]> {
   try {
-    const manifestPath = path.join(
-      __dirname,
-      '../../../src/data/photos-manifest.json',
-    )
     const manifestContent = await fs.readFile(manifestPath, 'utf-8')
     return JSON.parse(manifestContent) as PhotoManifestItem[]
   } catch {
@@ -43,11 +38,6 @@ export async function saveManifest(
   manifest: PhotoManifestItem[],
   fsLogger?: Logger['fs'],
 ): Promise<void> {
-  const manifestPath = path.join(
-    __dirname,
-    '../../../src/data/photos-manifest.json',
-  )
-
   // 按日期排序（最新的在前）
   const sortedManifest = [...manifest].sort(
     (a, b) => new Date(b.dateTaken).getTime() - new Date(a.dateTaken).getTime(),
@@ -82,8 +72,8 @@ export async function handleDeletedPhotos(
       // 删除对应的缩略图文件
       try {
         const thumbnailPath = path.join(
-          __dirname,
-          '../../../public/thumbnails',
+          workdir,
+          'public/thumbnails',
           `${existingItem.id}.webp`,
         )
         await fs.unlink(thumbnailPath)

@@ -29,7 +29,10 @@ export const precheck = async () => {
     if (builderConfig.repo.enable) {
       await pullAndLinkRemoteRepo()
     } else {
-      await $({ cwd: workdir, stdio: 'inherit' })`pnpm build:manifest`
+      await $({
+        cwd: workdir,
+        stdio: 'inherit',
+      })`pnpm --filter @photo-gallery/builder cli`
     }
   }
 }
