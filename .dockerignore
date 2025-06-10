@@ -2,23 +2,11 @@ node_modules
 .git
 .github
 .vscode
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
 
-node_modules
 .DS_Store
 dist
 dist-ssr
 *.local
-
-public/og-image-*.png
-test-svg-font-rendering.png
-test-traditional-font-rendering.png
-thomas-x2d-xcd-25v-1.jpg
-thomas-x2d-xcd-25v-1.webp
 
 apps/web/assets-git
 apps/web/public/thumbnails
@@ -26,6 +14,5 @@ apps/web/src/data/photos-manifest.json
 .vercel
 
 public/**
-src/index.html
-src/index.html.ts
-.vercel
+apps/ssr/src/index.html
+apps/ssr/src/index.html.ts
