@@ -339,7 +339,7 @@ export const GET = async (
                 fontFamily: 'Geist, SF Pro Display',
               }}
             >
-              {photo.description || siteConfig.name || site.title}
+              {photo.description || siteConfig.name || siteConfig.title}
             </p>
 
             {/* 标签 */}

@@ -48,7 +48,7 @@ export const ActionGroup = () => {
 
   return (
     <div className="flex items-center justify-center gap-3">
-      {siteConfig.extra.accessRepo && (
+      {siteConfig.extra?.accessRepo && (
         <Button
           variant="ghost"
           size="sm"

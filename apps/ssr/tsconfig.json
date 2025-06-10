@@ -24,7 +24,7 @@
     ],
     "paths": {
       "@config": [
-        "../../config/site.config.ts"
+        "../../site.config.ts"
       ]
     }
   },
