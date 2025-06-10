@@ -2,8 +2,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 
 import type { _Object } from '@aws-sdk/client-s3'
-
-import { workdir } from '~/path.js'
+import { workdir } from '@photo-gallery/builder/path.js'
 
 import type { Logger } from '../logger/index.js'
 import type { PhotoManifestItem } from '../types/photo.js'

@@ -1,10 +1,9 @@
 import path from 'node:path'
 
 import type { _Object } from '@aws-sdk/client-s3'
+import { workdir } from '@photo-gallery/builder/path.js'
 import type { Exif } from 'exif-reader'
 import sharp from 'sharp'
-
-import { workdir } from '~/path.js'
 
 import { HEIC_FORMATS } from '../constants/index.js'
 import { extractExifData } from '../image/exif.js'

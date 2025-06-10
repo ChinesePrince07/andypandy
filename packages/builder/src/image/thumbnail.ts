@@ -1,17 +1,12 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 
+import { workdir } from '@photo-gallery/builder/path.js'
 import sharp from 'sharp'
-
-import { workdir } from '~/path.js'
 
 import type { Logger } from '../logger/index.js'
 import type { ThumbnailResult } from '../types/photo.js'
 import { generateBlurhash } from './blurhash.js'
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
 
 // 检查缩略图是否存在
 export async function thumbnailExists(photoId: string): Promise<boolean> {

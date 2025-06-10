@@ -172,12 +172,18 @@ importers:
       es-toolkit:
         specifier: 1.39.3
         version: 1.39.3
+      exif-reader:
+        specifier: 2.0.2
+        version: 2.0.2
       foxact:
-        specifier: 0.2.46
-        version: 0.2.46(react@19.1.0)
+        specifier: 0.2.49
+        version: 0.2.49(react@19.1.0)
       fuji-recipes:
         specifier: 1.0.2
         version: 1.0.2
+      heic-to:
+        specifier: 1.1.13
+        version: 1.1.13
       immer:
         specifier: 10.1.1
         version: 10.1.1
@@ -4305,8 +4311,8 @@ packages:
     resolution: {integrity: sha512-gIXjKqtFuWEgzFRJA9WCQeSJLZDjgJUOMCMzxtvFq/37KojM1BFGufqsCy0r4qSQmYLsZYMeyRqzIWOMup03sw==}
     engines: {node: '>=14'}
 
-  foxact@0.2.46:
-    resolution: {integrity: sha512-HgPDumCL8/kkLQ+zd9B9Z8uOnjkLzLLimO3u/W5ApRP7aC6PwNM651x1ueukoJLXooH82COF8y1iEJ79He2ftA==}
+  foxact@0.2.49:
+    resolution: {integrity: sha512-9Pbu4IbkaNqtS/H4887/QWegclMpBn54mzbPp3t1mg0iJuB83jpQGBY2fshal50NmchlAFIT/GSWBFsa0YI31Q==}
     peerDependencies:
       react: '*'
     peerDependenciesMeta:
@@ -11011,7 +11017,7 @@ snapshots:
       cross-spawn: 7.0.6
       signal-exit: 4.1.0
 
-  foxact@0.2.46(react@19.1.0):
+  foxact@0.2.49(react@19.1.0):
     dependencies:
       client-only: 0.0.1
       server-only: 0.0.1
