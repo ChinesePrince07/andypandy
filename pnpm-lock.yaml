@@ -14,6 +14,9 @@ importers:
       dotenv:
         specifier: 16.5.0
         version: 16.5.0
+      es-toolkit:
+        specifier: 1.39.3
+        version: 1.39.3
       zod:
         specifier: 3.25.57
         version: 3.25.57
@@ -21,6 +24,9 @@ importers:
       '@innei/prettier':
         specifier: 0.15.0
         version: 0.15.0
+      consola:
+        specifier: 3.4.2
+        version: 3.4.2
       eslint:
         specifier: 9.28.0
         version: 9.28.0(jiti@2.4.2)
