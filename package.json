@@ -10,14 +10,14 @@
   },
   "scripts": {
     "build": "pnpm --filter @photo-gallery/web build",
+    "build:manifest": "pnpm --filter @photo-gallery/web build:manifest",
     "build:update-remote-repo": "sh scripts/build-update-remote-repo.sh",
     "dev": "pnpm --filter @photo-gallery/web dev",
     "extract:font": "tsx scripts/extract-font-glyphs.ts",
     "format": "prettier --write \"src/**/*.ts\" ",
     "lint": "eslint --fix",
     "preinstall": "sh scripts/preinstall.sh",
-    "prepare": "simple-git-hooks",
-    "test:svg-font": "tsx scripts/test-svg-text.ts"
+    "prepare": "simple-git-hooks"
   },
   "dependencies": {
     "@t3-oss/env-core": "0.13.8",
