@@ -130,13 +130,14 @@ cp config.example.json config.json
   "title": "我的照片画廊",
   "description": "记录生活中的美好瞬间",
   "url": "https://gallery.example.com",
-  "accentColor": "#007bff",
+  "accentColor": "#007bff", // 可选, 设置主题色
   "author": {
-    "name": "Your Name",
-    "url": "https://example.com"
+    "name": "Your Name", // 必填, 设置作者名称
+    "url": "https://example.com", // 可选, 设置作者主页
+    "avatar": "https://example.com/avatar.png" // 可选, 设置作者头像
   },
   "social": {
-    "twitter": "@yourusername"
+    "twitter": "@yourusername" // 可选, 设置社交账号
   }
 }
 ```

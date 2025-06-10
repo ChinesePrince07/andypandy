@@ -1,6 +1,8 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
+import { workdir } from '../packages/builder/src/path.js'
+
 interface PhotoManifest {
   id: string
   title: string
@@ -26,7 +28,7 @@ class BuildTimePhotoLoader {
 
   constructor() {
     try {
-      const manifestPath = join(process.cwd(), 'src/data/photos-manifest.json')
+      const manifestPath = join(workdir, 'src/data/photos-manifest.json')
       const manifestContent = readFileSync(manifestPath, 'utf-8')
       this.photos = JSON.parse(manifestContent) as PhotoManifest[]
 

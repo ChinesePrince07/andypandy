@@ -1,5 +1,6 @@
 import { siteConfig } from '@config'
 import { photoLoader } from '@photo-gallery/data'
+import * as AvatarPrimitive from '@radix-ui/react-avatar'
 
 import { clsxm } from '~/lib/cn'
 
@@ -25,8 +26,30 @@ export const MasonryHeaderMasonryItem = ({
     >
       {/* Header section with clean typography */}
       <div className="px-6 pt-8 pb-6 text-center">
-        <div className="from-accent to-accent/80 mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br shadow-lg">
-          <i className="i-mingcute-camera-2-line text-2xl text-white" />
+        <div className="flex items-center justify-center">
+          <div className="relative">
+            {siteConfig.author.avatar && (
+              <AvatarPrimitive.Root>
+                <AvatarPrimitive.Image
+                  src={siteConfig.author.avatar}
+                  className="size-16 rounded-full"
+                />
+                <AvatarPrimitive.Fallback>
+                  <div />
+                </AvatarPrimitive.Fallback>
+              </AvatarPrimitive.Root>
+            )}
+            <div
+              className={clsxm(
+                'from-accent to-accent/80 inline-flex items-center justify-center rounded-2xl bg-gradient-to-br shadow-lg',
+                siteConfig.author.avatar
+                  ? 'size-8 rounded absolute bottom-0 -right-3'
+                  : 'size-16 mb-4',
+              )}
+            >
+              <i className="i-mingcute-camera-2-line text-2xl text-white" />
+            </div>
+          </div>
         </div>
 
         <h2 className="mb-1 text-2xl font-semibold text-gray-900 dark:text-white">
