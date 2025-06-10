@@ -35,7 +35,7 @@ export const MasonryHeaderMasonryItem = ({
                   className="size-16 rounded-full"
                 />
                 <AvatarPrimitive.Fallback>
-                  <div />
+                  <div className="bg-material-medium size-16 rounded-full" />
                 </AvatarPrimitive.Fallback>
               </AvatarPrimitive.Root>
             )}
