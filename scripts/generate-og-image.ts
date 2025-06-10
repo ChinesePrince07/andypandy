@@ -12,6 +12,13 @@ async function getLatestPhotos(count = 4) {
 
   // 按拍摄时间排序，获取最新的照片
   const sortedPhotos = photos.sort((a, b) => {
+    if (
+      !a?.exif?.Photo?.DateTimeOriginal ||
+      !b?.exif?.Photo?.DateTimeOriginal
+    ) {
+      return 0
+    }
+
     const aDate =
       (a.exif.Photo?.DateTimeOriginal as unknown as string) || a.lastModified
     const bDate =
