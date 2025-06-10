@@ -15,20 +15,10 @@ RUN corepack enable
 FROM base AS builder
 
 RUN apk update && apk add --no-cache git
-# Copy dependency definition files to leverage Docker cache
-COPY pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY package.json ./
-COPY apps/web/package.json ./apps/web/package.json
-COPY apps/ssr/package.json ./apps/ssr/package.json
-COPY packages/data/package.json ./packages/data/package.json
-
-COPY scripts ./scripts
+COPY . .
 RUN sh ./scripts/preinstall.sh
 # Install all dependencies
 RUN pnpm install --frozen-lockfile
-
-# Copy all source code
-COPY . .
 
 # Build the app.
 # The build script in the ssr package.json handles building the web app first.
