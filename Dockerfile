@@ -24,13 +24,8 @@ COPY packages/data/package.json ./packages/data/package.json
 
 COPY scripts ./scripts
 RUN sh ./scripts/preinstall.sh
-RUN ls
 # Install all dependencies
 RUN pnpm install --frozen-lockfile
-COPY config.json ./
-COPY builder.config.json ./
-
-
 
 # Copy all source code
 COPY . .
