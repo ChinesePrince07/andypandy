@@ -166,9 +166,19 @@ export class WebGLImageViewerEngine extends ImageViewerEngineBase {
     this.notifyLoadingStateChange(false)
   }
 
+  private resizeObserver: ResizeObserver | null = null
+
   private setupCanvas() {
     this.resizeCanvas()
     window.addEventListener('resize', this.boundResizeCanvas)
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect()
+    }
+    this.resizeObserver = new ResizeObserver((e) => {
+      if (e[0].target !== this.canvas) return
+      this.boundResizeCanvas()
+    })
+    this.resizeObserver.observe(this.canvas)
   }
 
   private resizeCanvas() {
@@ -1035,6 +1045,9 @@ export class WebGLImageViewerEngine extends ImageViewerEngineBase {
     }
     if (this.program) {
       this.gl.deleteProgram(this.program)
+    }
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect()
     }
 
     this.worker?.terminate()
