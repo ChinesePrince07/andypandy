@@ -55,31 +55,11 @@
 - **S3 兼容存储** - AWS S3、MinIO、阿里云 OSS 等
 - **GitHub 存储** - 使用 GitHub 仓库作为图片存储
 
-## 📦 项目结构
-
-```
-photo-gallery-site/
-├── apps/web/                    # 主应用
-│   ├── src/
-│   │   ├── components/          # React 组件
-│   │   │   ├── ui/             # UI 组件库
-│   │   │   └── common/         # 通用组件
-│   │   ├── core/               # 核心构建系统
-│   │   │   ├── builder/        # 主构建器
-│   │   │   ├── storage/        # 存储适配器
-│   │   │   ├── image/          # 图像处理
-│   │   │   ├── photo/          # 照片处理
-│   │   │   └── worker/         # 并发处理
-│   │   ├── modules/            # 功能模块
-│   │   ├── pages/              # 页面组件
-│   ├── public/                 # 静态资源
-│   └── scripts/                # 构建脚本
-├── packages/webgl-viewer/       # WebGL 图像查看器
-├── config/                     # 配置文件
-└── docs/                       # 文档
-```
-
 ## 🚀 快速开始
+
+### Docker 部署
+
+![Docker 部署](https://github.com/Iris-Photo-Gallery/docker)
 
 ### 环境要求
 
@@ -277,35 +257,6 @@ pnpm dev
 # 构建生产版本
 pnpm build
 ```
-
-## 🚀 部署指南
-
-### Vercel 部署（推荐）
-
-1. **Fork 项目**
-
-   - 访问 [GitHub 仓库](https://github.com/Iris-Photo-Gallery/Iris)
-   - 点击右上角的 "Fork" 按钮，将项目 fork 到你的 GitHub 账户
-
-2. **在 Vercel 部署**
-   - 访问 [Vercel](https://vercel.com/)
-   - 使用 GitHub 账户登录
-   - 点击 "New Project"，选择你刚才 fork 的仓库
-   - 在项目设置中添加以下环境变量（如果你使用 S3 存储）：
-
-```env
-S3_REGION=us-east-1
-S3_ACCESS_KEY_ID=你的 S3 访问密钥 ID
-S3_SECRET_ACCESS_KEY=你的 S3 秘密访问密钥
-S3_ENDPOINT=https://s3.amazonaws.com
-S3_BUCKET_NAME=你的 S3 存储桶名称
-S3_PREFIX=photos/
-S3_CUSTOM_DOMAIN=你的自定义域名（可选）
-```
-
-3. **触发部署**
-   - 配置完环境变量后，Vercel 会自动开始部署
-   - 等待部署完成，你的照片画廊就上线了！
 
 ### 注意事项
 
