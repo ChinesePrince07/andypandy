@@ -346,20 +346,20 @@ export const PhotoMasonryItem = ({
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
           {/* 内容层 - 独立的层以支持 backdrop-filter */}
-          <div className="absolute inset-x-0 bottom-0 p-4 text-white ">
+          <div className="absolute inset-x-0 bottom-0 p-4 text-white">
             {/* 基本信息和标签 section */}
-            <div className="mb-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-              <h3 className="mb-2 truncate text-sm font-medium">
+            <div className="mb-3 [&_*]:duration-300">
+              <h3 className="mb-2 truncate text-sm font-medium opacity-0 group-hover:opacity-100">
                 {data.title}
               </h3>
               {data.description && (
-                <p className="mb-2 line-clamp-2 text-sm text-white/80">
+                <p className="mb-2 line-clamp-2 text-sm text-white/80 opacity-0 group-hover:opacity-100">
                   {data.description}
                 </p>
               )}
 
               {/* 基本信息 */}
-              <div className="mb-2 flex flex-wrap gap-2 text-xs text-white/80">
+              <div className="mb-2 flex flex-wrap gap-2 text-xs text-white/80 opacity-0 group-hover:opacity-100">
                 <span>{imageFormat}</span>
                 <span>•</span>
                 <span>
@@ -375,7 +375,7 @@ export const PhotoMasonryItem = ({
                   {data.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="rounded-full bg-white/20 px-2 py-0.5 text-xs text-white/90 backdrop-blur-sm"
+                      className="rounded-full bg-white/20 px-2 py-0.5 text-xs text-white/90 opacity-0 backdrop-blur-sm group-hover:opacity-100"
                     >
                       {tag}
                     </span>
@@ -385,7 +385,7 @@ export const PhotoMasonryItem = ({
             </div>
 
             {/* EXIF 信息网格 */}
-            <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="grid grid-cols-2 gap-2 text-xs opacity-0 group-hover:opacity-100">
               {exifData.focalLength35mm && (
                 <div className="flex items-center gap-1.5 rounded-md bg-white/10 px-2 py-1 opacity-0 backdrop-blur-md transition-opacity duration-300 group-hover:opacity-100">
                   <StreamlineImageAccessoriesLensesPhotosCameraShutterPicturePhotographyPicturesPhotoLens className="text-white/70" />

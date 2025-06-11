@@ -118,7 +118,7 @@ export const MasonryRoot = () => {
         </div>
       )}
 
-      <div className="p-1 lg:p-0 [&_*]:!select-none">
+      <div className="p-1 lg:px-0 lg:pb-0 [&_*]:!select-none">
         {isMobile && <MasonryHeaderMasonryItem className="mb-1" />}
         <Masonry<MasonryItemType>
           items={useMemo(
@@ -187,7 +187,7 @@ export const MasonryItem = memo(
     const delay = shouldAnimate
       ? data instanceof MasonryHeaderItem
         ? 0
-        : Math.min(index * 0.05, 0.8)
+        : Math.min(index * 0.05, 0.3)
       : 0
 
     // Framer Motion 动画变体
@@ -204,8 +204,7 @@ export const MasonryItem = memo(
         scale: 1,
         filter: 'blur(0px)',
         transition: {
-          duration: shouldAnimate ? 0.8 : 0,
-          ease: [0.16, 1, 0.3, 1], // cubic-bezier(0.16, 1, 0.3, 1)
+          ...Spring.presets.smooth,
           delay,
         },
       },

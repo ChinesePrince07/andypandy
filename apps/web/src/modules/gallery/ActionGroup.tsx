@@ -71,7 +71,7 @@ export const ActionGroup = () => {
           >
             <i className="i-mingcute-tag-line text-base text-gray-600 dark:text-gray-300" />
             {gallerySetting.selectedTags.length > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-xs font-medium text-white shadow-sm">
+              <span className="bg-accent absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full text-xs font-medium text-white shadow-sm">
                 {gallerySetting.selectedTags.length}
               </span>
             )}
@@ -200,7 +200,7 @@ const AdjustColumnsButton = () => {
       >
         <i className="i-mingcute-grid-line text-base text-gray-600 dark:text-gray-300" />
         {gallerySetting.columns !== 'auto' && (
-          <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-xs font-medium text-white shadow-sm">
+          <span className="bg-accent absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full text-xs font-medium text-white shadow-sm">
             {gallerySetting.columns}
           </span>
         )}

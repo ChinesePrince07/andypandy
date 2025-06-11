@@ -117,7 +117,7 @@ export const Slider = ({
           <div
             className={clsxm(
               'absolute top-0 h-full rounded-full transition-all duration-150',
-              value === 'auto' ? 'bg-green-500' : 'bg-blue-500',
+              value === 'auto' ? 'bg-green-500' : 'bg-accent',
             )}
             style={{
               width: `${Math.max(position, 5)}%`,
@@ -131,7 +131,7 @@ export const Slider = ({
           className={clsxm(
             'absolute top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-lg transition-all duration-150',
             isDragging ? 'scale-110' : 'hover:scale-105',
-            value === 'auto' ? 'bg-green-500' : 'bg-blue-500',
+            value === 'auto' ? 'bg-green-500' : 'bg-accent',
             disabled && 'cursor-not-allowed',
           )}
           style={{
@@ -158,7 +158,7 @@ export const Slider = ({
                   key={num}
                   className={clsxm(
                     'transition-colors',
-                    value === num && 'font-medium text-blue-500',
+                    value === num && 'font-medium text-accent',
                   )}
                 >
                   {num}
