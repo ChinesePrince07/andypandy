@@ -2,6 +2,12 @@
 
 一个现代化的照片画廊网站，采用 React + TypeScript 构建，支持从多种存储源（S3、GitHub）自动同步照片，具有高性能 WebGL 渲染、瀑布流布局、EXIF 信息展示、缩略图生成等功能。
 
+线上照片墙：
+
+- https://gallery.innei.in
+- https://gallery.mxte.cc
+- https://photography.pseudoyu.com
+
 ## 🌟 特性
 
 ### 核心功能
