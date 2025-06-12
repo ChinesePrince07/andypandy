@@ -4,6 +4,8 @@ import { fileURLToPath } from 'node:url'
 
 import type { Plugin } from 'vite'
 
+import type { SiteConfig } from '../../site.config'
+
 interface PhotoData {
   id: string
   title: string
@@ -22,18 +24,6 @@ interface PhotoData {
   size: number
   exif?: any
   isLivePhoto: boolean
-}
-
-interface SiteConfig {
-  name: string
-  title: string
-  description: string
-  url: string
-  author: {
-    name: string
-    url: string
-    avatar?: string
-  }
 }
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
@@ -135,6 +125,17 @@ ${exifTags}
     <lastBuildDate>${lastBuildDate}</lastBuildDate>
     <pubDate>${now}</pubDate>
     <ttl>60</ttl>
+    <copyright>Copyright ${config.author.name}</copyright>
+${
+  config.feed?.folo?.challenge
+    ? `
+    <follow_challenge>
+    <feedId>${config.feed?.folo?.challenge.feedId}</feedId>
+    <userId>${config.feed?.folo?.challenge.userId}</userId>
+</follow_challenge>
+`
+    : ''
+}
     <atom:link href="${config.url}/feed.xml" rel="self" type="application/rss+xml" />
     <managingEditor>${config.author.name}</managingEditor>
     <webMaster>${config.author.name}</webMaster>
