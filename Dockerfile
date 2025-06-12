@@ -22,7 +22,7 @@ RUN pnpm install --frozen-lockfile
 
 # Build the app.
 # The build script in the ssr package.json handles building the web app first.
-RUN pnpm --filter=@photo-gallery/ssr build
+RUN pnpm --filter=@afilmory/ssr build
 
 # -----------------
 # Runner stage

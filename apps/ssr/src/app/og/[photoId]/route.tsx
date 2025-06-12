@@ -1,5 +1,5 @@
+import { photoLoader } from '@afilmory/data'
 import { siteConfig } from '@config'
-import { photoLoader } from '@photo-gallery/data'
 import { ImageResponse } from 'next/og'
 import type { NextRequest } from 'next/server'
 

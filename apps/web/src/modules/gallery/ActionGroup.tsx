@@ -1,4 +1,4 @@
-import { photoLoader } from '@photo-gallery/data'
+import { photoLoader } from '@afilmory/data'
 import { useAtom } from 'jotai'
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'

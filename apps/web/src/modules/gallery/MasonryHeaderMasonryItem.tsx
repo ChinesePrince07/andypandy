@@ -1,5 +1,5 @@
+import { photoLoader } from '@afilmory/data'
 import { siteConfig } from '@config'
-import { photoLoader } from '@photo-gallery/data'
 import { repository } from '@pkg'
 import * as AvatarPrimitive from '@radix-ui/react-avatar'
 import { useTranslation } from 'react-i18next'

@@ -1,5 +1,5 @@
 {
-  "name": "@photo-gallery/monorepo",
+  "name": "@afilmory/monorepo",
   "type": "module",
   "version": "0.1.0",
   "private": true,
@@ -9,10 +9,10 @@
     "url": "https://github.com/Afilmory/Afilmory"
   },
   "scripts": {
-    "build": "pnpm --filter @photo-gallery/web build",
-    "build:manifest": "pnpm --filter @photo-gallery/builder cli",
+    "build": "pnpm --filter @afilmory/web build",
+    "build:manifest": "pnpm --filter @afilmory/builder cli",
     "build:update-remote-repo": "sh scripts/build-update-remote-repo.sh",
-    "dev": "pnpm --filter @photo-gallery/web dev",
+    "dev": "pnpm --filter @afilmory/web dev",
     "extract:font": "tsx scripts/extract-font-glyphs.ts",
     "format": "prettier --write \"src/**/*.ts\" ",
     "lint": "eslint --fix",
@@ -20,7 +20,7 @@
     "prepare": "simple-git-hooks"
   },
   "dependencies": {
-    "@photo-gallery/builder": "workspace:*",
+    "@afilmory/builder": "workspace:*",
     "@t3-oss/env-core": "0.13.8",
     "dotenv": "16.5.0",
     "es-toolkit": "1.39.3",

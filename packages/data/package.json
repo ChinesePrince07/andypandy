@@ -1,5 +1,5 @@
 {
-  "name": "@photo-gallery/data",
+  "name": "@afilmory/data",
   "type": "module",
   "private": true,
   "exports": {

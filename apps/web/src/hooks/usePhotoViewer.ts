@@ -1,4 +1,4 @@
-import { photoLoader } from '@photo-gallery/data'
+import { photoLoader } from '@afilmory/data'
 import { atom, useAtom, useAtomValue } from 'jotai'
 import { useCallback, useEffect, useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router'

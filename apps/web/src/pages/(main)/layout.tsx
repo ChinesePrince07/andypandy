@@ -1,5 +1,5 @@
+import { photoLoader } from '@afilmory/data'
 import { siteConfig } from '@config'
-import { photoLoader } from '@photo-gallery/data'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useEffect, useRef } from 'react'
 import { Outlet, useParams, useSearchParams } from 'react-router'

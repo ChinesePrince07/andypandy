@@ -1,4 +1,4 @@
-# Photo Gallery RSS EXIF Extension Specification
+# Afilmory RSS EXIF Extension Specification
 
 ## 概述
 

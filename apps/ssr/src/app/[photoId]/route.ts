@@ -1,5 +1,5 @@
-import { photoLoader } from '@photo-gallery/data'
-import type { PhotoManifest } from '@photo-gallery/data/types'
+import { photoLoader } from '@afilmory/data'
+import type { PhotoManifest } from '@afilmory/data/types'
 import { DOMParser } from 'linkedom'
 import type { NextRequest } from 'next/server'
 
