@@ -7,7 +7,7 @@
   "author": {
     "name": "Photo Gallery",
     "url": "https://innei.in/",
-    "avatar": "//cdn.jsdelivr.net/gh/Innei/static@master/avatar.png"
+    "avatar": "https://cdn.jsdelivr.net/gh/Innei/static@master/avatar.png"
   },
   "social": {
     "twitter": "@__oQuery",

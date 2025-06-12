@@ -109,24 +109,28 @@ function generateRSSFeed(photos: PhotoData[], config: SiteConfig): string {
         description += ` | Tags: ${tags}`
       }
 
+      // Extract EXIF data for custom tags
+      const exifTags = generateExifTags(photo.exif, photo)
+
       return `    <item>
-      <title><![CDATA[${escapeXml(photo.title)}]]></title>
+      <title><![CDATA[${photo.title}]]></title>
       <link>${photoUrl}</link>
       <guid isPermaLink="true">${photoUrl}</guid>
-      <description><![CDATA[${escapeXml(description)}]]></description>
+      <description><![CDATA[${description}]]></description>
       <pubDate>${pubDate}</pubDate>
-      ${photo.tags.map((tag) => `<category><![CDATA[${escapeXml(tag)}]]></category>`).join('\n      ')}
+      ${photo.tags.map((tag) => `<category><![CDATA[${tag}]]></category>`).join('\n      ')}
       <enclosure url="${photo.thumbnailUrl.startsWith('http') ? photo.thumbnailUrl : config.url + photo.thumbnailUrl}" type="image/webp" length="${photo.size}" />
+${exifTags}
     </item>`
     })
     .join('\n')
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:exif="https://exif.org/rss/1.0">
   <channel>
-    <title><![CDATA[${escapeXml(config.title)}]]></title>
+    <title><![CDATA[${config.title}]]></title>
     <link>${config.url}</link>
-    <description><![CDATA[${escapeXml(config.description)}]]></description>
+    <description><![CDATA[${config.description}]]></description>
     <language>zh-CN</language>
     <lastBuildDate>${lastBuildDate}</lastBuildDate>
     <pubDate>${now}</pubDate>
@@ -137,12 +141,91 @@ function generateRSSFeed(photos: PhotoData[], config: SiteConfig): string {
     <generator>Vite RSS Generator</generator>
     <image>
       <url>${config.author.avatar || `${config.url}/favicon.ico`}</url>
-      <title><![CDATA[${escapeXml(config.title)}]]></title>
+      <title><![CDATA[${config.title}]]></title>
       <link>${config.url}</link>
     </image>
 ${rssItems}
   </channel>
 </rss>`
+}
+
+function generateExifTags(exif: any, photo: PhotoData): string {
+  if (!exif || !exif.Photo) {
+    return ''
+  }
+
+  const tags: string[] = []
+
+  // Aperture (光圈)
+  if (exif.Photo.FNumber) {
+    tags.push(`      <exif:aperture>f/${exif.Photo.FNumber}</exif:aperture>`)
+  }
+
+  // Shutter Speed (快门)
+  if (exif.Photo.ExposureTime) {
+    const shutterSpeed =
+      exif.Photo.ExposureTime >= 1
+        ? `${exif.Photo.ExposureTime}s`
+        : `1/${Math.round(1 / exif.Photo.ExposureTime)}s`
+    tags.push(`      <exif:shutterSpeed>${shutterSpeed}</exif:shutterSpeed>`)
+  }
+
+  // ISO
+  if (exif.Photo.ISOSpeedRatings) {
+    tags.push(`      <exif:iso>${exif.Photo.ISOSpeedRatings}</exif:iso>`)
+  }
+
+  // Exposure Compensation (曝光补偿)
+  if (exif.Photo.ExposureBiasValue !== undefined) {
+    const ev = exif.Photo.ExposureBiasValue
+    const evString = ev > 0 ? `+${ev}` : `${ev}`
+    tags.push(
+      `      <exif:exposureCompensation>${evString} EV</exif:exposureCompensation>`,
+    )
+  }
+
+  // Image Dimensions (图片宽度, 高度)
+  tags.push(
+    `      <exif:imageWidth>${photo.width}</exif:imageWidth>`,
+    `      <exif:imageHeight>${photo.height}</exif:imageHeight>`,
+  )
+
+  // Date Taken (拍摄时间)
+  if (exif.Photo.DateTimeOriginal) {
+    tags.push(
+      `      <exif:dateTaken>${exif.Photo.DateTimeOriginal}</exif:dateTaken>`,
+    )
+  }
+
+  // Camera Model (机型)
+  if (exif.Image?.Make && exif.Image?.Model) {
+    tags.push(
+      `      <exif:camera><![CDATA[${exif.Image.Make} ${exif.Image.Model}]]></exif:camera>`,
+    )
+  }
+
+  // Lens Model (镜头)
+  if (exif.Photo.LensModel) {
+    tags.push(
+      `      <exif:lens><![CDATA[${exif.Photo.LensModel}]]></exif:lens>`,
+    )
+  }
+
+  // Focal Length (焦段)
+  if (exif.Photo.FocalLength) {
+    tags.push(
+      `      <exif:focalLength>${exif.Photo.FocalLength}mm</exif:focalLength>`,
+    )
+  }
+
+  // Focal Length in 35mm equivalent (等效35mm焦距)
+  if (exif.Photo.FocalLengthIn35mmFilm) {
+    tags.push(
+      `      <exif:focalLength35mm>${exif.Photo.FocalLengthIn35mmFilm}mm</exif:focalLength35mm>`,
+    )
+  }
+
+  return tags.join('\n')
 }
 
 function generateSitemap(photos: PhotoData[], config: SiteConfig): string {
@@ -176,13 +259,4 @@ function generateSitemap(photos: PhotoData[], config: SiteConfig): string {
 ${mainPageXml}
 ${photoUrls}
 </urlset>`
-}
-
-function escapeXml(text: string): string {
-  return text
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;')
 }
