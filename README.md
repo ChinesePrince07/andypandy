@@ -18,6 +18,7 @@ Afilmory (/əˈfɪlməri/, “uh-FIL-muh-ree”) 是一个为个人摄影网站�
 - 📱 **响应式瀑布流布局** - 采用 Masonic 实现，自适应不同屏幕尺寸
 - 🎨 **现代化 UI 设计** - 基于 Tailwind CSS 和 Radix UI 组件库
 - ⚡ **增量同步** - 智能检测文件变化，仅处理新增或修改的照片
+- 🌐 **i18n** - 支持多语言
 
 ### 图像处理
 
@@ -47,6 +48,7 @@ Afilmory (/əˈfɪlməri/, “uh-FIL-muh-ree”) 是一个为个人摄影网站�
 - **Jotai** - 状态管理
 - **TanStack Query** - 数据获取和缓存
 - **React Router 7** - 路由管理
+- **i18next** - 国际化
 
 ### 构建系统
 

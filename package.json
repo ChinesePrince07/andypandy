@@ -24,7 +24,7 @@
     "@t3-oss/env-core": "0.13.8",
     "dotenv": "16.5.0",
     "es-toolkit": "1.39.3",
-    "zod": "3.25.57"
+    "zod": "3.25.63"
   },
   "devDependencies": {
     "@innei/prettier": "0.15.0",
@@ -37,8 +37,8 @@
     "prettier": "3.5.3",
     "sharp": "0.34.2",
     "simple-git-hooks": "2.13.0",
-    "tailwindcss": "4.1.8",
-    "tsx": "4.19.4",
+    "tailwindcss": "4.1.10",
+    "tsx": "4.20.2",
     "typescript": "5.8.3",
     "vite": "6.3.5",
     "vite-bundle-analyzer": "0.22.2",
