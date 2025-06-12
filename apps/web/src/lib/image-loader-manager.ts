@@ -1,3 +1,5 @@
+import { i18nAtom } from '~/i18n'
+import { jotaiStore } from '~/lib/jotai'
 import { LRUCache } from '~/lib/lru-cache'
 import {
   convertMovToMp4,
@@ -222,9 +224,10 @@ export class ImageLoaderManager {
     const { onError: _onError, onLoadingStateUpdate } = callbacks
 
     // 如果是 HEIC 格式，进行转换
+    const i18n = jotaiStore.get(i18nAtom)
     onLoadingStateUpdate?.({
       isConverting: true,
-      conversionMessage: 'HEIC/HEIF 图片格式转换中...',
+      conversionMessage: i18n.t('loading.heic.converting'),
     })
 
     try {
@@ -331,15 +334,25 @@ export class ImageLoaderManager {
 
     console.info('Converting MOV video to MP4...')
 
+    const i18n = jotaiStore.get(i18nAtom)
     const result = await convertMovToMp4(livePhotoVideoUrl, (progress) => {
+      // 检查是否包含编码器信息（支持多语言）
+      const codecKeywords: string[] = [
+        i18n.t('video.codec.keyword'), // 翻译键
+        'encoder',
+        'codec',
+        '编码器', // 备用关键词
+      ]
+      const isCodecInfo = codecKeywords.some((keyword: string) =>
+        progress.message.toLowerCase().includes(keyword.toLowerCase()),
+      )
+
       onLoadingStateUpdate?.({
         isVisible: true,
         isConverting: progress.isConverting,
         loadingProgress: progress.progress,
         conversionMessage: progress.message,
-        codecInfo: progress.message.includes('编码器')
-          ? progress.message
-          : undefined,
+        codecInfo: isCodecInfo ? progress.message : undefined,
       })
     })
 

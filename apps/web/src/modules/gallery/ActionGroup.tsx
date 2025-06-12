@@ -3,6 +3,7 @@ import { photoLoader } from '@photo-gallery/data'
 import { repository } from '@pkg'
 import { useAtom } from 'jotai'
 import { useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { gallerySettingAtom } from '~/atoms/app'
 import { Button } from '~/components/ui/button'
@@ -19,6 +20,7 @@ import { useMobile } from '~/hooks/useMobile'
 const allTags = photoLoader.getAllTags()
 
 export const ActionGroup = () => {
+  const { t } = useTranslation()
   const [gallerySetting, setGallerySetting] = useAtom(gallerySettingAtom)
 
   const setSortOrder = (order: 'asc' | 'desc') => {
@@ -54,7 +56,7 @@ export const ActionGroup = () => {
           size="sm"
           className="h-10 w-10 rounded-full border-0 bg-gray-100 transition-all duration-200 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700"
           onClick={() => window.open(repository.url, '_blank')}
-          title="查看 GitHub 仓库"
+          title={t('action.view.github')}
         >
           <i className="i-mingcute-github-line text-base text-gray-600 dark:text-gray-300" />
         </Button>
@@ -67,7 +69,7 @@ export const ActionGroup = () => {
             variant="ghost"
             size="sm"
             className="relative h-10 w-10 rounded-full border-0 bg-gray-100 transition-all duration-200 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700"
-            title="标签筛选"
+            title={t('action.tag.filter')}
           >
             <i className="i-mingcute-tag-line text-base text-gray-600 dark:text-gray-300" />
             {gallerySetting.selectedTags.length > 0 && (
@@ -122,7 +124,7 @@ export const ActionGroup = () => {
             variant="ghost"
             size="sm"
             className="h-10 w-10 rounded-full border-0 bg-gray-100 transition-all duration-200 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700"
-            title="排序方式"
+            title={t('action.sort.mode')}
           >
             {gallerySetting.sortOrder === 'desc' ? (
               <i className="i-mingcute-sort-descending-line text-base text-gray-600 dark:text-gray-300" />
@@ -157,6 +159,7 @@ export const ActionGroup = () => {
 }
 
 const AdjustColumnsButton = () => {
+  const { t } = useTranslation()
   const [gallerySetting, setGallerySetting] = useAtom(gallerySettingAtom)
   const isMobile = useMobile()
 
@@ -196,7 +199,7 @@ const AdjustColumnsButton = () => {
         variant="ghost"
         size="sm"
         className="relative h-10 w-10 rounded-full border-0 bg-gray-100 transition-all duration-200 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700"
-        title="列数设置"
+        title={t('action.columns.setting')}
       >
         <i className="i-mingcute-grid-line text-base text-gray-600 dark:text-gray-300" />
         {gallerySetting.columns !== 'auto' && (
@@ -232,7 +235,9 @@ const AdjustColumnsButton = () => {
         />
 
         <DropdownMenuContent align="center" className="w-80 p-2">
-          <DropdownMenuLabel className="mb-3">列数设置</DropdownMenuLabel>
+          <DropdownMenuLabel className="mb-3">
+            {t('action.columns.setting')}
+          </DropdownMenuLabel>
 
           <div className="px-2">
             <Slider
@@ -240,7 +245,7 @@ const AdjustColumnsButton = () => {
               onChange={setColumns}
               min={columnRange.min}
               max={columnRange.max}
-              autoLabel="自动"
+              autoLabel={t('action.auto')}
             />
           </div>
         </DropdownMenuContent>

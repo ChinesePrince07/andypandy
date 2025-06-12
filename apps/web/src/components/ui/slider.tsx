@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { clsxm } from '~/lib/cn'
 
@@ -19,10 +20,12 @@ export const Slider = ({
   min,
   max,
   step = 1,
-  autoLabel = '自动',
+  autoLabel,
   className,
   disabled = false,
 }: SliderProps) => {
+  const { t } = useTranslation()
+  const finalAutoLabel = autoLabel || t('slider.auto')
   const [isDragging, setIsDragging] = useState(false)
   const sliderRef = useRef<HTMLDivElement>(null)
   const trackRef = useRef<HTMLDivElement>(null)
@@ -92,7 +95,7 @@ export const Slider = ({
     <div className={clsxm('w-full', className)}>
       {/* 标签 */}
       <div className="text-text-secondary mb-2 flex justify-between text-xs">
-        <span>{autoLabel}</span>
+        <span>{finalAutoLabel}</span>
         <span>{max}</span>
       </div>
 
@@ -148,7 +151,7 @@ export const Slider = ({
                 value === 'auto' && 'font-medium text-green-500',
               )}
             >
-              自动
+              {finalAutoLabel}
             </span>
           </div>
           <div className="flex w-[85%] justify-between">
@@ -171,7 +174,7 @@ export const Slider = ({
 
       {/* 当前值显示 */}
       <div className="mt-8 text-center text-sm font-medium text-gray-700 dark:text-gray-300">
-        {value === 'auto' ? autoLabel : `${value} 列`}
+        {value === 'auto' ? finalAutoLabel : `${value} 列`}
       </div>
     </div>
   )

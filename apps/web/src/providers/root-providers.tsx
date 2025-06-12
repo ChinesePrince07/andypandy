@@ -9,6 +9,7 @@ import { queryClient } from '~/lib/query-client'
 
 import { ContextMenuProvider } from './context-menu-provider'
 import { EventProvider } from './event-provider'
+import { I18nProvider } from './i18n-provider'
 import { SettingSync } from './setting-sync'
 import { StableRouterProvider } from './stable-router-provider'
 
@@ -29,7 +30,7 @@ export const RootProviders: FC<PropsWithChildren> = ({ children }) => (
           <StableRouterProvider />
           <SettingSync />
           <ContextMenuProvider />
-          {children}
+          <I18nProvider>{children}</I18nProvider>
         </Provider>
       </QueryClientProvider>
     </MotionConfig>

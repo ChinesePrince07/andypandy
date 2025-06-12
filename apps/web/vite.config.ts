@@ -44,7 +44,11 @@ export default defineConfig({
       bundler: 'vite',
       hotKeys: ['altKey'],
     }),
-    createDependencyChunksPlugin([['heic-to'], ['react', 'react-dom']]),
+    createDependencyChunksPlugin([
+      ['heic-to'],
+      ['react', 'react-dom'],
+      ['i18next', 'i18next-browser-languagedetector', 'react-i18next'],
+    ]),
     tailwindcss(),
     ogImagePlugin({
       title: siteConfig.title,

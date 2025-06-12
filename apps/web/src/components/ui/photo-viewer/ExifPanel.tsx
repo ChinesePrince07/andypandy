@@ -4,9 +4,11 @@ import type { Exif } from 'exif-reader'
 import { m } from 'motion/react'
 import type { FC } from 'react'
 import { Fragment } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { ScrollArea } from '~/components/ui/scroll-areas/ScrollArea'
 import { useMobile } from '~/hooks/useMobile'
+import { i18nAtom } from '~/i18n'
 import {
   CarbonIsoOutline,
   MaterialSymbolsExposure,
@@ -15,6 +17,7 @@ import {
   TablerAperture,
 } from '~/icons'
 import { getImageFormat } from '~/lib/image-utils'
+import { jotaiStore } from '~/lib/jotai'
 import type { PhotoManifest } from '~/types/photo'
 
 import { MotionButtonBase } from '../button'
@@ -26,8 +29,9 @@ export const ExifPanel: FC<{
 
   onClose?: () => void
 }> = ({ currentPhoto, exifData, onClose }) => {
+  const { t } = useTranslation()
   const isMobile = useMobile()
-  const formattedExifData = formatExifData(exifData)
+  const formattedExifData = formatExifData(exifData, t)
 
   // 使用通用的图片格式提取函数
   const imageFormat = getImageFormat(
@@ -57,7 +61,7 @@ export const ExifPanel: FC<{
     >
       <div className="mb-4 flex shrink-0 items-center justify-between p-4 pb-0">
         <h3 className={`${isMobile ? 'text-base' : 'text-lg'} font-semibold`}>
-          图片信息
+          {t('exif.header.title')}
         </h3>
         {isMobile && onClose && (
           <button
@@ -77,39 +81,53 @@ export const ExifPanel: FC<{
         <div className={`space-y-${isMobile ? '3' : '4'}`}>
           {/* 基本信息和标签 - 合并到一个 section */}
           <div>
-            <h4 className="mb-2 text-sm font-medium text-white/80">基本信息</h4>
+            <h4 className="mb-2 text-sm font-medium text-white/80">
+              {t('exif.basic.info')}
+            </h4>
             <div className="space-y-1 text-sm">
-              <Row label="文件名" value={currentPhoto.title} ellipsis />
-              <Row label="格式" value={imageFormat} />
               <Row
-                label="尺寸"
+                label={t('exif.filename')}
+                value={currentPhoto.title}
+                ellipsis
+              />
+              <Row label={t('exif.format')} value={imageFormat} />
+              <Row
+                label={t('exif.dimensions')}
                 value={`${currentPhoto.width} × ${currentPhoto.height}`}
               />
               <Row
-                label="文件大小"
+                label={t('exif.file.size')}
                 value={`${(currentPhoto.size / 1024 / 1024).toFixed(1)}MB`}
               />
               {formattedExifData?.megaPixels && (
                 <Row
-                  label="像素"
+                  label={t('exif.pixels')}
                   value={`${Math.floor(
                     Number.parseFloat(formattedExifData.megaPixels),
                   )} MP`}
                 />
               )}
               {formattedExifData?.colorSpace && (
-                <Row label="色彩空间" value={formattedExifData.colorSpace} />
+                <Row
+                  label={t('exif.color.space')}
+                  value={formattedExifData.colorSpace}
+                />
               )}
 
               {formattedExifData?.dateTime && (
-                <Row label="拍摄时间" value={formattedExifData.dateTime} />
+                <Row
+                  label={t('exif.capture.time')}
+                  value={formattedExifData.dateTime}
+                />
               )}
             </div>
 
             {/* 标签信息 - 移到基本信息 section 内 */}
             {currentPhoto.tags && currentPhoto.tags.length > 0 && (
               <div className="mt-3">
-                <div className="mb-2 text-sm text-white/80">标签</div>
+                <div className="mb-2 text-sm text-white/80">
+                  {t('exif.tags')}
+                </div>
                 <div className="flex flex-wrap gap-1.5">
                   {currentPhoto.tags.map((tag) => (
                     <MotionButtonBase
@@ -137,37 +155,43 @@ export const ExifPanel: FC<{
               {(formattedExifData.camera || formattedExifData.lens) && (
                 <div>
                   <h4 className="my-2 text-sm font-medium text-white/80">
-                    设备信息
+                    {t('exif.device.info')}
                   </h4>
                   <div className="space-y-1 text-sm">
                     {formattedExifData.camera && (
-                      <Row label="相机" value={formattedExifData.camera} />
+                      <Row
+                        label={t('exif.camera')}
+                        value={formattedExifData.camera}
+                      />
                     )}
                     {formattedExifData.lens && (
-                      <Row label="镜头" value={formattedExifData.lens} />
+                      <Row
+                        label={t('exif.lens')}
+                        value={formattedExifData.lens}
+                      />
                     )}
 
                     {formattedExifData.focalLength && (
                       <Row
-                        label="实际焦距"
+                        label={t('exif.focal.length.actual')}
                         value={`${formattedExifData.focalLength}mm`}
                       />
                     )}
                     {formattedExifData.focalLength35mm && (
                       <Row
-                        label="等效焦距"
+                        label={t('exif.focal.length.equivalent')}
                         value={`${formattedExifData.focalLength35mm}mm`}
                       />
                     )}
                     {formattedExifData.maxAperture && (
                       <Row
-                        label="最大光圈"
+                        label={t('exif.max.aperture')}
                         value={`f/${formattedExifData.maxAperture}`}
                       />
                     )}
                     {formattedExifData.digitalZoom && (
                       <Row
-                        label="数字变焦"
+                        label={t('exif.digital.zoom')}
                         value={`${formattedExifData.digitalZoom.toFixed(2)}x`}
                       />
                     )}
@@ -177,7 +201,7 @@ export const ExifPanel: FC<{
 
               <div>
                 <h4 className="my-2 text-sm font-medium text-white/80">
-                  拍摄参数
+                  {t('exif.capture.parameters')}
                 </h4>
                 <div className={`grid grid-cols-2 gap-3`}>
                   {formattedExifData.focalLength35mm && (
@@ -235,54 +259,54 @@ export const ExifPanel: FC<{
                 formattedExifData.flash) && (
                 <div>
                   <h4 className="my-2 text-sm font-medium text-white/80">
-                    拍摄模式
+                    {t('exif.capture.mode')}
                   </h4>
                   <div className="space-y-1 text-sm">
                     {formattedExifData.exposureMode && (
                       <Row
-                        label="曝光模式"
+                        label={t('exif.exposure.mode.title')}
                         value={formattedExifData.exposureMode}
                       />
                     )}
                     {formattedExifData.meteringMode && (
                       <Row
-                        label="测光模式"
+                        label={t('exif.metering.mode.type')}
                         value={formattedExifData.meteringMode}
                       />
                     )}
                     {formattedExifData.whiteBalance && (
                       <Row
-                        label="白平衡"
+                        label={t('exif.white.balance.title')}
                         value={formattedExifData.whiteBalance}
                       />
                     )}
                     {formattedExifData.whiteBalanceBias && (
                       <Row
-                        label="白平衡偏移"
+                        label={t('exif.white.balance.bias')}
                         value={`${formattedExifData.whiteBalanceBias} Mired`}
                       />
                     )}
                     {formattedExifData.wbShiftAB && (
                       <Row
-                        label="白平衡偏移 (琥珀-蓝)"
+                        label={t('exif.white.balance.shift.ab')}
                         value={formattedExifData.wbShiftAB}
                       />
                     )}
                     {formattedExifData.wbShiftGM && (
                       <Row
-                        label="白平衡偏移 (绿-洋红)"
+                        label={t('exif.white.balance.shift.gm')}
                         value={formattedExifData.wbShiftGM}
                       />
                     )}
                     {formattedExifData.whiteBalanceFineTune && (
                       <Row
-                        label="白平衡微调"
+                        label={t('exif.white.balance.fine.tune')}
                         value={formattedExifData.whiteBalanceFineTune}
                       />
                     )}
                     {formattedExifData.wbGRBLevels && (
                       <Row
-                        label="白平衡 GRB 级别"
+                        label={t('exif.white.balance.grb')}
                         value={
                           Array.isArray(formattedExifData.wbGRBLevels)
                             ? formattedExifData.wbGRBLevels.join(' ')
@@ -292,7 +316,7 @@ export const ExifPanel: FC<{
                     )}
                     {formattedExifData.wbGRBLevelsStandard && (
                       <Row
-                        label="标准白平衡 GRB"
+                        label={t('exif.standard.white.balance.grb')}
                         value={
                           Array.isArray(formattedExifData.wbGRBLevelsStandard)
                             ? formattedExifData.wbGRBLevelsStandard.join(' ')
@@ -302,7 +326,7 @@ export const ExifPanel: FC<{
                     )}
                     {formattedExifData.wbGRBLevelsAuto && (
                       <Row
-                        label="自动白平衡 GRB"
+                        label={t('exif.auto.white.balance.grb')}
                         value={
                           Array.isArray(formattedExifData.wbGRBLevelsAuto)
                             ? formattedExifData.wbGRBLevelsAuto.join(' ')
@@ -311,10 +335,16 @@ export const ExifPanel: FC<{
                       />
                     )}
                     {formattedExifData.flash && (
-                      <Row label="闪光灯" value={formattedExifData.flash} />
+                      <Row
+                        label={t('exif.flash.title')}
+                        value={formattedExifData.flash}
+                      />
                     )}
                     {formattedExifData.lightSource && (
-                      <Row label="光源" value={formattedExifData.lightSource} />
+                      <Row
+                        label={t('exif.light.source.type')}
+                        value={formattedExifData.lightSource}
+                      />
                     )}
                   </div>
                 </div>
@@ -323,72 +353,72 @@ export const ExifPanel: FC<{
               {formattedExifData.fujiRecipe && (
                 <div>
                   <h4 className="my-2 text-sm font-medium text-white/80">
-                    富士胶片模拟
+                    {t('exif.fuji.film.simulation')}
                   </h4>
                   <div className="space-y-1 text-sm">
                     {formattedExifData.fujiRecipe.FilmMode && (
                       <Row
-                        label="胶片模式"
+                        label={t('exif.film.mode')}
                         value={formattedExifData.fujiRecipe.FilmMode}
                       />
                     )}
                     {formattedExifData.fujiRecipe.DynamicRange && (
                       <Row
-                        label="动态范围"
+                        label={t('exif.dynamic.range')}
                         value={formattedExifData.fujiRecipe.DynamicRange}
                       />
                     )}
                     {formattedExifData.fujiRecipe.WhiteBalance && (
                       <Row
-                        label="白平衡"
+                        label={t('exif.white.balance.title')}
                         value={formattedExifData.fujiRecipe.WhiteBalance}
                       />
                     )}
                     {formattedExifData.fujiRecipe.HighlightTone && (
                       <Row
-                        label="高光色调"
+                        label={t('exif.highlight.tone')}
                         value={formattedExifData.fujiRecipe.HighlightTone}
                       />
                     )}
                     {formattedExifData.fujiRecipe.ShadowTone && (
                       <Row
-                        label="阴影色调"
+                        label={t('exif.shadow.tone')}
                         value={formattedExifData.fujiRecipe.ShadowTone}
                       />
                     )}
                     {formattedExifData.fujiRecipe.Saturation && (
                       <Row
-                        label="饱和度"
+                        label={t('exif.saturation')}
                         value={formattedExifData.fujiRecipe.Saturation}
                       />
                     )}
                     {formattedExifData.fujiRecipe.Sharpness && (
                       <Row
-                        label="锐度"
+                        label={t('exif.sharpness')}
                         value={formattedExifData.fujiRecipe.Sharpness}
                       />
                     )}
                     {formattedExifData.fujiRecipe.NoiseReduction && (
                       <Row
-                        label="降噪"
+                        label={t('exif.noise.reduction')}
                         value={formattedExifData.fujiRecipe.NoiseReduction}
                       />
                     )}
                     {formattedExifData.fujiRecipe.Clarity && (
                       <Row
-                        label="清晰度"
+                        label={t('exif.clarity')}
                         value={formattedExifData.fujiRecipe.Clarity}
                       />
                     )}
                     {formattedExifData.fujiRecipe.ColorChromeEffect && (
                       <Row
-                        label="色彩效果"
+                        label={t('exif.color.effect')}
                         value={formattedExifData.fujiRecipe.ColorChromeEffect}
                       />
                     )}
                     {formattedExifData.fujiRecipe.ColorChromeFxBlue && (
                       <Row
-                        label="蓝色色彩效果"
+                        label={t('exif.blue.color.effect')}
                         value={formattedExifData.fujiRecipe.ColorChromeFxBlue}
                       />
                     )}
@@ -397,7 +427,7 @@ export const ExifPanel: FC<{
                       <>
                         {formattedExifData.fujiRecipe.GrainEffectRoughness && (
                           <Row
-                            label="颗粒效果强度"
+                            label={t('exif.grain.effect.intensity')}
                             value={
                               formattedExifData.fujiRecipe.GrainEffectRoughness
                             }
@@ -405,7 +435,7 @@ export const ExifPanel: FC<{
                         )}
                         {formattedExifData.fujiRecipe.GrainEffectSize && (
                           <Row
-                            label="颗粒效果大小"
+                            label={t('exif.grain.effect.size')}
                             value={formattedExifData.fujiRecipe.GrainEffectSize}
                           />
                         )}
@@ -416,13 +446,13 @@ export const ExifPanel: FC<{
                       <>
                         {formattedExifData.fujiRecipe.Red && (
                           <Row
-                            label="红色调整"
+                            label={t('exif.red.adjustment')}
                             value={formattedExifData.fujiRecipe.Red}
                           />
                         )}
                         {formattedExifData.fujiRecipe.Blue && (
                           <Row
-                            label="蓝色调整"
+                            label={t('exif.blue.adjustment')}
                             value={formattedExifData.fujiRecipe.Blue}
                           />
                         )}
@@ -434,25 +464,31 @@ export const ExifPanel: FC<{
               {formattedExifData.gps && (
                 <div>
                   <h4 className="my-2 text-sm font-medium text-white/80">
-                    位置信息
+                    {t('exif.gps.location.info')}
                   </h4>
                   <div className="space-y-1 text-sm">
-                    <Row label="纬度" value={formattedExifData.gps.latitude} />
-                    <Row label="经度" value={formattedExifData.gps.longitude} />
+                    <Row
+                      label={t('exif.gps.latitude')}
+                      value={formattedExifData.gps.latitude}
+                    />
+                    <Row
+                      label={t('exif.gps.longitude')}
+                      value={formattedExifData.gps.longitude}
+                    />
                     {formattedExifData.gps.altitude && (
                       <Row
-                        label="海拔"
+                        label={t('exif.gps.altitude')}
                         value={`${formattedExifData.gps.altitude}m`}
                       />
                     )}
                     <div className="mt-2 text-right">
                       <a
-                        href={`https://uri.amap.com/marker?position=${formattedExifData.gps.longitude},${formattedExifData.gps.latitude}&name=拍摄位置`}
+                        href={`https://uri.amap.com/marker?position=${formattedExifData.gps.longitude},${formattedExifData.gps.latitude}&name=${encodeURIComponent(t('exif.gps.location.name'))}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue inline-flex items-center gap-1 text-xs underline transition-colors hover:text-blue-300"
                       >
-                        在高德地图中查看
+                        {t('exif.gps.view.map')}
                         <i className="i-mingcute-external-link-line" />
                       </a>
                     </div>
@@ -470,43 +506,43 @@ export const ExifPanel: FC<{
                 formattedExifData.focalPlaneYResolution) && (
                 <div>
                   <h4 className="my-2 text-sm font-medium text-white/80">
-                    技术参数
+                    {t('exif.technical.parameters')}
                   </h4>
                   <div className="space-y-1 text-sm">
                     {formattedExifData.brightnessValue && (
                       <Row
-                        label="亮度值"
+                        label={t('exif.brightness.value')}
                         value={formattedExifData.brightnessValue}
                       />
                     )}
                     {formattedExifData.shutterSpeedValue && (
                       <Row
-                        label="快门速度值"
+                        label={t('exif.shutter.speed.value')}
                         value={formattedExifData.shutterSpeedValue}
                       />
                     )}
                     {formattedExifData.apertureValue && (
                       <Row
-                        label="光圈值"
+                        label={t('exif.aperture.value')}
                         value={formattedExifData.apertureValue}
                       />
                     )}
                     {formattedExifData.sensingMethod && (
                       <Row
-                        label="感光方法"
+                        label={t('exif.sensing.method.type')}
                         value={formattedExifData.sensingMethod}
                       />
                     )}
                     {formattedExifData.customRendered && (
                       <Row
-                        label="图像处理"
+                        label={t('exif.custom.rendered.type')}
                         value={formattedExifData.customRendered}
                       />
                     )}
                     {(formattedExifData.focalPlaneXResolution ||
                       formattedExifData.focalPlaneYResolution) && (
                       <Row
-                        label="焦平面分辨率"
+                        label={t('exif.focal.plane.resolution')}
                         value={`${formattedExifData.focalPlaneXResolution || 'N/A'} × ${formattedExifData.focalPlaneYResolution || 'N/A'}${formattedExifData.focalPlaneResolutionUnit ? ` (${formattedExifData.focalPlaneResolutionUnit})` : ''}`}
                       />
                     )}
@@ -521,7 +557,7 @@ export const ExifPanel: FC<{
   )
 }
 
-const formatExifData = (exif: Exif | null) => {
+const formatExifData = (exif: Exif | null, t: any) => {
   if (!exif) return null
 
   const photo = exif.Photo || {}
@@ -599,59 +635,62 @@ const formatExifData = (exif: Exif | null) => {
 
   // 曝光模式
   const exposureModeMap: Record<number, string> = {
-    0: '自动曝光',
-    1: '手动曝光',
-    2: '自动包围曝光',
+    0: t('exif.exposure.mode.auto'),
+    1: t('exif.exposure.mode.manual'),
+    2: t('exif.exposure.mode.bracket'),
   }
   const exposureMode =
     photo.ExposureMode !== undefined
-      ? exposureModeMap[photo.ExposureMode] || `未知 (${photo.ExposureMode})`
+      ? exposureModeMap[photo.ExposureMode] ||
+        `${t('exif.unknown')} (${photo.ExposureMode})`
       : null
 
   // 测光模式
   const meteringModeMap: Record<number, string> = {
-    0: '未知',
-    1: '平均测光',
-    2: '中央重点测光',
-    3: '点测光',
-    4: '多点测光',
-    5: '评价测光',
-    6: '局部测光',
+    0: t('exif.metering.mode.unknown'),
+    1: t('exif.metering.mode.average'),
+    2: t('exif.metering.mode.center'),
+    3: t('exif.metering.mode.spot'),
+    4: t('exif.metering.mode.multi'),
+    5: t('exif.metering.mode.pattern'),
+    6: t('exif.metering.mode.partial'),
   }
   const meteringMode =
     photo.MeteringMode !== undefined
-      ? meteringModeMap[photo.MeteringMode] || `未知 (${photo.MeteringMode})`
+      ? meteringModeMap[photo.MeteringMode] ||
+        `${t('exif.unknown')} (${photo.MeteringMode})`
       : null
 
   // 白平衡
   const whiteBalanceMap: Record<number, string> = {
-    0: '自动白平衡',
-    1: '手动白平衡',
+    0: t('exif.white.balance.auto'),
+    1: t('exif.white.balance.manual'),
   }
   const whiteBalance =
     photo.WhiteBalance !== undefined
-      ? whiteBalanceMap[photo.WhiteBalance] || `未知 (${photo.WhiteBalance})`
+      ? whiteBalanceMap[photo.WhiteBalance] ||
+        `${t('exif.unknown')} (${photo.WhiteBalance})`
       : null
 
   // 闪光灯
   const flashMap: Record<number, string> = {
-    0: '未闪光',
-    1: '闪光',
-    5: '闪光，未检测到回闪',
-    7: '闪光，检测到回闪',
-    9: '强制闪光',
-    13: '强制闪光，未检测到回闪',
-    15: '强制闪光，检测到回闪',
-    16: '未闪光，强制关闭',
-    24: '未闪光，自动模式',
-    25: '闪光，自动模式',
-    29: '闪光，自动模式，未检测到回闪',
-    31: '闪光，自动模式，检测到回闪',
-    32: '未提供闪光功能',
+    0: t('exif.flash.disabled'),
+    1: t('exif.flash.enabled'),
+    5: t('exif.flash.disabled.return.detected'),
+    7: t('exif.flash.return.detected'),
+    9: t('exif.flash.forced.mode'),
+    13: t('exif.flash.forced.disabled.return.detected'),
+    15: t('exif.flash.forced.return.detected'),
+    16: t('exif.flash.off.mode'),
+    24: t('exif.flash.auto.no'),
+    25: t('exif.flash.auto.yes'),
+    29: t('exif.flash.auto.no.return'),
+    31: t('exif.flash.auto.return'),
+    32: t('exif.flash.unavailable'),
   }
   const flash =
     photo.Flash !== undefined
-      ? flashMap[photo.Flash] || `未知 (${photo.Flash})`
+      ? flashMap[photo.Flash] || `${t('exif.unknown')} (${photo.Flash})`
       : null
 
   // 数字变焦
@@ -679,31 +718,32 @@ const formatExifData = (exif: Exif | null) => {
 
   // 光源类型
   const lightSourceMap: Record<number, string> = {
-    0: '自动',
-    1: '日光',
-    2: '荧光灯',
-    3: '钨丝灯',
-    4: '闪光灯',
-    9: '晴天',
-    10: '阴天',
-    11: '阴影',
-    12: '日光荧光灯 (D 5700 – 7100K)',
-    13: '日白荧光灯 (N 4600 – 5400K)',
-    14: '冷白荧光灯 (W 3900 – 4500K)',
-    15: '白荧光灯 (WW 3200 – 3700K)',
-    17: '标准光源 A',
-    18: '标准光源 B',
-    19: '标准光源 C',
-    20: 'D55',
-    21: 'D65',
-    22: 'D75',
-    23: 'D50',
-    24: 'ISO 钨丝灯',
-    255: '其他光源',
+    0: t('exif.light.source.auto'),
+    1: t('exif.light.source.daylight.main'),
+    2: t('exif.light.source.fluorescent'),
+    3: t('exif.light.source.tungsten'),
+    4: t('exif.light.source.flash'),
+    9: t('exif.light.source.fine.weather'),
+    10: t('exif.light.source.cloudy'),
+    11: t('exif.light.source.shade'),
+    12: t('exif.light.source.daylight.fluorescent'),
+    13: t('exif.light.source.day.white.fluorescent'),
+    14: t('exif.light.source.cool.white.fluorescent'),
+    15: t('exif.light.source.white.fluorescent'),
+    17: t('exif.light.source.standard.a'),
+    18: t('exif.light.source.standard.b'),
+    19: t('exif.light.source.standard.c'),
+    20: t('exif.light.source.d55'),
+    21: t('exif.light.source.d65'),
+    22: t('exif.light.source.d75'),
+    23: t('exif.light.source.d50'),
+    24: t('exif.light.source.iso.tungsten'),
+    255: t('exif.light.source.other'),
   }
   const lightSource =
     photo.LightSource !== undefined
-      ? lightSourceMap[photo.LightSource] || `未知 (${photo.LightSource})`
+      ? lightSourceMap[photo.LightSource] ||
+        `${t('exif.unknown')} (${photo.LightSource})`
       : null
 
   // 白平衡偏移/微调相关字段
@@ -726,28 +766,29 @@ const formatExifData = (exif: Exif | null) => {
 
   // 感光方法
   const sensingMethodMap: Record<number, string> = {
-    1: '未定义',
-    2: '单芯片彩色区域传感器',
-    3: '双芯片彩色区域传感器',
-    4: '三芯片彩色区域传感器',
-    5: '彩色顺序区域传感器',
-    7: '三线传感器',
-    8: '彩色顺序线性传感器',
+    1: t('exif.sensing.method.undefined'),
+    2: t('exif.sensing.method.one.chip'),
+    3: t('exif.sensing.method.two.chip'),
+    4: t('exif.sensing.method.three.chip'),
+    5: t('exif.sensing.method.color.sequential.main'),
+    7: t('exif.sensing.method.trilinear'),
+    8: t('exif.sensing.method.color.sequential.linear'),
   }
   const sensingMethod =
     photo.SensingMethod !== undefined
-      ? sensingMethodMap[photo.SensingMethod] || `未知 (${photo.SensingMethod})`
+      ? sensingMethodMap[photo.SensingMethod] ||
+        `${t('exif.unknown')} (${photo.SensingMethod})`
       : null
 
   // 自定义渲染
   const customRenderedMap: Record<number, string> = {
-    0: '正常处理',
-    1: '自定义处理',
+    0: t('exif.custom.rendered.normal'),
+    1: t('exif.custom.rendered.special'),
   }
   const customRendered =
     photo.CustomRendered !== undefined
       ? customRenderedMap[photo.CustomRendered] ||
-        `未知 (${photo.CustomRendered})`
+        `${t('exif.unknown')} (${photo.CustomRendered})`
       : null
 
   // 焦平面分辨率
@@ -760,14 +801,14 @@ const formatExifData = (exif: Exif | null) => {
 
   // 焦平面分辨率单位
   const focalPlaneResolutionUnitMap: Record<number, string> = {
-    1: '无单位',
-    2: '英寸',
-    3: '厘米',
+    1: t('exif.resolution.unit.none'),
+    2: t('exif.resolution.unit.inches'),
+    3: t('exif.resolution.unit.cm'),
   }
   const focalPlaneResolutionUnit =
     photo.FocalPlaneResolutionUnit !== undefined
       ? focalPlaneResolutionUnitMap[photo.FocalPlaneResolutionUnit] ||
-        `未知 (${photo.FocalPlaneResolutionUnit})`
+        `${t('exif.unknown')} (${photo.FocalPlaneResolutionUnit})`
       : null
 
   // 像素信息
@@ -788,7 +829,8 @@ const formatExifData = (exif: Exif | null) => {
   }
   const colorSpace =
     photo.ColorSpace !== undefined
-      ? colorSpaceMap[photo.ColorSpace] || `未知 (${photo.ColorSpace})`
+      ? colorSpaceMap[photo.ColorSpace] ||
+        `${t('exif.unknown')} (${photo.ColorSpace})`
       : null
 
   // GPS 信息
@@ -897,12 +939,12 @@ const Row: FC<{
   )
 }
 
-const datetimeFormatter = new Intl.DateTimeFormat('zh-CN', {
-  dateStyle: 'short',
-  timeStyle: 'medium',
-})
-
 const formatDateTime = (date: Date | null | undefined) => {
+  const i18n = jotaiStore.get(i18nAtom)
+  const datetimeFormatter = new Intl.DateTimeFormat(i18n.language, {
+    dateStyle: 'short',
+    timeStyle: 'medium',
+  })
   if (!date) return ''
 
   return datetimeFormatter.format(date)

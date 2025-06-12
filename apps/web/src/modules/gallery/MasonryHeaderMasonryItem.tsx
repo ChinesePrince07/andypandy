@@ -1,12 +1,12 @@
 import { siteConfig } from '@config'
 import { photoLoader } from '@photo-gallery/data'
 import * as AvatarPrimitive from '@radix-ui/react-avatar'
+import { useTranslation } from 'react-i18next'
 
 import { clsxm } from '~/lib/cn'
 
 import { ActionGroup } from './ActionGroup'
 
-const numberFormatter = new Intl.NumberFormat('zh-CN')
 const data = photoLoader.getPhotos()
 
 export const MasonryHeaderMasonryItem = ({
@@ -16,6 +16,8 @@ export const MasonryHeaderMasonryItem = ({
   style?: React.CSSProperties
   className?: string
 }) => {
+  const { t } = useTranslation()
+  const { i18n } = useTranslation()
   return (
     <div
       className={clsxm(
@@ -57,7 +59,7 @@ export const MasonryHeaderMasonryItem = ({
         </h2>
 
         <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-          {numberFormatter.format(data?.length || 0)} 张照片
+          {t('gallery.photos', { count: data?.length || 0 })}
         </p>
       </div>
 
@@ -71,8 +73,8 @@ export const MasonryHeaderMasonryItem = ({
         <div className="flex items-center justify-center gap-2 text-xs text-gray-500 dark:text-gray-400">
           <i className="i-mingcute-calendar-line text-sm" />
           <span>
-            构建于{' '}
-            {new Date(BUILT_DATE).toLocaleDateString('zh-CN', {
+            {t('gallery.built.at')}
+            {new Date(BUILT_DATE).toLocaleDateString(i18n.language, {
               year: 'numeric',
               month: 'long',
               day: 'numeric',

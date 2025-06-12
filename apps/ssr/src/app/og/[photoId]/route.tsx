@@ -23,7 +23,7 @@ export const GET = async (
     // 格式化拍摄时间
     const dateTaken = photo.exif?.Photo?.DateTimeOriginal || photo.lastModified
     const formattedDate = dateTaken
-      ? new Date(dateTaken).toLocaleDateString('zh-CN')
+      ? new Date(dateTaken).toLocaleDateString('en-US')
       : ''
 
     // 处理标签

@@ -2,6 +2,7 @@ import clsx from 'clsx'
 import { m } from 'motion/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Blurhash } from 'react-blurhash'
+import { useTranslation } from 'react-i18next'
 
 import {
   CarbonIsoOutline,
@@ -27,6 +28,7 @@ export const PhotoMasonryItem = ({
   onPhotoClick: (index: number, element?: HTMLElement) => void
   photos: PhotoManifest[]
 }) => {
+  const { t } = useTranslation()
   const [imageLoaded, setImageLoaded] = useState(false)
   const [imageError, setImageError] = useState(false)
 
@@ -290,7 +292,7 @@ export const PhotoMasonryItem = ({
         <div className="bg-fill-quaternary text-text-tertiary absolute inset-0 flex items-center justify-center">
           <div className="text-center">
             <i className="i-mingcute-image-line text-2xl" />
-            <p className="mt-2 text-sm">Loaded error</p>
+            <p className="mt-2 text-sm">{t('photo.error.loading')}</p>
           </div>
         </div>
       )}
@@ -302,17 +304,21 @@ export const PhotoMasonryItem = ({
             'absolute z-20 flex items-center space-x-1 rounded-xl bg-black/50 px-1 py-1 text-xs text-white transition-all duration-200 hover:bg-black/70',
             'top-2 left-2',
           )}
-          title={isMobileDevice ? '长按播放实况照片' : '悬浮播放实况照片'}
+          title={
+            isMobileDevice
+              ? t('photo.live.tooltip.mobile.main')
+              : t('photo.live.tooltip.desktop.main')
+          }
         >
           {isConvertingVideo ? (
             <div className="flex items-center gap-1 px-1">
               <i className="i-mingcute-loading-line animate-spin" />
-              <span>视频转码中</span>
+              <span>{t('loading.converting')}</span>
             </div>
           ) : (
             <>
               <i className="i-mingcute-live-photo-line size-4" />
-              <span className="mr-1">实况</span>
+              <span className="mr-1">{t('photo.live.badge')}</span>
               {conversionMethod && (
                 <span
                   className={clsx(
@@ -328,9 +334,9 @@ export const PhotoMasonryItem = ({
                       !
                     </div>
                   ) : conversionMethod === 'webcodecs' ? (
-                    'WebCodecs'
+                    t('photo.conversion.webcodecs')
                   ) : (
-                    'FFmpeg'
+                    t('photo.conversion.ffmpeg')
                   )}
                 </span>
               )}

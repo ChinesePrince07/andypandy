@@ -1,19 +1,5 @@
-const sortObjectKeys = (obj) => {
-  if (typeof obj !== 'object' || obj === null) {
-    return obj
-  }
+import { cleanJsonText, sortObjectKeys } from './utils.js'
 
-  if (Array.isArray(obj)) {
-    return obj.map((element) => sortObjectKeys(element))
-  }
-
-  return Object.keys(obj)
-    .sort()
-    .reduce((acc, key) => {
-      acc[key] = sortObjectKeys(obj[key])
-      return acc
-    }, {})
-}
 /**
  * @type {import("eslint").ESLint.Plugin}
  */
@@ -27,16 +13,19 @@ export default {
       create(context) {
         return {
           Program(node) {
-            if (context.getFilename().endsWith('.json')) {
-              const sourceCode = context.getSourceCode()
-              const text = sourceCode.getText()
+            if (context.filename.endsWith('.json')) {
+              const { sourceCode } = context
+              const text = cleanJsonText(sourceCode.getText())
 
               try {
                 const json = JSON.parse(text)
                 const sortedJson = sortObjectKeys(json)
-                const sortedText = JSON.stringify(sortedJson, null, 2)
+                const sortedText = `${JSON.stringify(sortedJson, null, 2)}\n`
 
-                if (text.trim() !== sortedText.trim()) {
+                const noWhiteSpaceDiff = (a, b) =>
+                  a.replaceAll(/\s/g, '') === b.replaceAll(/\s/g, '')
+
+                if (!noWhiteSpaceDiff(text, sortedText)) {
                   context.report({
                     node,
                     message: 'JSON keys are not sorted recursively',

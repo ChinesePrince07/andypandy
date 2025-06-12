@@ -6,6 +6,7 @@ import 'swiper/css/navigation'
 import { AnimatePresence, m } from 'motion/react'
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { Blurhash } from 'react-blurhash'
+import { useTranslation } from 'react-i18next'
 import type { Swiper as SwiperType } from 'swiper'
 import { Keyboard, Navigation, Virtual } from 'swiper/modules'
 import { Swiper, SwiperSlide } from 'swiper/react'
@@ -35,6 +36,7 @@ export const PhotoViewer = ({
   onClose,
   onIndexChange,
 }: PhotoViewerProps) => {
+  const { t } = useTranslation()
   const containerRef = useRef<HTMLDivElement>(null)
   const swiperRef = useRef<SwiperType | null>(null)
   const [isImageZoomed, setIsImageZoomed] = useState(false)
@@ -228,7 +230,7 @@ export const PhotoViewer = ({
                           <button
                             type="button"
                             className="bg-material-ultra-thick pointer-events-auto flex size-8 items-center justify-center rounded-full text-white backdrop-blur-2xl duration-200 hover:bg-black/40"
-                            title="分享照片"
+                            title={t('photo.share.title')}
                           >
                             <i className="i-mingcute-share-2-line" />
                           </button>
