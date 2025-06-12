@@ -13,6 +13,7 @@ import type {
 } from 'masonic'
 import {
   createResizeObserver,
+  Masonry as MasonryReal,
   useMasonry,
   usePositioner,
   useScrollToIndex,
@@ -21,6 +22,7 @@ import { useForceUpdate } from 'motion/react'
 import * as React from 'react'
 
 import { useScrollViewElement } from '~/components/ui/scroll-areas/hooks'
+import { useMobile } from '~/hooks/useMobile'
 
 /**
  * A "batteries included" masonry grid which includes all of the implementation details below. This component is the
@@ -30,7 +32,7 @@ import { useScrollViewElement } from '~/components/ui/scroll-areas/hooks'
  *
  * @param props
  */
-export const Masonry = <Item,>(props: MasonryProps<Item>) => {
+const MasonryImpl = <Item,>(props: MasonryProps<Item>) => {
   const [scrollTop, setScrollTop] = React.useState(0)
   const [isScrolling, setIsScrolling] = React.useState(false)
   const scrollElement = useScrollViewElement()
@@ -239,4 +241,12 @@ function useResizeObserver(positioner: Positioner) {
   // component unmounts
   React.useEffect(() => () => resizeObserver.disconnect(), [resizeObserver])
   return resizeObserver
+}
+
+export const Masonry: typeof MasonryImpl = (props) => {
+  const isMobile = useMobile()
+  if (isMobile) {
+    return <MasonryReal {...props} />
+  }
+  return <MasonryImpl {...props} />
 }

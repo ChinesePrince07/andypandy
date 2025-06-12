@@ -8,7 +8,7 @@ inject()
 function App() {
   return (
     <RootProviders>
-      <div className="h-svh">
+      <div className="overflow-hidden lg:h-svh">
         <Outlet />
       </div>
     </RootProviders>
