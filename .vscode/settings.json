@@ -35,5 +35,8 @@
       "rule": "unused-imports/no-unused-imports",
       "severity": "off"
     }
+  ],
+  "cSpell.words": [
+    "Afilmory"
   ]
 }

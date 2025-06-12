@@ -1,4 +1,6 @@
-# Iris Photo Gallery
+# Afilmory
+
+Afilmory (/əˈfɪlməri/, “uh-FIL-muh-ree”) 是一个为个人摄影网站创造的术语，融合了对焦 (AF)、光圈（光线控制）、胶片（复古媒介）和记忆（捕捉的瞬间）。
 
 一个现代化的照片画廊网站，采用 React + TypeScript 构建，支持从多种存储源（S3、GitHub）自动同步照片，具有高性能 WebGL 渲染、瀑布流布局、EXIF 信息展示、缩略图生成等功能。
 
@@ -65,7 +67,7 @@
 
 ### Docker 部署
 
-![Docker 部署](https://github.com/Iris-Photo-Gallery/docker)
+[Docker 部署](https://github.com/Afilmory/docker)
 
 ### 环境要求
 
@@ -75,7 +77,7 @@
 ### 1. 克隆项目
 
 ```bash
-git clone https://github.com/Iris-Photo-Gallery/Iris.git
+git clone https://github.com/Afilmory/Afilmory.git
 cd photo-gallery-site
 ```
 
@@ -311,7 +313,6 @@ MIT License © 2025 Innei
 - [在线演示](https://gallery.innei.in)
 - [个人网站](https://innei.in)
 - [GitHub](https://github.com/innei)
-- [问题反馈](https://github.com/Iris-Photo-Gallery/Iris/issues)
 
 ---
 
