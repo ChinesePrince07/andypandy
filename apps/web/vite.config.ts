@@ -15,6 +15,7 @@ import PKG from '../../package.json'
 import { ogImagePlugin } from '../../plugins/og-image-plugin'
 import { createDependencyChunksPlugin } from '../../plugins/vite/deps'
 import { createFeedSitemapPlugin } from '../../plugins/vite/feed-sitemap'
+import { localesJsonPlugin } from '../../plugins/vite/locales-json'
 import { siteConfig } from '../../site.config'
 
 if (process.env.CI) {
@@ -51,6 +52,7 @@ export default defineConfig({
       ['react', 'react-dom'],
       ['i18next', 'i18next-browser-languagedetector', 'react-i18next'],
     ]),
+    localesJsonPlugin(),
     tailwindcss(),
     ogImagePlugin({
       title: siteConfig.title,
