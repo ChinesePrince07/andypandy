@@ -1,6 +1,4 @@
-import { siteConfig } from '@config'
 import { photoLoader } from '@photo-gallery/data'
-import { repository } from '@pkg'
 import { useAtom } from 'jotai'
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -50,18 +48,6 @@ export const ActionGroup = () => {
 
   return (
     <div className="flex items-center justify-center gap-3">
-      {siteConfig.extra?.accessRepo && (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-10 w-10 rounded-full border-0 bg-gray-100 transition-all duration-200 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700"
-          onClick={() => window.open(repository.url, '_blank')}
-          title={t('action.view.github')}
-        >
-          <i className="i-mingcute-github-line text-base text-gray-600 dark:text-gray-300" />
-        </Button>
-      )}
-
       {/* 标签筛选按钮 */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>

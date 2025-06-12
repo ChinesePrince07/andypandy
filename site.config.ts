@@ -10,7 +10,6 @@ interface SiteConfig {
   accentColor: string
   author: Author
   social?: Social
-  extra?: Extra
 }
 interface Author {
   name: string
@@ -19,9 +18,7 @@ interface Author {
 }
 interface Social {
   twitter: string
-}
-interface Extra {
-  accessRepo: boolean
+  github: string
 }
 
 const defaultConfig: SiteConfig = {
@@ -38,6 +35,7 @@ const defaultConfig: SiteConfig = {
   },
   social: {
     twitter: '@__oQuery',
+    github: 'Innei',
   },
 }
 export const siteConfig: SiteConfig = merge(defaultConfig, userConfig) as any

@@ -2,7 +2,7 @@
   "name": "Innei's Photo Gallery",
   "title": "Innei's Photo Gallery",
   "description": "Capturing beautiful moments in life, documenting daily warmth and emotions through my lens.",
-  "url": "https://gallery.innei.in",
+  "url": "https://afilmory.innei.in/",
   "accentColor": "#007bff",
   "author": {
     "name": "Photo Gallery",
@@ -10,9 +10,7 @@
     "avatar": "//cdn.jsdelivr.net/gh/Innei/static@master/avatar.png"
   },
   "social": {
-    "twitter": "@__oQuery"
-  },
-  "extra": {
-    "accessRepo": true
+    "twitter": "@__oQuery",
+    "github": "Innei"
   }
 }

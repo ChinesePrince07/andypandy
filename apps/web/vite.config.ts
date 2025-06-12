@@ -1,3 +1,4 @@
+import { execSync } from 'node:child_process'
 import { rmSync } from 'node:fs'
 import path from 'node:path'
 
@@ -13,6 +14,7 @@ import tsconfigPaths from 'vite-tsconfig-paths'
 import PKG from '../../package.json'
 import { ogImagePlugin } from '../../plugins/og-image-plugin'
 import { createDependencyChunksPlugin } from '../../plugins/vite/deps'
+import { createFeedSitemapPlugin } from '../../plugins/vite/feed-sitemap'
 import { siteConfig } from '../../site.config'
 
 if (process.env.CI) {
@@ -56,6 +58,7 @@ export default defineConfig({
       siteName: siteConfig.name,
       siteUrl: siteConfig.url,
     }),
+    createFeedSitemapPlugin(siteConfig),
     createHtmlPlugin({
       minify: {
         collapseWhitespace: true,
@@ -81,5 +84,15 @@ export default defineConfig({
     APP_DEV_CWD: JSON.stringify(process.cwd()),
     APP_NAME: JSON.stringify(PKG.name),
     BUILT_DATE: JSON.stringify(new Date().toLocaleDateString()),
+    GIT_COMMIT_HASH: JSON.stringify(getGitHash()),
   },
 })
+
+function getGitHash() {
+  try {
+    return execSync('git rev-parse HEAD').toString().trim()
+  } catch (e) {
+    console.error('Failed to get git hash', e)
+    return ''
+  }
+}
