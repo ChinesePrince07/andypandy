@@ -116,10 +116,10 @@ Edit `config.json`:
 
 ```json
 {
-  "name": "My Photo Gallery",
-  "title": "My Photo Gallery",
+  "name": "My Afilmory",
+  "title": "My Afilmory",
   "description": "Capturing beautiful moments in life",
-  "url": "https://gallery.example.com",
+  "url": "https://afilmory.example.com",
   "accentColor": "#007bff", // Optional, set theme color
   "author": {
     "name": "Your Name", // Required, set author name
