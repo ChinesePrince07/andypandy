@@ -60,7 +60,7 @@
   "exif.gps.location.info": "위치 정보",
   "exif.gps.location.name": "Photo Location",
   "exif.gps.longitude": "경도",
-  "exif.gps.view.map": "Kakao 지도에서 보기",
+  "exif.gps.view.map": "Amap 지도에서 보기",
   "exif.grain.effect.intensity": "그레인 효과 강도",
   "exif.grain.effect.size": "그레인 효과 크기",
   "exif.header.title": "사진 정보",

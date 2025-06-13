@@ -3,6 +3,7 @@ import jp from '@locales/app/jp.json'
 import ko from '@locales/app/ko.json'
 import zhCn from '@locales/app/zh-CN.json'
 import zhHk from '@locales/app/zh-HK.json'
+import zhTw from '@locales/app/zh-TW.json'
 
 import type { MainSupportedLanguages, ns } from './constants'
 
@@ -21,6 +22,9 @@ export const resources = {
   },
   ko: {
     app: ko,
+  },
+  'zh-TW': {
+    app: zhTw,
   },
 } satisfies Record<
   MainSupportedLanguages,
