@@ -43,9 +43,9 @@ export const ExifPanel: FC<{
     <m.div
       className={`${
         isMobile
-          ? 'exif-panel-mobile fixed right-0 bottom-0 left-0 max-h-[60vh] w-full rounded-t-2xl'
+          ? 'exif-panel-mobile fixed right-0 bottom-0 left-0 max-h-[60vh] w-full rounded-t-2xl backdrop-blur-[70px]'
           : 'w-80 shrink-0'
-      } bg-material-medium z-10 flex flex-col text-white backdrop-blur-[70px]`}
+      } bg-material-medium z-10 flex flex-col text-white`}
       initial={{
         opacity: 0,
         ...(isMobile ? { y: 100 } : { x: 100 }),
