@@ -20,7 +20,10 @@ export const GET = async (
 
   const photo = photoLoader.getPhoto(photoId)
   if (!photo) {
-    return new Response('Photo not found', { status: 404 })
+    return new Response(indexHtml, {
+      headers: { 'Content-Type': 'text/html' },
+      status: 404,
+    })
   }
 
   try {
@@ -54,6 +57,7 @@ export const GET = async (
 
     return new Response(indexHtml, {
       headers: { 'Content-Type': 'text/html' },
+      status: 500,
     })
   }
 }
@@ -65,7 +69,7 @@ const createAndInsertOpenGraphMeta = (
 ) => {
   // Open Graph meta tags
 
-  // X forward hjost
+  // X forward host
   const xForwardedHeaders = {
     'x-forwarded-host': request.headers.get('x-forwarded-host'),
     'x-forwarded-proto': request.headers.get('x-forwarded-proto'),
