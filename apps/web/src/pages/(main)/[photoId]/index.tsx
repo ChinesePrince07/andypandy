@@ -11,7 +11,7 @@ export const Component = () => {
   const photos = usePhotos()
 
   useTitle(photos[photoViewer.currentIndex]?.title || 'Not Found')
-  if (!photoViewer.currentIndex) {
+  if (!photos[photoViewer.currentIndex]) {
     return <NotFound />
   }
 
