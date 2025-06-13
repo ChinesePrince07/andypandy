@@ -145,6 +145,8 @@
   "photo.download": "下载图片",
   "photo.error.loading": "图片加载失败",
   "photo.live.badge": "实况",
+  "photo.live.converting.detail": "正在使用 {{method}} 转换视频格式...",
+  "photo.live.converting.video": "实况视频转换中",
   "photo.live.tooltip.desktop.main": "悬浮播放实况照片",
   "photo.live.tooltip.desktop.zoom": "悬浮实况标识播放 / 双击缩放",
   "photo.live.tooltip.mobile.main": "长按播放实况照片",
