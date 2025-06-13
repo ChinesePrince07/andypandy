@@ -266,6 +266,7 @@ export const LivePhoto = ({
         ref={videoRef}
         className={clsxm(
           'absolute inset-0 z-10 h-full w-full object-contain',
+          !isPlayingLivePhoto && 'hidden',
           className,
         )}
         muted
@@ -314,7 +315,7 @@ export const LivePhoto = ({
       <div className="pointer-events-none absolute bottom-4 left-1/2 z-20 -translate-x-1/2 rounded bg-black/50 px-2 py-1 text-xs text-white opacity-0 duration-200 group-hover:opacity-50">
         {isConvertingVideo
           ? t('photo.live.converting.detail', {
-              method: isWebCodecsSupported() ? 'WebCodecs' : 'FFmpeg',
+              method: isWebCodecsSupported() ? 'WebCodecs' : '',
             })
           : isMobileDevice
             ? t('photo.live.tooltip.mobile.zoom')
