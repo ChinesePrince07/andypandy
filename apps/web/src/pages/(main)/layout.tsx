@@ -35,7 +35,7 @@ export const Component = () => {
       )}
 
       {isMobile ? (
-        <ScrollElementContext value={document.documentElement}>
+        <ScrollElementContext value={document.body}>
           <MasonryRoot />
         </ScrollElementContext>
       ) : (

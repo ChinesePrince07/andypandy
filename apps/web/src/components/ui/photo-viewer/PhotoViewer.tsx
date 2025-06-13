@@ -4,7 +4,14 @@ import 'swiper/css'
 import 'swiper/css/navigation'
 
 import { AnimatePresence, m } from 'motion/react'
-import { Suspense, useCallback, useEffect, useRef, useState } from 'react'
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react'
 import { Blurhash } from 'react-blurhash'
 import { useTranslation } from 'react-i18next'
 import type { Swiper as SwiperType } from 'swiper'
@@ -47,7 +54,7 @@ export const PhotoViewer = ({
   const currentPhoto = photos[currentIndex]
 
   // 当 PhotoViewer 关闭时重置缩放状态和面板状态
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!isOpen) {
       setIsImageZoomed(false)
       setShowExifPanel(false)
@@ -203,7 +210,7 @@ export const PhotoViewer = ({
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
+                    transition={Spring.presets.snappy}
                     className={`pointer-events-none absolute ${isMobile ? 'top-2 right-2 left-2' : 'top-4 right-4 left-4'} z-30 flex items-center justify-between`}
                   >
                     {/* 左侧工具按钮 */}
@@ -283,10 +290,10 @@ export const PhotoViewer = ({
                           virtualIndex={index}
                         >
                           <m.div
-                            initial={{ opacity: 0, scale: 0.95 }}
+                            initial={{ opacity: 0.5, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}
-                            transition={{ duration: 0.3 }}
+                            transition={Spring.presets.smooth}
                             className="relative flex h-full w-full items-center justify-center"
                           >
                             <ProgressiveImage
@@ -360,15 +367,17 @@ export const PhotoViewer = ({
               {/* ExifPanel - 在桌面端始终显示，在移动端根据状态显示 */}
 
               <Suspense>
-                {(!isMobile || showExifPanel) && (
-                  <ExifPanel
-                    currentPhoto={currentPhoto}
-                    exifData={currentPhoto.exif}
-                    onClose={
-                      isMobile ? () => setShowExifPanel(false) : undefined
-                    }
-                  />
-                )}
+                <AnimatePresenceOnlyMobile>
+                  {(!isMobile || showExifPanel) && (
+                    <ExifPanel
+                      currentPhoto={currentPhoto}
+                      exifData={currentPhoto.exif}
+                      onClose={
+                        isMobile ? () => setShowExifPanel(false) : undefined
+                      }
+                    />
+                  )}
+                </AnimatePresenceOnlyMobile>
               </Suspense>
             </div>
           </div>
@@ -376,4 +385,14 @@ export const PhotoViewer = ({
       </AnimatePresence>
     </>
   )
+}
+
+const AnimatePresenceOnlyMobile = ({
+  children,
+}: {
+  children: React.ReactNode
+}) => {
+  const isMobile = useMobile()
+  if (!isMobile) return children
+  return <AnimatePresence>{children}</AnimatePresence>
 }

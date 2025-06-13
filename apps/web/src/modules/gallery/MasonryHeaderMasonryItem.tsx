@@ -55,7 +55,7 @@ export const MasonryHeaderMasonryItem = ({
           </div>
         </div>
 
-        <h2 className="mb-1 text-2xl font-semibold text-gray-900 dark:text-white">
+        <h2 className="mt-1 mb-1 text-2xl font-semibold text-gray-900 dark:text-white">
           {siteConfig.name}
         </h2>
 
@@ -108,18 +108,20 @@ export const MasonryHeaderMasonryItem = ({
               month: 'long',
               day: 'numeric',
             })}
-            <span className="ml-1">
-              (
-              <a
-                href={`${repository.url}/commit/${GIT_COMMIT_HASH}`}
-                target="_blank"
-                rel="noreferrer"
-                className="text-gray-500 dark:text-gray-400"
-              >
-                {GIT_COMMIT_HASH.slice(0, 6)}
-              </a>
-              )
-            </span>
+            {GIT_COMMIT_HASH && (
+              <span className="ml-1">
+                (
+                <a
+                  href={`${repository.url}/commit/${GIT_COMMIT_HASH}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-gray-500 dark:text-gray-400"
+                >
+                  {GIT_COMMIT_HASH.slice(0, 6)}
+                </a>
+                )
+              </span>
+            )}
           </span>
         </div>
       </div>

@@ -18,6 +18,7 @@ import {
 } from '~/icons'
 import { getImageFormat } from '~/lib/image-utils'
 import { jotaiStore } from '~/lib/jotai'
+import { Spring } from '~/lib/spring'
 import type { PhotoManifest } from '~/types/photo'
 
 import { MotionButtonBase } from '../button'
@@ -44,7 +45,7 @@ export const ExifPanel: FC<{
         isMobile
           ? 'exif-panel-mobile fixed right-0 bottom-0 left-0 max-h-[60vh] w-full rounded-t-2xl'
           : 'w-80 shrink-0'
-      } bg-material-medium z-10 flex flex-col text-white backdrop-blur-3xl`}
+      } bg-material-medium z-10 flex flex-col text-white backdrop-blur-[70px]`}
       initial={{
         opacity: 0,
         ...(isMobile ? { y: 100 } : { x: 100 }),
@@ -57,7 +58,7 @@ export const ExifPanel: FC<{
         opacity: 0,
         ...(isMobile ? { y: 100 } : { x: 100 }),
       }}
-      transition={{ duration: 0.3 }}
+      transition={Spring.presets.smooth}
     >
       <div className="mb-4 flex shrink-0 items-center justify-between p-4 pb-0">
         <h3 className={`${isMobile ? 'text-base' : 'text-lg'} font-semibold`}>

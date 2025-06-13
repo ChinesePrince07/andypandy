@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useMobile } from '~/hooks/useMobile'
 import { clsxm } from '~/lib/cn'
 import { nextFrame } from '~/lib/dom'
+import { Spring } from '~/lib/spring'
 import type { PhotoManifest } from '~/types/photo'
 
 const thumbnailSize = {
@@ -97,10 +98,10 @@ export const GalleryThumbnail: FC<{
   return (
     <m.div
       className="bg-material-medium pb-safe z-10 shrink-0 backdrop-blur-3xl"
-      initial={{ opacity: 0, y: 100 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 100 }}
-      transition={{ duration: 0.3 }}
+      initial={{ y: 100 }}
+      animate={{ y: 0 }}
+      exit={{ y: 100 }}
+      transition={Spring.presets.smooth}
     >
       <div className="bg-material-medium backdrop-blur-[70px]">
         <div

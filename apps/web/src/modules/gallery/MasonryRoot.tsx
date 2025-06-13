@@ -104,16 +104,16 @@ export const MasonryRoot = () => {
       )}
 
       {/* 移动端：垂直堆叠 */}
-      {isMobile && showFloatingActions && !!dateRange.formattedRange && (
+      {isMobile && !!dateRange.formattedRange && (
         <div className="fixed top-0 right-0 left-0 z-50">
           <DateRangeIndicator
             dateRange={dateRange.formattedRange}
             location={dateRange.location}
-            isVisible={true}
+            isVisible={showFloatingActions && !!dateRange.formattedRange}
             className="relative top-0 left-0"
           />
           <div className="flex justify-end">
-            <FloatingActionBar showFloatingActions={true} />
+            <FloatingActionBar showFloatingActions={showFloatingActions} />
           </div>
         </div>
       )}

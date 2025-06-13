@@ -303,6 +303,7 @@ export const PhotoMasonryItem = ({
           className={clsx(
             'absolute z-20 flex items-center space-x-1 rounded-xl bg-black/50 px-1 py-1 text-xs text-white transition-all duration-200 hover:bg-black/70',
             'top-2 left-2',
+            'flex-wrap gap-y-1',
           )}
           title={
             isMobileDevice
@@ -317,8 +318,8 @@ export const PhotoMasonryItem = ({
             </div>
           ) : (
             <>
-              <i className="i-mingcute-live-photo-line size-4" />
-              <span className="mr-1">{t('photo.live.badge')}</span>
+              <i className="i-mingcute-live-photo-line size-4 shrink-0" />
+              <span className="mr-1 shrink-0">{t('photo.live.badge')}</span>
               {conversionMethod && (
                 <span
                   className={clsx(
@@ -328,7 +329,7 @@ export const PhotoMasonryItem = ({
                 >
                   {videoConvertionError ? (
                     <div
-                      className="w-3 text-center font-bold text-yellow-400"
+                      className="text-yellow w-3 text-center font-bold"
                       title={(videoConvertionError as Error).message}
                     >
                       !
