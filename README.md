@@ -1,4 +1,8 @@
-# Afilmory
+<p align="center">
+  <img src="https://github.com/Afilmory/assets/blob/main/512-mac.png?raw=true" alt="Afilmory" width="256px" />
+</p>
+
+# <p align="center">Afilmory</p>
 
 Afilmory (/əˈfɪlməri/, "uh-FIL-muh-ree") is a term created for personal photography websites, blending Auto Focus (AF), aperture (light control), film (vintage medium), and memory (captured moments).
 
@@ -19,6 +23,7 @@ Live Photo Galleries:
 - 🎨 **Modern UI Design** - Built with Tailwind CSS and Radix UI component library
 - ⚡ **Incremental Sync** - Smart change detection, processes only new or modified photos
 - 🌐 **i18n** - Multi-language support
+- 🌐 **OpenGraph** - OpenGraph metadata for social media sharing
 
 ### Image Processing
 
