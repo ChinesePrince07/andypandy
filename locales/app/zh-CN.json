@@ -164,5 +164,19 @@
   "photo.webgl.unavailable": "WebGL 不可用，无法渲染图片",
   "photo.zoom.hint": "双击或双指缩放",
   "slider.auto": "自动",
-  "video.codec.keyword": "编码器"
+  "video.codec.keyword": "编码器",
+  "video.conversion.cached.result": "使用缓存结果",
+  "video.conversion.codec.fallback": "无法找到此分辨率支持的 MP4 编解码器。回退到 WebM。",
+  "video.conversion.complete": "转换完成",
+  "video.conversion.converting": "转换中... {{current}}/{{total}} 帧",
+  "video.conversion.duration.error": "无法确定视频时长或时长不是有限值。",
+  "video.conversion.encoder.error": "由于编码器错误，中止转换。",
+  "video.conversion.failed": "视频转换失败",
+  "video.conversion.initializing": "正在初始化视频转换器...",
+  "video.conversion.loading": "正在加载视频文件...",
+  "video.conversion.starting": "开始转换...",
+  "video.conversion.webcodecs.high.quality": "使用高质量 WebCodecs 转换器...",
+  "video.conversion.webcodecs.not.supported": "此浏览器不支持 WebCodecs",
+  "video.format.mov.not.supported": "浏览器不支持 MOV 格式，需要转换",
+  "video.format.mov.supported": "浏览器原生支持 MOV 格式，跳过转换"
 }

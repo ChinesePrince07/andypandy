@@ -164,5 +164,19 @@
   "photo.webgl.unavailable": "WebGL unavailable, cannot render image",
   "photo.zoom.hint": "Double click or pinch to zoom",
   "slider.auto": "Auto",
-  "video.codec.keyword": "encoder"
+  "video.codec.keyword": "encoder",
+  "video.conversion.cached.result": "Using cached result",
+  "video.conversion.codec.fallback": "Could not find a supported MP4 codec for this resolution. Falling back to WebM.",
+  "video.conversion.complete": "Conversion complete",
+  "video.conversion.converting": "Converting... {{current}}/{{total}} frames",
+  "video.conversion.duration.error": "Could not determine video duration or duration is not finite.",
+  "video.conversion.encoder.error": "Aborting conversion due to encoder error.",
+  "video.conversion.failed": "Video conversion failed",
+  "video.conversion.initializing": "Initializing video converter...",
+  "video.conversion.loading": "Loading video file...",
+  "video.conversion.starting": "Starting conversion...",
+  "video.conversion.webcodecs.high.quality": "Using high-quality WebCodecs converter...",
+  "video.conversion.webcodecs.not.supported": "WebCodecs not supported in this browser",
+  "video.format.mov.not.supported": "Browser does not support MOV format, conversion needed",
+  "video.format.mov.supported": "Browser natively supports MOV format, skipping conversion"
 }

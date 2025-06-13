@@ -164,5 +164,19 @@
   "photo.webgl.unavailable": "WebGLが利用できないため、画像をレンダリングできません",
   "photo.zoom.hint": "ダブルタップまたはピンチでズーム",
   "slider.auto": "自動",
-  "video.codec.keyword": "エンコーダー"
+  "video.codec.keyword": "エンコーダー",
+  "video.conversion.cached.result": "キャッシュされた結果を使用",
+  "video.conversion.codec.fallback": "この解像度でサポートされているMP4コーデックが見つかりません。WebMにフォールバックします。",
+  "video.conversion.complete": "変換完了",
+  "video.conversion.converting": "変換中... {{current}}/{{total}} フレーム",
+  "video.conversion.duration.error": "ビデオの長さを特定できないか、長さが有限値ではありません。",
+  "video.conversion.encoder.error": "エンコーダーエラーのため変換を中止します。",
+  "video.conversion.failed": "ビデオ変換に失敗しました",
+  "video.conversion.initializing": "ビデオコンバーターを初期化中...",
+  "video.conversion.loading": "ビデオファイルを読み込み中...",
+  "video.conversion.starting": "変換を開始中...",
+  "video.conversion.webcodecs.high.quality": "高品質WebCodecsコンバーターを使用中...",
+  "video.conversion.webcodecs.not.supported": "このブラウザはWebCodecsをサポートしていません",
+  "video.format.mov.not.supported": "ブラウザがMOV形式をサポートしていないため、変換が必要です",
+  "video.format.mov.supported": "ブラウザがMOV形式をネイティブサポートしているため、変換をスキップします"
 }

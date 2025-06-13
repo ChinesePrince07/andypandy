@@ -1,5 +1,7 @@
 import { ArrayBufferTarget, Muxer } from 'mp4-muxer'
 
+import { getI18n } from '~/i18n'
+
 import { isSafari } from './device-viewport'
 import { LRUCache } from './lru-cache'
 
@@ -55,9 +57,11 @@ export function isVideoConversionSupported(): boolean {
 // 使用简化的 MediaRecorder 方式转换视频
 function convertVideoWithWebCodecs(
   videoUrl: string,
+
   onProgress?: (progress: ConversionProgress) => void,
   preferMp4 = true,
 ): Promise<ConversionResult> {
+  const { t } = getI18n()
   return new Promise((resolve) => {
     let muxer: Muxer<ArrayBufferTarget> | null = null
     let encoder: VideoEncoder | null = null
@@ -74,7 +78,7 @@ function convertVideoWithWebCodecs(
         onProgress?.({
           isConverting: true,
           progress: 0,
-          message: 'Initializing video converter...',
+          message: t('video.conversion.initializing'),
         })
 
         const video = document.createElement('video')
@@ -85,7 +89,7 @@ function convertVideoWithWebCodecs(
         onProgress?.({
           isConverting: true,
           progress: 10,
-          message: 'Loading video file...',
+          message: t('video.conversion.loading'),
         })
 
         await new Promise<void>((videoResolve, videoReject) => {
@@ -97,9 +101,7 @@ function convertVideoWithWebCodecs(
 
         const { videoWidth, videoHeight, duration } = video
         if (!duration || !Number.isFinite(duration)) {
-          throw new Error(
-            'Could not determine video duration or duration is not finite.',
-          )
+          throw new Error(t('video.conversion.duration.error'))
         }
         const frameRate = 30 // Desired frame rate
 
@@ -142,9 +144,7 @@ function convertVideoWithWebCodecs(
         }
 
         if (outputFormat === 'WebM' && preferMp4) {
-          console.warn(
-            'Could not find a supported MP4 codec for this resolution. Falling back to WebM.',
-          )
+          console.warn(t('video.conversion.codec.fallback'))
         }
 
         console.info(`Target format: ${outputFormat} (${codec})`)
@@ -186,13 +186,13 @@ function convertVideoWithWebCodecs(
         onProgress?.({
           isConverting: true,
           progress: 20,
-          message: 'Starting conversion...',
+          message: t('video.conversion.starting'),
         })
 
         const frameInterval = 1 / frameRate
         for (let i = 0; i < totalFrames; i++) {
           if (conversionHasFailed) {
-            console.warn('Aborting conversion due to encoder error.')
+            console.warn(t('video.conversion.encoder.error'))
             return
           }
 
@@ -212,7 +212,10 @@ function convertVideoWithWebCodecs(
           onProgress?.({
             isConverting: true,
             progress,
-            message: `Converting... ${i + 1}/${totalFrames} frames`,
+            message: t('video.conversion.converting', {
+              current: i + 1,
+              total: totalFrames,
+            }),
           })
         }
 
@@ -228,7 +231,7 @@ function convertVideoWithWebCodecs(
         onProgress?.({
           isConverting: false,
           progress: 100,
-          message: 'Conversion complete',
+          message: t('video.conversion.complete'),
         })
 
         resolve({
@@ -242,7 +245,9 @@ function convertVideoWithWebCodecs(
         resolve({
           success: false,
           error:
-            error instanceof Error ? error.message : 'Video conversion failed',
+            error instanceof Error
+              ? error.message
+              : t('video.conversion.failed'),
         })
       } finally {
         cleanup()
@@ -293,10 +298,12 @@ export function needsVideoConversion(url: string): boolean {
 
 export async function convertMovToMp4(
   videoUrl: string,
+
   onProgress?: (progress: ConversionProgress) => void,
   forceReconvert = false, // 添加强制重新转换参数
   preferMp4 = true, // 新增参数：是否优先选择MP4格式
 ): Promise<ConversionResult> {
+  const { t } = getI18n()
   // Check cache first, unless forced to reconvert
   if (!forceReconvert) {
     const cachedResult = videoCache.get(videoUrl)
@@ -305,7 +312,7 @@ export async function convertMovToMp4(
       onProgress?.({
         isConverting: false,
         progress: 100,
-        message: '使用缓存结果',
+        message: t('video.conversion.cached.result'),
       })
       console.info(`Cached video conversion result:`, cachedResult)
       return cachedResult
@@ -324,7 +331,7 @@ export async function convertMovToMp4(
     onProgress?.({
       isConverting: true,
       progress: 0,
-      message: '使用高质量 WebCodecs 转换器...',
+      message: t('video.conversion.webcodecs.high.quality'),
     })
 
     const result = await convertVideoWithWebCodecs(
@@ -345,11 +352,11 @@ export async function convertMovToMp4(
     return result
   }
 
-  console.info('WebCodecs not supported, falling back to FFmpeg...')
+  console.error('WebCodecs not supported.')
 
   const fallbackResult = {
     success: false,
-    error: 'WebCodecs not supported in this browser',
+    error: t('video.conversion.webcodecs.not.supported'),
   }
 
   return fallbackResult

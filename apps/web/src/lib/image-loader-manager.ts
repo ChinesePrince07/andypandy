@@ -335,6 +335,7 @@ export class ImageLoaderManager {
     console.info('Converting MOV video to MP4...')
 
     const i18n = jotaiStore.get(i18nAtom)
+
     const result = await convertMovToMp4(livePhotoVideoUrl, (progress) => {
       // 检查是否包含编码器信息（支持多语言）
       const codecKeywords: string[] = [
