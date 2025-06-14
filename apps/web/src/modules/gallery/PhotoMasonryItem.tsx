@@ -77,27 +77,26 @@ export const PhotoMasonryItem = ({
       }
     }
 
-    const photo = exif.Photo || {}
-    const image = exif.Image || {}
-
     // 等效焦距 (35mm)
-    const focalLength35mm =
-      photo.FocalLengthIn35mmFilm ||
-      (photo.FocalLength ? Math.round(photo.FocalLength) : null)
+    const focalLength35mm = exif.FocalLengthIn35mmFormat
+      ? Number.parseInt(exif.FocalLengthIn35mmFormat)
+      : exif.FocalLength
+        ? Number.parseInt(exif.FocalLength)
+        : null
 
     // ISO
-    const iso = photo.ISOSpeedRatings || image.ISOSpeedRatings
+    const iso = exif.ISO
 
     // 快门速度
-    const exposureTime = photo.ExposureTime
+    const exposureTime = exif.ExposureTime
     const shutterSpeed = exposureTime
-      ? exposureTime >= 1
+      ? typeof exposureTime === 'number' && exposureTime >= 1
         ? `${exposureTime}s`
-        : `1/${Math.round(1 / exposureTime)}`
+        : `1/${Math.round(1 / (exposureTime as number))}`
       : null
 
     // 光圈
-    const aperture = photo.FNumber ? `f/${photo.FNumber}` : null
+    const aperture = exif.FNumber ? `f/${exif.FNumber}` : null
 
     return {
       focalLength35mm,

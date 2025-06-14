@@ -34,3 +34,6 @@ class PhotoLoader {
   }
 }
 export const photoLoader = new PhotoLoader()
+
+export type { PhotoManifest } from './types'
+export type { PickedExif } from '@afilmory/builder'

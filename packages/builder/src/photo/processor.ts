@@ -2,7 +2,6 @@ import path from 'node:path'
 
 import { workdir } from '@afilmory/builder/path.js'
 import type { _Object } from '@aws-sdk/client-s3'
-import type { Exif } from 'exif-reader'
 import sharp from 'sharp'
 
 import { HEIC_FORMATS } from '../constants/index.js'
@@ -20,7 +19,11 @@ import {
 import type { Logger } from '../logger/index.js'
 import { needsUpdate } from '../manifest/manager.js'
 import { generateS3Url, getImageFromS3 } from '../s3/operations.js'
-import type { PhotoManifestItem, ProcessPhotoResult } from '../types/photo.js'
+import type {
+  PhotoManifestItem,
+  PickedExif,
+  ProcessPhotoResult,
+} from '../types/photo.js'
 import { extractPhotoInfo } from './info-extractor.js'
 
 export interface PhotoProcessorOptions {
@@ -197,7 +200,7 @@ export async function processPhoto(
     }
 
     // 如果是增量更新且已有 EXIF 数据，可以复用
-    let exifData: Exif | null = null
+    let exifData: PickedExif | null = null
     if (
       !options.isForceMode &&
       !options.isForceManifest &&

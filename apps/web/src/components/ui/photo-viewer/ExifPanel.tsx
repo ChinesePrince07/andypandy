@@ -1,6 +1,7 @@
 import './PhotoViewer.css'
 
-import type { Exif } from 'exif-reader'
+import type { PickedExif } from '@afilmory/data'
+import { isNil } from 'es-toolkit/compat'
 import { m } from 'motion/react'
 import type { FC } from 'react'
 import { Fragment } from 'react'
@@ -8,7 +9,6 @@ import { useTranslation } from 'react-i18next'
 
 import { ScrollArea } from '~/components/ui/scroll-areas/ScrollArea'
 import { useMobile } from '~/hooks/useMobile'
-import { i18nAtom } from '~/i18n'
 import {
   CarbonIsoOutline,
   MaterialSymbolsExposure,
@@ -17,22 +17,21 @@ import {
   TablerAperture,
 } from '~/icons'
 import { getImageFormat } from '~/lib/image-utils'
-import { jotaiStore } from '~/lib/jotai'
 import { Spring } from '~/lib/spring'
 import type { PhotoManifest } from '~/types/photo'
 
 import { MotionButtonBase } from '../button'
-import { EllipsisHorizontalTextWithTooltip } from '../typography'
+import { formatExifData, Row } from './formatExifData'
 
 export const ExifPanel: FC<{
   currentPhoto: PhotoManifest
-  exifData: Exif | null
+  exifData: PickedExif | null
 
   onClose?: () => void
 }> = ({ currentPhoto, exifData, onClose }) => {
   const { t } = useTranslation()
   const isMobile = useMobile()
-  const formattedExifData = formatExifData(exifData, t)
+  const formattedExifData = formatExifData(exifData)
 
   // 使用通用的图片格式提取函数
   const imageFormat = getImageFormat(
@@ -126,10 +125,10 @@ export const ExifPanel: FC<{
             {/* 标签信息 - 移到基本信息 section 内 */}
             {currentPhoto.tags && currentPhoto.tags.length > 0 && (
               <div className="mt-3">
-                <div className="mb-2 text-sm text-white/80">
+                <h4 className="mb-2 text-sm font-medium text-white/80">
                   {t('exif.tags')}
-                </div>
-                <div className="flex flex-wrap gap-1.5">
+                </h4>
+                <div className="-ml-1 flex flex-wrap gap-1.5">
                   {currentPhoto.tags.map((tag) => (
                     <MotionButtonBase
                       type="button"
@@ -190,12 +189,6 @@ export const ExifPanel: FC<{
                         value={`f/${formattedExifData.maxAperture}`}
                       />
                     )}
-                    {formattedExifData.digitalZoom && (
-                      <Row
-                        label={t('exif.digital.zoom')}
-                        value={`${formattedExifData.digitalZoom.toFixed(2)}x`}
-                      />
-                    )}
                   </div>
                 </div>
               )}
@@ -254,6 +247,7 @@ export const ExifPanel: FC<{
 
               {/* 新增：拍摄模式信息 */}
               {(formattedExifData.exposureMode ||
+                formattedExifData.exposureProgram ||
                 formattedExifData.meteringMode ||
                 formattedExifData.whiteBalance ||
                 formattedExifData.lightSource ||
@@ -263,85 +257,62 @@ export const ExifPanel: FC<{
                     {t('exif.capture.mode')}
                   </h4>
                   <div className="space-y-1 text-sm">
-                    {formattedExifData.exposureMode && (
+                    {!isNil(formattedExifData.exposureProgram) && (
+                      <Row
+                        label={t('exif.exposureprogram.title')}
+                        value={formattedExifData.exposureProgram}
+                      />
+                    )}
+                    {!isNil(formattedExifData.exposureMode) && (
                       <Row
                         label={t('exif.exposure.mode.title')}
                         value={formattedExifData.exposureMode}
                       />
                     )}
-                    {formattedExifData.meteringMode && (
+                    {!isNil(formattedExifData.meteringMode) && (
                       <Row
                         label={t('exif.metering.mode.type')}
                         value={formattedExifData.meteringMode}
                       />
                     )}
-                    {formattedExifData.whiteBalance && (
+                    {!isNil(formattedExifData.whiteBalance) && (
                       <Row
                         label={t('exif.white.balance.title')}
                         value={formattedExifData.whiteBalance}
                       />
                     )}
-                    {formattedExifData.whiteBalanceBias && (
+                    {!isNil(formattedExifData.whiteBalanceBias) && (
                       <Row
                         label={t('exif.white.balance.bias')}
                         value={`${formattedExifData.whiteBalanceBias} Mired`}
                       />
                     )}
-                    {formattedExifData.wbShiftAB && (
+                    {!isNil(formattedExifData.wbShiftAB) && (
                       <Row
                         label={t('exif.white.balance.shift.ab')}
                         value={formattedExifData.wbShiftAB}
                       />
                     )}
-                    {formattedExifData.wbShiftGM && (
+                    {!isNil(formattedExifData.wbShiftGM) && (
                       <Row
                         label={t('exif.white.balance.shift.gm')}
                         value={formattedExifData.wbShiftGM}
                       />
                     )}
-                    {formattedExifData.whiteBalanceFineTune && (
+                    {!isNil(formattedExifData.whiteBalanceFineTune) && (
                       <Row
                         label={t('exif.white.balance.fine.tune')}
                         value={formattedExifData.whiteBalanceFineTune}
                       />
                     )}
-                    {formattedExifData.wbGRBLevels && (
-                      <Row
-                        label={t('exif.white.balance.grb')}
-                        value={
-                          Array.isArray(formattedExifData.wbGRBLevels)
-                            ? formattedExifData.wbGRBLevels.join(' ')
-                            : formattedExifData.wbGRBLevels
-                        }
-                      />
-                    )}
-                    {formattedExifData.wbGRBLevelsStandard && (
-                      <Row
-                        label={t('exif.standard.white.balance.grb')}
-                        value={
-                          Array.isArray(formattedExifData.wbGRBLevelsStandard)
-                            ? formattedExifData.wbGRBLevelsStandard.join(' ')
-                            : formattedExifData.wbGRBLevelsStandard
-                        }
-                      />
-                    )}
-                    {formattedExifData.wbGRBLevelsAuto && (
-                      <Row
-                        label={t('exif.auto.white.balance.grb')}
-                        value={
-                          Array.isArray(formattedExifData.wbGRBLevelsAuto)
-                            ? formattedExifData.wbGRBLevelsAuto.join(' ')
-                            : formattedExifData.wbGRBLevelsAuto
-                        }
-                      />
-                    )}
-                    {formattedExifData.flash && (
+
+                    {!isNil(formattedExifData.flash) && (
                       <Row
                         label={t('exif.flash.title')}
                         value={formattedExifData.flash}
                       />
                     )}
-                    {formattedExifData.lightSource && (
+                    {!isNil(formattedExifData.lightSource) && (
                       <Row
                         label={t('exif.light.source.type')}
                         value={formattedExifData.lightSource}
@@ -363,68 +334,80 @@ export const ExifPanel: FC<{
                         value={formattedExifData.fujiRecipe.FilmMode}
                       />
                     )}
-                    {formattedExifData.fujiRecipe.DynamicRange && (
+                    {!isNil(formattedExifData.fujiRecipe.DynamicRange) && (
                       <Row
                         label={t('exif.dynamic.range')}
                         value={formattedExifData.fujiRecipe.DynamicRange}
                       />
                     )}
-                    {formattedExifData.fujiRecipe.WhiteBalance && (
+                    {!isNil(formattedExifData.fujiRecipe.WhiteBalance) && (
                       <Row
                         label={t('exif.white.balance.title')}
                         value={formattedExifData.fujiRecipe.WhiteBalance}
                       />
                     )}
-                    {formattedExifData.fujiRecipe.HighlightTone && (
+                    {!isNil(formattedExifData.fujiRecipe.HighlightTone) && (
                       <Row
                         label={t('exif.highlight.tone')}
                         value={formattedExifData.fujiRecipe.HighlightTone}
                       />
                     )}
-                    {formattedExifData.fujiRecipe.ShadowTone && (
+                    {!isNil(formattedExifData.fujiRecipe.ShadowTone) && (
                       <Row
                         label={t('exif.shadow.tone')}
                         value={formattedExifData.fujiRecipe.ShadowTone}
                       />
                     )}
-                    {formattedExifData.fujiRecipe.Saturation && (
+                    {!isNil(formattedExifData.fujiRecipe.Saturation) && (
                       <Row
                         label={t('exif.saturation')}
                         value={formattedExifData.fujiRecipe.Saturation}
                       />
                     )}
-                    {formattedExifData.fujiRecipe.Sharpness && (
+                    {!isNil(formattedExifData.fujiRecipe.Sharpness) && (
                       <Row
                         label={t('exif.sharpness')}
                         value={formattedExifData.fujiRecipe.Sharpness}
                       />
                     )}
-                    {formattedExifData.fujiRecipe.NoiseReduction && (
+                    {!isNil(formattedExifData.fujiRecipe.NoiseReduction) && (
                       <Row
                         label={t('exif.noise.reduction')}
                         value={formattedExifData.fujiRecipe.NoiseReduction}
                       />
                     )}
-                    {formattedExifData.fujiRecipe.Clarity && (
+                    {!isNil(formattedExifData.fujiRecipe.Clarity) && (
                       <Row
                         label={t('exif.clarity')}
                         value={formattedExifData.fujiRecipe.Clarity}
                       />
                     )}
-                    {formattedExifData.fujiRecipe.ColorChromeEffect && (
+                    {!isNil(formattedExifData.fujiRecipe.ColorChromeEffect) && (
                       <Row
                         label={t('exif.color.effect')}
                         value={formattedExifData.fujiRecipe.ColorChromeEffect}
                       />
                     )}
-                    {formattedExifData.fujiRecipe.ColorChromeFxBlue && (
+                    {!isNil(formattedExifData.fujiRecipe.ColorChromeFxBlue) && (
                       <Row
                         label={t('exif.blue.color.effect')}
                         value={formattedExifData.fujiRecipe.ColorChromeFxBlue}
                       />
                     )}
-                    {(formattedExifData.fujiRecipe.GrainEffectRoughness ||
-                      formattedExifData.fujiRecipe.GrainEffectSize) && (
+                    {!isNil(
+                      formattedExifData.fujiRecipe.WhiteBalanceFineTune,
+                    ) && (
+                      <Row
+                        label={t('exif.white.balance.fine.tune')}
+                        value={
+                          formattedExifData.fujiRecipe.WhiteBalanceFineTune
+                        }
+                      />
+                    )}
+                    {(!isNil(
+                      formattedExifData.fujiRecipe.GrainEffectRoughness,
+                    ) ||
+                      !isNil(formattedExifData.fujiRecipe.GrainEffectSize)) && (
                       <>
                         {formattedExifData.fujiRecipe.GrainEffectRoughness && (
                           <Row
@@ -434,7 +417,9 @@ export const ExifPanel: FC<{
                             }
                           />
                         )}
-                        {formattedExifData.fujiRecipe.GrainEffectSize && (
+                        {!isNil(
+                          formattedExifData.fujiRecipe.GrainEffectSize,
+                        ) && (
                           <Row
                             label={t('exif.grain.effect.size')}
                             value={formattedExifData.fujiRecipe.GrainEffectSize}
@@ -442,57 +427,6 @@ export const ExifPanel: FC<{
                         )}
                       </>
                     )}
-                    {(formattedExifData.fujiRecipe.Red ||
-                      formattedExifData.fujiRecipe.Blue) && (
-                      <>
-                        {formattedExifData.fujiRecipe.Red && (
-                          <Row
-                            label={t('exif.red.adjustment')}
-                            value={formattedExifData.fujiRecipe.Red}
-                          />
-                        )}
-                        {formattedExifData.fujiRecipe.Blue && (
-                          <Row
-                            label={t('exif.blue.adjustment')}
-                            value={formattedExifData.fujiRecipe.Blue}
-                          />
-                        )}
-                      </>
-                    )}
-                  </div>
-                </div>
-              )}
-              {formattedExifData.gps && (
-                <div>
-                  <h4 className="my-2 text-sm font-medium text-white/80">
-                    {t('exif.gps.location.info')}
-                  </h4>
-                  <div className="space-y-1 text-sm">
-                    <Row
-                      label={t('exif.gps.latitude')}
-                      value={formattedExifData.gps.latitude}
-                    />
-                    <Row
-                      label={t('exif.gps.longitude')}
-                      value={formattedExifData.gps.longitude}
-                    />
-                    {formattedExifData.gps.altitude && (
-                      <Row
-                        label={t('exif.gps.altitude')}
-                        value={`${formattedExifData.gps.altitude}m`}
-                      />
-                    )}
-                    <div className="mt-2 text-right">
-                      <a
-                        href={`https://uri.amap.com/marker?position=${formattedExifData.gps.longitude},${formattedExifData.gps.latitude}&name=${encodeURIComponent(t('exif.gps.location.name'))}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue inline-flex items-center gap-1 text-xs underline transition-colors hover:text-blue-300"
-                      >
-                        {t('exif.gps.view.map')}
-                        <i className="i-mingcute-external-link-line" />
-                      </a>
-                    </div>
                   </div>
                 </div>
               )}
@@ -502,7 +436,6 @@ export const ExifPanel: FC<{
                 formattedExifData.shutterSpeedValue ||
                 formattedExifData.apertureValue ||
                 formattedExifData.sensingMethod ||
-                formattedExifData.customRendered ||
                 formattedExifData.focalPlaneXResolution ||
                 formattedExifData.focalPlaneYResolution) && (
                 <div>
@@ -534,17 +467,12 @@ export const ExifPanel: FC<{
                         value={formattedExifData.sensingMethod}
                       />
                     )}
-                    {formattedExifData.customRendered && (
-                      <Row
-                        label={t('exif.custom.rendered.type')}
-                        value={formattedExifData.customRendered}
-                      />
-                    )}
+
                     {(formattedExifData.focalPlaneXResolution ||
                       formattedExifData.focalPlaneYResolution) && (
                       <Row
                         label={t('exif.focal.plane.resolution')}
-                        value={`${formattedExifData.focalPlaneXResolution || 'N/A'} × ${formattedExifData.focalPlaneYResolution || 'N/A'}${formattedExifData.focalPlaneResolutionUnit ? ` (${formattedExifData.focalPlaneResolutionUnit})` : ''}`}
+                        value={`${formattedExifData.focalPlaneXResolution || 'N/A'} × ${formattedExifData.focalPlaneYResolution || 'N/A'}`}
                       />
                     )}
                   </div>
@@ -556,397 +484,4 @@ export const ExifPanel: FC<{
       </ScrollArea>
     </m.div>
   )
-}
-
-const formatExifData = (exif: Exif | null, t: any) => {
-  if (!exif) return null
-
-  const photo = exif.Photo || {}
-  const image = exif.Image || {}
-  const gps = exif.GPSInfo || {}
-
-  // 等效焦距 (35mm)
-  const focalLength35mm = photo.FocalLengthIn35mmFilm
-    ? Math.round(photo.FocalLengthIn35mmFilm)
-    : null
-
-  // 实际焦距
-  const focalLength = photo.FocalLength ? Math.round(photo.FocalLength) : null
-
-  // ISO
-  const iso = photo.ISOSpeedRatings || image.ISOSpeedRatings
-
-  // 快门速度
-  const exposureTime = photo.ExposureTime
-  const shutterSpeed = exposureTime
-    ? exposureTime >= 1
-      ? `${exposureTime}s`
-      : `1/${Math.round(1 / exposureTime)}`
-    : null
-
-  // 光圈
-  const aperture = photo.FNumber ? `f/${photo.FNumber}` : null
-
-  // 最大光圈
-  const maxAperture = photo.MaxApertureValue
-    ? `${Math.round(Math.pow(Math.sqrt(2), photo.MaxApertureValue) * 10) / 10}`
-    : null
-
-  // 相机信息
-  const camera =
-    image.Make && image.Model ? `${image.Make} ${image.Model}` : null
-
-  // 镜头信息
-  const lens =
-    photo.LensModel || photo.LensSpecification || photo.LensMake || null
-
-  // 软件信息
-  const software = image.Software || null
-
-  const offsetTimeOriginal = photo.OffsetTimeOriginal || photo.OffsetTime
-  // 拍摄时间
-  const dateTime: string | null = (() => {
-    const originalDateTimeStr =
-      (photo.DateTimeOriginal as unknown as string) ||
-      (photo.DateTime as unknown as string)
-
-    if (!originalDateTimeStr) return null
-
-    const date = new Date(originalDateTimeStr)
-
-    if (offsetTimeOriginal) {
-      // 解析时区偏移，例如 "+08:00" 或 "-05:00"
-      const offsetMatch = offsetTimeOriginal.match(/([+-])(\d{2}):(\d{2})/)
-      if (offsetMatch) {
-        const [, sign, hours, minutes] = offsetMatch
-        const offsetMinutes =
-          (Number.parseInt(hours) * 60 + Number.parseInt(minutes)) *
-          (sign === '+' ? 1 : -1)
-
-        // 减去偏移量，将本地时间转换为 UTC 时间
-        const utcTime = new Date(date.getTime() - offsetMinutes * 60 * 1000)
-        return formatDateTime(utcTime)
-      }
-
-      return formatDateTime(date)
-    }
-
-    return formatDateTime(date)
-  })()
-
-  // 曝光模式
-  const exposureModeMap: Record<number, string> = {
-    0: t('exif.exposure.mode.auto'),
-    1: t('exif.exposure.mode.manual'),
-    2: t('exif.exposure.mode.bracket'),
-  }
-  const exposureMode =
-    photo.ExposureMode !== undefined
-      ? exposureModeMap[photo.ExposureMode] ||
-        `${t('exif.unknown')} (${photo.ExposureMode})`
-      : null
-
-  // 测光模式
-  const meteringModeMap: Record<number, string> = {
-    0: t('exif.metering.mode.unknown'),
-    1: t('exif.metering.mode.average'),
-    2: t('exif.metering.mode.center'),
-    3: t('exif.metering.mode.spot'),
-    4: t('exif.metering.mode.multi'),
-    5: t('exif.metering.mode.pattern'),
-    6: t('exif.metering.mode.partial'),
-  }
-  const meteringMode =
-    photo.MeteringMode !== undefined
-      ? meteringModeMap[photo.MeteringMode] ||
-        `${t('exif.unknown')} (${photo.MeteringMode})`
-      : null
-
-  // 白平衡
-  const whiteBalanceMap: Record<number, string> = {
-    0: t('exif.white.balance.auto'),
-    1: t('exif.white.balance.manual'),
-  }
-  const whiteBalance =
-    photo.WhiteBalance !== undefined
-      ? whiteBalanceMap[photo.WhiteBalance] ||
-        `${t('exif.unknown')} (${photo.WhiteBalance})`
-      : null
-
-  // 闪光灯
-  const flashMap: Record<number, string> = {
-    0: t('exif.flash.disabled'),
-    1: t('exif.flash.enabled'),
-    5: t('exif.flash.disabled.return.detected'),
-    7: t('exif.flash.return.detected'),
-    9: t('exif.flash.forced.mode'),
-    13: t('exif.flash.forced.disabled.return.detected'),
-    15: t('exif.flash.forced.return.detected'),
-    16: t('exif.flash.off.mode'),
-    24: t('exif.flash.auto.no'),
-    25: t('exif.flash.auto.yes'),
-    29: t('exif.flash.auto.no.return'),
-    31: t('exif.flash.auto.return'),
-    32: t('exif.flash.unavailable'),
-  }
-  const flash =
-    photo.Flash !== undefined
-      ? flashMap[photo.Flash] || `${t('exif.unknown')} (${photo.Flash})`
-      : null
-
-  // 数字变焦
-  const digitalZoom = photo.DigitalZoomRatio || null
-
-  // 曝光补偿
-  const exposureBias = photo.ExposureBiasValue
-    ? `${photo.ExposureBiasValue > 0 ? '+' : ''}${photo.ExposureBiasValue.toFixed(1)} EV`
-    : null
-
-  // 亮度值
-  const brightnessValue = photo.BrightnessValue
-    ? `${photo.BrightnessValue.toFixed(1)} EV`
-    : null
-
-  // 快门速度值
-  const shutterSpeedValue = photo.ShutterSpeedValue
-    ? `${photo.ShutterSpeedValue.toFixed(1)} EV`
-    : null
-
-  // 光圈值
-  const apertureValue = photo.ApertureValue
-    ? `${photo.ApertureValue.toFixed(1)} EV`
-    : null
-
-  // 光源类型
-  const lightSourceMap: Record<number, string> = {
-    0: t('exif.light.source.auto'),
-    1: t('exif.light.source.daylight.main'),
-    2: t('exif.light.source.fluorescent'),
-    3: t('exif.light.source.tungsten'),
-    4: t('exif.light.source.flash'),
-    9: t('exif.light.source.fine.weather'),
-    10: t('exif.light.source.cloudy'),
-    11: t('exif.light.source.shade'),
-    12: t('exif.light.source.daylight.fluorescent'),
-    13: t('exif.light.source.day.white.fluorescent'),
-    14: t('exif.light.source.cool.white.fluorescent'),
-    15: t('exif.light.source.white.fluorescent'),
-    17: t('exif.light.source.standard.a'),
-    18: t('exif.light.source.standard.b'),
-    19: t('exif.light.source.standard.c'),
-    20: t('exif.light.source.d55'),
-    21: t('exif.light.source.d65'),
-    22: t('exif.light.source.d75'),
-    23: t('exif.light.source.d50'),
-    24: t('exif.light.source.iso.tungsten'),
-    255: t('exif.light.source.other'),
-  }
-  const lightSource =
-    photo.LightSource !== undefined
-      ? lightSourceMap[photo.LightSource] ||
-        `${t('exif.unknown')} (${photo.LightSource})`
-      : null
-
-  // 白平衡偏移/微调相关字段
-  const whiteBalanceBias = (photo as any).WhiteBalanceBias || null
-  const wbShiftAB = (photo as any).WBShiftAB || null
-  const wbShiftGM = (photo as any).WBShiftGM || null
-  const whiteBalanceFineTune = (photo as any).WhiteBalanceFineTune || null
-
-  // 富士相机特有的白平衡字段
-  const wbGRBLevels =
-    (photo as any).WBGRBLevels || (photo as any)['WB GRB Levels'] || null
-  const wbGRBLevelsStandard =
-    (photo as any).WBGRBLevelsStandard ||
-    (photo as any)['WB GRB Levels Standard'] ||
-    null
-  const wbGRBLevelsAuto =
-    (photo as any).WBGRBLevelsAuto ||
-    (photo as any)['WB GRB Levels Auto'] ||
-    null
-
-  // 感光方法
-  const sensingMethodMap: Record<number, string> = {
-    1: t('exif.sensing.method.undefined'),
-    2: t('exif.sensing.method.one.chip'),
-    3: t('exif.sensing.method.two.chip'),
-    4: t('exif.sensing.method.three.chip'),
-    5: t('exif.sensing.method.color.sequential.main'),
-    7: t('exif.sensing.method.trilinear'),
-    8: t('exif.sensing.method.color.sequential.linear'),
-  }
-  const sensingMethod =
-    photo.SensingMethod !== undefined
-      ? sensingMethodMap[photo.SensingMethod] ||
-        `${t('exif.unknown')} (${photo.SensingMethod})`
-      : null
-
-  // 自定义渲染
-  const customRenderedMap: Record<number, string> = {
-    0: t('exif.custom.rendered.normal'),
-    1: t('exif.custom.rendered.special'),
-  }
-  const customRendered =
-    photo.CustomRendered !== undefined
-      ? customRenderedMap[photo.CustomRendered] ||
-        `${t('exif.unknown')} (${photo.CustomRendered})`
-      : null
-
-  // 焦平面分辨率
-  const focalPlaneXResolution = photo.FocalPlaneXResolution
-    ? Math.round(photo.FocalPlaneXResolution)
-    : null
-  const focalPlaneYResolution = photo.FocalPlaneYResolution
-    ? Math.round(photo.FocalPlaneYResolution)
-    : null
-
-  // 焦平面分辨率单位
-  const focalPlaneResolutionUnitMap: Record<number, string> = {
-    1: t('exif.resolution.unit.none'),
-    2: t('exif.resolution.unit.inches'),
-    3: t('exif.resolution.unit.cm'),
-  }
-  const focalPlaneResolutionUnit =
-    photo.FocalPlaneResolutionUnit !== undefined
-      ? focalPlaneResolutionUnitMap[photo.FocalPlaneResolutionUnit] ||
-        `${t('exif.unknown')} (${photo.FocalPlaneResolutionUnit})`
-      : null
-
-  // 像素信息
-  const pixelXDimension = photo.PixelXDimension || null
-  const pixelYDimension = photo.PixelYDimension || null
-  const totalPixels =
-    pixelXDimension && pixelYDimension
-      ? pixelXDimension * pixelYDimension
-      : null
-  const megaPixels = totalPixels
-    ? `${(totalPixels / 1000000).toFixed(1)}MP`
-    : null
-
-  // 色彩空间
-  const colorSpaceMap: Record<number, string> = {
-    1: 'sRGB',
-    65535: 'Adobe RGB',
-  }
-  const colorSpace =
-    photo.ColorSpace !== undefined
-      ? colorSpaceMap[photo.ColorSpace] ||
-        `${t('exif.unknown')} (${photo.ColorSpace})`
-      : null
-
-  // GPS 信息
-  let gpsInfo: {
-    latitude: string | undefined
-    longitude: string | undefined
-    altitude: number | null
-  } | null = null
-  if (gps.GPSLatitude && gps.GPSLongitude) {
-    const latitude = convertDMSToDD(gps.GPSLatitude, gps.GPSLatitudeRef || '')
-    const longitude = convertDMSToDD(
-      gps.GPSLongitude,
-      gps.GPSLongitudeRef || '',
-    )
-    const altitude = gps.GPSAltitude || null
-
-    gpsInfo = {
-      latitude: latitude?.toFixed(6),
-      longitude: longitude?.toFixed(6),
-      altitude: altitude ? Math.round(altitude) : null,
-    }
-  }
-
-  // 富士相机 Recipe 信息
-  const fujiRecipe = (exif as any).FujiRecipe || null
-
-  return {
-    focalLength35mm,
-    focalLength,
-    iso,
-    shutterSpeed,
-    aperture,
-    maxAperture,
-    camera,
-    lens,
-    software,
-    dateTime,
-    exposureMode,
-    meteringMode,
-    whiteBalance,
-    flash,
-    digitalZoom,
-    colorSpace,
-    gps: gpsInfo,
-    exposureBias,
-    brightnessValue,
-    shutterSpeedValue,
-    apertureValue,
-    lightSource,
-    sensingMethod,
-    customRendered,
-    focalPlaneXResolution,
-    focalPlaneYResolution,
-    focalPlaneResolutionUnit,
-    megaPixels,
-    pixelXDimension,
-    pixelYDimension,
-    whiteBalanceBias,
-    wbShiftAB,
-    wbShiftGM,
-    whiteBalanceFineTune,
-    wbGRBLevels,
-    wbGRBLevelsStandard,
-    wbGRBLevelsAuto,
-    fujiRecipe,
-  }
-}
-
-// 将度分秒格式转换为十进制度数
-const convertDMSToDD = (dms: number[], ref: string): number | null => {
-  if (!dms || dms.length !== 3) return null
-
-  const [degrees, minutes, seconds] = dms
-  let dd = degrees + minutes / 60 + seconds / 3600
-
-  if (ref === 'S' || ref === 'W') {
-    dd = dd * -1
-  }
-
-  return dd
-}
-
-const Row: FC<{
-  label: string
-  value: string | number | null | undefined | number[]
-  ellipsis?: boolean
-}> = ({ label, value, ellipsis }) => {
-  return (
-    <div className="flex justify-between gap-4">
-      <span className="text-text-secondary shrink-0">{label}</span>
-
-      {ellipsis ? (
-        <span className="relative min-w-0 flex-1 shrink">
-          <span className="absolute inset-0">
-            <EllipsisHorizontalTextWithTooltip className="text-text min-w-0 text-right">
-              {Array.isArray(value) ? value.join(' ') : value}
-            </EllipsisHorizontalTextWithTooltip>
-          </span>
-        </span>
-      ) : (
-        <span className="text-text min-w-0 text-right">
-          {Array.isArray(value) ? value.join(' ') : value}
-        </span>
-      )}
-    </div>
-  )
-}
-
-const formatDateTime = (date: Date | null | undefined) => {
-  const i18n = jotaiStore.get(i18nAtom)
-  const datetimeFormatter = new Intl.DateTimeFormat(i18n.language, {
-    dateStyle: 'short',
-    timeStyle: 'medium',
-  })
-  if (!date) return ''
-
-  return datetimeFormatter.format(date)
 }

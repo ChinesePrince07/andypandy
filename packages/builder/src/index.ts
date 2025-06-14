@@ -52,7 +52,7 @@ export {
   needsUpdate,
   saveManifest,
 } from './manifest/manager.js'
-
+export type { FujiRecipe, PickedExif } from './types/photo.js'
 // Worker 池
 export {
   type TaskFunction,

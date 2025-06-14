@@ -31,8 +31,8 @@ export const useVisiblePhotosDateRange = (_photos: PhotoManifest[]) => {
 
   const getPhotoDate = useCallback((photo: PhotoManifest): Date => {
     // 优先使用 EXIF 中的拍摄时间
-    if (photo.exif?.Photo?.DateTimeOriginal) {
-      const dateStr = photo.exif.Photo.DateTimeOriginal as unknown as string
+    if (photo.exif?.DateTimeOriginal) {
+      const dateStr = photo.exif.DateTimeOriginal as unknown as string
       // EXIF 日期格式通常是 "YYYY:MM:DD HH:mm:ss"
       const formattedDateStr = dateStr.replace(
         /^(\d{4}):(\d{2}):(\d{2})/,
