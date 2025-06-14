@@ -120,79 +120,37 @@ export const ExifPanel: FC<{
                   value={formattedExifData.dateTime}
                 />
               )}
-            </div>
 
-            {/* 标签信息 - 移到基本信息 section 内 */}
-            {currentPhoto.tags && currentPhoto.tags.length > 0 && (
-              <div className="mt-3">
-                <h4 className="mb-2 text-sm font-medium text-white/80">
-                  {t('exif.tags')}
-                </h4>
-                <div className="-ml-1 flex flex-wrap gap-1.5">
-                  {currentPhoto.tags.map((tag) => (
-                    <MotionButtonBase
-                      type="button"
-                      onClick={() => {
-                        window.open(
-                          `/?tags=${tag}`,
-                          '_blank',
-                          'noopener,noreferrer',
-                        )
-                      }}
-                      key={tag}
-                      className="bg-material-medium hover:bg-material-thin inline-flex cursor-pointer items-center rounded-full px-2 py-1 text-xs text-white/90 backdrop-blur-sm"
-                    >
-                      {tag}
-                    </MotionButtonBase>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {formattedExifData && (
-            <Fragment>
-              {(formattedExifData.camera || formattedExifData.lens) && (
-                <div>
-                  <h4 className="my-2 text-sm font-medium text-white/80">
-                    {t('exif.device.info')}
-                  </h4>
-                  <div className="space-y-1 text-sm">
-                    {formattedExifData.camera && (
-                      <Row
-                        label={t('exif.camera')}
-                        value={formattedExifData.camera}
-                      />
-                    )}
-                    {formattedExifData.lens && (
-                      <Row
-                        label={t('exif.lens')}
-                        value={formattedExifData.lens}
-                      />
-                    )}
-
-                    {formattedExifData.focalLength && (
-                      <Row
-                        label={t('exif.focal.length.actual')}
-                        value={`${formattedExifData.focalLength}mm`}
-                      />
-                    )}
-                    {formattedExifData.focalLength35mm && (
-                      <Row
-                        label={t('exif.focal.length.equivalent')}
-                        value={`${formattedExifData.focalLength35mm}mm`}
-                      />
-                    )}
-                    {formattedExifData.maxAperture && (
-                      <Row
-                        label={t('exif.max.aperture')}
-                        value={`f/${formattedExifData.maxAperture}`}
-                      />
-                    )}
-                  </div>
-                </div>
+              {formattedExifData?.zone && (
+                <Row
+                  label={t('exif.time.zone')}
+                  value={formattedExifData.zone}
+                />
+              )}
+              {formattedExifData?.artist && (
+                <Row
+                  label={t('exif.artist')}
+                  value={formattedExifData.artist}
+                  ellipsis
+                />
+              )}
+              {formattedExifData?.copyright && (
+                <Row
+                  label={t('exif.copyright')}
+                  value={formattedExifData.copyright}
+                  ellipsis
+                />
               )}
 
+              {formattedExifData?.software && (
+                <Row
+                  label={t('exif.software')}
+                  value={formattedExifData.software}
+                />
+              )}
+            </div>
+
+            {formattedExifData && (
               <div>
                 <h4 className="my-2 text-sm font-medium text-white/80">
                   {t('exif.capture.parameters')}
@@ -244,6 +202,87 @@ export const ExifPanel: FC<{
                   )}
                 </div>
               </div>
+            )}
+
+            {/* 标签信息 - 移到基本信息 section 内 */}
+            {currentPhoto.tags && currentPhoto.tags.length > 0 && (
+              <div className="mt-3">
+                <h4 className="mb-2 text-sm font-medium text-white/80">
+                  {t('exif.tags')}
+                </h4>
+                <div className="-ml-1 flex flex-wrap gap-1.5">
+                  {currentPhoto.tags.map((tag) => (
+                    <MotionButtonBase
+                      type="button"
+                      onClick={() => {
+                        window.open(
+                          `/?tags=${tag}`,
+                          '_blank',
+                          'noopener,noreferrer',
+                        )
+                      }}
+                      key={tag}
+                      className="bg-material-medium hover:bg-material-thin inline-flex cursor-pointer items-center rounded-full px-2 py-1 text-xs text-white/90 backdrop-blur-sm"
+                    >
+                      {tag}
+                    </MotionButtonBase>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {formattedExifData && (
+            <Fragment>
+              {(formattedExifData.camera || formattedExifData.lens) && (
+                <div>
+                  <h4 className="my-2 text-sm font-medium text-white/80">
+                    {t('exif.device.info')}
+                  </h4>
+                  <div className="space-y-1 text-sm">
+                    {formattedExifData.camera && (
+                      <Row
+                        label={t('exif.camera')}
+                        value={formattedExifData.camera}
+                      />
+                    )}
+                    {formattedExifData.lens && (
+                      <Row
+                        label={t('exif.lens')}
+                        value={formattedExifData.lens}
+                      />
+                    )}
+                    {formattedExifData.lensMake &&
+                      !formattedExifData.lens?.includes(
+                        formattedExifData.lensMake,
+                      ) && (
+                        <Row
+                          label={t('exif.lensmake')}
+                          value={formattedExifData.lensMake}
+                        />
+                      )}
+
+                    {formattedExifData.focalLength && (
+                      <Row
+                        label={t('exif.focal.length.actual')}
+                        value={`${formattedExifData.focalLength}mm`}
+                      />
+                    )}
+                    {formattedExifData.focalLength35mm && (
+                      <Row
+                        label={t('exif.focal.length.equivalent')}
+                        value={`${formattedExifData.focalLength35mm}mm`}
+                      />
+                    )}
+                    {formattedExifData.maxAperture && (
+                      <Row
+                        label={t('exif.max.aperture')}
+                        value={`f/${formattedExifData.maxAperture}`}
+                      />
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* 新增：拍摄模式信息 */}
               {(formattedExifData.exposureMode ||
@@ -316,6 +355,18 @@ export const ExifPanel: FC<{
                       <Row
                         label={t('exif.light.source.type')}
                         value={formattedExifData.lightSource}
+                      />
+                    )}
+                    {!isNil(formattedExifData.sceneCaptureType) && (
+                      <Row
+                        label={t('exif.scene.capture.type')}
+                        value={formattedExifData.sceneCaptureType}
+                      />
+                    )}
+                    {!isNil(formattedExifData.flashMeteringMode) && (
+                      <Row
+                        label={t('exif.flash.metering.mode')}
+                        value={formattedExifData.flashMeteringMode}
                       />
                     )}
                   </div>
@@ -506,7 +557,7 @@ export const ExifPanel: FC<{
                       formattedExifData.focalPlaneYResolution) && (
                       <Row
                         label={t('exif.focal.plane.resolution')}
-                        value={`${formattedExifData.focalPlaneXResolution || 'N/A'} × ${formattedExifData.focalPlaneYResolution || 'N/A'}`}
+                        value={`${formattedExifData.focalPlaneXResolution || t('exif.not.available')} × ${formattedExifData.focalPlaneYResolution || t('exif.not.available')}`}
                       />
                     )}
                   </div>

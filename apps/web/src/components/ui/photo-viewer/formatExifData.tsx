@@ -88,6 +88,9 @@ const translateFujiDynamicRange = createTranslator('fujirecipe-dynamicrange')
 const translateFujiSharpness = createTranslator('fujirecipe-sharpness')
 const translateFujiWhiteBalance = createTranslator('fujirecipe-whitebalance')
 
+// 场景捕获类型翻译
+const translateSceneCaptureType = createTranslator('scene.capture.type')
+
 // 翻译白平衡偏移字段中的 Red 和 Blue
 const translateWhiteBalanceFineTune = (value: string | null): string | null => {
   if (!value) return null
@@ -173,6 +176,11 @@ const processFujiRecipe = (recipe: FujiRecipe): any => {
 export const formatExifData = (exif: PickedExif | null) => {
   if (!exif) return null
 
+  // 时区和时间相关
+  const zone = exif.zone || null
+  const tz = exif.tz || null
+  const tzSource = exif.tzSource || null
+
   // 等效焦距 (35mm)
   const focalLength35mm = exif.FocalLengthIn35mmFormat
     ? Number.parseInt(exif.FocalLengthIn35mmFormat)
@@ -199,40 +207,44 @@ export const formatExifData = (exif: PickedExif | null) => {
   // 相机信息
   const camera = exif.Make && exif.Model ? `${exif.Make} ${exif.Model}` : null
 
-  // 镜头信息
-  const lens = exif.LensModel || null
+  // 镜头信息 - 包含制造商
+  const lens = (() => {
+    if (exif.LensMake && exif.LensModel) {
+      return `${exif.LensMake} ${exif.LensModel}`
+    }
+    return exif.LensModel || null
+  })()
+
+  // 镜头制造商
+  const lensMake = exif.LensMake || null
 
   // 软件信息
   const software = exif.Software || null
 
-  const offsetTimeOriginal = exif.OffsetTimeOriginal || exif.OffsetTime
+  // 艺术家/作者信息
+  const artist = exif.Artist || null
+
+  // 版权信息
+  const copyright = exif.Copyright || null
+
+  // 图像方向
+  const orientation = exif.Orientation || null
+
   // 拍摄时间
   const dateTime: string | null = (() => {
-    const originalDateTimeStr = exif.DateTimeOriginal || (exif as any).DateTime
-
-    if (!originalDateTimeStr) return null
-
-    const date = new Date(originalDateTimeStr)
-
-    if (offsetTimeOriginal) {
-      // 解析时区偏移，例如 "+08:00" 或 "-05:00"
-      const offsetMatch = offsetTimeOriginal.match(/([+-])(\d{2}):(\d{2})/)
-      if (offsetMatch) {
-        const [, sign, hours, minutes] = offsetMatch
-        const offsetMinutes =
-          (Number.parseInt(hours) * 60 + Number.parseInt(minutes)) *
-          (sign === '+' ? 1 : -1)
-
-        // 减去偏移量，将本地时间转换为 UTC 时间
-        const utcTime = new Date(date.getTime() - offsetMinutes * 60 * 1000)
-        return formatDateTime(utcTime)
-      }
-
-      return formatDateTime(date)
-    }
-
-    return formatDateTime(date)
+    return formatDateTime(new Date(exif.DateTimeOriginal || ''))
   })()
+
+  // 数字化时间
+  const dateTimeDigitized: string | null = (() => {
+    if (!exif.DateTimeDigitized) return null
+    return formatDateTime(new Date(exif.DateTimeDigitized))
+  })()
+
+  // 时间偏移
+  const offsetTime = exif.OffsetTime || null
+  const offsetTimeOriginal = exif.OffsetTimeOriginal || null
+  const offsetTimeDigitized = exif.OffsetTimeDigitized || null
 
   // 曝光模式 - with translation
   const exposureMode = translateExposureMode(exif.ExposureMode || null)
@@ -245,6 +257,14 @@ export const formatExifData = (exif: PickedExif | null) => {
 
   // 闪光灯 - with translation
   const flash = translateFlash(exif.Flash || null)
+
+  // 闪光灯测光模式
+  const flashMeteringMode = exif.FlashMeteringMode || null
+
+  // 场景捕获类型 - with translation
+  const sceneCaptureType = translateSceneCaptureType(
+    exif.SceneCaptureType || null,
+  )
 
   // 曝光补偿
   const exposureBias = exif.ExposureCompensation
@@ -310,6 +330,12 @@ export const formatExifData = (exif: PickedExif | null) => {
   const exposureProgram = translateExposureProgram(exif.ExposureProgram || null)
 
   return {
+    // 时区和时间相关
+    zone,
+    tz,
+    tzSource,
+
+    // 基本信息
     focalLength35mm,
     focalLength,
     iso,
@@ -318,14 +344,29 @@ export const formatExifData = (exif: PickedExif | null) => {
     maxAperture,
     camera,
     lens,
+    lensMake,
     software,
+    artist,
+    copyright,
+    orientation,
     dateTime,
+    dateTimeDigitized,
+
+    // 时间偏移
+    offsetTime,
+    offsetTimeOriginal,
+    offsetTimeDigitized,
+
+    // 拍摄模式
     exposureMode,
     meteringMode,
     whiteBalance,
     flash,
+    flashMeteringMode,
+    sceneCaptureType,
     colorSpace,
-    gps: gpsInfo,
+
+    // 曝光参数
     exposureBias,
     brightnessValue,
     shutterSpeedValue,
@@ -344,10 +385,14 @@ export const formatExifData = (exif: PickedExif | null) => {
     wbShiftGM,
     whiteBalanceFineTune,
 
+    // GPS信息
+    gps: gpsInfo,
+
     fujiRecipe: exif.FujiRecipe ? processFujiRecipe(exif.FujiRecipe) : null,
     exposureProgram,
   }
 }
+
 export const Row: FC<{
   label: string
   value: string | number | null | undefined | number[]
@@ -373,6 +418,7 @@ export const Row: FC<{
     </div>
   )
 }
+
 const formatDateTime = (date: Date | null | undefined) => {
   const i18n = jotaiStore.get(i18nAtom)
   const datetimeFormatter = new Intl.DateTimeFormat(i18n.language, {
