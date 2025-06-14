@@ -21,7 +21,7 @@ export const GET = async (
 
   try {
     // 格式化拍摄时间
-    const dateTaken = photo.exif?.Photo?.DateTimeOriginal || photo.lastModified
+    const dateTaken = photo.exif?.DateTimeOriginal || photo.lastModified
     const formattedDate = dateTaken
       ? new Date(dateTaken).toLocaleDateString('en-US')
       : ''
@@ -33,29 +33,16 @@ export const GET = async (
     const formatExifInfo = () => {
       if (!photo.exif) return null
 
-      const photoExif = photo.exif.Photo || {}
-      const imageExif = photo.exif.Image || {}
-
       const info = {
-        focalLength: photoExif.FocalLengthIn35mmFilm
-          ? `${Math.round(photoExif.FocalLengthIn35mmFilm)}mm`
-          : null,
-        aperture: photoExif.FNumber ? `f/${photoExif.FNumber}` : null,
-        iso: photoExif.ISOSpeedRatings || imageExif.ISOSpeedRatings || null,
-        shutterSpeed: null as string | null,
+        focalLength:
+          photo.exif.FocalLengthIn35mmFormat || photo.exif.FocalLength,
+        aperture: photo.exif.FNumber ? `f/${photo.exif.FNumber}` : null,
+        iso: photo.exif.ISO || null,
+        shutterSpeed: `${photo.exif.ExposureTime}s`,
         camera:
-          imageExif.Make && imageExif.Model
-            ? `${imageExif.Make} ${imageExif.Model}`
+          photo.exif.Make && photo.exif.Model
+            ? `${photo.exif.Make} ${photo.exif.Model}`
             : null,
-      }
-
-      // Format shutter speed
-      const exposureTime = photoExif.ExposureTime
-      if (exposureTime) {
-        info.shutterSpeed =
-          exposureTime >= 1
-            ? `${exposureTime}s`
-            : `1/${Math.round(1 / exposureTime)}`
       }
 
       return info
