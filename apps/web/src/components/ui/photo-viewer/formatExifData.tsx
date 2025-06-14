@@ -275,7 +275,7 @@ export const formatExifData = (exif: PickedExif | null) => {
     exif.WhiteBalanceFineTune ? String(exif.WhiteBalanceFineTune) : null,
   )
 
-  // 感光方法 - with translation
+  // 感光方法
   const sensingMethod = translateSensingMethod(exif.SensingMethod || null)
 
   // 焦平面分辨率
@@ -301,9 +301,11 @@ export const formatExifData = (exif: PickedExif | null) => {
   const colorSpace = translateColorSpace(exif.ColorSpace || null)
 
   // GPS 信息
-  const gpsInfo = null
-
-  // 富士相机 Recipe 信息 - with cleaning
+  const gpsInfo = {
+    altitude: exif.GPSAltitude,
+    latitude: exif.GPSLatitude,
+    longitude: exif.GPSLongitude,
+  }
 
   const exposureProgram = translateExposureProgram(exif.ExposureProgram || null)
 

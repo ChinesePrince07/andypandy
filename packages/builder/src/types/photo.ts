@@ -114,6 +114,9 @@ export interface PickedExif {
   SensingMethod: Tags['SensingMethod']
   FocalPlaneXResolution: Tags['FocalPlaneXResolution']
   FocalPlaneYResolution: Tags['FocalPlaneYResolution']
+  GPSAltitude: Tags['GPSAltitude']
+  GPSLatitude: Tags['GPSLatitude']
+  GPSLongitude: Tags['GPSLongitude']
 
   // 富士胶片配方
   FujiRecipe?: FujiRecipe

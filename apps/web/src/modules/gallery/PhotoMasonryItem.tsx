@@ -89,11 +89,7 @@ export const PhotoMasonryItem = ({
 
     // 快门速度
     const exposureTime = exif.ExposureTime
-    const shutterSpeed = exposureTime
-      ? typeof exposureTime === 'number' && exposureTime >= 1
-        ? `${exposureTime}s`
-        : `1/${Math.round(1 / (exposureTime as number))}`
-      : null
+    const shutterSpeed = `${exposureTime}s`
 
     // 光圈
     const aperture = exif.FNumber ? `f/${exif.FNumber}` : null

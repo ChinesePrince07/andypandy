@@ -174,6 +174,11 @@ const pickKeys: Array<keyof Tags | (string & {})> = [
   'ScaleFactor35efl',
   'ShutterSpeed',
   'LightValue',
+  // GPS
+  'GPSAltitude',
+  'GPSCoordinates',
+  'GPSLatitude',
+  'GPSLongitude',
 ]
 function handleExifData(exifData: Tags, metadata: Metadata): PickedExif {
   const date = {

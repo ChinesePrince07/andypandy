@@ -430,6 +430,40 @@ export const ExifPanel: FC<{
                   </div>
                 </div>
               )}
+              {formattedExifData.gps && (
+                <div>
+                  <h4 className="my-2 text-sm font-medium text-white/80">
+                    {t('exif.gps.location.info')}
+                  </h4>
+                  <div className="space-y-1 text-sm">
+                    <Row
+                      label={t('exif.gps.latitude')}
+                      value={formattedExifData.gps.latitude}
+                    />
+                    <Row
+                      label={t('exif.gps.longitude')}
+                      value={formattedExifData.gps.longitude}
+                    />
+                    {formattedExifData.gps.altitude && (
+                      <Row
+                        label={t('exif.gps.altitude')}
+                        value={`${formattedExifData.gps.altitude}m`}
+                      />
+                    )}
+                    <div className="mt-2 text-right">
+                      <a
+                        href={`https://uri.amap.com/marker?position=${formattedExifData.gps.longitude},${formattedExifData.gps.latitude}&name=${encodeURIComponent(t('exif.gps.location.name'))}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue inline-flex items-center gap-1 text-xs underline transition-colors hover:text-blue-300"
+                      >
+                        {t('exif.gps.view.map')}
+                        <i className="i-mingcute-external-link-line" />
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* 新增：技术参数 */}
               {(formattedExifData.brightnessValue ||
