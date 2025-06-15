@@ -62,24 +62,6 @@ export const PhotoViewer = ({
     }
   }, [isOpen])
 
-  // 预加载相邻图片
-  useEffect(() => {
-    if (!isOpen) return
-
-    const preloadImage = (src: string) => {
-      const img = new Image()
-      img.src = src
-    }
-
-    // 预加载前一张和后一张
-    if (currentIndex > 0) {
-      preloadImage(photos[currentIndex - 1].originalUrl)
-    }
-    if (currentIndex < photos.length - 1) {
-      preloadImage(photos[currentIndex + 1].originalUrl)
-    }
-  }, [isOpen, currentIndex, photos])
-
   const handlePrevious = useCallback(() => {
     if (currentIndex > 0) {
       onIndexChange(currentIndex - 1)
@@ -154,7 +136,7 @@ export const PhotoViewer = ({
     }
   }, [isOpen, handlePrevious, handleNext, onClose, showExifPanel])
 
-  // const imageSize = getImageDisplaySize() // 已改为直接使用原始尺寸优化WebGL加载
+  // const imageSize = getImageDisplaySize() // 已改为直接使用原始尺寸优化 WebGL 加载
 
   if (!currentPhoto) return null
 
