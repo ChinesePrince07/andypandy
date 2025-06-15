@@ -37,6 +37,7 @@ const getTranslationKey = (
 const translateExifValue = (
   category: string,
   value: string | number | null,
+  props?: Record<string, string | number>,
 ): string | null => {
   if (!value) return null
 
@@ -51,15 +52,18 @@ const translateExifValue = (
     return cleanedValue
   }
 
-  const translated = i18n.t(translationKey as any)
+  const translated = i18n.t(translationKey as any, props)
   return translated || cleanedValue
 }
 
 const createTranslator =
   (category: string) =>
-  (value: string | number | null): string | null => {
+  (
+    value: string | number | null,
+    props?: Record<string, string | number>,
+  ): string | null => {
     if (value === null || value === undefined) return null
-    return translateExifValue(category, value)
+    return translateExifValue(category, value, props)
   }
 
 // Specific translation functions for different EXIF fields
@@ -119,52 +123,67 @@ const processFujiRecipe = (recipe: FujiRecipe): any => {
   const processed = { ...recipe } as any
 
   // Clean specific fields that commonly have unnecessary characters
-  if (processed.HighlightTone) {
+  if (recipe.HighlightTone) {
     processed.HighlightTone = processFujiRecipeValue(recipe.HighlightTone)
   }
-  if (processed.ShadowTone) {
+  if (recipe.ShadowTone) {
     processed.ShadowTone = processFujiRecipeValue(recipe.ShadowTone)
   }
-  if (processed.Saturation) {
+  if (recipe.Saturation) {
     processed.Saturation = processFujiRecipeValue(recipe.Saturation)
   }
-  if (processed.NoiseReduction) {
+  if (recipe.NoiseReduction) {
     processed.NoiseReduction = processFujiRecipeValue(recipe.NoiseReduction)
   }
-  if (processed.FilmMode) {
+  if (recipe.FilmMode) {
     processed.FilmMode = processFujiRecipeValue(recipe.FilmMode)
   }
 
-  if (processed.GrainEffectRoughness) {
+  if (recipe.GrainEffectRoughness) {
     processed.GrainEffectRoughness = translateFujiGrainEffectRoughness(
       recipe.GrainEffectRoughness,
     )
   }
-  if (processed.GrainEffectSize) {
+  if (recipe.GrainEffectSize) {
     processed.GrainEffectSize = translateFujiGrainEffectSize(
       recipe.GrainEffectSize,
     )
   }
-  if (processed.ColorChromeEffect) {
+  if (recipe.ColorChromeEffect) {
     processed.ColorChromeEffect = translateFujiColorChromeEffect(
       recipe.ColorChromeEffect,
     )
   }
-  if (processed.ColorChromeFxBlue) {
+  if (recipe.ColorChromeFxBlue) {
     processed.ColorChromeFxBlue = translateFujiColorChromeFxBlue(
       recipe.ColorChromeFxBlue,
     )
   }
-  if (processed.DynamicRange) {
+  if (recipe.DynamicRange) {
     processed.DynamicRange = translateFujiDynamicRange(recipe.DynamicRange)
   }
-  if (processed.Sharpness) {
+
+  if (recipe.DynamicRangeSetting) {
+    if (recipe.DynamicRangeSetting === 'Manual') {
+      processed.DynamicRange = `DR${recipe.DevelopmentDynamicRange}`
+    } else {
+      processed.DynamicRange = 'Auto'
+    }
+  }
+
+  if (recipe.Sharpness) {
     processed.Sharpness = translateFujiSharpness(recipe.Sharpness)
   }
-  if (processed.WhiteBalance) {
-    processed.WhiteBalance = translateFujiWhiteBalance(recipe.WhiteBalance)
+  if (recipe.WhiteBalance) {
+    if (recipe.ColorTemperature && recipe.WhiteBalance === 'Kelvin') {
+      processed.WhiteBalance = translateFujiWhiteBalance('Kelvin', {
+        kelvin: recipe.ColorTemperature,
+      })
+    } else {
+      processed.WhiteBalance = translateFujiWhiteBalance('Auto')
+    }
   }
-  if (processed.WhiteBalanceFineTune) {
+  if (recipe.WhiteBalanceFineTune) {
     processed.WhiteBalanceFineTune = translateWhiteBalanceFineTune(
       recipe.WhiteBalanceFineTune,
     )
@@ -177,8 +196,8 @@ export const formatExifData = (exif: PickedExif | null) => {
   if (!exif) return null
 
   // 时区和时间相关
-  const zone = exif.zone || null
-  const tz = exif.tz || null
+  const zone = exif.zone || exif.tz || null
+
   const tzSource = exif.tzSource || null
 
   // 等效焦距 (35mm)
@@ -320,11 +339,18 @@ export const formatExifData = (exif: PickedExif | null) => {
   // 色彩空间 - with translation
   const colorSpace = translateColorSpace(exif.ColorSpace || null)
 
+  const GPSAltitudeIsAboveSeaLevel = exif.GPSAltitudeRef === 'Above Sea Level'
   // GPS 信息
   const gpsInfo = {
-    altitude: exif.GPSAltitude,
-    latitude: exif.GPSLatitude,
-    longitude: exif.GPSLongitude,
+    altitude: exif.GPSAltitude
+      ? `${GPSAltitudeIsAboveSeaLevel ? '' : '-'}${exif.GPSAltitude}`
+      : null,
+    latitude: exif.GPSLatitude
+      ? `${exif.GPSLatitude}° ${exif.GPSLatitudeRef}`
+      : null,
+    longitude: exif.GPSLongitude
+      ? `${exif.GPSLongitude}° ${exif.GPSLongitudeRef}`
+      : null,
   }
 
   const exposureProgram = translateExposureProgram(exif.ExposureProgram || null)
@@ -332,7 +358,7 @@ export const formatExifData = (exif: PickedExif | null) => {
   return {
     // 时区和时间相关
     zone,
-    tz,
+
     tzSource,
 
     // 基本信息

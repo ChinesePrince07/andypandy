@@ -117,6 +117,9 @@ export interface PickedExif {
   GPSAltitude: Tags['GPSAltitude']
   GPSLatitude: Tags['GPSLatitude']
   GPSLongitude: Tags['GPSLongitude']
+  GPSAltitudeRef: Tags['GPSAltitudeRef']
+  GPSLatitudeRef: Tags['GPSLatitudeRef']
+  GPSLongitudeRef: Tags['GPSLongitudeRef']
 
   // 富士胶片配方
   FujiRecipe?: FujiRecipe
@@ -199,4 +202,92 @@ export type FujiRecipe = {
    * Clarity adjustment (typically 0)
    */
   Clarity: number
+  /**
+   * Color temperature setting (e.g., "5000", "6500")
+   */
+  ColorTemperature: Tags['ColorTemperature']
+  /**
+   * Development dynamic range setting (e.g., "100", "200")
+   */
+  DevelopmentDynamicRange: number
+  /**
+   * Dynamic range setting (e.g., Auto, Manual, Standard, Wide1, Wide2, Film Simulation)
+   */
+  DynamicRangeSetting: Tags['DynamicRangeSetting']
+}
+
+export type SonyRecipe = {
+  /**
+   * Adobe RGB
+   * Real
+   * Standard
+   * Vivid
+   * Portrait
+   * Landscape
+   * Sunset
+   * Nightview
+   * BW
+   * Neutral
+   * Clear
+   * Deep
+   * Light
+   * Autumn Leaves
+   * Sepia
+   * VV2
+   * FL
+   * IN
+   * SH
+   */
+  CreativeStyle: string
+
+  /**
+   *  Off
+   *  Toy Camera
+   *  Pop Color
+   *  Posterization
+   *  Posterization B/W
+   *  Retro Photo
+   *  Soft High Key
+   *  Partial Color (red)
+   *  Partial Color (green)
+   *  Partial Color (blue)
+   *  Partial Color (yellow)
+   *  High Contrast Monochrome
+   *  Toy Camera (normal)
+   *  Toy Camera (cool)
+   *  Toy Camera (warm)
+   *  Toy Camera (green)
+   *  Toy Camera (magenta)
+   *  Soft Focus (low)
+   *  Soft Focus
+   *  Soft Focus (high)
+   *  Miniature (auto)
+   *  Miniature (top)
+   *  Miniature (middle horizontal)
+   *  Miniature (bottom)
+   *  Miniature (left)
+   *  Miniature (middle vertical)
+   *  Miniature (right)
+   *  HDR Painting (low)
+   *  HDR Painting
+   *  HDR Painting (high)
+   *  Rich-tone Monochrome
+   *  Water Color
+   *  Water Color 2
+   *  Illustration (low)
+   *  Illustration
+   *  Illustration (high)
+   */
+  PictureEffect: string
+
+  /**
+   * 0 => 'Off',
+   * 1 => 'On',
+   */
+  Hdr: string
+
+  /**
+   * Off, Low, Mid, High
+   */
+  SoftSkinEffect: string
 }

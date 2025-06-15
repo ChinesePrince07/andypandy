@@ -2,7 +2,7 @@ import { writeFileSync } from 'node:fs'
 import { mkdir, unlink } from 'node:fs/promises'
 import path from 'node:path'
 
-import { noop } from 'es-toolkit'
+import { isNil, noop } from 'es-toolkit'
 import type { ExifDateTime, Tags } from 'exiftool-vendored'
 import { exiftool } from 'exiftool-vendored'
 import type { Metadata } from 'sharp'
@@ -123,7 +123,6 @@ export async function extractExifData(
 }
 
 const pickKeys: Array<keyof Tags | (string & {})> = [
-  'zone',
   'tz',
   'tzSource',
   'Orientation',
@@ -177,8 +176,11 @@ const pickKeys: Array<keyof Tags | (string & {})> = [
   // GPS
   'GPSAltitude',
   'GPSCoordinates',
+  'GPSAltitudeRef',
   'GPSLatitude',
+  'GPSLatitudeRef',
   'GPSLongitude',
+  'GPSLongitudeRef',
 ]
 function handleExifData(exifData: Tags, metadata: Metadata): PickedExif {
   const date = {
@@ -206,6 +208,19 @@ function handleExifData(exifData: Tags, metadata: Metadata): PickedExif {
       Sharpness: exifData.Sharpness,
       NoiseReduction: exifData.NoiseReduction,
       Clarity: exifData.Clarity,
+      ColorTemperature: exifData.ColorTemperature,
+      DevelopmentDynamicRange: (exifData as any).DevelopmentDynamicRange,
+      DynamicRangeSetting: exifData.DynamicRangeSetting,
+    }
+  }
+
+  let SonyRecipe: any = null
+  if (!isNil(exifData.CreativeStyle)) {
+    SonyRecipe = {
+      CreativeStyle: exifData.CreativeStyle,
+      PictureEffect: exifData.PictureEffect,
+      Hdr: exifData.Hdr,
+      SoftSkinEffect: exifData.SoftSkinEffect,
     }
   }
   const size = {
@@ -221,10 +236,12 @@ function handleExifData(exifData: Tags, metadata: Metadata): PickedExif {
   }
 
   return {
-    ...result,
     ...date,
     ...size,
+    ...result,
+
     ...(FujiRecipe ? { FujiRecipe } : {}),
+    ...(SonyRecipe ? { SonyRecipe } : {}),
   }
 }
 
