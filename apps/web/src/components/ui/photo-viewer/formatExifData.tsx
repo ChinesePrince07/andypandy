@@ -136,7 +136,7 @@ const processFujiRecipe = (recipe: FujiRecipe): any => {
     processed.NoiseReduction = processFujiRecipeValue(recipe.NoiseReduction)
   }
   if (recipe.FilmMode) {
-    processed.FilmMode = processFujiRecipeValue(recipe.FilmMode)
+    processed.FilmMode = mapReadableFilmMode(recipe.FilmMode)
   }
 
   if (recipe.GrainEffectRoughness) {
@@ -454,4 +454,28 @@ const formatDateTime = (date: Date | null | undefined) => {
   if (!date) return ''
 
   return datetimeFormatter.format(date)
+}
+
+const mapReadableFilmMode = (filmMode: string) => {
+  switch (filmMode) {
+    case 'F0/Standard (Provia)': {
+      return 'Provia'
+    }
+
+    case 'F1b/Studio Portrait Smooth Skin Tone (Astia)': {
+      return 'Astia'
+    }
+
+    case 'F2/Fujichrome (Velvia)': {
+      return 'Velvia'
+    }
+
+    case 'F4/Velvia': {
+      return 'Velvia'
+    }
+
+    default: {
+      return filmMode
+    }
+  }
 }
