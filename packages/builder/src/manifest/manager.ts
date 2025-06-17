@@ -1,10 +1,9 @@
 import fs from 'node:fs/promises'
-import path from 'node:path'
+import path, { basename } from 'node:path'
 
 import { workdir } from '@afilmory/builder/path.js'
 import type { _Object } from '@aws-sdk/client-s3'
 
-import type { Logger } from '../logger/index.js'
 import { logger } from '../logger/index.js'
 import type { AfilmoryManifest } from '../types/manifest.js'
 import type { PhotoManifestItem } from '../types/photo.js'
@@ -45,10 +44,7 @@ export function needsUpdate(
 }
 
 // 保存 manifest
-export async function saveManifest(
-  items: PhotoManifestItem[],
-  fsLogger?: Logger['fs'],
-): Promise<void> {
+export async function saveManifest(items: PhotoManifestItem[]): Promise<void> {
   // 按日期排序（最新的在前）
   const sortedManifest = [...items].sort(
     (a, b) => new Date(b.dateTaken).getTime() - new Date(a.dateTaken).getTime(),
@@ -67,42 +63,33 @@ export async function saveManifest(
     ),
   )
 
-  fsLogger?.info(`📁 Manifest 保存至：${manifestPath}`)
+  logger.fs.info(`📁 Manifest 保存至：${manifestPath}`)
 }
 
 // 检测并处理已删除的图片
 export async function handleDeletedPhotos(
   items: PhotoManifestItem[],
-  s3ImageKeys: Set<string>,
-  mainLogger?: Logger['main'],
-  fsLogger?: Logger['fs'],
 ): Promise<number> {
+  logger.main.info('🔍 检查已删除的图片...')
   if (items.length === 0) {
+    // Clear all thumbnails
+    await fs.rm(path.join(workdir, 'public/thumbnails'), { recursive: true })
+    logger.main.info('🔍 没有图片，清空缩略图...')
     return 0
   }
 
-  mainLogger?.info('🔍 检查已删除的图片...')
   let deletedCount = 0
+  const allThumbnails = await fs.readdir(
+    path.join(workdir, 'public/thumbnails'),
+  )
 
-  for (const existingItem of items) {
-    // 如果现有 manifest 中的图片在 S3 中不存在了
-    if (!s3ImageKeys.has(existingItem.s3Key)) {
-      mainLogger?.info(`🗑️ 检测到已删除的图片：${existingItem.s3Key}`)
+  // If thumbnails not in manifest, delete it
+  const manifestKeySet = new Set(items.map((item) => item.id))
+
+  for (const thumbnail of allThumbnails) {
+    if (!manifestKeySet.has(basename(thumbnail, '.webp'))) {
+      await fs.unlink(path.join(workdir, 'public/thumbnails', thumbnail))
       deletedCount++
-
-      // 删除对应的缩略图文件
-      try {
-        const thumbnailPath = path.join(
-          workdir,
-          'public/thumbnails',
-          `${existingItem.id}.webp`,
-        )
-        await fs.unlink(thumbnailPath)
-        fsLogger?.info(`🗑️ 已删除缩略图：${existingItem.id}.webp`)
-      } catch (error) {
-        // 缩略图可能已经不存在，忽略错误
-        fsLogger?.warn(`删除缩略图失败：${existingItem.id}.webp`, error)
-      }
     }
   }
 

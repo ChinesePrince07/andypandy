@@ -261,21 +261,9 @@ export class PhotoGalleryBuilder {
     }
 
     // 检测并处理已删除的图片
-    if (
-      !options.isForceMode &&
-      !options.isForceManifest &&
-      existingManifestItems.length > 0
-    ) {
-      deletedCount = await handleDeletedPhotos(
-        existingManifestItems,
-        s3ImageKeys,
-        logger.main,
-        logger.fs,
-      )
-    }
-
+    deletedCount = await handleDeletedPhotos(manifest)
     // 保存 manifest
-    await saveManifest(manifest, logger.fs)
+    await saveManifest(manifest)
 
     // 显示构建结果
     if (this.config.options.showDetailedStats) {
