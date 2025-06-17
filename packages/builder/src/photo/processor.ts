@@ -17,8 +17,10 @@ import {
   thumbnailExists,
 } from '../image/thumbnail.js'
 import type { Logger } from '../logger/index.js'
+import { logger } from '../logger/index.js'
 import { needsUpdate } from '../manifest/manager.js'
-import { generateS3Url, getImageFromS3 } from '../s3/operations.js'
+import { generateS3Url } from '../s3/operations.js'
+import { defaultStorageManager } from '../storage/manager.js'
 import type {
   PhotoManifestItem,
   PickedExif,
@@ -49,7 +51,6 @@ export async function processPhoto(
   existingManifestMap: Map<string, PhotoManifestItem>,
   livePhotoMap: Map<string, _Object>,
   options: PhotoProcessorOptions,
-  logger: Logger,
 ): Promise<ProcessPhotoResult> {
   const key = obj.Key
   if (!key) {
@@ -104,7 +105,8 @@ export async function processPhoto(
 
   try {
     // 获取图片数据
-    const rawImageBuffer = await getImageFromS3(key, workerLoggers.s3)
+    const rawImageBuffer = await defaultStorageManager.getFile(key)
+
     if (!rawImageBuffer) return { item: null, type: 'failed' }
 
     // 预处理图片（处理 HEIC/HEIF 格式）

@@ -340,6 +340,7 @@ export const formatExifData = (exif: PickedExif | null) => {
   const colorSpace = translateColorSpace(exif.ColorSpace || null)
 
   const GPSAltitudeIsAboveSeaLevel = exif.GPSAltitudeRef === 'Above Sea Level'
+
   // GPS 信息
   const gpsInfo = {
     altitude: exif.GPSAltitude
@@ -412,7 +413,7 @@ export const formatExifData = (exif: PickedExif | null) => {
     whiteBalanceFineTune,
 
     // GPS信息
-    gps: gpsInfo,
+    gps: gpsInfo.latitude && gpsInfo.longitude ? gpsInfo : null,
 
     fujiRecipe: exif.FujiRecipe ? processFujiRecipe(exif.FujiRecipe) : null,
     exposureProgram,
