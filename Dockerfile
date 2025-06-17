@@ -14,7 +14,7 @@ RUN corepack enable
 # -----------------
 FROM base AS builder
 
-RUN apk update && apk add --no-cache git
+RUN apk update && apk add --no-cache git perl
 COPY . .
 RUN sh ./scripts/preinstall.sh
 # Install all dependencies
