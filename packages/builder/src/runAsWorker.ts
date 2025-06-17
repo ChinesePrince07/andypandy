@@ -47,15 +47,6 @@ export async function runAsWorker() {
     const buffer = Buffer.from(serializedData.data)
     const sharedData = deserialize(buffer) as SharedData
 
-    // 动态导入所需模块
-    const [{ StorageManager }, { builderConfig }] = await Promise.all([
-      import('./storage/index.js'),
-      import('@builder'),
-    ])
-
-    // 在 worker 中初始化存储管理器
-    storageManager = new StorageManager(builderConfig.storage)
-
     // 从主进程接收的共享数据中恢复数据结构（数据已经是正确的类型）
     imageObjects = sharedData.imageObjects
     existingManifestMap = sharedData.existingManifestMap
