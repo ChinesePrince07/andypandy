@@ -447,12 +447,12 @@ export const Row: FC<{
 }
 
 const formatDateTime = (date: Date | null | undefined) => {
+  if (!date || Number.isNaN(date.getTime())) return ''
   const i18n = jotaiStore.get(i18nAtom)
   const datetimeFormatter = new Intl.DateTimeFormat(i18n.language, {
     dateStyle: 'short',
     timeStyle: 'medium',
   })
-  if (!date) return ''
 
   return datetimeFormatter.format(date)
 }
