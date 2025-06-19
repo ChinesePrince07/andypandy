@@ -102,6 +102,7 @@ S3_ENDPOINT=https://s3.amazonaws.com
 S3_BUCKET_NAME=your_bucket_name
 S3_PREFIX=photos/
 S3_CUSTOM_DOMAIN=your_custom_domain.com
+S3_EXCLUDE_REGEX=
 ```
 
 ### 4. 站点配置
@@ -202,6 +203,7 @@ pnpm dev
 - `endpoint`: S3 端点（可选）
 - `prefix`: 文件前缀
 - `customDomain`: 自定义域名
+- `excludeRegex`: 排除文件的正则表达式（可选）
 
 #### 构建选项 (`options`)
 

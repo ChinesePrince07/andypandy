@@ -89,11 +89,16 @@ export class S3StorageProvider implements StorageProvider {
 
     const listResponse = await s3Client.send(listCommand)
     const objects = listResponse.Contents || []
+    const excludeRegex = this.config.excludeRegex
+      ? new RegExp(this.config.excludeRegex)
+      : null
 
     // 过滤出图片文件并转换为通用格式
     const imageObjects = objects
       .filter((obj: _Object) => {
         if (!obj.Key) return false
+        if (excludeRegex && excludeRegex.test(obj.Key)) return false
+
         const ext = path.extname(obj.Key).toLowerCase()
         return SUPPORTED_FORMATS.has(ext)
       })

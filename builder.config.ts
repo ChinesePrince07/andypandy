@@ -85,6 +85,7 @@ export const defaultBuilderConfig: BuilderConfig = {
     secretAccessKey: env.S3_SECRET_ACCESS_KEY,
     prefix: env.S3_PREFIX,
     customDomain: env.S3_CUSTOM_DOMAIN,
+    excludeRegex: env.S3_EXCLUDE_REGEX,
   },
 
   options: {
