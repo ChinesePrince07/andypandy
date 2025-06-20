@@ -1,5 +1,34 @@
 import type { Tags } from 'exiftool-vendored'
 
+// 影调类型定义
+export type ToneType = 'low-key' | 'high-key' | 'normal' | 'high-contrast'
+
+// 压缩的直方图数据结构
+export interface CompressedHistogramData {
+  red: number[] // 64 个点位，降采样后的数据
+  green: number[] // 64 个点位，降采样后的数据
+  blue: number[] // 64 个点位，降采样后的数据
+  luminance: number[] // 64 个点位，降采样后的数据
+}
+
+// 原始直方图数据结构（仅用于内部计算）
+export interface HistogramData {
+  red: number[]
+  green: number[]
+  blue: number[]
+  luminance: number[]
+}
+
+// 影调分析结果
+export interface ToneAnalysis {
+  toneType: ToneType
+  brightness: number // 0-100，平均亮度
+  contrast: number // 0-100，对比度
+  shadowRatio: number // 0-1，阴影区域占比
+  highlightRatio: number // 0-1，高光区域占比
+  histogram: CompressedHistogramData // 压缩的直方图数据
+}
+
 export interface PhotoInfo {
   title: string
   dateTaken: string
@@ -31,6 +60,7 @@ export interface PhotoManifestItem {
   lastModified: string
   size: number
   exif: PickedExif | null
+  toneAnalysis: ToneAnalysis | null // 影调分析结果
   isLivePhoto?: boolean
   livePhotoVideoUrl?: string
   livePhotoVideoS3Key?: string
@@ -96,7 +126,7 @@ export interface PickedExif {
   ShutterSpeed?: string | number
   LightValue?: number
 
-  // 日期时间（处理后的ISO格式）
+  // 日期时间（处理后的 ISO 格式）
   DateTimeOriginal?: string
   DateTimeDigitized?: string
 

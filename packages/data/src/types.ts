@@ -1,4 +1,4 @@
-import type { PickedExif } from '@afilmory/builder'
+import type { PickedExif, ToneAnalysis } from '@afilmory/builder'
 
 export interface PhotoManifest {
   id: string
@@ -16,6 +16,7 @@ export interface PhotoManifest {
   lastModified: string
   size: number
   exif: PickedExif
+  toneAnalysis: ToneAnalysis | null // 影调分析结果
   isLivePhoto?: boolean
   livePhotoVideoUrl?: string
   livePhotoVideoS3Key?: string

@@ -412,7 +412,7 @@ export const formatExifData = (exif: PickedExif | null) => {
     wbShiftGM,
     whiteBalanceFineTune,
 
-    // GPS信息
+    // GPS 信息
     gps: gpsInfo.latitude && gpsInfo.longitude ? gpsInfo : null,
 
     fujiRecipe: exif.FujiRecipe ? processFujiRecipe(exif.FujiRecipe) : null,
@@ -426,7 +426,7 @@ export const Row: FC<{
   ellipsis?: boolean
 }> = ({ label, value, ellipsis }) => {
   return (
-    <div className="flex justify-between gap-4">
+    <div className="flex justify-between gap-4 text-sm">
       <span className="text-text-secondary shrink-0">{label}</span>
 
       {ellipsis ? (

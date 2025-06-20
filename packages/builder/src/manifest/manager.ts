@@ -14,7 +14,7 @@ export async function loadExistingManifest(): Promise<AfilmoryManifest> {
   try {
     const manifestContent = await fs.readFile(manifestPath, 'utf-8')
     const manifest = JSON.parse(manifestContent) as AfilmoryManifest
-    if (manifest.version !== 'v1') {
+    if (manifest.version !== 'v2') {
       throw new Error('Invalid manifest version')
     }
     return manifest
@@ -23,7 +23,7 @@ export async function loadExistingManifest(): Promise<AfilmoryManifest> {
       '🔍 未找到 manifest 文件/解析失败，创建新的 manifest 文件...',
     )
     return {
-      version: 'v1',
+      version: 'v2',
       data: [],
     }
   }
@@ -55,7 +55,7 @@ export async function saveManifest(items: PhotoManifestItem[]): Promise<void> {
     manifestPath,
     JSON.stringify(
       {
-        version: 'v1',
+        version: 'v2',
         data: sortedManifest,
       } as AfilmoryManifest,
       null,

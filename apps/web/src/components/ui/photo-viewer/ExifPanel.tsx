@@ -22,6 +22,7 @@ import type { PhotoManifest } from '~/types/photo'
 
 import { MotionButtonBase } from '../button'
 import { formatExifData, Row } from './formatExifData'
+import { HistogramChart } from './HistogramChart'
 
 export const ExifPanel: FC<{
   currentPhoto: PhotoManifest
@@ -206,7 +207,7 @@ export const ExifPanel: FC<{
 
             {/* 标签信息 - 移到基本信息 section 内 */}
             {currentPhoto.tags && currentPhoto.tags.length > 0 && (
-              <div className="mt-3">
+              <div className="mt-3 mb-3">
                 <h4 className="mb-2 text-sm font-medium text-white/80">
                   {t('exif.tags')}
                 </h4>
@@ -231,6 +232,59 @@ export const ExifPanel: FC<{
               </div>
             )}
           </div>
+
+          {/* 影调分析和直方图 */}
+          {currentPhoto.toneAnalysis && (
+            <div>
+              <h4 className="mb-2 text-sm font-medium text-white/80">
+                影调分析
+              </h4>
+              <div>
+                {/* 影调信息 */}
+                <Row
+                  label={t('exif.tone.type')}
+                  value={(() => {
+                    const toneTypeMap = {
+                      'low-key': t('exif.tone.low-key'),
+                      'high-key': t('exif.tone.high-key'),
+                      normal: t('exif.tone.normal'),
+                      'high-contrast': t('exif.tone.high-contrast'),
+                    }
+                    return (
+                      toneTypeMap[currentPhoto.toneAnalysis!.toneType] ||
+                      currentPhoto.toneAnalysis!.toneType
+                    )
+                  })()}
+                />
+                <div className="mt-1 mb-3 grid grid-cols-2 gap-x-2 gap-y-1 text-sm">
+                  <Row
+                    label={t('exif.brightness.title')}
+                    value={`${currentPhoto.toneAnalysis.brightness}%`}
+                  />
+                  <Row
+                    label={t('exif.contrast.title')}
+                    value={`${currentPhoto.toneAnalysis.contrast}%`}
+                  />
+                  <Row
+                    label={t('exif.shadow.ratio')}
+                    value={`${Math.round(currentPhoto.toneAnalysis.shadowRatio * 100)}%`}
+                  />
+                  <Row
+                    label={t('exif.highlight.ratio')}
+                    value={`${Math.round(currentPhoto.toneAnalysis.highlightRatio * 100)}%`}
+                  />
+                </div>
+
+                {/* 直方图 */}
+                <div className="mb-3">
+                  <div className="mb-2 text-xs font-medium text-white/70">
+                    {t('exif.histogram')}
+                  </div>
+                  <HistogramChart toneAnalysis={currentPhoto.toneAnalysis} />
+                </div>
+              </div>
+            </div>
+          )}
 
           {formattedExifData && (
             <Fragment>
