@@ -174,7 +174,7 @@ Create `builder.config.json` file for advanced configuration:
     "bucket": "my-photos",
     "region": "us-east-1",
     "prefix": "photos/",
-    "customDomain": "cdn.example.com"
+    "customDomain": "https://cdn.example.com"
   },
   "options": {
     "defaultConcurrency": 8,
