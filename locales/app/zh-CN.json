@@ -129,6 +129,8 @@
   "exif.white.balance.shift.gm": "白平衡偏移 (绿色 - 品红色)",
   "exif.white.balance.title": "白平衡",
   "gallery.built.at": "构建于 ",
+  "gallery.photos_one": "{{count}} 张照片",
+  "gallery.photos_other": "{{count}} 张照片",
   "histogram.blue": "蓝",
   "histogram.channel": "通道",
   "histogram.green": "绿",

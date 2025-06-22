@@ -13,11 +13,11 @@ export function extractPhotoInfo(
 ): PhotoInfo {
   const log = imageLogger
 
-  log?.debug(`提取照片信息: ${key}`)
+  log?.debug(`提取照片信息：${key}`)
 
   const fileName = path.basename(key, path.extname(key))
 
-  // 尝试从文件名解析信息，格式示例: "2024-01-15_城市夜景_1250views"
+  // 尝试从文件名解析信息，格式示例："2024-01-15_城市夜景_1250views"
   let title = fileName
   let dateTaken = new Date().toISOString()
   let views = 0
