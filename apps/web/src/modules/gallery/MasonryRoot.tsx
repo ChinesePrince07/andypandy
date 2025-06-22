@@ -13,7 +13,10 @@ import { clsxm } from '~/lib/cn'
 import { Spring } from '~/lib/spring'
 import type { PhotoManifest } from '~/types/photo'
 
-import { ActionGroup } from './ActionGroup'
+import type { PanelType } from './ActionGroup'
+import { ActionGroup, ActionPanel } from './ActionGroup'
+import type { ActionType } from './FloatingActionButton'
+import { FloatingActionButton } from './FloatingActionButton'
 import { Masonry } from './Masonic'
 import { MasonryHeaderMasonryItem } from './MasonryHeaderMasonryItem'
 import { PhotoMasonryItem } from './PhotoMasonryItem'
@@ -29,7 +32,7 @@ const FIRST_SCREEN_ITEMS_COUNT = 30
 export const MasonryRoot = () => {
   const { columns } = useAtomValue(gallerySettingAtom)
   const hasAnimatedRef = useRef(false)
-  const [showFloatingActions, setShowFloatingActions] = useState(false)
+  const [showFloatingActions, setShowFloatingActions] = useState(true)
   const [containerWidth, setContainerWidth] = useState(0)
 
   const photos = usePhotos()
@@ -41,6 +44,11 @@ export const MasonryRoot = () => {
     hasAnimatedRef.current = true
   }, [])
   const isMobile = useMobile()
+
+  const [activePanel, setActivePanel] = useState<ActionType | null>(null)
+  const handleActionClick = (action: ActionType) => {
+    setActivePanel(action)
+  }
 
   // 监听容器宽度变化
   useEffect(() => {
@@ -112,10 +120,14 @@ export const MasonryRoot = () => {
             isVisible={showFloatingActions && !!dateRange.formattedRange}
             className="relative top-0 left-0"
           />
-          <div className="flex justify-end">
-            <FloatingActionBar showFloatingActions={showFloatingActions} />
-          </div>
         </div>
+      )}
+
+      {isMobile && (
+        <FloatingActionButton
+          isVisible={showFloatingActions}
+          onActionClick={handleActionClick}
+        />
       )}
 
       <div className="p-1 lg:px-0 lg:pb-0 [&_*]:!select-none">
@@ -150,6 +162,16 @@ export const MasonryRoot = () => {
           }, [])}
         />
       </div>
+
+      <ActionPanel
+        open={!!activePanel}
+        onOpenChange={(open) => {
+          if (!open) {
+            setActivePanel(null)
+          }
+        }}
+        type={activePanel as PanelType | null}
+      />
     </>
   )
 }
