@@ -41,11 +41,7 @@ export {
 
 // 照片处理
 export { extractPhotoInfo } from './photo/info-extractor.js'
-export {
-  type PhotoProcessorOptions,
-  processPhoto,
-  type WorkerLoggers,
-} from './photo/processor.js'
+export { type PhotoProcessorOptions, processPhoto } from './photo/processor.js'
 
 // Manifest 管理
 export {
