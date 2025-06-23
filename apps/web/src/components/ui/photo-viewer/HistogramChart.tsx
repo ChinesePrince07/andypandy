@@ -102,9 +102,27 @@ export const HistogramChart: FC<HistogramChartProps> = ({
     const decompressedHistogram = decompressHistogram(toneAnalysis.histogram)
     const { red, green, blue, luminance } = decompressedHistogram
 
-    // 设置画布尺寸
-    const { width } = canvas
-    const { height } = canvas
+    // 获取设备像素比，提高画布分辨率
+    const devicePixelRatio = window.devicePixelRatio || 1
+    const rect = canvas.getBoundingClientRect()
+
+    // 设置画布内部分辨率
+    canvas.width = rect.width * devicePixelRatio
+    canvas.height = rect.height * devicePixelRatio
+
+    // 缩放上下文以匹配设备像素比
+    ctx.scale(devicePixelRatio, devicePixelRatio)
+
+    // 设置画布样式尺寸
+    canvas.style.width = `${rect.width}px`
+    canvas.style.height = `${rect.height}px`
+
+    // 启用抗锯齿和平滑渲染
+    ctx.imageSmoothingEnabled = true
+    ctx.imageSmoothingQuality = 'high'
+
+    const { width } = rect
+    const { height } = rect
     const padding = 8
 
     // 清空画布
@@ -147,18 +165,31 @@ export const HistogramChart: FC<HistogramChartProps> = ({
 
     // 绘制直方图函数
     const drawHistogram = (data: number[], color: string, alpha = 0.6) => {
-      ctx.fillStyle = color
       ctx.globalAlpha = alpha
 
-      for (const [i, datum] of data.entries()) {
-        if (datum > 0) {
-          const x = padding + i * barWidth
-          const barHeight = (datum / globalMax) * drawHeight
-          const y = height - padding - barHeight
+      // 使用路径绘制更平滑的直方图
+      ctx.beginPath()
+      ctx.moveTo(padding, height - padding)
 
-          ctx.fillRect(x, y, Math.max(barWidth, 1), barHeight)
-        }
+      for (const [i, datum] of data.entries()) {
+        const x = padding + i * barWidth
+        const barHeight = (datum / globalMax) * drawHeight
+        const y = height - padding - barHeight
+
+        ctx.lineTo(x, y)
       }
+
+      ctx.lineTo(padding + drawWidth, height - padding)
+      ctx.closePath()
+
+      ctx.fillStyle = color
+      ctx.fill()
+
+      // 添加描边以增强视觉效果
+      ctx.strokeStyle = color
+      ctx.lineWidth = 0.5
+      ctx.globalAlpha = alpha * 1.5
+      ctx.stroke()
     }
 
     // 根据可见性绘制 RGB 直方图
@@ -175,17 +206,30 @@ export const HistogramChart: FC<HistogramChartProps> = ({
     // 绘制亮度直方图
     if (channelVisibility.luminance) {
       ctx.globalAlpha = 0.8
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'
+
+      // 使用路径绘制更平滑的亮度直方图
+      ctx.beginPath()
+      ctx.moveTo(padding, height - padding)
 
       for (const [i, element] of luminance.entries()) {
-        if (element > 0) {
-          const x = padding + i * barWidth
-          const barHeight = (element / globalMax) * drawHeight
-          const y = height - padding - barHeight
+        const x = padding + i * barWidth
+        const barHeight = (element / globalMax) * drawHeight
+        const y = height - padding - barHeight
 
-          ctx.fillRect(x, y, Math.max(barWidth, 1), barHeight)
-        }
+        ctx.lineTo(x, y)
       }
+
+      ctx.lineTo(padding + drawWidth, height - padding)
+      ctx.closePath()
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'
+      ctx.fill()
+
+      // 添加描边
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)'
+      ctx.lineWidth = 0.5
+      ctx.globalAlpha = 0.9
+      ctx.stroke()
     }
 
     // 重置透明度
@@ -276,10 +320,8 @@ export const HistogramChart: FC<HistogramChartProps> = ({
       <div className="relative">
         <canvas
           ref={canvasRef}
-          width={256}
-          height={100}
           className="h-[100px] w-full cursor-crosshair rounded-md bg-black/20"
-          style={{ imageRendering: 'pixelated' }}
+          style={{ imageRendering: 'auto' }}
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
         />

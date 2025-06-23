@@ -237,7 +237,7 @@ export const ExifPanel: FC<{
           {currentPhoto.toneAnalysis && (
             <div>
               <h4 className="mb-2 text-sm font-medium text-white/80">
-                影调分析
+                {t('exif.tone.analysis.title')}
               </h4>
               <div>
                 {/* 影调信息 */}
