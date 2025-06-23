@@ -1,5 +1,6 @@
 import { photoLoader } from '@afilmory/data'
 import type { PhotoManifest } from '@afilmory/data/types'
+import siteConfig from '@config'
 import { DOMParser } from 'linkedom'
 import type { NextRequest } from 'next/server'
 
@@ -41,6 +42,7 @@ export const handler = async (
         }
       }
     })
+    document.head.title = `${photo.id} | ${siteConfig.title}`
     // Insert meta open graph tags and twitter meta tags
     createAndInsertOpenGraphMeta(document, photo, request)
 
@@ -83,7 +85,7 @@ const createAndInsertOpenGraphMeta = (
 
   const ogTags = {
     'og:type': 'website',
-    'og:title': photo.id,
+    'og:title': `${photo.id} on ${siteConfig.title}`,
     'og:description': photo.description || '',
     'og:image': `${realOrigin}/og/${photo.id}`,
     'og:url': `${realOrigin}/${photo.id}`,
@@ -99,7 +101,7 @@ const createAndInsertOpenGraphMeta = (
   // Twitter Card meta tags
   const twitterTags = {
     'twitter:card': 'summary_large_image',
-    'twitter:title': photo.id,
+    'twitter:title': `${photo.id} on ${siteConfig.title}`,
     'twitter:description': photo.description || '',
     'twitter:image': `${realOrigin}/og/${photo.id}`,
   }
