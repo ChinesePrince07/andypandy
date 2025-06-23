@@ -48,7 +48,7 @@ const COLUMN_WIDTH_CONFIG = {
 export const MasonryRoot = () => {
   const { columns } = useAtomValue(gallerySettingAtom)
   const hasAnimatedRef = useRef(false)
-  const [showFloatingActions, setShowFloatingActions] = useState(true)
+  const [showFloatingActions, setShowFloatingActions] = useState(false)
   const [containerWidth, setContainerWidth] = useState(0)
 
   const photos = usePhotos()
