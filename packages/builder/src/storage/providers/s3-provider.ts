@@ -84,7 +84,7 @@ export class S3StorageProvider implements StorageProvider {
     const listCommand = new ListObjectsV2Command({
       Bucket: this.config.bucket,
       Prefix: this.config.prefix,
-      MaxKeys: 1000, // 最多获取 1000 张照片
+      MaxKeys: this.config.maxFileLimit, // 最多获取 1000 张照片
     })
 
     const listResponse = await s3Client.send(listCommand)
@@ -111,7 +111,7 @@ export class S3StorageProvider implements StorageProvider {
     const listCommand = new ListObjectsV2Command({
       Bucket: this.config.bucket,
       Prefix: this.config.prefix,
-      MaxKeys: 1000,
+      MaxKeys: this.config.maxFileLimit,
     })
 
     const listResponse = await s3Client.send(listCommand)
