@@ -295,19 +295,24 @@ export const HistogramChart: FC<HistogramChartProps> = ({
               {t('histogram.value')}: {hoverInfo.value}
             </div>
             {channelVisibility.red && (
-              <div className="text-red-400">R: {hoverInfo.channels.red}</div>
+              <div className="text-red">
+                R: {hoverInfo.channels.red.toFixed(2)}
+              </div>
             )}
             {channelVisibility.green && (
-              <div className="text-green-400">
-                G: {hoverInfo.channels.green}
+              <div className="text-green">
+                G: {hoverInfo.channels.green.toFixed(2)}
               </div>
             )}
             {channelVisibility.blue && (
-              <div className="text-blue-400">B: {hoverInfo.channels.blue}</div>
+              <div className="text-blue">
+                B: {hoverInfo.channels.blue.toFixed(2)}
+              </div>
             )}
             {channelVisibility.luminance && (
               <div className="text-white">
-                {t('histogram.luminance')}: {hoverInfo.channels.luminance}
+                {t('histogram.luminance')}:{' '}
+                {hoverInfo.channels.luminance.toFixed(2)}
               </div>
             )}
           </m.div>
@@ -324,12 +329,12 @@ export const HistogramChart: FC<HistogramChartProps> = ({
               onClick={() => toggleChannel('red')}
               className={`flex items-center gap-1 rounded px-2 py-1 text-xs transition-all ${
                 channelVisibility.red
-                  ? 'border border-red-500/30 bg-red-500/20 text-red-400'
+                  ? 'text-red border border-red-500/30 bg-red-500/20'
                   : 'border border-white/10 bg-white/5 text-white/40'
               }`}
             >
               <div
-                className={`size-2 rounded-full ${channelVisibility.red ? 'bg-red-400' : 'bg-white/20'}`}
+                className={`size-2 rounded-full ${channelVisibility.red ? 'bg-red' : 'bg-white/20'}`}
               />
               <span>R</span>
             </button>
@@ -343,7 +348,7 @@ export const HistogramChart: FC<HistogramChartProps> = ({
               }`}
             >
               <div
-                className={`size-2 rounded-full ${channelVisibility.green ? 'bg-green-400' : 'bg-white/20'}`}
+                className={`size-2 rounded-full ${channelVisibility.green ? 'bg-green' : 'bg-white/20'}`}
               />
               <span>G</span>
             </button>
@@ -357,7 +362,7 @@ export const HistogramChart: FC<HistogramChartProps> = ({
               }`}
             >
               <div
-                className={`size-2 rounded-full ${channelVisibility.blue ? 'bg-blue-400' : 'bg-white/20'}`}
+                className={`size-2 rounded-full ${channelVisibility.blue ? 'bg-blue' : 'bg-white/20'}`}
               />
               <span>B</span>
             </button>
@@ -371,7 +376,7 @@ export const HistogramChart: FC<HistogramChartProps> = ({
               }`}
             >
               <div
-                className={`size-2 rounded-full ${channelVisibility.luminance ? 'bg-white' : 'bg-white/20'}`}
+                className={`size-2 rounded-full ${channelVisibility.luminance ? 'bg-white/80' : 'bg-white/20'}`}
               />
               <span>{t('histogram.luminance')}</span>
             </button>
