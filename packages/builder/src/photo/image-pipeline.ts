@@ -1,13 +1,13 @@
 import type { _Object } from '@aws-sdk/client-s3'
 import sharp from 'sharp'
 
+import { defaultBuilder } from '../builder/builder.js'
 import {
   convertBmpToJpegSharpInstance,
   getImageMetadataWithSharp,
   isBitmap,
   preprocessImageBuffer,
 } from '../image/processor.js'
-import { defaultStorageManager } from '../storage/manager.js'
 import type { PhotoManifestItem } from '../types/photo.js'
 import {
   processExifData,
@@ -46,7 +46,9 @@ export async function preprocessImage(
 
   try {
     // 获取图片数据
-    const rawImageBuffer = await defaultStorageManager.getFile(photoKey)
+    const rawImageBuffer = await defaultBuilder
+      .getStorageManager()
+      .getFile(photoKey)
     if (!rawImageBuffer) {
       loggers.image.error(`无法获取图片数据：${photoKey}`)
       return null
@@ -199,7 +201,9 @@ export async function executePhotoProcessingPipeline(
       dateTaken: photoInfo.dateTaken,
       views: photoInfo.views,
       tags: photoInfo.tags,
-      originalUrl: defaultStorageManager.generatePublicUrl(photoKey),
+      originalUrl: defaultBuilder
+        .getStorageManager()
+        .generatePublicUrl(photoKey),
       thumbnailUrl: thumbnailResult.thumbnailUrl,
       blurhash: thumbnailResult.blurhash,
       width: metadata.width,

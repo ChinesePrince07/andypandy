@@ -1,7 +1,7 @@
 import type { _Object } from '@aws-sdk/client-s3'
 
+import { defaultBuilder } from '../builder/builder.js'
 import type { StorageObject } from '../storage/interfaces.js'
-import { defaultStorageManager } from '../storage/manager.js'
 import { getGlobalLoggers } from './logger-adapter.js'
 
 export interface LivePhotoResult {
@@ -40,7 +40,9 @@ export function processLivePhoto(
     return { isLivePhoto: false }
   }
 
-  const livePhotoVideoUrl = defaultStorageManager.generatePublicUrl(videoKey)
+  const livePhotoVideoUrl = defaultBuilder
+    .getStorageManager()
+    .generatePublicUrl(videoKey)
 
   loggers.image.info(`📱 检测到 Live Photo：${photoKey} -> ${videoKey}`)
 

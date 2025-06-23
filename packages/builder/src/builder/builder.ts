@@ -26,7 +26,7 @@ export interface BuilderOptions {
   concurrencyLimit?: number // 可选，如果未提供则使用配置文件中的默认值
 }
 
-export class PhotoGalleryBuilder {
+class PhotoGalleryBuilder {
   private storageManager: StorageManager
   private config: BuilderConfig
 

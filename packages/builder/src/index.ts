@@ -1,9 +1,5 @@
 // 主要构建器
-export {
-  type BuilderOptions,
-  defaultBuilder,
-  PhotoGalleryBuilder,
-} from './builder/index.js'
+export { type BuilderOptions, defaultBuilder } from './builder/index.js'
 export type { StorageConfig } from './storage/interfaces.js'
 // 日志系统
 export { type Logger, logger, type WorkerLogger } from './logger/index.js'
@@ -33,11 +29,6 @@ export {
   thumbnailExists,
 } from './image/thumbnail.js'
 export { s3Client } from './s3/client.js'
-export {
-  generateS3Url,
-  getImageFromS3,
-  listImagesFromS3,
-} from './s3/operations.js'
 
 // 照片处理
 export { extractPhotoInfo } from './photo/info-extractor.js'
