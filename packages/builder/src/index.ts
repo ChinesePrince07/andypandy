@@ -19,7 +19,6 @@ export type {
 
 // S3 操作
 export { generateBlurhash } from './image/blurhash.js'
-export { extractExifData } from './image/exif.js'
 export {
   getImageMetadataWithSharp,
   preprocessImageBuffer,

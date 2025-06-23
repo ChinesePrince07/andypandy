@@ -119,11 +119,7 @@ export async function processExifData(
   const ext = path.extname(photoKey).toLowerCase()
   const originalBuffer = HEIC_FORMATS.has(ext) ? rawImageBuffer : undefined
 
-  return await extractExifData(
-    imageBuffer,
-    originalBuffer,
-    loggers.exif.originalLogger,
-  )
+  return await extractExifData(imageBuffer, originalBuffer)
 }
 
 /**

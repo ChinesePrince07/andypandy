@@ -57,11 +57,7 @@ export async function preprocessImage(
     // 预处理图片（处理 HEIC/HEIF 格式）
     let imageBuffer: Buffer
     try {
-      imageBuffer = await preprocessImageBuffer(
-        rawImageBuffer,
-        photoKey,
-        loggers.image.originalLogger,
-      )
+      imageBuffer = await preprocessImageBuffer(rawImageBuffer, photoKey)
     } catch (error) {
       loggers.image.error(`预处理图片失败：${photoKey}`, error)
       return null
@@ -182,11 +178,7 @@ export async function executePhotoProcessingPipeline(
     )
 
     // 6. 提取照片信息
-    const photoInfo = extractPhotoInfo(
-      photoKey,
-      exifData,
-      loggers.image.originalLogger,
-    )
+    const photoInfo = extractPhotoInfo(photoKey, exifData)
 
     // 7. 处理 Live Photo
     const livePhotoResult = processLivePhoto(photoKey, livePhotoMap)
