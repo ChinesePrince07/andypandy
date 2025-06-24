@@ -61,7 +61,7 @@ export const HistogramChart: FC<HistogramChartProps> = ({
       const rect = canvas.getBoundingClientRect()
       const x = event.clientX - rect.left
       const padding = 8
-      const drawWidth = canvas.width - padding * 2
+      const drawWidth = rect.width - padding * 2
 
       // 计算对应的直方图索引
       const histogramIndex = Math.floor(((x - padding) / drawWidth) * 256)
@@ -120,6 +120,8 @@ export const HistogramChart: FC<HistogramChartProps> = ({
     // 启用抗锯齿和平滑渲染
     ctx.imageSmoothingEnabled = true
     ctx.imageSmoothingQuality = 'high'
+    ctx.lineJoin = 'round'
+    ctx.lineCap = 'round'
 
     const { width } = rect
     const { height } = rect
@@ -258,7 +260,8 @@ export const HistogramChart: FC<HistogramChartProps> = ({
 
     // 绘制悬停指示线
     if (hoverInfo) {
-      const hoverX = padding + (hoverInfo.x * drawWidth) / 255
+      const barWidth = drawWidth / 256
+      const hoverX = padding + hoverInfo.x * barWidth
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)'
       ctx.lineWidth = 1
       ctx.setLineDash([])
