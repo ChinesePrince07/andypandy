@@ -1,5 +1,5 @@
+import type { PhotoManifestItem } from '@afilmory/builder'
 import { photoLoader } from '@afilmory/data'
-import type { PhotoManifest } from '@afilmory/data/types'
 import siteConfig from '@config'
 import { DOMParser } from 'linkedom'
 import type { NextRequest } from 'next/server'
@@ -66,7 +66,7 @@ export const handler = async (
 
 const createAndInsertOpenGraphMeta = (
   document: OnlyHTMLDocument,
-  photo: PhotoManifest,
+  photo: PhotoManifestItem,
   request: NextRequest,
 ) => {
   // Open Graph meta tags

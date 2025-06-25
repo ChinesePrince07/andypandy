@@ -2,29 +2,10 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import type { PhotoManifestItem } from '@afilmory/builder'
 import type { Plugin } from 'vite'
 
 import type { SiteConfig } from '../../site.config'
-
-interface PhotoData {
-  id: string
-  title: string
-  description: string
-  dateTaken: string
-  views: number
-  tags: string[]
-  originalUrl: string
-  thumbnailUrl: string
-  blurhash: string
-  width: number
-  height: number
-  aspectRatio: number
-  s3Key: string
-  lastModified: string
-  size: number
-  exif?: any
-  isLivePhoto: boolean
-}
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
@@ -39,9 +20,9 @@ export function createFeedSitemapPlugin(siteConfig: SiteConfig): Plugin {
           __dirname,
           '../../packages/data/src/photos-manifest.json',
         )
-        const photosData: PhotoData[] = (JSON.parse(
-          readFileSync(manifestPath, 'utf-8'),).data
-        )
+        const photosData: PhotoManifestItem[] = JSON.parse(
+          readFileSync(manifestPath, 'utf-8'),
+        ).data
 
         // Sort photos by date taken (newest first)
         const sortedPhotos = photosData.sort(
@@ -78,7 +59,10 @@ export function createFeedSitemapPlugin(siteConfig: SiteConfig): Plugin {
   }
 }
 
-function generateRSSFeed(photos: PhotoData[], config: SiteConfig): string {
+function generateRSSFeed(
+  photos: PhotoManifestItem[],
+  config: SiteConfig,
+): string {
   const now = new Date().toUTCString()
   const latestPhoto = photos[0]
   const lastBuildDate = latestPhoto
@@ -154,7 +138,7 @@ ${rssItems}
 </rss>`
 }
 
-function generateExifTags(exif: any, photo: PhotoData): string {
+function generateExifTags(exif: any, photo: PhotoManifestItem): string {
   if (!exif) {
     return ''
   }
@@ -193,16 +177,16 @@ function generateExifTags(exif: any, photo: PhotoData): string {
 
   // === 图像属性 (basic) ===
 
-  // Image Dimensions (图片宽度, 高度)
+  // Image Dimensions (图片宽度，高度)
   tags.push(
     `      <exif:imageWidth>${photo.width}</exif:imageWidth>`,
     `      <exif:imageHeight>${photo.height}</exif:imageHeight>`,
   )
 
-  // Date Taken (拍摄时间) - 转换为ISO 8601格式
+  // Date Taken (拍摄时间) - 转换为 ISO 8601 格式
   if (exif.Photo?.DateTimeOriginal) {
     try {
-      // 尝试解析EXIF日期格式 (YYYY:MM:DD HH:mm:ss)
+      // 尝试解析 EXIF 日期格式 (YYYY:MM:DD HH:mm:ss)
       const exifDate = exif.Photo.DateTimeOriginal.replaceAll(':', '-').replace(
         /-(\d{2}:\d{2}:\d{2})/,
         ' $1',
@@ -210,7 +194,7 @@ function generateExifTags(exif: any, photo: PhotoData): string {
       const isoDate = new Date(exifDate).toISOString()
       tags.push(`      <exif:dateTaken>${isoDate}</exif:dateTaken>`)
     } catch {
-      // 如果解析失败，使用photo.dateTaken
+      // 如果解析失败，使用 photo.dateTaken
       const isoDate = new Date(photo.dateTaken).toISOString()
       tags.push(`      <exif:dateTaken>${isoDate}</exif:dateTaken>`)
     }
@@ -249,7 +233,7 @@ function generateExifTags(exif: any, photo: PhotoData): string {
     )
   }
 
-  // Focal Length in 35mm equivalent (等效35mm焦距)
+  // Focal Length in 35mm equivalent (等效 35mm 焦距)
   if (exif.Photo?.FocalLengthIn35mmFilm) {
     tags.push(
       `      <exif:focalLength35mm>${exif.Photo.FocalLengthIn35mmFilm}mm</exif:focalLength35mm>`,
@@ -419,10 +403,13 @@ function convertDMSToDD(dms: number[], ref: string): number | null {
     dd = dd * -1
   }
 
-  return Math.round(dd * 1000000) / 1000000 // 保留6位小数
+  return Math.round(dd * 1000000) / 1000000 // 保留 6 位小数
 }
 
-function generateSitemap(photos: PhotoData[], config: SiteConfig): string {
+function generateSitemap(
+  photos: PhotoManifestItem[],
+  config: SiteConfig,
+): string {
   const now = new Date().toISOString()
 
   // Main page

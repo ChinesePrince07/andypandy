@@ -1,5 +1,6 @@
 import './PhotoViewer.css'
 
+import type { PhotoManifestItem } from '@afilmory/builder'
 import type { PickedExif } from '@afilmory/data'
 import { isNil } from 'es-toolkit/compat'
 import { useAtomValue } from 'jotai'
@@ -20,7 +21,6 @@ import {
 } from '~/icons'
 import { getImageFormat } from '~/lib/image-utils'
 import { Spring } from '~/lib/spring'
-import type { PhotoManifest } from '~/types/photo'
 
 import { MotionButtonBase } from '../button'
 import { formatExifData, Row } from './formatExifData'
@@ -28,7 +28,7 @@ import { HistogramChart } from './HistogramChart'
 import { RawExifViewer } from './RawExifViewer'
 
 export const ExifPanel: FC<{
-  currentPhoto: PhotoManifest
+  currentPhoto: PhotoManifestItem
   exifData: PickedExif | null
 
   onClose?: () => void

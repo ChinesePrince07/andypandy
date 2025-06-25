@@ -191,7 +191,6 @@ export async function executePhotoProcessingPipeline(
       title: photoInfo.title,
       description: photoInfo.description,
       dateTaken: photoInfo.dateTaken,
-      views: photoInfo.views,
       tags: photoInfo.tags,
       originalUrl: defaultBuilder
         .getStorageManager()

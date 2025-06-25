@@ -32,7 +32,6 @@ export interface ToneAnalysis {
 export interface PhotoInfo {
   title: string
   dateTaken: string
-  views: number
   tags: string[]
   description: string
 }
@@ -43,16 +42,11 @@ export interface ImageMetadata {
   format: string
 }
 
-export interface PhotoManifestItem {
+export interface PhotoManifestItem extends PhotoInfo {
   id: string
-  title: string
-  description: string
-  dateTaken: string
-  views: number
-  tags: string[]
   originalUrl: string
-  thumbnailUrl: string | null
-  blurhash: string | null
+  thumbnailUrl: string
+  blurhash: string
   width: number
   height: number
   aspectRatio: number
