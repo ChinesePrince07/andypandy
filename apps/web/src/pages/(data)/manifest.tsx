@@ -71,7 +71,6 @@ const ManifestStats = ({ data }: { data: any[] }) => {
   const stats = useMemo(() => {
     const totalPhotos = data.length
     const totalSize = data.reduce((sum, photo) => sum + (photo.size || 0), 0)
-    const totalViews = data.reduce((sum, photo) => sum + (photo.views || 0), 0)
 
     const uniqueTags = new Set()
     data.forEach((photo) => {
@@ -88,21 +87,17 @@ const ManifestStats = ({ data }: { data: any[] }) => {
     return {
       totalPhotos,
       totalSize: (totalSize / (1024 * 1024 * 1024)).toFixed(2), // GB
-      totalViews,
+
       uniqueTags: uniqueTags.size,
       uniqueCameras: cameras.size,
     }
   }, [data])
 
   return (
-    <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
       <StatCard label="Photos" value={stats.totalPhotos} icon="📸" />
       <StatCard label="Storage" value={`${stats.totalSize} GB`} icon="💾" />
-      <StatCard
-        label="Views"
-        value={stats.totalViews.toLocaleString()}
-        icon="👁️"
-      />
+
       <StatCard label="Tags" value={stats.uniqueTags} icon="🏷️" />
       <StatCard label="Cameras" value={stats.uniqueCameras} icon="📷" />
     </div>
