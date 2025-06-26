@@ -1,4 +1,4 @@
-import { WebGLImageViewer } from '@afilmory/webgl-viewer'
+import { LoadingState, WebGLImageViewer } from '@afilmory/webgl-viewer'
 import { AnimatePresence, m } from 'motion/react'
 import {
   startTransition,
@@ -169,9 +169,17 @@ export const ProgressiveImage = ({
   const handleWebGLLoadingStateChange = useCallback(
     (
       isLoading: boolean,
-      message?: string,
+      state?: LoadingState,
       quality?: 'high' | 'medium' | 'low' | 'unknown',
     ) => {
+      let message = ''
+
+      if (state === LoadingState.CREATE_TEXTURE) {
+        message = t('photo.webgl.creatingTexture')
+      } else if (state === LoadingState.IMAGE_LOADING) {
+        message = t('photo.webgl.loadingImage')
+      }
+
       loadingIndicatorRef.current?.updateLoadingState({
         isVisible: isLoading,
         isWebGLLoading: isLoading,
@@ -179,7 +187,7 @@ export const ProgressiveImage = ({
         webglQuality: quality,
       })
     },
-    [],
+    [t],
   )
 
   const [isThumbnailLoaded, setIsThumbnailLoaded] = useState(false)

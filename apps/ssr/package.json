@@ -2,7 +2,7 @@
   "name": "@afilmory/ssr",
   "type": "module",
   "version": "1.0.0",
-  "packageManager": "pnpm@10.12.1",
+  "packageManager": "pnpm@10.12.3",
   "description": "",
   "author": "Innei",
   "license": "ISC",
@@ -25,9 +25,9 @@
   },
   "devDependencies": {
     "@cloudflare/next-on-pages": "1.13.12",
-    "@types/node": "24.0.1",
+    "@types/node": "24.0.4",
     "@types/react": "19.1.8",
     "@types/react-dom": "19.1.6",
-    "next": "15.3.3"
+    "next": "15.3.4"
   }
 }
