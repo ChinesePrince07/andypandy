@@ -10,9 +10,10 @@ A modern photo gallery website built with React + TypeScript, supporting automat
 
 Live Photo Galleries:
 
-- https://gallery.innei.in
+- https://afilmory.innei.in
 - https://gallery.mxte.cc
 - https://photography.pseudoyu.com
+- https://afilmory.magren.cc
 
 ## 🌟 Features
 
