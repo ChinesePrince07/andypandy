@@ -84,6 +84,7 @@
     "@types/react": "19.1.8",
     "@types/react-dom": "19.1.6",
     "@vitejs/plugin-react": "^4.6.0",
+    "ast-kit": "2.1.0",
     "babel-plugin-react-compiler": "19.1.0-rc.2",
     "code-inspector-plugin": "0.20.12",
     "daisyui": "5.0.43",
@@ -99,6 +100,7 @@
     "tailwindcss-animate": "1.0.7",
     "tailwindcss-safe-area": "0.6.0",
     "tailwindcss-uikit-colors": "1.0.0-alpha.1",
+    "unplugin-ast": "0.15.0",
     "vite-plugin-html": "3.2.2"
   }
 }

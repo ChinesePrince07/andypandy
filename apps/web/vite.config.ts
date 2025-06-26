@@ -1,6 +1,7 @@
 import { execSync } from 'node:child_process'
 import { rmSync } from 'node:fs'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
@@ -18,6 +19,9 @@ import { createFeedSitemapPlugin } from '../../plugins/vite/feed-sitemap'
 import { localesJsonPlugin } from '../../plugins/vite/locales-json'
 import { manifestInjectPlugin } from '../../plugins/vite/manifest-inject'
 import { siteConfig } from '../../site.config'
+import { astPlugin } from './plugins/vite/ast'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 if (process.env.CI) {
   rmSync(path.join(process.cwd(), 'src/pages/(debug)'), {
@@ -40,10 +44,12 @@ export default defineConfig({
       },
     }),
 
+    astPlugin,
     tsconfigPaths(),
     checker({
       typescript: true,
       enableBuild: true,
+      root: __dirname,
     }),
     codeInspectorPlugin({
       bundler: 'vite',

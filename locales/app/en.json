@@ -240,6 +240,7 @@
   "photo.live.tooltip.desktop.zoom": "Hover to play Live Photo / Double-click to zoom",
   "photo.live.tooltip.mobile.main": "Long press to play Live Photo",
   "photo.live.tooltip.mobile.zoom": "Long press to play Live Photo / Double-tap to zoom",
+  "photo.reaction.success": "Reaction added",
   "photo.share.actions": "Actions",
   "photo.share.copy.failed": "Copy failed",
   "photo.share.copy.link": "Copy Link",

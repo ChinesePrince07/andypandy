@@ -33,6 +33,10 @@ declare global {
   const __MANIFEST__: AfilmoryManifest
 
   const __CONFIG__: InjectConfig
+  /**
+   * This function is a macro, will replace in the build stage.
+   */
+  export function tw(strings: TemplateStringsArray, ...values: any[]): string
 }
 
 export {}

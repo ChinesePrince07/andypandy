@@ -95,6 +95,11 @@ export const ReactionButton = ({
       <m.div
         className="relative"
         initial="closed"
+        exit={{
+          opacity: 0,
+          scale: 0,
+          transition: { duration: 0.2 },
+        }}
         animate={isOpen ? 'open' : 'closed'}
       >
         <AnimatePresence>
@@ -149,13 +154,12 @@ export const ReactionButton = ({
               <m.i
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
+                exit={{ opacity: 0, transition: { duration: 0 } }}
                 transition={Spring.presets.smooth}
                 key={isOpen ? 'close' : 'emoji'}
-                className={clsxm(
-                  styles.mainButtonIcon(),
-                  isOpen ? 'i-mingcute-close-line' : 'i-mingcute-emoji-line',
-                )}
+                className={
+                  isOpen ? 'i-mingcute-close-line' : 'i-mingcute-emoji-line'
+                }
               />
             </AnimatePresence>
           </m.div>

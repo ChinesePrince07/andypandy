@@ -15,6 +15,7 @@ import {
 } from 'react'
 import { Blurhash } from 'react-blurhash'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 import type { Swiper as SwiperType } from 'swiper'
 import { Keyboard, Navigation, Virtual } from 'swiper/modules'
 import { Swiper, SwiperSlide } from 'swiper/react'
@@ -244,11 +245,12 @@ export const PhotoViewer = ({
                   {!isMobile && injectConfig.useApi && (
                     <ReactionButton
                       className="absolute right-4 bottom-4"
-                      onReaction={(reaction) => {
-                        client.actReaction({
+                      onReaction={async (reaction) => {
+                        await client.actReaction({
                           refKey: currentPhoto.id,
                           reaction,
                         })
+                        toast.success(t('photo.reaction.success'))
                       }}
                     />
                   )}
