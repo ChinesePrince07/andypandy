@@ -1,4 +1,8 @@
-# Afilmory
+<p align="center">
+  <img src="https://github.com/Afilmory/assets/blob/main/afilmory-readme.webp?raw=true" alt="Afilmory" width="100%" />
+</p>
+
+# <p align="center">Afilmory</p>
 
 Afilmory (/əˈfɪlməri/, "uh-FIL-muh-ree") 是一个为个人摄影网站创造的术语，融合了对焦 (AF)、光圈（光线控制）、胶片（复古媒介）和记忆（捕捉的瞬间）。
 
@@ -9,6 +13,7 @@ Afilmory (/əˈfɪlməri/, "uh-FIL-muh-ree") 是一个为个人摄影网站创�
 - https://gallery.innei.in
 - https://gallery.mxte.cc
 - https://photography.pseudoyu.com
+- https://afilmory.magren.cc
 
 ## 🌟 特性
 
@@ -19,6 +24,7 @@ Afilmory (/əˈfɪlməri/, "uh-FIL-muh-ree") 是一个为个人摄影网站创�
 - 🎨 **现代化 UI 设计** - 基于 Tailwind CSS 和 Radix UI 组件库
 - ⚡ **增量同步** - 智能检测文件变化，仅处理新增或修改的照片
 - 🌐 **i18n** - 支持多语言
+- 🔗 **OpenGraph** - OpenGraph 元数据，用于社交媒体分享
 
 ### 图像处理
 
@@ -32,7 +38,7 @@ Afilmory (/əˈfɪlməri/, "uh-FIL-muh-ree") 是一个为个人摄影网站创�
 
 - 🎛️ **富士胶片模拟** - 读取和展示富士相机的胶片模拟设置
 - 🔍 **全屏查看器** - 支持手势操作的图片查看器
-- 🏷️ **智能标签** - 基于 EXIF 数据自动生成标签
+- 🏷️ **文件系统标签** - 基于文件系统自动生成标签
 - ⚡ **并发处理** - 支持多进程/多线程并发处理
 - 🗂️ **多存储支持** - S3、GitHub 等多种存储后端
 

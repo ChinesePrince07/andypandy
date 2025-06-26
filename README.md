@@ -15,6 +15,8 @@ Live Photo Galleries:
 - https://photography.pseudoyu.com
 - https://afilmory.magren.cc
 
+[简体中文](./README.zh.md)
+
 ## 🌟 Features
 
 ### Core Functionality
@@ -24,7 +26,7 @@ Live Photo Galleries:
 - 🎨 **Modern UI Design** - Built with Tailwind CSS and Radix UI component library
 - ⚡ **Incremental Sync** - Smart change detection, processes only new or modified photos
 - 🌐 **i18n** - Multi-language support
-- 🌐 **OpenGraph** - OpenGraph metadata for social media sharing
+- 🔗 **OpenGraph** - OpenGraph metadata for social media sharing
 
 ### Image Processing
 
@@ -38,7 +40,7 @@ Live Photo Galleries:
 
 - 🎛️ **Fujifilm Simulation** - Read and display Fujifilm camera film simulation settings
 - 🔍 **Fullscreen Viewer** - Image viewer with gesture support
-- 🏷️ **Smart Tags** - Auto-generated tags based on EXIF data
+- 🏷️ **File System Tags** - Auto-generated tags based on file system
 - ⚡ **Concurrent Processing** - Multi-process/multi-thread concurrent processing support
 - 🗂️ **Multi-Storage Support** - S3, GitHub, and other storage backends
 
