@@ -382,7 +382,7 @@ export const PhotoMasonryItem = ({
             </div>
 
             {/* EXIF 信息网格 */}
-            <div className="grid grid-cols-2 gap-2 text-xs opacity-0 group-hover:opacity-100">
+            <div className="grid grid-cols-2 gap-2 text-xs">
               {exifData.focalLength35mm && (
                 <div className="flex items-center gap-1.5 rounded-md bg-white/10 px-2 py-1 opacity-0 backdrop-blur-md transition-opacity duration-300 group-hover:opacity-100">
                   <StreamlineImageAccessoriesLensesPhotosCameraShutterPicturePhotographyPicturesPhotoLens className="text-white/70" />
