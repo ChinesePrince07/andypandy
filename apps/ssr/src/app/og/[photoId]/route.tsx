@@ -7,8 +7,6 @@ import { photoLoader } from '~/lib/photo-loader'
 import geistFont from './Geist-Medium.ttf'
 import Sans from './PingFangSC.ttf'
 
-export const runtime = 'edge'
-
 export const GET = async (
   request: NextRequest,
   { params }: { params: Promise<{ photoId: string }> },
