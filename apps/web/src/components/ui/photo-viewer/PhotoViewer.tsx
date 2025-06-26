@@ -15,7 +15,6 @@ import {
 } from 'react'
 import { Blurhash } from 'react-blurhash'
 import { useTranslation } from 'react-i18next'
-import { toast } from 'sonner'
 import type { Swiper as SwiperType } from 'swiper'
 import { Keyboard, Navigation, Virtual } from 'swiper/modules'
 import { Swiper, SwiperSlide } from 'swiper/react'
@@ -23,7 +22,6 @@ import { Swiper, SwiperSlide } from 'swiper/react'
 import { PassiveFragment } from '~/components/common/PassiveFragmenet'
 import { injectConfig } from '~/config'
 import { useMobile } from '~/hooks/useMobile'
-import { client } from '~/lib/client'
 import { Spring } from '~/lib/spring'
 import type { PhotoManifest } from '~/types/photo'
 
@@ -244,14 +242,8 @@ export const PhotoViewer = ({
 
                   {!isMobile && injectConfig.useApi && (
                     <ReactionButton
+                      photoId={currentPhoto.id}
                       className="absolute right-4 bottom-4"
-                      onReaction={async (reaction) => {
-                        await client.actReaction({
-                          refKey: currentPhoto.id,
-                          reaction,
-                        })
-                        toast.success(t('photo.reaction.success'))
-                      }}
                     />
                   )}
                   {/* Swiper 容器 */}

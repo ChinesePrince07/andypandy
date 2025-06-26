@@ -1,16 +1,23 @@
+import { FluentEmoji, getEmoji } from '@lobehub/fluent-emoji'
+import { produce } from 'immer'
 import { AnimatePresence, m } from 'motion/react'
 import { useCallback, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 import { tv } from 'tailwind-variants'
 
+import { client } from '~/lib/client'
 import { clsxm } from '~/lib/cn'
 import { Spring } from '~/lib/spring'
+
+import { useAnalysis } from './hooks/useAnalysis'
 
 const reactions = ['👍', '😍', '🔥', '👏', '🌟', '🙌'] as const
 
 interface ReactionButtonProps {
-  onReaction?: (reaction: (typeof reactions)[number]) => void
   className?: string
   disabled?: boolean
+  photoId: string
 }
 
 const reactionButton = tv({
@@ -31,9 +38,10 @@ const reactionButton = tv({
       'left-1/2 -translate-x-1/2',
       'rounded-full border-white/20 !bg-black/70 p-2 shadow-2xl backdrop-blur-[70px]',
       'bg-gradient-to-br from-white/20 to-white/0',
+      'select-none',
     ],
     reactionItem: [
-      'flex size-10 items-center justify-center',
+      'relative flex size-10 items-center justify-center',
       'cursor-pointer text-xl',
     ],
   },
@@ -73,21 +81,40 @@ const iconVariants = {
   open: { rotate: 180 },
   closed: { rotate: 0 },
 }
-
 export const ReactionButton = ({
-  onReaction,
   className,
   disabled = false,
+  photoId,
 }: ReactionButtonProps) => {
   const [isOpen, setIsOpen] = useState(false)
   const styles = reactionButton()
+  const { t } = useTranslation()
 
+  const handleReaction = useCallback(
+    async (reaction: (typeof reactions)[number]) => {
+      await client.actReaction({
+        refKey: photoId,
+        reaction,
+      })
+      toast.success(t('photo.reaction.success'))
+    },
+    [photoId, t],
+  )
+  const { data, mutate } = useAnalysis(photoId)
   const handleReactionClick = useCallback(
     (reaction: (typeof reactions)[number]) => {
-      onReaction?.(reaction)
+      handleReaction(reaction).then(() => {
+        mutate((data) => {
+          return produce(data, (draft) => {
+            if (!draft) return
+            draft.data.reactions[reaction] =
+              (draft.data.reactions[reaction] || 0) + 1
+          })
+        })
+      })
       setIsOpen(false)
     },
-    [onReaction],
+    [handleReaction, mutate],
   )
 
   return (
@@ -133,7 +160,17 @@ export const ReactionButton = ({
                   whileHover={{ scale: 1.2 }}
                   whileTap={{ scale: 0.9 }}
                 >
-                  <span className="select-none">{reaction}</span>
+                  <FluentEmoji
+                    cdn="aliyun"
+                    emoji={getEmoji(reaction)!}
+                    size={24}
+                    type="anim"
+                  />
+                  {!!data?.data.reactions[reaction] && (
+                    <span className="bg-red/50 absolute top-0 right-0 rounded-full px-1.5 py-0.5 text-[8px] text-white tabular-nums backdrop-blur-2xl">
+                      {data.data.reactions[reaction]}
+                    </span>
+                  )}
                 </m.button>
               ))}
             </m.div>
@@ -158,7 +195,7 @@ export const ReactionButton = ({
                 transition={Spring.presets.smooth}
                 key={isOpen ? 'close' : 'emoji'}
                 className={
-                  isOpen ? 'i-mingcute-close-line' : 'i-mingcute-emoji-line'
+                  isOpen ? 'i-mingcute-close-fill' : 'i-mingcute-emoji-fill'
                 }
               />
             </AnimatePresence>
