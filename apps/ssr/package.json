@@ -11,25 +11,33 @@
     "build": "sh scripts/build.sh",
     "build:jpg": "node scripts/webp-to-jpg.js",
     "build:next": "next build",
-    "deploy": "npm run pages:build && wrangler pages deploy",
-    "dev": "concurrently \"pnpm run dev:next\" \"pnpm run dev:web\"",
-    "dev:next": "next dev --turbo --port 1975",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "dev": "concurrently \"pnpm run dev:web\" \"pnpm run dev:next\"",
+    "dev:next": "next dev --turbo --port 1924",
     "dev:web": "cross-env DEV_NEXT_JS=true pnpm --filter web dev",
     "start": "next start"
   },
   "dependencies": {
     "@afilmory/data": "workspace:*",
+    "@t3-oss/env-nextjs": "0.13.8",
+    "drizzle-orm": "0.44.2",
     "linkedom": "0.18.11",
+    "pg": "8.16.2",
+    "postgres": "3.4.7",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "zod": "catalog:"
   },
   "devDependencies": {
-    "@cloudflare/next-on-pages": "1.13.12",
     "@types/node": "24.0.4",
+    "@types/pg": "8.15.4",
     "@types/react": "19.1.8",
     "@types/react-dom": "19.1.6",
     "concurrently": "9.2.0",
     "cross-env": "7.0.3",
+    "dotenv-expand": "catalog:",
+    "drizzle-kit": "0.31.2",
     "next": "15.3.4"
   }
 }

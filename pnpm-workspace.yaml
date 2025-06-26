@@ -1,3 +1,9 @@
 packages:
-  - 'apps/*'
-  - 'packages/*'
+  - apps/**/*
+  - packages/*
+
+catalog:
+  zod: 3.25.67
+  '@t3-oss/env-core': 0.13.8
+  dotenv-expand: 12.0.2
+  typescript: 5.8.3

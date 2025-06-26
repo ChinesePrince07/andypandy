@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@afilmory/data": "workspace:*",
+    "@afilmory/ssr-sdk": "workspace:*",
     "@afilmory/webgl-viewer": "workspace:*",
     "@essentials/request-timeout": "1.3.0",
     "@headlessui/react": "2.2.4",
@@ -31,7 +32,7 @@
     "@radix-ui/react-tooltip": "1.2.7",
     "@react-hook/window-size": "3.1.1",
     "@remixicon/react": "4.6.0",
-    "@t3-oss/env-core": "0.13.8",
+    "@t3-oss/env-core": "catalog:",
     "@tanstack/react-query": "5.81.2",
     "@use-gesture/react": "10.3.1",
     "@uswriting/exiftool": "1.0.3",
@@ -69,7 +70,7 @@
     "tiff": "^7.0.0",
     "usehooks-ts": "3.1.1",
     "vaul": "1.1.2",
-    "zod": "3.25.67",
+    "zod": "catalog:",
     "zustand": "5.0.5"
   },
   "devDependencies": {

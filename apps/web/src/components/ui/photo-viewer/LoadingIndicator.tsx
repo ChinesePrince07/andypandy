@@ -71,7 +71,7 @@ export const LoadingIndicator = ({
   }
 
   return (
-    <div className="pointer-events-none absolute right-4 bottom-4 z-10 rounded-xl border border-white/10 bg-black/80 px-3 py-2 backdrop-blur-sm">
+    <div className="pointer-events-none absolute bottom-4 left-4 z-10 rounded-xl border border-white/10 bg-black/80 px-3 py-2 backdrop-blur-sm">
       <div className="flex items-center gap-3 text-white">
         <div className="relative">
           <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />

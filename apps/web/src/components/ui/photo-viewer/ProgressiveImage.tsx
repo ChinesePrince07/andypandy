@@ -24,6 +24,7 @@ import { LivePhoto } from './LivePhoto'
 import type { LoadingIndicatorRef } from './LoadingIndicator'
 import { LoadingIndicator } from './LoadingIndicator'
 
+const SHOW_SCALE_INDICATOR_DURATION = 1000
 interface ProgressiveImageProps {
   src: string
   thumbnailSrc?: string
@@ -159,7 +160,7 @@ export const ProgressiveImage = ({
       // 设置新的定时器，500ms 后隐藏提示
       scaleIndicatorTimeoutRef.current = setTimeout(() => {
         setShowScaleIndicator(false)
-      }, 500)
+      }, SHOW_SCALE_INDICATOR_DURATION)
 
       onZoomChange?.(isZoomed)
     },
@@ -379,7 +380,7 @@ export const ProgressiveImage = ({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
-            className="pointer-events-none absolute bottom-4 left-4 z-20 flex items-center gap-0.5 rounded bg-black/50 px-3 py-1 text-lg text-white"
+            className="pointer-events-none absolute bottom-4 left-4 z-20 flex items-center gap-0.5 rounded bg-black/50 px-3 py-1 text-lg text-white tabular-nums"
           >
             <SlidingNumber number={currentScale} decimalPlaces={1} />x
           </m.div>

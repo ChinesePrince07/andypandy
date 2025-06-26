@@ -4,6 +4,7 @@ import { DOMParser } from 'linkedom'
 import type { NextRequest } from 'next/server'
 
 import indexHtml from '~/index.html'
+import { injectConfigToDocument } from '~/lib/injectable'
 import { photoLoader } from '~/lib/photo-loader'
 
 type HtmlElement = ReturnType<typeof DOMParser.prototype.parseFromString>
@@ -45,6 +46,8 @@ export const handler = async (
     document.head.title = `${photo.id} | ${siteConfig.title}`
     // Insert meta open graph tags and twitter meta tags
     createAndInsertOpenGraphMeta(document, photo, request)
+
+    injectConfigToDocument(document)
 
     return new Response(document.documentElement.outerHTML, {
       headers: {
