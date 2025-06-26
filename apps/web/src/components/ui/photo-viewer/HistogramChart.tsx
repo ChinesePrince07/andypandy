@@ -1,4 +1,4 @@
-import type { ToneAnalysis } from '@afilmory/data'
+import type { ToneAnalysis } from '@afilmory/builder'
 import { AnimatePresence, m } from 'motion/react'
 import type { FC } from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'

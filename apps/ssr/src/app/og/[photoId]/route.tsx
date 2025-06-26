@@ -1,7 +1,8 @@
-import { photoLoader } from '@afilmory/data'
 import { siteConfig } from '@config'
 import { ImageResponse } from 'next/og'
 import type { NextRequest } from 'next/server'
+
+import { photoLoader } from '~/lib/photo-loader'
 
 import geistFont from './Geist-Medium.ttf'
 import Sans from './PingFangSC.ttf'

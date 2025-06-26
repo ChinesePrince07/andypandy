@@ -1,3 +1,4 @@
+import type { AfilmoryManifest } from '@packages/builder/src/types/manifest'
 import type { FC, PropsWithChildren } from 'react'
 
 declare global {
@@ -26,6 +27,8 @@ declare global {
   const APP_NAME: string
   const BUILT_DATE: string
   const GIT_COMMIT_HASH: string
+
+  const __MANIFEST__: AfilmoryManifest
 }
 
 export {}

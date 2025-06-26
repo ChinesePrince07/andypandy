@@ -1,7 +1,6 @@
 import './PhotoViewer.css'
 
-import type { PhotoManifestItem } from '@afilmory/builder'
-import type { PickedExif } from '@afilmory/data'
+import type { PhotoManifestItem, PickedExif } from '@afilmory/builder'
 import { isNil } from 'es-toolkit/compat'
 import { useAtomValue } from 'jotai'
 import { m } from 'motion/react'

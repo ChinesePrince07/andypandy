@@ -2,7 +2,7 @@ import { DOMParser } from 'linkedom'
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 
-const host = 'http://localhost:1924'
+const host = 'http://localhost:3000'
 export const handler = async (req: NextRequest) => {
   if (process.env.NODE_ENV !== 'development') {
     return new NextResponse(null, { status: 404 })

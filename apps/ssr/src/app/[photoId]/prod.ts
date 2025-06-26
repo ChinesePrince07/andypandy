@@ -1,10 +1,10 @@
 import type { PhotoManifestItem } from '@afilmory/builder'
-import { photoLoader } from '@afilmory/data'
 import siteConfig from '@config'
 import { DOMParser } from 'linkedom'
 import type { NextRequest } from 'next/server'
 
-import indexHtml from '../../index.html'
+import indexHtml from '~/index.html'
+import { photoLoader } from '~/lib/photo-loader'
 
 type HtmlElement = ReturnType<typeof DOMParser.prototype.parseFromString>
 type OnlyHTMLDocument = HtmlElement extends infer T

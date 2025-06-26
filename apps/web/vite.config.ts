@@ -16,6 +16,7 @@ import { ogImagePlugin } from '../../plugins/og-image-plugin'
 import { createDependencyChunksPlugin } from '../../plugins/vite/deps'
 import { createFeedSitemapPlugin } from '../../plugins/vite/feed-sitemap'
 import { localesJsonPlugin } from '../../plugins/vite/locales-json'
+import { manifestInjectPlugin } from '../../plugins/vite/manifest-inject'
 import { siteConfig } from '../../site.config'
 
 if (process.env.CI) {
@@ -24,6 +25,7 @@ if (process.env.CI) {
     force: true,
   })
 }
+const DEV_NEXT_JS = process.env.DEV_NEXT_JS === 'true'
 
 const ReactCompilerConfig = {
   /* ... */
@@ -53,6 +55,7 @@ export default defineConfig({
       ['i18next', 'i18next-browser-languagedetector', 'react-i18next'],
     ]),
     localesJsonPlugin(),
+    manifestInjectPlugin(),
     tailwindcss(),
     ogImagePlugin({
       title: siteConfig.title,
@@ -83,7 +86,7 @@ export default defineConfig({
     process.env.analyzer && analyzer(),
   ],
   server: {
-    port: 1924, // 1924 年首款 35mm 相机问世
+    port: !DEV_NEXT_JS ? 1924 : 3000, // 1924 年首款 35mm 相机问世
   },
   define: {
     APP_DEV_CWD: JSON.stringify(process.cwd()),
