@@ -1,6 +1,6 @@
 import clsx from 'clsx'
 import { m } from 'motion/react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
 import { Blurhash } from 'react-blurhash'
 import { useTranslation } from 'react-i18next'
 
@@ -38,7 +38,6 @@ export const PhotoMasonryItem = ({
   const [isConvertingVideo, setIsConvertingVideo] = useState(false)
   const [videoConvertionError, setVideoConversionError] =
     useState<unknown>(null)
-  const [conversionMethod, setConversionMethod] = useState<string>('')
 
   const imageRef = useRef<HTMLImageElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -128,19 +127,10 @@ export const PhotoMasonryItem = ({
       imageLoaderManagerRef.current = imageLoaderManager
 
       try {
-        const videoResult = await imageLoaderManager.processLivePhotoVideo(
+        await imageLoaderManager.processLivePhotoVideo(
           data.livePhotoVideoUrl!,
           videoRef.current!,
-          {
-            onLoadingStateUpdate: () => {
-              setConversionMethod('transmux')
-            },
-          },
         )
-
-        if (videoResult.conversionMethod) {
-          setConversionMethod(videoResult.conversionMethod)
-        }
 
         setLivePhotoVideoLoaded(true)
       } catch (videoError) {
@@ -307,31 +297,20 @@ export const PhotoMasonryItem = ({
               <span>{t('loading.converting')}</span>
             </div>
           ) : (
-            <>
+            <Fragment>
               <i className="i-mingcute-live-photo-line size-4 shrink-0" />
               <span className="mr-1 shrink-0">{t('photo.live.badge')}</span>
-              {conversionMethod && (
-                <span
-                  className={clsx(
-                    'ml-0.5 rounded px-1 text-xs',
-                    videoConvertionError ? 'bg-warning/20' : 'bg-white/20',
-                  )}
-                >
-                  {videoConvertionError ? (
-                    <div
-                      className="text-yellow w-3 text-center font-bold"
-                      title={(videoConvertionError as Error).message}
-                    >
-                      !
-                    </div>
-                  ) : conversionMethod === 'webcodecs' ? (
-                    t('photo.conversion.webcodecs')
-                  ) : (
-                    t('photo.conversion.transmux')
-                  )}
+              {videoConvertionError ? (
+                <span className={'bg-warning/20 ml-0.5 rounded px-1 text-xs'}>
+                  <div
+                    className="text-yellow w-3 text-center font-bold"
+                    title={(videoConvertionError as Error).message}
+                  >
+                    !
+                  </div>
                 </span>
-              )}
-            </>
+              ) : null}
+            </Fragment>
           )}
         </div>
       )}
@@ -343,7 +322,7 @@ export const PhotoMasonryItem = ({
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
           {/* 内容层 - 独立的层以支持 backdrop-filter */}
-          <div className="absolute inset-x-0 bottom-0 p-4 text-white">
+          <div className="absolute inset-x-0 bottom-0 p-4 pb-0 text-white">
             {/* 基本信息和标签 section */}
             <div className="mb-3 [&_*]:duration-300">
               <h3 className="mb-2 truncate text-sm font-medium opacity-0 group-hover:opacity-100">
@@ -382,37 +361,41 @@ export const PhotoMasonryItem = ({
             </div>
 
             {/* EXIF 信息网格 */}
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              {exifData.focalLength35mm && (
-                <div className="flex items-center gap-1.5 rounded-md bg-white/10 px-2 py-1 opacity-0 backdrop-blur-md transition-opacity duration-300 group-hover:opacity-100">
-                  <StreamlineImageAccessoriesLensesPhotosCameraShutterPicturePhotographyPicturesPhotoLens className="text-white/70" />
-                  <span className="text-white/90">
-                    {exifData.focalLength35mm}mm
-                  </span>
-                </div>
-              )}
+            {calculatedHeight >= 200 && (
+              <div className="grid grid-cols-2 gap-2 pb-4 text-xs">
+                {exifData.focalLength35mm && (
+                  <div className="flex items-center gap-1.5 rounded-md bg-white/10 px-2 py-1 opacity-0 backdrop-blur-md transition-opacity duration-300 group-hover:opacity-100">
+                    <StreamlineImageAccessoriesLensesPhotosCameraShutterPicturePhotographyPicturesPhotoLens className="text-white/70" />
+                    <span className="text-white/90">
+                      {exifData.focalLength35mm}mm
+                    </span>
+                  </div>
+                )}
 
-              {exifData.aperture && (
-                <div className="flex items-center gap-1.5 rounded-md bg-white/10 px-2 py-1 opacity-0 backdrop-blur-md transition-opacity duration-300 group-hover:opacity-100">
-                  <TablerAperture className="text-white/70" />
-                  <span className="text-white/90">{exifData.aperture}</span>
-                </div>
-              )}
+                {exifData.aperture && (
+                  <div className="flex items-center gap-1.5 rounded-md bg-white/10 px-2 py-1 opacity-0 backdrop-blur-md transition-opacity duration-300 group-hover:opacity-100">
+                    <TablerAperture className="text-white/70" />
+                    <span className="text-white/90">{exifData.aperture}</span>
+                  </div>
+                )}
 
-              {exifData.shutterSpeed && (
-                <div className="flex items-center gap-1.5 rounded-md bg-white/10 px-2 py-1 opacity-0 backdrop-blur-md transition-opacity duration-300 group-hover:opacity-100">
-                  <MaterialSymbolsShutterSpeed className="text-white/70" />
-                  <span className="text-white/90">{exifData.shutterSpeed}</span>
-                </div>
-              )}
+                {exifData.shutterSpeed && (
+                  <div className="flex items-center gap-1.5 rounded-md bg-white/10 px-2 py-1 opacity-0 backdrop-blur-md transition-opacity duration-300 group-hover:opacity-100">
+                    <MaterialSymbolsShutterSpeed className="text-white/70" />
+                    <span className="text-white/90">
+                      {exifData.shutterSpeed}
+                    </span>
+                  </div>
+                )}
 
-              {exifData.iso && (
-                <div className="flex items-center gap-1.5 rounded-md bg-white/10 px-2 py-1 opacity-0 backdrop-blur-md transition-opacity duration-300 group-hover:opacity-100">
-                  <CarbonIsoOutline className="text-white/70" />
-                  <span className="text-white/90">ISO {exifData.iso}</span>
-                </div>
-              )}
-            </div>
+                {exifData.iso && (
+                  <div className="flex items-center gap-1.5 rounded-md bg-white/10 px-2 py-1 opacity-0 backdrop-blur-md transition-opacity duration-300 group-hover:opacity-100">
+                    <CarbonIsoOutline className="text-white/70" />
+                    <span className="text-white/90">ISO {exifData.iso}</span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
