@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/Afilmory/assets/blob/main/512-mac.png?raw=true" alt="Afilmory" width="256px" />
+  <img src="https://github.com/Afilmory/assets/blob/main/afilmory-readme.webp?raw=true" alt="Afilmory" width="100%" />
 </p>
 
 # <p align="center">Afilmory</p>
