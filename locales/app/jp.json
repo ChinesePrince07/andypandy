@@ -224,7 +224,6 @@
   "loading.heic.main": "HEIC",
   "loading.webgl.building": "高品質テクスチャを構築中...",
   "loading.webgl.main": "WebGL テクスチャの読み込み",
-  "photo.conversion.transmux": "トランスマックス",
   "photo.conversion.webcodecs": "WebCodecs",
   "photo.copy.error": "画像のコピーに失敗しました。後でもう一度お試しください。",
   "photo.copy.image": "画像をコピー",

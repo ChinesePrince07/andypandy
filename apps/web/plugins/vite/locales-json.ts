@@ -1,11 +1,8 @@
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 
 import { set } from 'es-toolkit/compat'
 import type { Plugin } from 'vite'
 
-const __dirname = fileURLToPath(new URL('.', import.meta.url))
-const localesDir = path.resolve(__dirname, '../../locales')
+import { MONOREPO_ROOT_PATH } from './__internal__/constants'
 
 export function localesJsonPlugin(): Plugin {
   return {
@@ -13,7 +10,7 @@ export function localesJsonPlugin(): Plugin {
     enforce: 'pre',
 
     async transform(code, id) {
-      if (!id.includes(localesDir) || !id.endsWith('.json')) {
+      if (!id.includes(MONOREPO_ROOT_PATH) || !id.endsWith('.json')) {
         return null
       }
 

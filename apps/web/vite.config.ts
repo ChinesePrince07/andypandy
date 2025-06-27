@@ -13,13 +13,13 @@ import { createHtmlPlugin } from 'vite-plugin-html'
 import tsconfigPaths from 'vite-tsconfig-paths'
 
 import PKG from '../../package.json'
-import { ogImagePlugin } from '../../plugins/og-image-plugin'
-import { createDependencyChunksPlugin } from '../../plugins/vite/deps'
-import { createFeedSitemapPlugin } from '../../plugins/vite/feed-sitemap'
-import { localesJsonPlugin } from '../../plugins/vite/locales-json'
-import { manifestInjectPlugin } from '../../plugins/vite/manifest-inject'
 import { siteConfig } from '../../site.config'
 import { astPlugin } from './plugins/vite/ast'
+import { createDependencyChunksPlugin } from './plugins/vite/deps'
+import { createFeedSitemapPlugin } from './plugins/vite/feed-sitemap'
+import { localesJsonPlugin } from './plugins/vite/locales-json'
+import { manifestInjectPlugin } from './plugins/vite/manifest-inject'
+import { ogImagePlugin } from './plugins/vite/og-image-plugin'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 

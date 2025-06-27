@@ -1,19 +1,13 @@
 import { readFileSync } from 'node:fs'
-import path from 'node:path'
 
 import type { Plugin } from 'vite'
 
-const dirname = path.dirname(new URL(import.meta.url).pathname)
-export function manifestInjectPlugin(): Plugin {
-  // 定位到 manifest 文件的实际位置
-  const manifestPath = path.resolve(
-    dirname,
-    '../../packages/data/src/photos-manifest.json',
-  )
+import { MANIFEST_PATH } from './__internal__/constants'
 
+export function manifestInjectPlugin(): Plugin {
   function getManifestContent(): string {
     try {
-      const content = readFileSync(manifestPath, 'utf-8')
+      const content = readFileSync(MANIFEST_PATH, 'utf-8')
       return content
     } catch (error) {
       console.warn('Failed to read manifest file:', error)
@@ -26,10 +20,10 @@ export function manifestInjectPlugin(): Plugin {
 
     configureServer(server) {
       // 监听 manifest 文件变化
-      server.watcher.add(manifestPath)
+      server.watcher.add(MANIFEST_PATH)
 
       server.watcher.on('change', (file) => {
-        if (file === manifestPath) {
+        if (file === MANIFEST_PATH) {
           console.info(
             '[manifest-inject] Manifest file changed, triggering HMR...',
           )

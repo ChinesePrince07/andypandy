@@ -1,26 +1,23 @@
 import fs from 'node:fs'
-import path, { dirname } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import path from 'node:path'
 
 import { set } from 'es-toolkit/compat'
 import type { Plugin } from 'vite'
+
+import { MONOREPO_ROOT_PATH } from './__internal__/constants'
 
 export function localesPlugin(): Plugin {
   return {
     name: 'locales-merge',
     enforce: 'post',
     generateBundle(_options, bundle) {
-      const __dirname = dirname(fileURLToPath(import.meta.url))
-
-      const localesDir = path.resolve(__dirname, '../../locales')
-
       const namespaces = fs
-        .readdirSync(localesDir)
+        .readdirSync(MONOREPO_ROOT_PATH)
         .filter((dir) => dir !== '.DS_Store')
       const languageResources = {} as any
 
       namespaces.forEach((namespace) => {
-        const namespacePath = path.join(localesDir, namespace)
+        const namespacePath = path.join(MONOREPO_ROOT_PATH, namespace)
         const files = fs
           .readdirSync(namespacePath)
           .filter((file) => file.endsWith('.json'))

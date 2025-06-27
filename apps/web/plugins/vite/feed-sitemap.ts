@@ -1,11 +1,11 @@
 import { readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import type { PhotoManifestItem } from '@afilmory/builder'
 import type { Plugin } from 'vite'
 
-import type { SiteConfig } from '../../site.config'
+import type { SiteConfig } from '../../../../site.config'
+import { MANIFEST_PATH } from './__internal__/constants'
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
@@ -15,13 +15,8 @@ export function createFeedSitemapPlugin(siteConfig: SiteConfig): Plugin {
     apply: 'build',
     generateBundle() {
       try {
-        // Read photos manifest
-        const manifestPath = resolve(
-          __dirname,
-          '../../packages/data/src/photos-manifest.json',
-        )
         const photosData: PhotoManifestItem[] = JSON.parse(
-          readFileSync(manifestPath, 'utf-8'),
+          readFileSync(MANIFEST_PATH, 'utf-8'),
         ).data
 
         // Sort photos by date taken (newest first)
