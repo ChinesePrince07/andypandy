@@ -225,7 +225,6 @@
   "loading.heic.main": "HEIC",
   "loading.webgl.building": "正在构建高质量纹理...",
   "loading.webgl.main": "WebGL 纹理加载",
-  "photo.conversion.transmux": "转封装",
   "photo.conversion.webcodecs": "WebCodecs",
   "photo.copy.error": "复制图像失败，请稍后重试",
   "photo.copy.image": "复制图像",
