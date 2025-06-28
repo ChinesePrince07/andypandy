@@ -182,6 +182,9 @@ export const ProgressiveImage = ({
     ) {
       return
     }
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current)
+    }
     longPressTimerRef.current = setTimeout(playVideo, 200)
   }, [isLivePhoto, isLivePhotoPlaying])
 
