@@ -235,6 +235,7 @@
   "photo.live.badge": "Live",
   "photo.live.converting.detail": "Converting video format using {{method}}...",
   "photo.live.converting.video": "Converting Live Photo video",
+  "photo.live.playing": "Playing Live Photo",
   "photo.live.tooltip.desktop.main": "Hover to play Live Photo",
   "photo.live.tooltip.desktop.zoom": "Hover to play Live Photo / Double-click to zoom",
   "photo.live.tooltip.mobile.main": "Long press to play Live Photo",
