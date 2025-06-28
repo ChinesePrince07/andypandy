@@ -109,10 +109,6 @@ Create `builder.config.json` file for storage configuration and other options:
 
 ```json
 {
-  "repo": {
-    "enable": false,
-    "url": "https://github.com/username/gallery-assets"
-  },
   "storage": {
     "provider": "s3",
     "bucket": "my-photos",
