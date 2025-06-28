@@ -1,5 +1,6 @@
 import { photoLoader } from '@afilmory/data'
 import { Blurhash } from 'react-blurhash'
+import { ErrorBoundary } from 'react-error-boundary'
 
 export const Component = () => {
   const photos = photoLoader.getPhotos()
@@ -21,16 +22,18 @@ export const Component = () => {
             width={photo.width}
             className="absolute inset-0"
           />
-          <div className="absolute inset-0 opacity-0 group-hover:opacity-100">
-            <Blurhash
-              hash={photo.blurhash}
-              width="100%"
-              height="100%"
-              resolutionX={32}
-              resolutionY={32}
-              punch={1}
-            />
-          </div>
+          <ErrorBoundary fallbackRender={() => null}>
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100">
+              <Blurhash
+                hash={photo.blurhash}
+                width="100%"
+                height="100%"
+                resolutionX={32}
+                resolutionY={32}
+                punch={1}
+              />
+            </div>
+          </ErrorBoundary>
         </div>
       ))}
     </div>
