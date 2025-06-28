@@ -13,9 +13,8 @@ import { clsxm } from '~/lib/cn'
 import { Spring } from '~/lib/spring'
 import type { PhotoManifest } from '~/types/photo'
 
-import type { PanelType } from './ActionGroup'
+import type { ActionType } from './ActionGroup'
 import { ActionGroup, ActionPanel } from './ActionGroup'
-import type { ActionType } from './FloatingActionButton'
 import { FloatingActionButton } from './FloatingActionButton'
 import { Masonry } from './Masonic'
 import { MasonryHeaderMasonryItem } from './MasonryHeaderMasonryItem'
@@ -201,7 +200,7 @@ export const MasonryRoot = () => {
             setActivePanel(null)
           }
         }}
-        type={activePanel as PanelType | null}
+        type={activePanel}
       />
     </>
   )

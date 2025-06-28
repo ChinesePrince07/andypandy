@@ -10,7 +10,7 @@ import { Spring } from '~/lib/spring'
 type TranslationKeys = keyof typeof en
 
 const actions: {
-  id: string
+  id: 'sort' | 'tags' | 'columns'
   icon: string
   title: TranslationKeys
 }[] = [
@@ -25,7 +25,7 @@ const actions: {
     icon: 'i-mingcute-grid-line',
     title: 'action.columns.setting',
   },
-]
+] as const
 
 export type ActionType = (typeof actions)[number]['id']
 
