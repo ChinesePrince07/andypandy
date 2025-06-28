@@ -36,7 +36,6 @@ export async function generateThumbnailAndBlurhash(
   },
 ): Promise<ThumbnailResult> {
   const thumbnailLog = workerLogger?.thumbnail
-  const blurhashLog = workerLogger?.blurhash
 
   try {
     const thumbnailDir = path.join(workdir, 'public/thumbnails')
@@ -56,7 +55,6 @@ export async function generateThumbnailAndBlurhash(
           existingBuffer,
           originalWidth,
           originalHeight,
-          blurhashLog,
         )
 
         return {
@@ -99,7 +97,6 @@ export async function generateThumbnailAndBlurhash(
       thumbnailBuffer,
       originalWidth,
       originalHeight,
-      blurhashLog,
     )
 
     return {

@@ -139,8 +139,6 @@ export const PhotoViewer = ({
     }
   }, [isOpen, handlePrevious, handleNext, onClose, showExifPanel])
 
-  // const imageSize = getImageDisplaySize() // 已改为直接使用原始尺寸优化 WebGL 加载
-
   if (!currentPhoto) return null
 
   return (
