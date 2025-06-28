@@ -37,6 +37,26 @@ async function pushManifestToRemoteRepo(): Promise<boolean> {
 
     logger.main.info('📤 开始推送更新到远程仓库...')
 
+    // 配置 Git 用户身份（特别是在 CI 环境中）
+    try {
+      // 检查是否已配置用户身份
+      await $({
+        cwd: assetsGitDir,
+        stdio: 'pipe',
+      })`git config user.name`
+    } catch {
+      // 如果没有配置，则设置默认的 CI 用户身份
+      logger.main.info('🔧 配置 Git 用户身份（CI 环境）...')
+      await $({
+        cwd: assetsGitDir,
+        stdio: 'pipe',
+      })`git config user.email "ci@afilmory.local"`
+      await $({
+        cwd: assetsGitDir,
+        stdio: 'pipe',
+      })`git config user.name "Afilmory CI"`
+    }
+
     // 检查是否有变更
     const status = await $({
       cwd: assetsGitDir,
