@@ -39,4 +39,4 @@ jobs:
         with:
           run_install: true
       - run: echo '{"version":"v2","data":[]}' > apps/web/src/data/photos-manifest.json
-      - run: pnpm vite build
+      - run: cd apps/web && pnpm vite build

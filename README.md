@@ -139,11 +139,20 @@ Edit `config.json`:
   "accentColor": "#007bff", // Optional, set theme color
   "author": {
     "name": "Your Name", // Required, set author name
-    "url": "https://example.com", // Optional, set author homepage
-    "avatar": "https://example.com/avatar.png" // Optional, set author avatar
+    "url": "https://example.com", // Required, set author homepage
+    "avatar": "https://example.com/avatar.png" // Required, set author avatar
   },
   "social": {
-    "twitter": "@yourusername" // Optional, set social accounts
+    // Optional, set social accounts
+    "twitter": "@yourusername"
+  },
+  "feed": {
+    "folo": { // Optional, set Folo RSS claim
+      "challenge": {
+        "feedId": "155982289762921472",
+        "userId": "41312624216137728"
+      }
+    }
   }
 }
 ```
@@ -214,6 +223,7 @@ This will automatically pull resources from the remote repository, avoiding rebu
 - `verbose`: Verbose logging
 - `level`: Log level (`info` | `warn` | `error` | `debug`)
 - `outputToFile`: Output to file
+
 
 ## 📋 CLI Commands
 
