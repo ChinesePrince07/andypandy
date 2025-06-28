@@ -18,6 +18,9 @@ export const env = createEnv({
     S3_EXCLUDE_REGEX: z.string().optional(),
 
     PG_CONNECTION_STRING: z.string().min(1).optional(),
+
+    // Git token for uploading updated manifest to remote repository
+    GIT_TOKEN: z.string().optional(),
   },
   runtimeEnv: process.env,
   isServer: typeof window === 'undefined',

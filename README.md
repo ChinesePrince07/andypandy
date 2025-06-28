@@ -15,8 +15,6 @@ Live Photo Galleries:
 - https://photography.pseudoyu.com
 - https://afilmory.magren.cc
 
-[简体中文](./README.zh.md)
-
 ## 🌟 Features
 
 ### Core Functionality
@@ -97,20 +95,33 @@ cd photo-gallery-site
 pnpm install
 ```
 
-### 3. Environment Configuration
+### 3. Configuration
 
 Create `.env` file:
 
 ```env
-# S3 Storage Configuration
-S3_REGION=us-east-1
+# S3 Storage Keys
 S3_ACCESS_KEY_ID=your_access_key_id
 S3_SECRET_ACCESS_KEY=your_secret_access_key
-S3_ENDPOINT=https://s3.amazonaws.com
-S3_BUCKET_NAME=your_bucket_name
-S3_PREFIX=photos/
-S3_CUSTOM_DOMAIN=your_custom_domain.com
-S3_EXCLUDE_REGEX=
+```
+
+Create `builder.config.json` file for storage configuration and other options:
+
+```json
+{
+  "repo": {
+    "enable": false,
+    "url": "https://github.com/username/gallery-assets"
+  },
+  "storage": {
+    "provider": "s3",
+    "bucket": "my-photos",
+    "region": "us-east-1",
+    "prefix": "photos/",
+    "customDomain": "https://cdn.example.com",
+    "endpoint": "https://s3.amazonaws.com"
+  }
+}
 ```
 
 ### 4. Site Configuration
@@ -162,47 +173,22 @@ pnpm dev
 
 ## ⚙️ Configuration Options
 
-### Builder Configuration
+#### Remote Repository Configuration (`repo`)
 
-Create `builder.config.json` file for advanced configuration:
+To achieve incremental builds in CI, it is necessary to configure a cache repository, which will pull the cache before each build and upload the build results after the build.
 
 ```json
 {
   "repo": {
-    "enable": false,
+    "enable": true,
     "url": "https://github.com/username/gallery-assets"
-  },
-  "storage": {
-    "provider": "s3",
-    "bucket": "my-photos",
-    "region": "us-east-1",
-    "prefix": "photos/",
-    "customDomain": "https://cdn.example.com",
-    "endpoint": "https://s3.amazonaws.com"
-  },
-  "options": {
-    "defaultConcurrency": 8,
-    "enableLivePhotoDetection": true,
-    "showProgress": true,
-    "showDetailedStats": true
-  },
-  "logging": {
-    "verbose": true,
-    "level": "info",
-    "outputToFile": false
-  },
-  "performance": {
-    "worker": {
-      "workerCount": 8,
-      "timeout": 30000,
-      "useClusterMode": true,
-      "workerConcurrency": 2
-    }
   }
 }
 ```
 
-### Configuration Options Description
+This will automatically pull resources from the remote repository, avoiding rebuilds each time.
+
+**In order to achieve uploading to the git repository, you need to provide a `GIT_TOKEN` and write it in the `.env` file.**
 
 #### Storage Configuration (`storage`)
 
@@ -232,21 +218,6 @@ Create `builder.config.json` file for advanced configuration:
 - `verbose`: Verbose logging
 - `level`: Log level (`info` | `warn` | `error` | `debug`)
 - `outputToFile`: Output to file
-
-### Remote Repository Configuration
-
-If you have a separate asset repository for storing thumbnails and manifests:
-
-```json
-{
-  "repo": {
-    "enable": true,
-    "url": "https://github.com/username/gallery-assets"
-  }
-}
-```
-
-This will automatically pull resources from the remote repository, avoiding rebuilds each time.
 
 ## 📋 CLI Commands
 
