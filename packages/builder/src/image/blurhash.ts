@@ -1,4 +1,4 @@
-import { encode } from 'blurhash'
+import { encode, isBlurhashValid } from 'blurhash'
 import sharp from 'sharp'
 
 import { logger } from '../logger/index.js'
@@ -19,21 +19,12 @@ export async function generateBlurhash(
         resolveWithObject: true,
       })
 
-    const xComponents = Math.min(Math.max(Math.round(info.width / 16), 3), 9)
-    const yComponents = Math.min(Math.max(Math.round(info.height / 16), 3), 9)
+    const xComponents = 4
+    const yComponents = 4
 
     logger.blurhash.info(
       `生成参数：原始 ${originalWidth}x${originalHeight}, 实际 ${info.width}x${info.height}, 组件 ${xComponents}x${yComponents}`,
     )
-
-    // 验证数据长度是否匹配
-    const expectedLength = info.width * info.height * info.channels
-    if (data.length !== expectedLength) {
-      logger.blurhash.error(
-        `数据长度不匹配：期望 ${expectedLength}，实际 ${data.length}`,
-      )
-      return null
-    }
 
     // 生成 blurhash
     const blurhash = encode(
@@ -43,6 +34,11 @@ export async function generateBlurhash(
       xComponents,
       yComponents,
     )
+
+    if (!isBlurhashValid(blurhash)) {
+      logger.blurhash.error('生成失败：blurhash 无效', blurhash)
+      return null
+    }
 
     logger.blurhash.success(`生成成功：${blurhash}`)
     return blurhash

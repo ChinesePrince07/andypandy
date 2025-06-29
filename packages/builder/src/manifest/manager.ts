@@ -20,15 +20,15 @@ export async function loadExistingManifest(): Promise<AfilmoryManifest> {
       '🔍 未找到 manifest 文件/解析失败，创建新的 manifest 文件...',
     )
     return {
-      version: 'v3',
+      version: 'v4',
       data: [],
     }
   }
 
-  if (manifest.version !== 'v3') {
+  if (manifest.version !== 'v4') {
     logger.fs.error('🔍 无效的 manifest 版本，创建新的 manifest 文件...')
     return {
-      version: 'v3',
+      version: 'v4',
       data: [],
     }
   }
@@ -61,7 +61,7 @@ export async function saveManifest(items: PhotoManifestItem[]): Promise<void> {
     manifestPath,
     JSON.stringify(
       {
-        version: 'v3',
+        version: 'v4',
         data: sortedManifest,
       } as AfilmoryManifest,
       null,

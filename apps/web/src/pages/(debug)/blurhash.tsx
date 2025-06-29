@@ -22,18 +22,20 @@ export const Component = () => {
             width={photo.width}
             className="absolute inset-0"
           />
-          <ErrorBoundary fallbackRender={() => null}>
-            <div className="absolute inset-0 opacity-0 group-hover:opacity-100">
-              <Blurhash
-                hash={photo.blurhash}
-                width="100%"
-                height="100%"
-                resolutionX={32}
-                resolutionY={32}
-                punch={1}
-              />
-            </div>
-          </ErrorBoundary>
+          {photo.blurhash && (
+            <ErrorBoundary fallback={null}>
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100">
+                <Blurhash
+                  hash={photo.blurhash}
+                  width="100%"
+                  height="100%"
+                  resolutionX={32}
+                  resolutionY={32}
+                  punch={1}
+                />
+              </div>
+            </ErrorBoundary>
+          )}
         </div>
       ))}
     </div>

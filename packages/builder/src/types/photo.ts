@@ -45,7 +45,7 @@ export interface PhotoManifestItem extends PhotoInfo {
   id: string
   originalUrl: string
   thumbnailUrl: string
-  blurhash: string
+  blurhash: string | null
   width: number
   height: number
   aspectRatio: number

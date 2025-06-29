@@ -1,6 +1,6 @@
 import type { PhotoManifestItem } from './photo'
 
 export type AfilmoryManifest = {
-  version: 'v3'
+  version: 'v4'
   data: PhotoManifestItem[]
 }

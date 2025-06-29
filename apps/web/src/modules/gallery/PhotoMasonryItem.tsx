@@ -230,7 +230,7 @@ export const PhotoMasonryItem = ({
     >
       {/* Blurhash 占位符 */}
       {data.blurhash && (
-        <ErrorBoundary fallbackRender={() => null}>
+        <ErrorBoundary fallback={null}>
           <Blurhash
             hash={data.blurhash}
             width="100%"
