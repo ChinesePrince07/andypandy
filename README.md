@@ -29,6 +29,7 @@ Live Photo Galleries:
 ### Image Processing
 
 - 🔄 **HEIC/HEIF Format Support** - Automatic conversion of Apple device HEIC format
+- 📷 **TIFF Format Support** - Automatic conversion of TIFF format
 - 🖼️ **Smart Thumbnail Generation** - Multi-size thumbnails for optimized loading performance
 - 📊 **EXIF Information Display** - Complete shooting parameters including camera model, focal length, aperture, etc.
 - 🌈 **Blurhash Placeholders** - Elegant image loading experience
@@ -36,11 +37,12 @@ Live Photo Galleries:
 
 ### Advanced Features
 
-- 🎛️ **Fujifilm Simulation** - Read and display Fujifilm camera film simulation settings
+- 🎛️ **Fujifilm Recipe** - Read and display Fujifilm camera film simulation settings
 - 🔍 **Fullscreen Viewer** - Image viewer with gesture support
 - 🏷️ **File System Tags** - Auto-generated tags based on file system
 - ⚡ **Concurrent Processing** - Multi-process/multi-thread concurrent processing support
 - 🗂️ **Multi-Storage Support** - S3, GitHub, and other storage backends
+- 📷 **Share Image** - Share image to social media or embed iframe to your website
 
 ## 🏗️ Technical Architecture
 
