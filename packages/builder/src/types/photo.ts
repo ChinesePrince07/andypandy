@@ -45,7 +45,7 @@ export interface PhotoManifestItem extends PhotoInfo {
   id: string
   originalUrl: string
   thumbnailUrl: string
-  blurhash: string | null
+  thumbHash: string | null
   width: number
   height: number
   aspectRatio: number
@@ -151,7 +151,7 @@ export interface PickedExif {
 export interface ThumbnailResult {
   thumbnailUrl: string | null
   thumbnailBuffer: Buffer | null
-  blurhash: string | null
+  thumbHash: Uint8Array | null
 }
 
 export type FujiRecipe = {

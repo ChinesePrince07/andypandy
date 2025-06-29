@@ -27,7 +27,7 @@ function createFailureResult(): ThumbnailResult {
   return {
     thumbnailUrl: null,
     thumbnailBuffer: null,
-    blurhash: null,
+    thumbHash: null,
   }
 }
 
@@ -35,12 +35,12 @@ function createFailureResult(): ThumbnailResult {
 function createSuccessResult(
   thumbnailUrl: string,
   thumbnailBuffer: Buffer,
-  blurhash: string | null,
+  thumbHash: Uint8Array | null,
 ): ThumbnailResult {
   return {
     thumbnailUrl,
     thumbnailBuffer,
-    blurhash,
+    thumbHash,
   }
 }
 
@@ -63,8 +63,6 @@ export async function thumbnailExists(photoId: string): Promise<boolean> {
 // 读取现有缩略图并生成 blurhash
 async function processExistingThumbnail(
   photoId: string,
-  originalWidth: number,
-  originalHeight: number,
 ): Promise<ThumbnailResult | null> {
   const { thumbnailPath, thumbnailUrl } = getThumbnailPaths(photoId)
 
@@ -73,13 +71,9 @@ async function processExistingThumbnail(
 
   try {
     const existingBuffer = await fs.readFile(thumbnailPath)
-    const blurhash = await generateBlurhash(
-      existingBuffer,
-      originalWidth,
-      originalHeight,
-    )
+    const thumbHash = await generateBlurhash(existingBuffer)
 
-    return createSuccessResult(thumbnailUrl, existingBuffer, blurhash)
+    return createSuccessResult(thumbnailUrl, existingBuffer, thumbHash)
   } catch (error) {
     thumbnailLog?.warn(`读取现有缩略图失败，重新生成：${photoId}`, error)
     return null
@@ -90,8 +84,6 @@ async function processExistingThumbnail(
 async function generateNewThumbnail(
   imageBuffer: Buffer,
   photoId: string,
-  originalWidth: number,
-  originalHeight: number,
 ): Promise<ThumbnailResult> {
   const { thumbnailPath, thumbnailUrl } = getThumbnailPaths(photoId)
 
@@ -123,13 +115,9 @@ async function generateNewThumbnail(
     log.success(`生成完成：${photoId} (${sizeKB}KB, ${duration}ms)`)
 
     // 基于生成的缩略图生成 blurhash
-    const blurhash = await generateBlurhash(
-      thumbnailBuffer,
-      originalWidth,
-      originalHeight,
-    )
+    const thumbHash = await generateBlurhash(thumbnailBuffer)
 
-    return createSuccessResult(thumbnailUrl, thumbnailBuffer, blurhash)
+    return createSuccessResult(thumbnailUrl, thumbnailBuffer, thumbHash)
   } catch (error) {
     log.error(`生成失败：${photoId}`, error)
     return createFailureResult()
@@ -140,8 +128,6 @@ async function generateNewThumbnail(
 export async function generateThumbnailAndBlurhash(
   imageBuffer: Buffer,
   photoId: string,
-  originalWidth: number,
-  originalHeight: number,
   forceRegenerate = false,
 ): Promise<ThumbnailResult> {
   const thumbnailLog = getGlobalLoggers().thumbnail
@@ -151,11 +137,7 @@ export async function generateThumbnailAndBlurhash(
 
     // 如果不是强制模式且缩略图已存在，尝试复用现有文件
     if (!forceRegenerate && (await thumbnailExists(photoId))) {
-      const existingResult = await processExistingThumbnail(
-        photoId,
-        originalWidth,
-        originalHeight,
-      )
+      const existingResult = await processExistingThumbnail(photoId)
 
       if (existingResult) {
         return existingResult
@@ -164,12 +146,7 @@ export async function generateThumbnailAndBlurhash(
     }
 
     // 生成新的缩略图
-    return await generateNewThumbnail(
-      imageBuffer,
-      photoId,
-      originalWidth,
-      originalHeight,
-    )
+    return await generateNewThumbnail(imageBuffer, photoId)
   } catch (error) {
     thumbnailLog.error(`处理失败：${photoId}`, error)
     return createFailureResult()

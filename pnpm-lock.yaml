@@ -323,6 +323,9 @@ importers:
       tailwind-merge:
         specifier: 3.3.1
         version: 3.3.1
+      thumbhash:
+        specifier: 0.1.1
+        version: 0.1.1
       tiff:
         specifier: ^7.0.0
         version: 7.0.0
@@ -456,6 +459,9 @@ importers:
       sharp:
         specifier: 0.34.2
         version: 0.34.2
+      thumbhash:
+        specifier: 0.1.1
+        version: 0.1.1
 
   packages/data:
     dependencies:
@@ -1963,7 +1969,7 @@ packages:
     resolution: {integrity: sha512-fyjAACV62oPV925xFCrH8DR5xWhg9KYtJT4s3u54jxp+L/hbpTY2kIeEFFbFe+a/HCE94zGQMZLIpVTPVZDhaA==}
     peerDependencies:
       '@types/react': '*'
-      react: 18.3.1
+      react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
     peerDependenciesMeta:
       '@types/react':
         optional: true
@@ -7354,6 +7360,9 @@ packages:
   throttle-debounce@5.0.2:
     resolution: {integrity: sha512-B71/4oyj61iNH0KeCamLuE2rmKuTO5byTOSVwECM5FA7TiAiAW+UqTKZ9ERueC4qvgSttUhdmq1mXC3kJqGX7A==}
     engines: {node: '>=12.22'}
+
+  thumbhash@0.1.1:
+    resolution: {integrity: sha512-kH5pKeIIBPQXAOni2AiY/Cu/NKdkFREdpH+TLdM0g6WA7RriCv0kPLgP731ady67MhTAqrVG/4mnEeibVuCJcg==}
 
   tiff@7.0.0:
     resolution: {integrity: sha512-NhAYu+1cYzWpJ64bxaAC/b1fy6ZwkllMxYUziVZAISZa2TKu8H7AsC7Kpz4epZoMb0SNS4fOA6Ql1gZCZ27UXQ==}
@@ -16228,6 +16237,8 @@ snapshots:
       source-map-support: 0.5.21
 
   throttle-debounce@5.0.2: {}
+
+  thumbhash@0.1.1: {}
 
   tiff@7.0.0:
     dependencies:

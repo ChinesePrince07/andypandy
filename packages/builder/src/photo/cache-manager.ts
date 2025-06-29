@@ -82,7 +82,7 @@ export function validateCacheData(
     needsThumbnail:
       options.isForceMode ||
       options.isForceThumbnails ||
-      !existingItem.blurhash,
+      !existingItem.thumbHash,
     needsExif:
       options.isForceMode || options.isForceManifest || !existingItem.exif,
     needsToneAnalysis:

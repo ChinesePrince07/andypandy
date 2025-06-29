@@ -1,10 +1,9 @@
 import clsx from 'clsx'
 import { m } from 'motion/react'
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
-import { Blurhash } from 'react-blurhash'
-import { ErrorBoundary } from 'react-error-boundary'
 import { useTranslation } from 'react-i18next'
 
+import { Thumbhash } from '~/components/ui/thumbhash'
 import {
   CarbonIsoOutline,
   MaterialSymbolsShutterSpeed,
@@ -229,18 +228,8 @@ export const PhotoMasonryItem = ({
       onMouseLeave={handleMouseLeave}
     >
       {/* Blurhash 占位符 */}
-      {data.blurhash && (
-        <ErrorBoundary fallback={null}>
-          <Blurhash
-            hash={data.blurhash}
-            width="100%"
-            height="100%"
-            resolutionX={32}
-            resolutionY={32}
-            punch={1}
-            className="absolute inset-0"
-          />
-        </ErrorBoundary>
+      {data.thumbHash && (
+        <Thumbhash thumbHash={data.thumbHash} className="absolute inset-0" />
       )}
 
       {!imageError && (

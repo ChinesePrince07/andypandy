@@ -13,7 +13,6 @@ import {
   useRef,
   useState,
 } from 'react'
-import { Blurhash } from 'react-blurhash'
 import { ErrorBoundary } from 'react-error-boundary'
 import { useTranslation } from 'react-i18next'
 import type { Swiper as SwiperType } from 'swiper'
@@ -26,6 +25,7 @@ import { useMobile } from '~/hooks/useMobile'
 import { Spring } from '~/lib/spring'
 import type { PhotoManifest } from '~/types/photo'
 
+import { Thumbhash } from '../thumbhash'
 import { ExifPanel } from './ExifPanel'
 import { GalleryThumbnail } from './GalleryThumbnail'
 import { ProgressiveImage } from './ProgressiveImage'
@@ -147,7 +147,7 @@ export const PhotoViewer = ({
       {/* 固定背景层防止透出 */}
       {/* 交叉溶解的 Blurhash 背景 */}
       <AnimatePresence mode="popLayout">
-        {isOpen && currentPhoto.blurhash && (
+        {isOpen && currentPhoto.thumbHash && (
           <ErrorBoundary fallback={null}>
             <PassiveFragment>
               <m.div
@@ -158,20 +158,15 @@ export const PhotoViewer = ({
                 className="bg-material-opaque fixed inset-0"
               />
               <m.div
-                key={currentPhoto.blurhash}
+                key={currentPhoto.id}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={Spring.presets.smooth}
                 className="fixed inset-0"
               >
-                <Blurhash
-                  hash={currentPhoto.blurhash}
-                  width="100%"
-                  height="100%"
-                  resolutionX={32}
-                  resolutionY={32}
-                  punch={1}
+                <Thumbhash
+                  thumbHash={currentPhoto.thumbHash}
                   className="size-fill"
                 />
               </m.div>

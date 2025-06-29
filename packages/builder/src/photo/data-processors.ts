@@ -10,6 +10,7 @@ import {
   generateThumbnailAndBlurhash,
   thumbnailExists,
 } from '../image/thumbnail.js'
+import { decompressUint8Array } from '../lib/u8array.js'
 import { workdir } from '../path.js'
 import type {
   PhotoManifestItem,
@@ -22,7 +23,7 @@ import type { PhotoProcessorOptions } from './processor.js'
 export interface ThumbnailResult {
   thumbnailUrl: string
   thumbnailBuffer: Buffer
-  blurhash: string
+  thumbHash: Uint8Array | null
 }
 
 /**
@@ -32,8 +33,6 @@ export interface ThumbnailResult {
 export async function processThumbnailAndBlurhash(
   imageBuffer: Buffer,
   photoId: string,
-  width: number,
-  height: number,
   existingItem: PhotoManifestItem | undefined,
   options: PhotoProcessorOptions,
 ): Promise<ThumbnailResult> {
@@ -43,7 +42,7 @@ export async function processThumbnailAndBlurhash(
   if (
     !options.isForceMode &&
     !options.isForceThumbnails &&
-    existingItem?.blurhash &&
+    existingItem?.thumbHash &&
     (await thumbnailExists(photoId))
   ) {
     try {
@@ -61,7 +60,7 @@ export async function processThumbnailAndBlurhash(
       return {
         thumbnailUrl,
         thumbnailBuffer,
-        blurhash: existingItem.blurhash,
+        thumbHash: decompressUint8Array(existingItem.thumbHash),
       }
     } catch (error) {
       loggers.thumbnail.warn(`读取现有缩略图失败，重新生成：${photoId}`, error)
@@ -73,15 +72,13 @@ export async function processThumbnailAndBlurhash(
   const result = await generateThumbnailAndBlurhash(
     imageBuffer,
     photoId,
-    width,
-    height,
     options.isForceMode || options.isForceThumbnails,
   )
 
   return {
     thumbnailUrl: result.thumbnailUrl!,
     thumbnailBuffer: result.thumbnailBuffer!,
-    blurhash: result.blurhash!,
+    thumbHash: result.thumbHash!,
   }
 }
 

@@ -8,6 +8,7 @@ import {
   isBitmap,
   preprocessImageBuffer,
 } from '../image/processor.js'
+import { compressUint8Array } from '../lib/u8array.js'
 import type { PhotoManifestItem } from '../types/photo.js'
 import { shouldProcessPhoto } from './cache-manager.js'
 import {
@@ -154,8 +155,6 @@ export async function executePhotoProcessingPipeline(
     const thumbnailResult = await processThumbnailAndBlurhash(
       imageBuffer,
       photoId,
-      metadata.width,
-      metadata.height,
       existingItem,
       options,
     )
@@ -196,7 +195,9 @@ export async function executePhotoProcessingPipeline(
         .getStorageManager()
         .generatePublicUrl(photoKey),
       thumbnailUrl: thumbnailResult.thumbnailUrl,
-      blurhash: thumbnailResult.blurhash,
+      thumbHash: thumbnailResult.thumbHash
+        ? compressUint8Array(thumbnailResult.thumbHash)
+        : null,
       width: metadata.width,
       height: metadata.height,
       aspectRatio,
