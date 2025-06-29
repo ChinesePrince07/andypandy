@@ -9,12 +9,12 @@ import {
   preprocessImageBuffer,
 } from '../image/processor.js'
 import type { PhotoManifestItem } from '../types/photo.js'
+import { shouldProcessPhoto } from './cache-manager.js'
 import {
   processExifData,
   processThumbnailAndBlurhash,
   processToneAnalysis,
-  shouldProcessPhoto,
-} from './cache-manager.js'
+} from './data-processors.js'
 import { extractPhotoInfo } from './info-extractor.js'
 import { processLivePhoto } from './live-photo-handler.js'
 import { getGlobalLoggers } from './logger-adapter.js'

@@ -11,9 +11,13 @@ export async function generateBlurhash(
 ): Promise<string | null> {
   try {
     // 复用缩略图的 Sharp 实例来生成 blurhash
-    const { data, info } = await sharp(thumbnailBuffer).toBuffer({
-      resolveWithObject: true,
-    })
+    // 确保转换为 raw RGBA 格式
+    const { data, info } = await sharp(thumbnailBuffer)
+      .raw()
+      .ensureAlpha()
+      .toBuffer({
+        resolveWithObject: true,
+      })
 
     const xComponents = Math.min(Math.max(Math.round(info.width / 16), 3), 9)
     const yComponents = Math.min(Math.max(Math.round(info.height / 16), 3), 9)
@@ -21,6 +25,15 @@ export async function generateBlurhash(
     logger.blurhash.info(
       `生成参数：原始 ${originalWidth}x${originalHeight}, 实际 ${info.width}x${info.height}, 组件 ${xComponents}x${yComponents}`,
     )
+
+    // 验证数据长度是否匹配
+    const expectedLength = info.width * info.height * info.channels
+    if (data.length !== expectedLength) {
+      logger.blurhash.error(
+        `数据长度不匹配：期望 ${expectedLength}，实际 ${data.length}`,
+      )
+      return null
+    }
 
     // 生成 blurhash
     const blurhash = encode(
