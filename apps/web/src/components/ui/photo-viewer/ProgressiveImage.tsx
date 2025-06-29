@@ -24,7 +24,6 @@ import { SlidingNumber } from '../number/SlidingNumber'
 import type { LivePhotoHandle } from './LivePhoto'
 import { LivePhoto } from './LivePhoto'
 import type { LoadingIndicatorRef } from './LoadingIndicator'
-import { LoadingIndicator } from './LoadingIndicator'
 
 const SHOW_SCALE_INDICATOR_DURATION = 1000
 interface ProgressiveImageProps {
@@ -50,6 +49,8 @@ interface ProgressiveImageProps {
   // Live Photo 相关 props
   isLivePhoto?: boolean
   livePhotoVideoUrl?: string
+
+  loadingIndicatorRef: React.RefObject<LoadingIndicatorRef | null>
 }
 
 export const ProgressiveImage = ({
@@ -73,6 +74,7 @@ export const ProgressiveImage = ({
   // Live Photo props
   isLivePhoto = false,
   livePhotoVideoUrl,
+  loadingIndicatorRef,
 }: ProgressiveImageProps) => {
   const { t } = useTranslation()
   const [blobSrc, setBlobSrc] = useState<string | null>(null)
@@ -88,7 +90,6 @@ export const ProgressiveImage = ({
   const [showScaleIndicator, setShowScaleIndicator] = useState(false)
   const scaleIndicatorTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  const loadingIndicatorRef = useRef<LoadingIndicatorRef>(null)
   const imageLoaderManagerRef = useRef<ImageLoaderManager | null>(null)
   const livePhotoRef = useRef<LivePhotoHandle>(null)
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null)
@@ -162,7 +163,6 @@ export const ProgressiveImage = ({
         clearTimeout(scaleIndicatorTimeoutRef.current)
       }
 
-      // 设置新的定时器，500ms 后隐藏提示
       scaleIndicatorTimeoutRef.current = setTimeout(() => {
         setShowScaleIndicator(false)
       }, SHOW_SCALE_INDICATOR_DURATION)
@@ -402,9 +402,6 @@ export const ProgressiveImage = ({
           </span>
         </div>
       )}
-
-      {/* 加载指示器 */}
-      <LoadingIndicator ref={loadingIndicatorRef} />
 
       {/* 操作提示 */}
       {!isLivePhoto && (

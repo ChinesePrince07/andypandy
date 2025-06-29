@@ -28,6 +28,8 @@ import type { PhotoManifest } from '~/types/photo'
 import { Thumbhash } from '../thumbhash'
 import { ExifPanel } from './ExifPanel'
 import { GalleryThumbnail } from './GalleryThumbnail'
+import type { LoadingIndicatorRef } from './LoadingIndicator'
+import { LoadingIndicator } from './LoadingIndicator'
 import { ProgressiveImage } from './ProgressiveImage'
 import { ReactionButton } from './Reaction'
 import { SharePanel } from './SharePanel'
@@ -100,6 +102,7 @@ export const PhotoViewer = ({
     }
   }, [isImageZoomed])
 
+  const loadingIndicatorRef = useRef<LoadingIndicatorRef>(null)
   // 处理图片缩放状态变化
   const handleZoomChange = useCallback((isZoomed: boolean) => {
     setIsImageZoomed(isZoomed)
@@ -242,6 +245,9 @@ export const PhotoViewer = ({
                       className="absolute right-4 bottom-4"
                     />
                   )}
+
+                  {/* 加载指示器 */}
+                  <LoadingIndicator ref={loadingIndicatorRef} />
                   {/* Swiper 容器 */}
                   <Swiper
                     modules={[Navigation, Keyboard, Virtual]}
@@ -284,6 +290,7 @@ export const PhotoViewer = ({
                             className="relative flex h-full w-full items-center justify-center"
                           >
                             <ProgressiveImage
+                              loadingIndicatorRef={loadingIndicatorRef}
                               isCurrentImage={isCurrentImage}
                               src={photo.originalUrl}
                               thumbnailSrc={photo.thumbnailUrl}
