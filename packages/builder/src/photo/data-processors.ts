@@ -76,10 +76,6 @@ export async function processThumbnailAndBlurhash(
     width,
     height,
     options.isForceMode || options.isForceThumbnails,
-    {
-      thumbnail: loggers.thumbnail.originalLogger,
-      blurhash: loggers.blurhash.originalLogger,
-    },
   )
 
   return {
@@ -140,8 +136,5 @@ export async function processToneAnalysis(
   }
 
   // 计算新的影调分析
-  return await calculateHistogramAndAnalyzeTone(
-    sharpInstance,
-    loggers.tone.originalLogger,
-  )
+  return await calculateHistogramAndAnalyzeTone(sharpInstance)
 }

@@ -285,7 +285,7 @@ export const ExifPanel: FC<{
                   <div className="mb-2 text-xs font-medium text-white/70">
                     {t('exif.histogram')}
                   </div>
-                  <HistogramChart toneAnalysis={currentPhoto.toneAnalysis} />
+                  <HistogramChart thumbnailUrl={currentPhoto.thumbnailUrl} />
                 </div>
               </div>
             </div>

@@ -312,7 +312,7 @@ class PhotoGalleryBuilder {
   ): Promise<AfilmoryManifest> {
     return options.isForceMode || options.isForceManifest
       ? {
-          version: 'v2',
+          version: 'v3',
           data: [],
         }
       : await loadExistingManifest()
