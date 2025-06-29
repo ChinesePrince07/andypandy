@@ -15,7 +15,7 @@ import { ImageLoaderManager } from '~/lib/image-loader-manager'
 import { getImageFormat } from '~/lib/image-utils'
 import type { PhotoManifest } from '~/types/photo'
 
-export const PhotoMasonryItem = ({
+export const MasonryPhotoItem = ({
   data,
   width,
   index: _,
@@ -88,7 +88,7 @@ export const PhotoMasonryItem = ({
 
     // 快门速度
     const exposureTime = exif.ExposureTime
-    const shutterSpeed = `${exposureTime}s`
+    const shutterSpeed = exposureTime ? `${exposureTime}s` : null
 
     // 光圈
     const aperture = exif.FNumber ? `f/${exif.FNumber}` : null

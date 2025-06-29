@@ -17,7 +17,10 @@ class PhotoLoader {
     })
   }
 
-  getPhotos() {
+  getPhotos(ids?: string[]) {
+    if (ids) {
+      return this.photos.filter((photo) => ids.includes(photo.id))
+    }
     return this.photos
   }
 

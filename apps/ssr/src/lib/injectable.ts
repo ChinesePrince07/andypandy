@@ -12,6 +12,7 @@ export const injectConfigToDocument = (document: OnlyHTMLDocument) => {
   const $config = document.head.querySelector('#config')
   const injectConfigBase = {
     useApi: DbManager.shared.isEnabled(),
+    useNext: true,
   }
   if ($config) {
     $config.innerHTML = `window.__CONFIG__ = ${JSON.stringify(injectConfigBase)}`

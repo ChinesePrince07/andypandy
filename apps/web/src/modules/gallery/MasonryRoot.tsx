@@ -18,7 +18,7 @@ import { ActionGroup, ActionPanel } from './ActionGroup'
 import { FloatingActionButton } from './FloatingActionButton'
 import { Masonry } from './Masonic'
 import { MasonryHeaderMasonryItem } from './MasonryHeaderMasonryItem'
-import { PhotoMasonryItem } from './PhotoMasonryItem'
+import { MasonryPhotoItem } from './MasonryPhotoItem'
 
 class MasonryHeaderItem {
   static default = new MasonryHeaderItem()
@@ -273,7 +273,7 @@ export const MasonryItem = memo(
           animate="visible"
           onAnimationComplete={shouldAnimate ? onAnimationComplete : undefined}
         >
-          <PhotoMasonryItem
+          <MasonryPhotoItem
             data={data as PhotoManifest}
             width={width}
             index={index}

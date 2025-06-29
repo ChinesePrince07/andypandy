@@ -156,59 +156,64 @@ export const ExifPanel: FC<{
               )}
             </div>
 
-            {formattedExifData && (
-              <div>
-                <h4 className="my-2 text-sm font-medium text-white/80">
-                  {t('exif.capture.parameters')}
-                </h4>
-                <div className={`grid grid-cols-2 gap-2`}>
-                  {formattedExifData.focalLength35mm && (
-                    <div className="flex h-6 items-center gap-2 rounded-md bg-white/10 px-2">
-                      <StreamlineImageAccessoriesLensesPhotosCameraShutterPicturePhotographyPicturesPhotoLens className="text-sm text-white/70" />
-                      <span className="text-xs">
-                        {formattedExifData.focalLength35mm}mm
-                      </span>
-                    </div>
-                  )}
+            {formattedExifData &&
+              (formattedExifData.shutterSpeed ||
+                formattedExifData.iso ||
+                formattedExifData.aperture ||
+                formattedExifData.exposureBias ||
+                formattedExifData.focalLength35mm) && (
+                <div>
+                  <h4 className="my-2 text-sm font-medium text-white/80">
+                    {t('exif.capture.parameters')}
+                  </h4>
+                  <div className={`grid grid-cols-2 gap-2`}>
+                    {formattedExifData.focalLength35mm && (
+                      <div className="flex h-6 items-center gap-2 rounded-md bg-white/10 px-2">
+                        <StreamlineImageAccessoriesLensesPhotosCameraShutterPicturePhotographyPicturesPhotoLens className="text-sm text-white/70" />
+                        <span className="text-xs">
+                          {formattedExifData.focalLength35mm}mm
+                        </span>
+                      </div>
+                    )}
 
-                  {formattedExifData.aperture && (
-                    <div className="flex h-6 items-center gap-2 rounded-md bg-white/10 px-2">
-                      <TablerAperture className="text-sm text-white/70" />
-                      <span className="text-xs">
-                        {formattedExifData.aperture}
-                      </span>
-                    </div>
-                  )}
+                    {formattedExifData.aperture && (
+                      <div className="flex h-6 items-center gap-2 rounded-md bg-white/10 px-2">
+                        <TablerAperture className="text-sm text-white/70" />
+                        <span className="text-xs">
+                          {formattedExifData.aperture}
+                        </span>
+                      </div>
+                    )}
 
-                  {formattedExifData.shutterSpeed && (
-                    <div className="flex h-6 items-center gap-2 rounded-md bg-white/10 px-2">
-                      <MaterialSymbolsShutterSpeed className="text-sm text-white/70" />
-                      <span className="text-xs">
-                        {formattedExifData.shutterSpeed}
-                      </span>
-                    </div>
-                  )}
+                    {formattedExifData.shutterSpeed && (
+                      <div className="flex h-6 items-center gap-2 rounded-md bg-white/10 px-2">
+                        <MaterialSymbolsShutterSpeed className="text-sm text-white/70" />
+                        <span className="text-xs">
+                          {formattedExifData.shutterSpeed}
+                        </span>
+                      </div>
+                    )}
 
-                  {formattedExifData.iso && (
-                    <div className="flex h-6 items-center gap-2 rounded-md bg-white/10 px-2">
-                      <CarbonIsoOutline className="text-sm text-white/70" />
-                      <span className="text-xs">
-                        ISO {formattedExifData.iso}
-                      </span>
-                    </div>
-                  )}
+                    {formattedExifData.iso && (
+                      <div className="flex h-6 items-center gap-2 rounded-md bg-white/10 px-2">
+                        <CarbonIsoOutline className="text-sm text-white/70" />
+                        <span className="text-xs">
+                          ISO {formattedExifData.iso}
+                        </span>
+                      </div>
+                    )}
 
-                  {formattedExifData.exposureBias && (
-                    <div className="flex h-6 items-center gap-2 rounded-md bg-white/10 px-2">
-                      <MaterialSymbolsExposure className="text-sm text-white/70" />
-                      <span className="text-xs">
-                        {formattedExifData.exposureBias}
-                      </span>
-                    </div>
-                  )}
+                    {formattedExifData.exposureBias && (
+                      <div className="flex h-6 items-center gap-2 rounded-md bg-white/10 px-2">
+                        <MaterialSymbolsExposure className="text-sm text-white/70" />
+                        <span className="text-xs">
+                          {formattedExifData.exposureBias}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
             {/* 标签信息 - 移到基本信息 section 内 */}
             {currentPhoto.tags && currentPhoto.tags.length > 0 && (
