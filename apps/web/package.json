@@ -104,6 +104,7 @@
     "tailwindcss-safe-area": "catalog:",
     "tailwindcss-uikit-colors": "catalog:",
     "unplugin-ast": "0.15.0",
-    "vite-plugin-html": "3.2.2"
+    "vite-plugin-html": "3.2.2",
+    "vite-plugin-pwa": "1.0.1"
   }
 }

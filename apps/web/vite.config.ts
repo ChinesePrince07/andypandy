@@ -12,6 +12,7 @@ import { defineConfig } from 'vite'
 import { analyzer } from 'vite-bundle-analyzer'
 import { checker } from 'vite-plugin-checker'
 import { createHtmlPlugin } from 'vite-plugin-html'
+import { VitePWA } from 'vite-plugin-pwa'
 import tsconfigPaths from 'vite-tsconfig-paths'
 
 import PKG from '../../package.json'
@@ -78,6 +79,80 @@ export default defineConfig({
     localesJsonPlugin(),
     manifestInjectPlugin(),
     tailwindcss(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+      manifest: {
+        name: siteConfig.title,
+        short_name: siteConfig.name,
+        description: siteConfig.description,
+        theme_color: '#1c1c1e',
+        background_color: '#1c1c1e',
+        display: 'standalone',
+        scope: '/',
+        start_url: '/',
+        icons: [
+          {
+            src: 'android-chrome-192x192.png',
+            sizes: '192x192',
+            type: 'image/png',
+          },
+          {
+            src: 'android-chrome-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+          },
+          {
+            src: 'apple-touch-icon.png',
+            sizes: '180x180',
+            type: 'image/png',
+          },
+        ],
+      },
+      workbox: {
+        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10MB
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'],
+        globIgnores: ['**/*.{jpg,jpeg}'], // 忽略大图片文件
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'google-fonts-cache',
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 365, // <== 365 days
+              },
+            },
+          },
+          {
+            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'gstatic-fonts-cache',
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 365, // <== 365 days
+              },
+            },
+          },
+          {
+            urlPattern: /\.(?:png|jpg|jpeg|svg|webp)$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'images-cache',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24 * 30, // <== 30 days
+              },
+            },
+          },
+        ],
+      },
+      devOptions: {
+        enabled: false, // 开发环境不启用 PWA
+      },
+    }),
     ogImagePlugin({
       title: siteConfig.title,
       description: siteConfig.description,
