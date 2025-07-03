@@ -146,13 +146,15 @@ export const PhotoViewer = ({
   return (
     <>
       <AnimatePresence>
-        <m.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={Spring.presets.snappy}
-          className="bg-material-opaque fixed inset-0"
-        />
+        {isOpen && (
+          <m.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={Spring.presets.snappy}
+            className="bg-material-opaque fixed inset-0"
+          />
+        )}
       </AnimatePresence>
       {/* 固定背景层防止透出 */}
       {/* 交叉溶解的 Blurhash 背景 */}
