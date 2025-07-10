@@ -11,6 +11,7 @@ import { canUseWebGL } from '~/lib/feature'
 
 import { SlidingNumber } from '../number/SlidingNumber'
 import { DOMImageViewer } from './DOMImageViewer'
+import { HDRBadge } from './HDRBadge'
 import {
   createContextMenuItems,
   useImageLoader,
@@ -181,13 +182,16 @@ export const ProgressiveImage = ({
         </div>
       )}
 
-      {/* LivePhoto 控制按钮 - 不跟随图片缩放 */}
       {isLivePhoto && highResLoaded && blobSrc && isCurrentImage && !error && (
         <LivePhotoBadge
           livePhotoRef={livePhotoRef}
           isLivePhotoPlaying={isLivePhotoPlaying}
           imageLoaderManagerRef={imageLoaderManagerRef}
         />
+      )}
+
+      {isHDR && highResLoaded && blobSrc && isCurrentImage && !error && (
+        <HDRBadge />
       )}
 
       {/* 备用图片（当 WebGL 不可用时） - 只在非错误状态时显示 */}
