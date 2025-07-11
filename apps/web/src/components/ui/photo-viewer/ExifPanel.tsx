@@ -91,11 +91,7 @@ export const ExifPanel: FC<{
               {t('exif.basic.info')}
             </h4>
             <div className="space-y-1 text-sm">
-              <Row
-                label={t('exif.filename')}
-                value={currentPhoto.title}
-                ellipsis
-              />
+              <Row label={t('exif.filename')} value={currentPhoto.title} />
               <Row label={t('exif.format')} value={imageFormat} />
               <Row
                 label={t('exif.dimensions')}
@@ -137,14 +133,12 @@ export const ExifPanel: FC<{
                 <Row
                   label={t('exif.artist')}
                   value={formattedExifData.artist}
-                  ellipsis
                 />
               )}
               {formattedExifData?.copyright && (
                 <Row
                   label={t('exif.copyright')}
                   value={formattedExifData.copyright}
-                  ellipsis
                 />
               )}
 
