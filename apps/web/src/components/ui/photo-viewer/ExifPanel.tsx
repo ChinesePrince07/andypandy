@@ -38,16 +38,13 @@ export const ExifPanel: FC<{
   const isMobile = useMobile()
   const formattedExifData = formatExifData(exifData)
   const isExiftoolLoaded = useAtomValue(isExiftoolLoadedAtom)
-  
+
   // Compute decimal GPS coordinates from raw EXIF data
-  const gpsData = useMemo(
-    () => convertExifGPSToDecimal(exifData),
-    [exifData]
-  )
-  
+  const gpsData = useMemo(() => convertExifGPSToDecimal(exifData), [exifData])
+
   const decimalLatitude = gpsData?.latitude || null
   const decimalLongitude = gpsData?.longitude || null
-  
+
   // 使用通用的图片格式提取函数
   const imageFormat = getImageFormat(
     currentPhoto.originalUrl || currentPhoto.s3Key || '',
@@ -58,7 +55,7 @@ export const ExifPanel: FC<{
       className={`${
         isMobile
           ? 'exif-panel-mobile fixed right-0 bottom-0 left-0 z-10 max-h-[60vh] w-full rounded-t-2xl backdrop-blur-[70px]'
-          : 'relative z-10 w-80 shrink-0'
+          : 'relative w-80 shrink-0'
       } bg-material-medium flex flex-col text-white`}
       initial={{
         opacity: 0,
