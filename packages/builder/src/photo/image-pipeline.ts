@@ -213,6 +213,7 @@ export async function executePhotoProcessingPipeline(
       description: photoInfo.description,
       dateTaken: photoInfo.dateTaken,
       tags: photoInfo.tags,
+      equipmentTags: photoInfo.equipmentTags, // 添加设备标签
       originalUrl: defaultBuilder
         .getStorageManager()
         .generatePublicUrl(photoKey),

@@ -16,11 +16,18 @@ const filterAndSortPhotos = (
   selectedTags: string[],
   sortOrder: 'asc' | 'desc',
 ) => {
-  // 首先根据 tags 筛选
+  // 首先根据 tags 筛选（包括显示标签和设备标签）
   let filteredPhotos = data
   if (selectedTags.length > 0) {
     filteredPhotos = data.filter((photo) =>
-      selectedTags.some((tag) => photo.tags.includes(tag)),
+      selectedTags.some((tag) => {
+        // 检查显示标签
+        if (photo.tags.includes(tag)) return true
+        // 检查设备标签
+        if (photo.equipmentTags && photo.equipmentTags.includes(tag))
+          return true
+        return false
+      }),
     )
   }
 

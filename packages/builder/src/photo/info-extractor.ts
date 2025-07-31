@@ -82,6 +82,37 @@ export function extractPhotoInfo(
     log.info(`从文件名提取浏览次数：${views}`)
   }
 
+  // 从 EXIF 数据中提取设备标签（相机和镜头）
+  const equipmentTags: string[] = []
+  if (exifData) {
+    // 相机信息标签
+    if (exifData.Make && exifData.Model) {
+      const cameraTag = `${exifData.Make} ${exifData.Model}`.trim()
+      equipmentTags.push(cameraTag)
+      log.info(`从 EXIF 提取相机标签：${cameraTag}`)
+    } else if (exifData.Make) {
+      equipmentTags.push(exifData.Make)
+      log.info(`从 EXIF 提取相机品牌标签：${exifData.Make}`)
+    } else if (exifData.Model) {
+      equipmentTags.push(exifData.Model)
+      log.info(`从 EXIF 提取相机型号标签：${exifData.Model}`)
+    }
+
+    // 镜头信息标签
+    if (exifData.LensModel) {
+      let lensTag = exifData.LensModel
+      // 如果镜头有制造商信息且与相机制造商不同，也添加制造商
+      if (exifData.LensMake && exifData.LensMake !== exifData.Make) {
+        lensTag = `${exifData.LensMake} ${exifData.LensModel}`
+      }
+      equipmentTags.push(lensTag.trim())
+      log.info(`从 EXIF 提取镜头标签：${lensTag}`)
+    } else if (exifData.LensMake) {
+      equipmentTags.push(exifData.LensMake)
+      log.info(`从 EXIF 提取镜头品牌标签：${exifData.LensMake}`)
+    }
+  }
+
   // 从文件名中提取标题（移除日期和浏览次数）
   title = fileName
     .replaceAll(/\d{4}-\d{2}-\d{2}[_-]?/g, '')
@@ -94,12 +125,15 @@ export function extractPhotoInfo(
     title = path.basename(key, path.extname(key))
   }
 
-  log.info(`照片信息提取完成："${title}"`)
+  log.info(
+    `照片信息提取完成："${title}"，路径标签：[${tags.join(', ')}]，设备标签：[${equipmentTags.join(', ')}]`,
+  )
 
   return {
     title,
     dateTaken,
-    tags,
+    tags, // 只包含路径等显示标签
+    equipmentTags, // 设备标签，仅用于筛选
     description: '', // 可以从 EXIF 或其他元数据中获取
   }
 }

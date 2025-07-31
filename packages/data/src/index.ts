@@ -31,5 +31,27 @@ class PhotoLoader {
     })
     return Array.from(tagSet).sort()
   }
+
+  getAllEquipmentTags() {
+    const tagSet = new Set<string>()
+    this.photos.forEach((photo) => {
+      if (photo.equipmentTags) {
+        photo.equipmentTags.forEach((tag) => tagSet.add(tag))
+      }
+    })
+    return Array.from(tagSet).sort()
+  }
+
+  // 获取所有标签（包括显示标签和设备标签，用于筛选）
+  getAllTagsForFiltering() {
+    const tagSet = new Set<string>()
+    this.photos.forEach((photo) => {
+      photo.tags.forEach((tag) => tagSet.add(tag))
+      if (photo.equipmentTags) {
+        photo.equipmentTags.forEach((tag) => tagSet.add(tag))
+      }
+    })
+    return Array.from(tagSet).sort()
+  }
 }
 export const photoLoader = new PhotoLoader()

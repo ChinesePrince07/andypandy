@@ -318,16 +318,44 @@ export const ExifPanel: FC<{
                   </h4>
                   <div className="space-y-1 text-sm">
                     {formattedExifData.camera && (
-                      <Row
-                        label={t('exif.camera')}
-                        value={formattedExifData.camera}
-                      />
+                      <div className="flex justify-between gap-4 text-sm">
+                        <span className="text-text-secondary shrink-0">
+                          {t('exif.camera')}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            window.open(
+                              `/?tags=${encodeURIComponent(formattedExifData.camera!)}`,
+                              '_blank',
+                              'noopener,noreferrer',
+                            )
+                          }}
+                          className="text-text min-w-0 cursor-pointer border-b border-dashed border-white/30 text-right hover:border-white/60"
+                        >
+                          {formattedExifData.camera}
+                        </button>
+                      </div>
                     )}
                     {formattedExifData.lens && (
-                      <Row
-                        label={t('exif.lens')}
-                        value={formattedExifData.lens}
-                      />
+                      <div className="flex justify-between gap-4 text-sm">
+                        <span className="text-text-secondary shrink-0">
+                          {t('exif.lens')}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            window.open(
+                              `/?tags=${encodeURIComponent(formattedExifData.lens!)}`,
+                              '_blank',
+                              'noopener,noreferrer',
+                            )
+                          }}
+                          className="text-text min-w-0 cursor-pointer border-b border-dashed border-white/30 text-right hover:border-white/60"
+                        >
+                          {formattedExifData.lens}
+                        </button>
+                      </div>
                     )}
                     {formattedExifData.lensMake &&
                       !formattedExifData.lens?.includes(

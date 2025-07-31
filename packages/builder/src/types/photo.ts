@@ -31,7 +31,8 @@ export interface ToneAnalysis {
 export interface PhotoInfo {
   title: string
   dateTaken: string
-  tags: string[]
+  tags: string[] // 显示标签（路径标签等）
+  equipmentTags: string[] // 设备标签（相机、镜头，仅用于筛选）
   description: string
 }
 
