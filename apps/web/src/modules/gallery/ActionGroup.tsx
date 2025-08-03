@@ -16,7 +16,7 @@ import { Slider } from '~/components/ui/slider'
 import { useMobile } from '~/hooks/useMobile'
 import { clsxm } from '~/lib/cn'
 
-const allTagsForFiltering = photoLoader.getAllTagsForFiltering()
+const allTags = photoLoader.getAllTags()
 
 const SortPanel = () => {
   const { t } = useTranslation()
@@ -105,7 +105,7 @@ const TagsPanel = () => {
   }
 
   // 根据正则查询过滤标签
-  const filteredTags = allTagsForFiltering.filter((tag) => {
+  const filteredTags = allTags.filter((tag) => {
     if (!searchQuery) return true
 
     try {
@@ -149,7 +149,7 @@ const TagsPanel = () => {
         </div>
       </div>
 
-      {allTagsForFiltering.length === 0 ? (
+      {allTags.length === 0 ? (
         <div className="px-3 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
           {t('action.tag.empty')}
         </div>
