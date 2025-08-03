@@ -1,11 +1,11 @@
-import { photoLoader } from '@afilmory/data'
 import { useAtom, useSetAtom } from 'jotai'
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 import { Drawer } from 'vaul'
 
 import { gallerySettingAtom } from '~/atoms/app'
+import { FilterPanel } from '~/components/gallery/FilterPanel'
 import { Button } from '~/components/ui/button'
 import {
   DropdownMenu,
@@ -15,8 +15,6 @@ import {
 import { Slider } from '~/components/ui/slider'
 import { useMobile } from '~/hooks/useMobile'
 import { clsxm } from '~/lib/cn'
-
-const allTags = photoLoader.getAllTags()
 
 const SortPanel = () => {
   const { t } = useTranslation()
@@ -60,131 +58,6 @@ const SortPanel = () => {
       </div>
     </div>
   )
-}
-
-const TagsPanel = () => {
-  const { t } = useTranslation()
-  const [gallerySetting, setGallerySetting] = useAtom(gallerySettingAtom)
-  const [searchQuery, setSearchQuery] = useState(gallerySetting.tagSearchQuery)
-  const inputRef = useRef<HTMLInputElement>(null)
-
-  // 当面板打开时自动聚焦输入框
-  useEffect(() => {
-    if (gallerySetting.isTagsPanelOpen && inputRef.current) {
-      inputRef.current?.focus()
-    }
-  }, [gallerySetting.isTagsPanelOpen])
-
-  const toggleTag = (tag: string) => {
-    const newSelectedTags = gallerySetting.selectedTags.includes(tag)
-      ? gallerySetting.selectedTags.filter((t) => t !== tag)
-      : [...gallerySetting.selectedTags, tag]
-
-    setGallerySetting({
-      ...gallerySetting,
-      selectedTags: newSelectedTags,
-    })
-  }
-
-  const clearAllTags = () => {
-    setGallerySetting({
-      ...gallerySetting,
-      selectedTags: [],
-      tagSearchQuery: '', // 清除搜索查询
-      isTagsPanelOpen: false, // 关闭标签面板
-    })
-  }
-
-  const onSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const query = e.target.value
-    setSearchQuery(query)
-    setGallerySetting((prev) => ({
-      ...prev,
-      tagSearchQuery: query, // 同步搜索查询
-    }))
-  }
-
-  // 根据正则查询过滤标签
-  const filteredTags = allTags.filter((tag) => {
-    if (!searchQuery) return true
-
-    try {
-      const regex = new RegExp(searchQuery, 'i')
-      return regex.test(tag)
-    } catch {
-      // 如果正则表达式无效，回退到简单的包含查询
-      return tag.toLowerCase().includes(searchQuery.toLowerCase())
-    }
-  })
-
-  return (
-    <div className="lg:pb-safe-2 w-full p-2 pb-0 text-sm lg:w-64 lg:p-0">
-      <div className="relative mb-2">
-        <h3 className="flex h-6 items-center px-2 font-medium lg:h-8">
-          {t('action.tag.filter')}
-        </h3>
-        {gallerySetting.selectedTags.length > 0 && (
-          <Button
-            variant="ghost"
-            size="xs"
-            onClick={clearAllTags}
-            className="absolute top-0 right-0 h-8 rounded-md px-2 text-xs"
-          >
-            {t('action.tag.clear')}
-          </Button>
-        )}
-      </div>
-      {/* 搜索栏 */}
-      <div className="mb-3 px-2">
-        <div className="relative">
-          <input
-            ref={inputRef}
-            type="text"
-            placeholder={t('action.tag.search')}
-            value={searchQuery}
-            onChange={onSearchChange}
-            className="w-full rounded-md border border-gray-200 bg-transparent px-3 py-2 text-sm placeholder:text-gray-500 focus:border-gray-400 focus:outline-none dark:text-white dark:placeholder:text-gray-400 dark:focus:border-gray-500"
-          />
-          <i className="i-mingcute-search-line absolute top-1/2 right-3 -translate-y-1/2 text-gray-400" />
-        </div>
-      </div>
-
-      {allTags.length === 0 ? (
-        <div className="px-3 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-          {t('action.tag.empty')}
-        </div>
-      ) : filteredTags.length === 0 ? (
-        <div className="px-3 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-          {t('action.tag.not-found')}
-        </div>
-      ) : (
-        <div className="pb-safe-offset-4 lg:pb-safe -mx-4 -mb-4 max-h-64 overflow-y-auto px-4 lg:mx-0 lg:mb-0 lg:px-0">
-          {filteredTags.map((tag) => (
-            <div
-              key={tag}
-              onClick={() => toggleTag(tag)}
-              className="hover:bg-accent/50 flex cursor-pointer items-center rounded-md bg-transparent px-2 py-3 lg:py-1"
-            >
-              <span className="flex-1">{tag}</span>
-              {gallerySetting.selectedTags.includes(tag) && (
-                <i className="i-mingcute-check-line ml-auto" />
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
-const onTagsPanelOpenChange = (
-  open: boolean,
-  setGallerySetting: (setting: any) => void,
-) => {
-  setGallerySetting((prev) => ({
-    ...prev,
-    isTagsPanelOpen: open,
-  }))
 }
 
 const ColumnsPanel = () => {
@@ -394,8 +267,15 @@ const ResponsiveActionButton = ({
 
 export const ActionGroup = () => {
   const { t } = useTranslation()
-  const [gallerySetting] = useAtom(gallerySettingAtom)
+  const [gallerySetting, setGallerySetting] = useAtom(gallerySettingAtom)
   const navigate = useNavigate()
+
+  const onTagsPanelOpenChange = (open: boolean) => {
+    setGallerySetting((prev: any) => ({
+      ...prev,
+      isTagsPanelOpen: open,
+    }))
+  }
 
   return (
     <div className="flex items-center justify-center gap-3">
@@ -410,20 +290,25 @@ export const ActionGroup = () => {
         <i className="i-mingcute-map-pin-line text-base text-gray-600 dark:text-gray-300" />
       </Button>
 
-      {/* 标签筛选按钮 */}
+      {/* 过滤按钮 */}
       <ResponsiveActionButton
-        icon="i-mingcute-tag-line"
-        title={t('action.tag.filter')}
+        icon="i-mingcute-filter-line"
+        title={t('action.filter.title')}
         badge={
-          gallerySetting.selectedTags.length > 0
-            ? gallerySetting.selectedTags.length
+          gallerySetting.selectedTags.length +
+            gallerySetting.selectedCameras.length +
+            gallerySetting.selectedLenses.length >
+          0
+            ? gallerySetting.selectedTags.length +
+              gallerySetting.selectedCameras.length +
+              gallerySetting.selectedLenses.length
             : undefined
         }
         // 使用全局状态实现滚动时自动收起标签面板
         globalOpen={gallerySetting.isTagsPanelOpen}
         onGlobalOpenChange={onTagsPanelOpenChange}
       >
-        <TagsPanel />
+        <FilterPanel />
       </ResponsiveActionButton>
 
       {/* 列数调整按钮 */}
@@ -455,7 +340,7 @@ export const ActionGroup = () => {
 
 const panelMap = {
   sort: SortPanel,
-  tags: TagsPanel,
+  tags: FilterPanel,
   columns: ColumnsPanel,
 }
 

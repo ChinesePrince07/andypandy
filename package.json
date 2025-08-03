@@ -28,6 +28,7 @@
   },
   "devDependencies": {
     "@innei/prettier": "0.15.0",
+    "@types/node": "24.0.4",
     "consola": "3.4.2",
     "dotenv-expand": "catalog:",
     "eslint": "9.29.0",
