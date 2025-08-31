@@ -7,6 +7,8 @@ import { gallerySettingAtom } from '~/atoms/app'
 import { Button } from '~/components/ui/button'
 import { clsxm } from '~/lib/cn'
 
+import { Checkbox } from '../ui/checkbox'
+
 const allTags = photoLoader.getAllTags()
 const allCameras = photoLoader.getAllCameras()
 const allLenses = photoLoader.getAllLenses()
@@ -133,6 +135,16 @@ export const FilterPanel = () => {
     }))
     setRatingSearchQuery('')
   }, [setGallerySetting])
+
+  const setTagFilterMode = useCallback(
+    (mode: 'union' | 'intersection') => {
+      setGallerySetting((prev) => ({
+        ...prev,
+        tagFilterMode: mode,
+      }))
+    },
+    [setGallerySetting],
+  )
 
   // Search handlers with useCallback
   const onTagSearchChange = useCallback(
@@ -266,13 +278,13 @@ export const FilterPanel = () => {
         data: [] as string[],
         filteredData: [] as string[],
         selectedItems: [] as string[],
-        searchQuery: '',
-        searchPlaceholder: '',
+        searchQuery: ratingSearchQuery,
+        searchPlaceholder: t('action.rating.search'),
         emptyMessage: '',
         notFoundMessage: '',
         onToggle: () => {},
         onClear: clearRatings,
-        onSearchChange: () => {},
+        onSearchChange: onRatingSearchChange,
       },
     ],
     [
@@ -291,7 +303,6 @@ export const FilterPanel = () => {
       toggleTag,
       toggleCamera,
       toggleLens,
-      setRating,
       clearTags,
       clearCameras,
       clearLenses,
@@ -328,6 +339,7 @@ export const FilterPanel = () => {
               selectedCameras: [],
               selectedLenses: [],
               selectedRatings: null,
+              tagFilterMode: 'union',
               tagSearchQuery: '',
               cameraSearchQuery: '',
               lensSearchQuery: '',
@@ -385,7 +397,7 @@ export const FilterPanel = () => {
                 <i className="i-mingcute-search-line absolute top-1/2 right-3 -translate-y-1/2 text-gray-400" />
               </div>
             )}
-            {currentTab.count > 0 && activeTab != 'ratings' && (
+            {currentTab.count > 0 && activeTab !== 'ratings' && (
               <Button
                 variant="ghost"
                 size="xs"
@@ -416,23 +428,46 @@ export const FilterPanel = () => {
             {currentTab.notFoundMessage}
           </div>
         ) : (
-          <div className="pb-safe-offset-4 lg:pb-safe -mx-4 -mb-4 max-h-64 overflow-y-auto px-4 lg:mx-0 lg:mb-0 lg:px-0">
-            {(currentTab.filteredData).map((item) => (
-              <div
-                key={item}
-                onClick={() => currentTab.onToggle(item)}
-                className={clsxm(
-                  'hover:bg-accent/50 flex cursor-pointer items-center rounded-md bg-transparent px-2 py-2.5 transition-colors lg:py-2',
-                  currentTab.selectedItems.includes(item) && 'bg-accent/20',
-                )}
-              >
-                <span className="mr-2 flex-1 truncate">{item}</span>
-                {currentTab.selectedItems.includes(item) && (
-                  <i className="i-mingcute-check-line ml-auto text-green-600 dark:text-green-400" />
-                )}
+          <>
+            {/* Tag Filter Mode Toggle - Only show for tags tab when tags are selected */}
+            {activeTab === 'tags' && (
+              <div className="mb-3 flex items-center gap-3 px-2 text-xs text-gray-600 dark:text-gray-400">
+                <span>{t('action.tag.match.label')}</span>
+                <label className="flex cursor-pointer items-center gap-1.5">
+                  <Checkbox
+                    checked={gallerySetting.tagFilterMode === 'union'}
+                    onCheckedChange={() => setTagFilterMode('union')}
+                  />
+                  <span>{t('action.tag.match.any')}</span>
+                </label>
+                <label className="flex cursor-pointer items-center gap-1.5">
+                  <Checkbox
+                    checked={gallerySetting.tagFilterMode === 'intersection'}
+                    onCheckedChange={() => setTagFilterMode('intersection')}
+                  />
+                  <span>{t('action.tag.match.all')}</span>
+                </label>
               </div>
-            ))}
-          </div>
+            )}
+
+            <div className="pb-safe-offset-4 lg:pb-safe -mx-4 -mb-4 max-h-64 overflow-y-auto px-4 lg:mx-0 lg:mb-0 lg:px-0">
+              {currentTab.filteredData.map((item) => (
+                <div
+                  key={item}
+                  onClick={() => currentTab.onToggle(item)}
+                  className={clsxm(
+                    'hover:bg-accent/50 flex cursor-pointer items-center rounded-md bg-transparent px-2 py-2.5 transition-colors lg:py-2',
+                    currentTab.selectedItems.includes(item) && 'bg-accent/20',
+                  )}
+                >
+                  <span className="mr-2 flex-1 truncate">{item}</span>
+                  {currentTab.selectedItems.includes(item) && (
+                    <i className="i-mingcute-check-line ml-auto text-green-600 dark:text-green-400" />
+                  )}
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>
@@ -471,7 +506,7 @@ const StarRating = ({
               className={clsxm(
                 'text-2xl',
                 rating <= (hoveredRating ?? value ?? 0)
-                  ? 'i-mingcute-star-fill text-yellow-400'
+                  ? 'i-mingcute-star-fill text-yellow-400 dark:text-yellow-500'
                   : 'i-mingcute-star-line text-gray-300 dark:text-gray-600',
               )}
             />

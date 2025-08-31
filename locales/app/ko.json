@@ -23,6 +23,8 @@
   "action.tag.clear": "지우기",
   "action.tag.empty": "태그가 없습니다",
   "action.tag.filter": "태그 필터",
+  "action.tag.mode.and": "AND",
+  "action.tag.mode.or": "OR",
   "action.tag.not-found": "검색과 일치하는 태그가 없습니다",
   "action.tag.search": "태그 검색",
   "action.view.github": "GitHub 리포지토리 보기",

@@ -10,6 +10,7 @@ export const gallerySettingAtom = atom({
   selectedCameras: [] as string[], // Selected camera display names
   selectedLenses: [] as string[], // Selected lens display names
   selectedRatings: null as number | null, // Selected minimum rating threshold
+  tagFilterMode: 'union' as 'union' | 'intersection', // Tag filtering logic mode
   tagSearchQuery: '' as string,
   cameraSearchQuery: '' as string, // Camera search query
   lensSearchQuery: '' as string, // Lens search query
