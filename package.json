@@ -12,12 +12,17 @@
     "build": "pnpm --filter @afilmory/ssr build",
     "build:manifest": "pnpm --filter @afilmory/builder cli",
     "build:update-remote-repo": "sh scripts/build-update-remote-repo.sh",
+    "create:doc": "tsx scripts/create-doc.ts",
     "dev": "pnpm --filter @afilmory/ssr dev",
+    "docs:build": "pnpm --filter @afilmory/docs build",
+    "docs:dev": "pnpm --filter @afilmory/docs dev",
+    "docs:preview": "pnpm --filter @afilmory/docs preview",
     "extract:font": "tsx scripts/extract-font-glyphs.ts",
     "format": "prettier --write \"src/**/*.ts\" ",
     "lint": "eslint --fix",
     "preinstall": "sh scripts/preinstall.sh",
-    "prepare": "simple-git-hooks"
+    "prepare": "simple-git-hooks",
+    "update:lastmodified": "tsx scripts/update-lastmodified.ts"
   },
   "dependencies": {
     "@afilmory/builder": "workspace:*",
@@ -27,6 +32,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@clack/prompts": "^0.11.0",
     "@innei/prettier": "0.15.0",
     "@types/node": "24.0.4",
     "consola": "3.4.2",
@@ -57,6 +63,9 @@
     ],
     "*.{js,ts,cjs,mjs,jsx,tsx,json}": [
       "eslint --fix"
+    ],
+    "*.{md,mdx}": [
+      "pnpm update:lastmodified"
     ]
   }
 }

@@ -6,10 +6,7 @@ import { PhotoViewer } from '~/components/ui/photo-viewer'
 import { RootPortal } from '~/components/ui/portal'
 import { RootPortalProvider } from '~/components/ui/portal/provider'
 import { useTitle } from '~/hooks/common'
-import {
-  useContextPhotos,
-  usePhotoViewer,
-} from '~/hooks/usePhotoViewer'
+import { useContextPhotos, usePhotoViewer } from '~/hooks/usePhotoViewer'
 
 export const Component = () => {
   const photoViewer = usePhotoViewer()
