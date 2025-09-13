@@ -11,6 +11,7 @@ import {
   needsUpdate,
   saveManifest,
 } from '../manifest/manager.js'
+import { CURRENT_MANIFEST_VERSION } from '../manifest/version.js'
 import type { PhotoProcessorOptions } from '../photo/processor.js'
 import { processPhoto } from '../photo/processor.js'
 import { StorageManager } from '../storage/index.js'
@@ -321,7 +322,7 @@ class PhotoGalleryBuilder {
   ): Promise<AfilmoryManifest> {
     return options.isForceMode || options.isForceManifest
       ? {
-          version: 'v6',
+          version: CURRENT_MANIFEST_VERSION,
           data: [],
           cameras: [],
           lenses: [],
