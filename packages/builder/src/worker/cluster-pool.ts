@@ -91,6 +91,10 @@ export class ClusterPool<T> extends EventEmitter {
   private readyWorkers = new Set<number>()
   private workerTaskCounts = new Map<number, number>() // 追踪每个 worker 当前正在处理的任务数
   private initializedWorkers = new Set<number>() // 追踪已初始化的 worker
+  private workerPendingTasks = new Map<
+    number,
+    Map<string, number> // taskId -> taskIndex
+  >() // 跟踪每个 worker 正在处理的任务，以便在崩溃时重入队
 
   constructor(options: ClusterPoolOptions) {
     super()
@@ -152,9 +156,11 @@ export class ClusterPool<T> extends EventEmitter {
       `计算 worker 数量：总任务 ${this.totalTasks}，每个 worker 并发 ${this.workerConcurrency}，需要 ${requiredWorkers} 个，实际启动 ${workersToStart} 个`,
     )
 
+    const starts: Array<Promise<void>> = []
     for (let i = 1; i <= workersToStart; i++) {
-      await this.createWorker(i)
+      starts.push(this.createWorker(i))
     }
+    await Promise.all(starts)
   }
 
   private async createWorker(workerId: number): Promise<void> {
@@ -177,10 +183,15 @@ export class ClusterPool<T> extends EventEmitter {
 
       const workerLogger = this.logger.worker(workerId)
 
+      const startupTimer = setTimeout(() => {
+        reject(new Error(`Worker ${workerId} 启动超时`))
+      }, 10_000)
+
       worker.on('online', () => {
         workerLogger.start(
           `Worker ${workerId} 进程启动 (PID: ${worker.process?.pid})`,
         )
+        clearTimeout(startupTimer)
         resolve()
       })
 
@@ -227,19 +238,32 @@ export class ClusterPool<T> extends EventEmitter {
           workerLogger.error(
             `Worker ${workerId} 意外退出 (code: ${code}, signal: ${signal})`,
           )
+          // 将该 worker 未完成的任务重新入队
+          const pending = this.workerPendingTasks.get(workerId)
+          const requeue: number[] = pending ? Array.from(pending.values()) : []
+          if (pending) pending.clear()
+          this.workerTaskCounts.set(workerId, 0)
+
+          for (const taskIndex of requeue) {
+            // 清理挂起映射并重新入队
+            for (const [taskId] of this.pendingTasks) {
+              if (taskId.startsWith(`${workerId}-${taskIndex}-`)) {
+                this.pendingTasks.delete(taskId)
+              }
+            }
+            this.taskQueue.unshift({ taskIndex })
+          }
+
+          if (requeue.length > 0) {
+            workerLogger.warn(`已将 ${requeue.length} 个未完成任务重新入队`)
+          }
+
           // 重启 worker
           setTimeout(() => this.createWorker(workerId), 1000)
         } else {
           workerLogger.info(`Worker ${workerId} 正常退出`)
         }
       })
-
-      // 设置超时
-      setTimeout(() => {
-        if (!worker.isDead()) {
-          reject(new Error(`Worker ${workerId} 启动超时`))
-        }
-      }, 10000)
     })
   }
 
@@ -326,6 +350,10 @@ export class ClusterPool<T> extends EventEmitter {
 
     // 分配一批任务
     const tasks: Array<{ taskId: string; taskIndex: number }> = []
+    const workerPending =
+      this.workerPendingTasks.get(workerId) || new Map<string, number>()
+    this.workerPendingTasks.set(workerId, workerPending)
+
     for (let i = 0; i < tasksToAssign; i++) {
       const task = this.taskQueue.shift()
       if (!task) break
@@ -345,6 +373,9 @@ export class ClusterPool<T> extends EventEmitter {
           // Promise reject callback
         },
       })
+
+      // 标记该任务分配给此 worker
+      workerPending.set(taskId, task.taskIndex)
     }
 
     // 更新 worker 状态
@@ -388,6 +419,9 @@ export class ClusterPool<T> extends EventEmitter {
       }
 
       this.pendingTasks.delete(taskResult.taskId)
+      // 从 worker 待处理集合移除
+      const workerPending = this.workerPendingTasks.get(workerId)
+      if (workerPending) workerPending.delete(taskResult.taskId)
       completedInBatch++
 
       if (taskResult.type === 'result' && taskResult.result !== undefined) {
@@ -440,6 +474,8 @@ export class ClusterPool<T> extends EventEmitter {
     }
 
     this.pendingTasks.delete(message.taskId)
+    const workerPending = this.workerPendingTasks.get(workerId)
+    if (workerPending) workerPending.delete(message.taskId)
 
     // 更新任务计数
     const newTaskCount = Math.max(0, currentTaskCount - 1)

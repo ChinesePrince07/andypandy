@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.837.0",
+    "@aws-sdk/node-http-handler": "3.374.0",
     "@aws-sdk/s3-request-presigner": "3.837.0",
     "@vingle/bmp-js": "^0.2.5",
     "blurhash": "2.0.5",

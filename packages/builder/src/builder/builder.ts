@@ -147,7 +147,7 @@ class PhotoGalleryBuilder {
     }
 
     // 筛选出实际需要处理的图片
-    const tasksToProcess = await this.filterTaskImages(
+    let tasksToProcess = await this.filterTaskImages(
       imageObjects,
       existingManifestMap,
       options,
@@ -156,6 +156,17 @@ class PhotoGalleryBuilder {
     logger.main.info(
       `存储中找到 ${imageObjects.length} 张照片，实际需要处理 ${tasksToProcess.length} 张`,
     )
+
+    // 为减少尾部长耗时，按文件大小降序处理（优先处理大文件）
+    if (tasksToProcess.length > 1) {
+      const beforeFirst = tasksToProcess[0]?.key
+      tasksToProcess = tasksToProcess.sort(
+        (a, b) => (b.size ?? 0) - (a.size ?? 0),
+      )
+      if (beforeFirst !== tasksToProcess[0]?.key) {
+        logger.main.info('已按文件大小降序重排处理队列')
+      }
+    }
 
     // 如果没有任务需要处理，直接使用现有的 manifest
     if (tasksToProcess.length === 0) {
