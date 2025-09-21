@@ -49,6 +49,10 @@ export const ExifPanel: FC<{
   const imageFormat = getImageFormat(
     currentPhoto.originalUrl || currentPhoto.s3Key || '',
   )
+  const megaPixels = (
+    ((currentPhoto.height * currentPhoto.width) / 1000000) |
+    0
+  ).toString()
 
   return (
     <m.div
@@ -114,13 +118,8 @@ export const ExifPanel: FC<{
                 label={t('exif.file.size')}
                 value={`${(currentPhoto.size / 1024 / 1024).toFixed(1)}MB`}
               />
-              {formattedExifData?.megaPixels && (
-                <Row
-                  label={t('exif.pixels')}
-                  value={`${Math.floor(
-                    Number.parseFloat(formattedExifData.megaPixels),
-                  )} MP`}
-                />
+              {megaPixels && (
+                <Row label={t('exif.pixels')} value={`${megaPixels} MP`} />
               )}
               {formattedExifData?.colorSpace && (
                 <Row

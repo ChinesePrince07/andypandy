@@ -21,6 +21,7 @@ export default defineConfig(
       },
     },
     rules: {
+      '@typescript-eslint/triple-slash-reference': 0,
       'unicorn/prefer-math-trunc': 'off',
       'unicorn/no-static-only-class': 'off',
       '@eslint-react/no-clone-element': 0,
