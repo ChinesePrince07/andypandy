@@ -10,16 +10,8 @@ import TextureWorkerRaw from './texture.worker?raw'
 
 // 瓦片系统配置
 const TILE_SIZE = 512 // 每个瓦片的像素大小
-// 平台调优：iOS 设备上降低并发和缓存以减少内存峰值
-function isIOSPlatform(): boolean {
-  if (typeof navigator === 'undefined') return false
-  const ua = navigator.userAgent || ''
-  return /iP(?:ad|hone|od)/.test(ua)
-}
-
-// 作为实例字段使用的默认阈值（避免在SSR时访问window）
-const DEFAULT_MAX_TILES_PER_FRAME = 4
-const DEFAULT_TILE_CACHE_SIZE = 32
+const MAX_TILES_PER_FRAME = 4 // 每帧最多创建的瓦片数量
+const TILE_CACHE_SIZE = 32 // 最大缓存瓦片数量
 
 // 瓦片信息接口
 interface TileInfo {
@@ -87,7 +79,6 @@ export class WebGLImageViewerEngine extends ImageViewerEngineBase {
   private targetTranslateX = 0
   private targetTranslateY = 0
   private animationStartLOD = -1
-  // 动画焦点（已回滚到默认行为，无额外 pivot 锁定状态）
 
   // 简化的纹理管理
   private currentLOD = 1 // 默认使用正常质量
@@ -109,10 +100,6 @@ export class WebGLImageViewerEngine extends ImageViewerEngineBase {
   private isLoadingTexture = true
   private worker: Worker | null = null
   private textureWorkerInitialized = false
-
-  // 平台相关的瓦片参数
-  private MAX_TILES_PER_FRAME = DEFAULT_MAX_TILES_PER_FRAME
-  private TILE_CACHE_SIZE = DEFAULT_TILE_CACHE_SIZE
 
   // 事件处理器绑定
   private boundHandleMouseDown: (e: MouseEvent) => void
@@ -154,8 +141,7 @@ export class WebGLImageViewerEngine extends ImageViewerEngineBase {
     // 初始化 WebGL
     const gl = canvas.getContext('webgl', {
       alpha: true,
-      // 使用预乘 alpha，避免在与页面合成时出现 1px 边缘伪影
-      premultipliedAlpha: true,
+      premultipliedAlpha: false,
       antialias: true,
       powerPreference: 'default',
     })
@@ -180,12 +166,6 @@ export class WebGLImageViewerEngine extends ImageViewerEngineBase {
     this.initWorker()
     this.setupEventListeners()
 
-    // 初始化平台相关阈值
-    if (isIOSPlatform()) {
-      this.MAX_TILES_PER_FRAME = 2
-      this.TILE_CACHE_SIZE = 16
-    }
-
     this.isLoadingTexture = false
     this.notifyLoadingStateChange(false)
   }
@@ -207,9 +187,7 @@ export class WebGLImageViewerEngine extends ImageViewerEngineBase {
 
   private resizeCanvas() {
     const rect = this.canvas.getBoundingClientRect()
-    // 限制 iOS 上的 DPR 以减少渲染分辨率和显存压力
-    const dpr = window.devicePixelRatio || 1
-    this.devicePixelRatio = isIOSPlatform() ? Math.min(dpr, 2) : dpr
+    this.devicePixelRatio = window.devicePixelRatio || 1
 
     this.canvasWidth = rect.width
     this.canvasHeight = rect.height
@@ -257,24 +235,9 @@ export class WebGLImageViewerEngine extends ImageViewerEngineBase {
 
     gl.useProgram(this.program)
 
-    // 启用混合（针对预乘 alpha 使用正确的混合函数）
+    // 启用混合
     gl.enable(gl.BLEND)
-    gl.blendFuncSeparate(
-      gl.ONE,
-      gl.ONE_MINUS_SRC_ALPHA,
-      gl.ONE,
-      gl.ONE_MINUS_SRC_ALPHA,
-    )
-
-    // 上传像素时的解包设置，避免多余的颜色空间转换和预乘
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 0)
-    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, 0)
-    // 避免色彩空间转换导致的额外开销
-    // @ts-ignore - 常量属于扩展
-    if (gl.UNPACK_COLORSPACE_CONVERSION_WEBGL !== undefined) {
-      // @ts-ignore
-      gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE)
-    }
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
     // 创建几何体
     const positions = new Float32Array([
@@ -503,25 +466,20 @@ export class WebGLImageViewerEngine extends ImageViewerEngineBase {
 
     // 寻找最佳的 LOD 级别
     // 我们希望找到一个 LOD 级别，它的缩放比例刚好大于或等于所需的缩放比例
-    const maxLodIndex = isIOSPlatform()
-      ? SIMPLE_LOD_LEVELS.findIndex((l) => l.scale >= 1) // 限制 iOS 最高 LOD = 1x
-      : SIMPLE_LOD_LEVELS.length - 1
-    for (let i = 0; i <= SIMPLE_LOD_LEVELS.length - 1; i++) {
-      const level = SIMPLE_LOD_LEVELS[i]
-      if (level.scale >= requiredScale) {
-        return Math.min(i, maxLodIndex)
+    for (const [i, SIMPLE_LOD_LEVEL] of SIMPLE_LOD_LEVELS.entries()) {
+      if (SIMPLE_LOD_LEVEL.scale >= requiredScale) {
+        return i
       }
     }
 
     // 如果没有找到，返回最高质量的 LOD
-    return Math.min(SIMPLE_LOD_LEVELS.length - 1, maxLodIndex)
+    return SIMPLE_LOD_LEVELS.length - 1
   }
 
   // 缓动函数
   private easeOutQuart(t: number): number {
     return 1 - Math.pow(1 - t, 4)
   }
-  // 回滚：保持原始的 easeOutQuart 作为平滑动画曲线
 
   private startAnimation(
     targetScale: number,
@@ -829,11 +787,11 @@ export class WebGLImageViewerEngine extends ImageViewerEngineBase {
     const maxAge = 30000 // 30 秒后清理不再使用的瓦片
 
     // 如果缓存过大，强制清理
-    if (this.tileCache.size > this.TILE_CACHE_SIZE) {
+    if (this.tileCache.size > TILE_CACHE_SIZE) {
       const tilesToRemove = Array.from(this.tileCache.entries())
         .filter(([key]) => !this.currentVisibleTiles.has(key))
         .sort(([, a], [, b]) => a.lastUsed - b.lastUsed)
-        .slice(0, this.tileCache.size - this.TILE_CACHE_SIZE + 5) // 清理多一些
+        .slice(0, this.tileCache.size - TILE_CACHE_SIZE + 5) // 清理多一些
 
       for (const [key, tileInfo] of tilesToRemove) {
         if (tileInfo.texture) {
@@ -870,7 +828,7 @@ export class WebGLImageViewerEngine extends ImageViewerEngineBase {
     this.pendingTileRequests.sort((a, b) => a.priority - b.priority)
 
     // 限制并发加载数量
-    const batch = this.pendingTileRequests.splice(0, this.MAX_TILES_PER_FRAME)
+    const batch = this.pendingTileRequests.splice(0, MAX_TILES_PER_FRAME)
 
     for (const request of batch) {
       const { key, priority } = request
@@ -1095,8 +1053,8 @@ export class WebGLImageViewerEngine extends ImageViewerEngineBase {
       visibleTiles: this.currentVisibleTiles.size,
       loadingTiles: this.loadingTiles.size,
       pendingRequests: this.pendingTileRequests.length,
-      cacheLimit: this.TILE_CACHE_SIZE,
-      maxTilesPerFrame: this.MAX_TILES_PER_FRAME,
+      cacheLimit: TILE_CACHE_SIZE,
+      maxTilesPerFrame: MAX_TILES_PER_FRAME,
       tileSize: TILE_SIZE,
       cacheKeys: Array.from(this.tileCache.keys()),
       visibleKeys: Array.from(this.currentVisibleTiles),
