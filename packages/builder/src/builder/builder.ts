@@ -111,6 +111,7 @@ class PhotoGalleryBuilder {
       `现有 manifest 包含 ${existingManifestItems.length} 张照片`,
     )
 
+    logger.main.info('使用存储提供商：', this.config.storage.provider)
     // 列出存储中的所有文件
     const allObjects = await this.storageManager.listAllFiles()
     logger.main.info(`存储中找到 ${allObjects.length} 个文件`)
