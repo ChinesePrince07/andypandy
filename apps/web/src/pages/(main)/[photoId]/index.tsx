@@ -31,6 +31,7 @@ export const Component = () => {
             photos={photos}
             currentIndex={photoViewer.currentIndex}
             isOpen={photoViewer.isOpen}
+            triggerElement={photoViewer.triggerElement}
             onClose={photoViewer.closeViewer}
             onIndexChange={photoViewer.goToIndex}
           />

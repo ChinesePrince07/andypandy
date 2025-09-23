@@ -53,8 +53,13 @@ export const MasonryPhotoItem = ({
 
   const handleClick = () => {
     const photoIndex = photos.findIndex((photo) => photo.id === data.id)
-    if (photoIndex !== -1 && imageRef.current) {
-      photoViewer.openViewer(photoIndex, imageRef.current)
+    if (photoIndex !== -1) {
+      const triggerEl =
+        imageRef.current?.parentElement instanceof HTMLElement
+          ? imageRef.current.parentElement
+          : imageRef.current
+
+      photoViewer.openViewer(photoIndex, triggerEl ?? undefined)
     }
   }
 

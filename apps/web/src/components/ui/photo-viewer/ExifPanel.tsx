@@ -33,7 +33,8 @@ export const ExifPanel: FC<{
   exifData: PickedExif | null
 
   onClose?: () => void
-}> = ({ currentPhoto, exifData, onClose }) => {
+  visible?: boolean
+}> = ({ currentPhoto, exifData, onClose, visible = true }) => {
   const { t } = useTranslation()
   const isMobile = useMobile()
   const formattedExifData = formatExifData(exifData)
@@ -66,14 +67,15 @@ export const ExifPanel: FC<{
         ...(isMobile ? { y: 100 } : { x: 100 }),
       }}
       animate={{
-        opacity: 1,
-        ...(isMobile ? { y: 0 } : { x: 0 }),
+        opacity: visible ? 1 : 0,
+        ...(isMobile ? { y: visible ? 0 : 100 } : { x: visible ? 0 : 100 }),
       }}
       exit={{
         opacity: 0,
         ...(isMobile ? { y: 100 } : { x: 100 }),
       }}
       transition={Spring.presets.smooth}
+      style={{ pointerEvents: visible ? 'auto' : 'none' }}
     >
       <div className="mb-4 flex shrink-0 items-center justify-between p-4 pb-0">
         <h3 className={`${isMobile ? 'text-base' : 'text-lg'} font-semibold`}>
