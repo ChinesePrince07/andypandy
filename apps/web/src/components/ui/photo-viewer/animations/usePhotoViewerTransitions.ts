@@ -66,7 +66,7 @@ export const usePhotoViewerTransitions = ({
     const trigger = hiddenTriggerRef.current
     if (trigger) {
       const prevVisibility = hiddenTriggerPrevVisibilityRef.current
-      if (prevVisibility !== null && prevVisibility !== undefined) {
+      if (prevVisibility != null) {
         trigger.style.visibility = prevVisibility
       } else {
         trigger.style.removeProperty('visibility')
@@ -74,6 +74,12 @@ export const usePhotoViewerTransitions = ({
     }
     hiddenTriggerRef.current = null
     hiddenTriggerPrevVisibilityRef.current = null
+  }, [])
+
+  const hideTriggerElement = useCallback((element: HTMLElement) => {
+    hiddenTriggerRef.current = element
+    hiddenTriggerPrevVisibilityRef.current = element.style.visibility || null
+    element.style.visibility = 'hidden'
   }, [])
 
   const resolveTriggerElement = useCallback((): HTMLElement | null => {
@@ -175,9 +181,7 @@ export const usePhotoViewerTransitions = ({
       return
     }
 
-    hiddenTriggerRef.current = triggerEl
-    hiddenTriggerPrevVisibilityRef.current = triggerEl.style.visibility || null
-    triggerEl.style.visibility = 'hidden'
+    hideTriggerElement(triggerEl)
 
     const triggerBorderRadius = getBorderRadius(
       triggerEl instanceof HTMLImageElement && triggerEl.parentElement
@@ -225,6 +229,7 @@ export const usePhotoViewerTransitions = ({
     currentBlobSrc,
     isMobile,
     resolveTriggerElement,
+    hideTriggerElement,
   ])
 
   useEffect(() => {
@@ -309,9 +314,7 @@ export const usePhotoViewerTransitions = ({
     }
 
     restoreTriggerElementVisibility()
-    hiddenTriggerRef.current = triggerEl
-    hiddenTriggerPrevVisibilityRef.current = triggerEl.style.visibility || null
-    triggerEl.style.visibility = 'hidden'
+    hideTriggerElement(triggerEl)
 
     const transitionState: PhotoViewerTransitionState = {
       photoId: currentPhoto.id,
@@ -343,6 +346,7 @@ export const usePhotoViewerTransitions = ({
     isMobile,
     resolveTriggerElement,
     restoreTriggerElementVisibility,
+    hideTriggerElement,
   ])
 
   useLayoutEffect(() => {
