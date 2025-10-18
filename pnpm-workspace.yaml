@@ -16,7 +16,7 @@ catalog:
   tailwindcss-safe-area: 1.1.0
   tailwindcss-uikit-colors: 1.0.0
   typescript: 5.9.3
-  zod: 4.1.11
+  zod: 4.1.12
 
 onlyBuiltDependencies:
   - esbuild
