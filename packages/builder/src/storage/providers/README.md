@@ -40,14 +40,12 @@ const s3Config: StorageConfig = {
 ```typescript
 const githubConfig: StorageConfig = {
   provider: 'github',
-  github: {
-    owner: 'your-username',      // GitHub 用户名或组织名
-    repo: 'photo-gallery',       // 仓库名称
-    branch: 'main',              // 分支名称（可选，默认 'main'）
-    token: 'ghp_xxxxxxxxxxxx',   // GitHub 访问令牌（可选）
-    path: 'photos',              // 照片存储路径（可选）
-    useRawUrl: true,             // 使用 raw.githubusercontent.com（默认 true）
-  },
+  owner: 'your-username',      // GitHub 用户名或组织名
+  repo: 'photo-gallery',       // 仓库名称
+  branch: 'main',              // 分支名称（可选，默认 'main'）
+  token: 'ghp_xxxxxxxxxxxx',   // GitHub 访问令牌（可选）
+  path: 'photos',              // 照片存储路径（可选）
+  useRawUrl: true,             // 使用 raw.githubusercontent.com（默认 true）
 }
 ```
 
@@ -79,14 +77,12 @@ const githubConfig: StorageConfig = {
      ...defaultBuilderConfig,
      storage: {
        provider: 'github',
-       github: {
-         owner: 'your-username',
-         repo: 'photo-gallery',
-         branch: 'main',
-         token: process.env.GITHUB_TOKEN,
-         path: 'photos',
-         useRawUrl: true,
-       },
+       owner: 'your-username',
+       repo: 'photo-gallery',
+       branch: 'main',
+       token: process.env.GITHUB_TOKEN,
+       path: 'photos',
+       useRawUrl: true,
      },
    }
    ```
@@ -98,13 +94,11 @@ import { GitHubStorageProvider } from '@/core/storage'
 
 const githubProvider = new GitHubStorageProvider({
   provider: 'github',
-  github: {
-    owner: 'octocat',
-    repo: 'Hello-World',
-    branch: 'main',
-    token: 'your-token',
-    path: 'images',
-  },
+  owner: 'octocat',
+  repo: 'Hello-World',
+  branch: 'main',
+  token: 'your-token',
+  path: 'images',
 })
 
 // 获取文件
