@@ -5,6 +5,8 @@ import * as React from 'react'
 import { clsxm } from '~/lib/cn'
 import { Spring } from '~/lib/spring'
 
+import { useRootPortal } from '../portal/provider'
+
 const DialogContext = React.createContext<{ open: boolean }>({ open: false })
 
 const Dialog = ({
@@ -43,10 +45,11 @@ const DialogPortal = ({
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Portal>) => {
   const { open } = React.use(DialogContext)
+  const to = useRootPortal()
 
   return (
-    <DialogPrimitive.Portal forceMount {...props}>
-      <AnimatePresence>{open && children}</AnimatePresence>
+    <DialogPrimitive.Portal container={to} forceMount {...props}>
+      <AnimatePresence mode="wait">{open && children}</AnimatePresence>
     </DialogPrimitive.Portal>
   )
 }
@@ -95,7 +98,7 @@ const DialogContent = ({
       {...props}
     >
       <m.div
-        className="border-accent/20 relative gap-4 overflow-hidden rounded-2xl border p-6 backdrop-blur-2xl"
+        className="border-accent/20 gap-4 overflow-hidden rounded-2xl border p-6 backdrop-blur-2xl"
         style={{
           backgroundImage:
             'linear-gradient(to bottom right, color-mix(in srgb, var(--color-background) 98%, transparent), color-mix(in srgb, var(--color-background) 95%, transparent))',
@@ -123,7 +126,7 @@ const DialogContent = ({
         />
 
         {/* Content */}
-        <div className="relative">{children}</div>
+        <div className="relative flex h-0 flex-1 flex-col">{children}</div>
       </m.div>
     </DialogPrimitive.Content>
   </DialogPortal>

@@ -72,7 +72,9 @@ const Toaster = ({ ...props }: ToasterProps) => {
         error: <i className="i-mingcute-close-circle-fill" />,
         warning: <i className="i-mingcute-warning-fill" />,
         info: <i className="i-mingcute-information-fill" />,
-        loading: <i className="i-mingcute-loading-3-fill animate-spin" />,
+        loading: (
+          <i className="i-mingcute-loading-3-fill animate-spin !duration-1000" />
+        ),
       }}
       {...props}
     />

@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { RemoveScroll } from 'react-remove-scroll'
 
 import { NotFound } from '~/components/common/NotFound'
@@ -14,12 +14,14 @@ export const Component = () => {
   const photoViewer = usePhotoViewer()
   const photos = useContextPhotos()
 
-  const ref = useRef<HTMLDivElement>(null)
-  const rootPortalValue = useMemo(() => {
-    return {
-      to: ref.current as HTMLElement,
-    }
-  }, [])
+  // const ref = useRef<HTMLDivElement>(null)
+  const [ref, setRef] = useState<HTMLElement | null>(null)
+  const rootPortalValue = useMemo(
+    () => ({
+      to: ref as HTMLElement,
+    }),
+    [ref],
+  )
   useTitle(photos[photoViewer.currentIndex]?.title || 'Not Found')
 
   const [accentColor, setAccentColor] = useState<string | null>(null)
@@ -62,7 +64,7 @@ export const Component = () => {
               ...(accentColor ? { '--color-accent': accentColor } : {}),
             } as React.CSSProperties
           }
-          ref={ref}
+          ref={setRef}
           className={clsx(
             photoViewer.isOpen
               ? 'fixed inset-0 z-9999'
