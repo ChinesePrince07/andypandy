@@ -31,6 +31,18 @@ export function photosStaticPlugin(): Plugin {
   return {
     name: 'photos-static',
     configureServer(server) {
+      // 如果 photos 目录已经存在，则警告并跳过该插件
+      const publicPhotosDir = path.resolve(
+        projectRoot,
+        './apps/web/public/photos',
+      )
+      if (fs.existsSync(publicPhotosDir)) {
+        const msg =
+          "[photos-static] Detected 'apps/web/public/photos' directory. Skipping plugin to avoid conflict with Vite static serving."
+        server.config.logger.warn(msg)
+        return
+      }
+
       server.middlewares.use('/photos', (req, res, next) => {
         if (!req.url) {
           next()

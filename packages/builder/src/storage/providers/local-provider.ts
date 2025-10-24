@@ -18,13 +18,13 @@ export type ProgressCallback = (progress: ScanProgress) => void
 export class LocalStorageProvider implements StorageProvider {
   private config: LocalConfig
   private basePath: string
+  private distPath?: string
   private scanProgress: ScanProgress = {
     currentPath: '',
     filesScanned: 0,
   }
 
   constructor(config: LocalConfig) {
-    // 参数验证
     if (!config.basePath || config.basePath.trim() === '') {
       throw new Error('LocalStorageProvider: basePath 不能为空')
     }
@@ -53,6 +53,18 @@ export class LocalStorageProvider implements StorageProvider {
       const __dirname = path.dirname(fileURLToPath(import.meta.url))
       const projectRoot = path.resolve(__dirname, '../../../../../')
       this.basePath = path.resolve(projectRoot, config.basePath)
+    }
+
+    // 处理 distPath（可选）
+    if (config.distPath && config.distPath.trim() !== '') {
+      if (path.isAbsolute(config.distPath)) {
+        this.distPath = config.distPath
+      } else {
+        const __dirname = path.dirname(fileURLToPath(import.meta.url))
+        const projectRoot = path.resolve(__dirname, '../../../../../')
+        this.distPath = path.resolve(projectRoot, config.distPath)
+      }
+      copyToDist(this.basePath, this.distPath)
     }
   }
 
@@ -298,5 +310,27 @@ export class LocalStorageProvider implements StorageProvider {
       )
       throw error
     }
+  }
+}
+
+/**
+ * 将文件夹复制到 dist 目录（保持相对路径结构）。
+ */
+async function copyToDist(fromPath: string, distPath: string): Promise<void> {
+  try {
+    // 确保目标目录存在
+    await fs.mkdir(distPath, { recursive: true })
+    await fs.cp(fromPath, distPath, {
+      recursive: true,
+      force: true,
+    })
+
+    logger.main.log(
+      `LocalStorageProvider: 已复制文件到发布目录： ${fromPath} -> ${distPath}`,
+    )
+  } catch (error) {
+    logger.main.error(
+      `LocalStorageProvider: basePath: ${fromPath}, distPath: ${distPath}, 错误: ${error}`,
+    )
   }
 }
