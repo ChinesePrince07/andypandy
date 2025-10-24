@@ -6,7 +6,7 @@ import {
   MaterialSymbolsShutterSpeed,
   StreamlineImageAccessoriesLensesPhotosCameraShutterPicturePhotographyPicturesPhotoLens,
   TablerAperture,
-} from '@afilmory/ui/icons/index.jsx'
+} from '@afilmory/ui'
 import { clsxm as cn } from '@afilmory/utils'
 import { thumbHashToDataURL } from 'thumbhash'
 
