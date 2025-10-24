@@ -1,4 +1,7 @@
 @import 'tailwindcss';
+
+@source "../../../node_modules/@afilmory/ui";
+
 @plugin '@tailwindcss/typography';
 @plugin 'tailwind-scrollbar';
 @plugin 'tailwindcss-animate';

@@ -7,6 +7,8 @@
 @import 'tailwindcss-safe-area';
 @import 'tailwindcss-uikit-colors/v4/macos.css';
 
+@source "../../node_modules/@afilmory/ui";
+
 @plugin "daisyui/theme" {
   name: 'dark';
   prefersdark: true;
