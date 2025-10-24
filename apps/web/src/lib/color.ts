@@ -1,4 +1,4 @@
-import { decompressUint8Array } from '@afilmory/builder'
+import { decompressUint8Array } from '@afilmory/utils'
 import { thumbHashToDataURL } from 'thumbhash'
 
 const BG_HEX = '#1c1c1e'
@@ -8,7 +8,11 @@ export type RGB = { r: number; g: number; b: number }
 export const hexToRgb = (hex: string): RGB | null => {
   const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
   if (!m) return null
-  return { r: Number.parseInt(m[1], 16), g: Number.parseInt(m[2], 16), b: Number.parseInt(m[3], 16) }
+  return {
+    r: Number.parseInt(m[1], 16),
+    g: Number.parseInt(m[2], 16),
+    b: Number.parseInt(m[3], 16),
+  }
 }
 
 export const rgbToHex = ({ r, g, b }: RGB): string => {

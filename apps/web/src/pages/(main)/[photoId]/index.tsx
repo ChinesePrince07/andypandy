@@ -1,13 +1,12 @@
+import { RootPortal, RootPortalProvider } from '@afilmory/ui'
 import clsx from 'clsx'
 import { useEffect, useMemo, useState } from 'react'
 import { RemoveScroll } from 'react-remove-scroll'
 
 import { NotFound } from '~/components/common/NotFound'
 import { PhotoViewer } from '~/components/ui/photo-viewer'
-import { RootPortal } from '~/components/ui/portal'
-import { RootPortalProvider } from '~/components/ui/portal/provider'
-import { useTitle } from '~/hooks/common'
 import { useContextPhotos, usePhotoViewer } from '~/hooks/usePhotoViewer'
+import { useTitle } from '~/hooks/useTitle'
 import { deriveAccentFromSources } from '~/lib/color'
 
 export const Component = () => {

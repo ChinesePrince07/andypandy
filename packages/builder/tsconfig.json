@@ -38,6 +38,5 @@
   "include": [
     "./src/**/*",
     "./scripts/**/*",
-    "../../apps/web/src/lib/histogram.ts"
   ]
 }

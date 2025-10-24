@@ -1,10 +1,9 @@
+import { clsxm, Spring } from '@afilmory/utils'
 import { AnimatePresence, m } from 'motion/react'
 import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useMobile } from '~/hooks/useMobile'
-import { clsxm } from '~/lib/cn'
-import { Spring } from '~/lib/spring'
 
 interface DateRangeIndicatorProps {
   dateRange: string

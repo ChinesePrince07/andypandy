@@ -1,4 +1,5 @@
 import { photoLoader } from '@afilmory/data'
+import { clsxm } from '@afilmory/utils'
 import { useAtom } from 'jotai'
 import * as React from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -8,7 +9,6 @@ import { useNavigate } from 'react-router'
 import { gallerySettingAtom } from '~/atoms/app'
 import { usePhotoViewer } from '~/hooks/usePhotoViewer'
 import { MageLens } from '~/icons'
-import { clsxm } from '~/lib/cn'
 
 // Command types
 type CommandType = 'search' | 'filter' | 'action' | 'photo'

@@ -1,4 +1,5 @@
 import { photoLoader } from '@afilmory/data'
+import { ScrollArea, ScrollElementContext } from '@afilmory/ui'
 import siteConfig from '@config'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useEffect, useRef } from 'react'
@@ -11,8 +12,6 @@ import {
 } from 'react-router'
 
 import { gallerySettingAtom } from '~/atoms/app'
-import { ScrollElementContext } from '~/components/ui/scroll-areas/ctx'
-import { ScrollArea } from '~/components/ui/scroll-areas/ScrollArea'
 import { useMobile } from '~/hooks/useMobile'
 import {
   getFilteredPhotos,

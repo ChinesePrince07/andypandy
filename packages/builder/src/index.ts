@@ -1,5 +1,26 @@
-export * from './lib/u8array.js'
-export type { StorageConfig } from './storage/interfaces.js'
+export * from '../../utils/src/u8array.js'
+export type { BuilderOptions, BuilderResult } from './builder/index.js'
+export { AfilmoryBuilder, defaultBuilder } from './builder/index.js'
+export type {
+  PhotoProcessingContext,
+  ProcessedImageData,
+} from './photo/image-pipeline.js'
+export {
+  executePhotoProcessingPipeline,
+  preprocessImage,
+  processImageWithSharp,
+  processPhotoWithPipeline,
+} from './photo/image-pipeline.js'
+export type { PhotoProcessorOptions } from './photo/processor.js'
+export type {
+  ProgressCallback,
+  ScanProgress,
+  StorageConfig,
+  StorageObject,
+  StorageProvider,
+} from './storage/index.js'
+export { StorageFactory, StorageManager } from './storage/index.js'
+export type { BuilderConfig } from './types/config.js'
 export type {
   AfilmoryManifest,
   CameraInfo,

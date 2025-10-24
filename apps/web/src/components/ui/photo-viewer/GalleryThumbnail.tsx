@@ -1,14 +1,12 @@
+import { Thumbhash } from '@afilmory/ui'
+import { clsxm, Spring } from '@afilmory/utils'
 import { m } from 'motion/react'
 import type { FC } from 'react'
 import { useEffect, useRef, useState } from 'react'
 
 import { useMobile } from '~/hooks/useMobile'
-import { clsxm } from '~/lib/cn'
 import { nextFrame } from '~/lib/dom'
-import { Spring } from '~/lib/spring'
 import type { PhotoManifest } from '~/types/photo'
-
-import { Thumbhash } from '../thumbhash'
 
 const thumbnailSize = {
   mobile: 48,
