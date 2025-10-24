@@ -141,12 +141,15 @@ importers:
 
   apps/ssr:
     dependencies:
-      '@afilmory/components':
-        specifier: workspace:*
-        version: link:../../packages/components
       '@afilmory/data':
         specifier: workspace:*
         version: link:../../packages/data
+      '@afilmory/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      '@afilmory/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       '@t3-oss/env-nextjs':
         specifier: 0.13.8
         version: 0.13.8(typescript@5.9.3)(zod@4.1.12)
@@ -1013,12 +1016,6 @@ importers:
       thumbhash:
         specifier: 0.1.1
         version: 0.1.1
-
-  packages/components:
-    dependencies:
-      react:
-        specifier: ^19.1.1
-        version: 19.1.1
 
   packages/data:
     dependencies:
@@ -9864,10 +9861,6 @@ packages:
     peerDependencies:
       react: '*'
       react-dom: '*'
-
-  react@19.1.1:
-    resolution: {integrity: sha512-w8nqGImo45dmMIfljjMwOGtbmC/mk4CMYhWIicdSflH91J9TyCyczcPFXJzrZ/ZXcgGRFeP6BU0BEJTw6tZdfQ==}
-    engines: {node: '>=0.10.0'}
 
   react@19.2.0:
     resolution: {integrity: sha512-tmbWg6W31tQLeB5cdIBOicJDJRR2KzXsV7uSK9iNfLWQ5bIZfxuPEHp7M8wiHyHnn0DD1i7w3Zmin0FtkrwoCQ==}
@@ -21973,8 +21966,6 @@ snapshots:
     dependencies:
       react: 19.2.0
       react-dom: 19.2.0(react@19.2.0)
-
-  react@19.1.1: {}
 
   react@19.2.0: {}
 

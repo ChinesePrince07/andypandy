@@ -1,8 +1,8 @@
+import { cx } from '@afilmory/utils'
+import clsx from 'clsx'
 import type { FC } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-
-import { cx } from '@afilmory/utils'
 
 interface CompressedHistogramData {
   red: number[]
@@ -192,6 +192,8 @@ export const HistogramChart: FC<{
   className?: string
 }> = ({ thumbnailUrl, className = '' }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const previousHistogramRef = useRef<CompressedHistogramData | null>(null)
+  const animationRef = useRef<number | null>(null)
   const [histogram, setHistogram] = useState<CompressedHistogramData | null>(
     null,
   )
@@ -202,7 +204,6 @@ export const HistogramChart: FC<{
   useEffect(() => {
     setLoading(true)
     setError(false)
-    setHistogram(null)
 
     const img = new Image()
     img.crossOrigin = 'Anonymous'
@@ -249,16 +250,85 @@ export const HistogramChart: FC<{
   }, [thumbnailUrl])
 
   useEffect(() => {
-    if (histogram && canvasRef.current) {
-      drawHistogram(canvasRef.current, histogram)
+    if (!histogram || !canvasRef.current) return
+
+    const canvas = canvasRef.current
+
+    // Cancel any ongoing animation before starting a new one
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current)
+      animationRef.current = null
+    }
+
+    // If we don't have a previous histogram, draw immediately and set baseline
+    if (!previousHistogramRef.current) {
+      drawHistogram(canvas, histogram)
+      previousHistogramRef.current = histogram
+      return
+    }
+
+    const startAt = performance.now()
+    const prev = previousHistogramRef.current
+
+    // Spring parameters (slightly underdamped for natural feel)
+    const frequency = 8 // rad/s, controls oscillation speed (lower = smoother)
+    const damping = 7 // higher = faster decay, tuned for subtle bounce
+    const restDelta = 0.001
+    const maxMs = 1200
+
+    const springProgress = (tSec: number) => {
+      // Analytic solution for underdamped second-order system step response
+      // y(t) = 1 - e^{-d t} (cos(w t) + (d/w) sin(w t))
+      const w = frequency
+      const d = damping
+      const exp = Math.exp(-d * tSec)
+      const value =
+        1 - exp * (Math.cos(w * tSec) + (d / w) * Math.sin(w * tSec))
+      // Clamp to [0, 1] to avoid overshoot drawing artifacts
+      return Math.max(0, Math.min(1, value))
+    }
+
+    const lerpArray = (from: number[], to: number[], p: number) =>
+      from.map((v, i) => v + (to[i] - v) * p)
+
+    const frame = (now: number) => {
+      const elapsedMs = now - startAt
+      const tSec = elapsedMs / 1000
+      const eased = springProgress(tSec)
+
+      const interpolated: CompressedHistogramData = {
+        red: lerpArray(prev.red, histogram.red, eased),
+        green: lerpArray(prev.green, histogram.green, eased),
+        blue: lerpArray(prev.blue, histogram.blue, eased),
+        luminance: lerpArray(prev.luminance, histogram.luminance, eased),
+      }
+
+      drawHistogram(canvas, interpolated)
+
+      const done = Math.abs(1 - eased) < restDelta || elapsedMs >= maxMs
+      if (!done) {
+        animationRef.current = requestAnimationFrame(frame)
+      } else {
+        previousHistogramRef.current = histogram
+        animationRef.current = null
+      }
+    }
+
+    animationRef.current = requestAnimationFrame(frame)
+
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current)
+        animationRef.current = null
+      }
     }
   }, [histogram])
 
   return (
     <div className={cx('relative grow w-full h-32 group', className)}>
       {loading && (
-        <div className="bg-material-ultra-thin absolute inset-0 flex items-center justify-center rounded-sm backdrop-blur-xl">
-          <div className="i-mingcute-loading-3-line animate-spin text-xl !duration-1000" />
+        <div className="bg-material-ultra-thin absolute inset-0 z-10 flex items-center justify-center rounded-sm backdrop-blur-xl">
+          <div className="i-mingcute-loading-3-line animate-spin text-xl" />
         </div>
       )}
       {error && (
@@ -273,7 +343,10 @@ export const HistogramChart: FC<{
       {histogram && (
         <canvas
           ref={canvasRef}
-          className="bg-material-ultra-thin ring-fill-tertiary/20 group-hover:ring-fill-tertiary/40 h-full w-full rounded-sm ring-1 backdrop-blur-xl transition-all duration-200"
+          className={clsx(
+            'bg-material-ultra-thin ring-fill-tertiary/20 group-hover:ring-fill-tertiary/40 h-full w-full rounded-sm ring-1 backdrop-blur-xl transition-all duration-200',
+            loading && 'opacity-30',
+          )}
         />
       )}
     </div>

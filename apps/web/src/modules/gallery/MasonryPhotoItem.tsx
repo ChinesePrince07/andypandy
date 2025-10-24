@@ -1,9 +1,9 @@
+import { Thumbhash } from '@afilmory/ui'
 import clsx from 'clsx'
 import { m } from 'motion/react'
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { Thumbhash } from '@afilmory/ui'
 import { useContextPhotos, usePhotoViewer } from '~/hooks/usePhotoViewer'
 import {
   CarbonIsoOutline,
@@ -289,7 +289,7 @@ export const MasonryPhotoItem = ({
         >
           {isConvertingVideo ? (
             <div className="flex items-center gap-1 px-1">
-              <i className="i-mingcute-loading-line animate-spin !duration-1000" />
+              <i className="i-mingcute-loading-line animate-spin" />
               <span>{t('loading.converting')}</span>
             </div>
           ) : (

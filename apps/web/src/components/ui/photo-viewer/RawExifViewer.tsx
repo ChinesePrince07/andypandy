@@ -1,16 +1,15 @@
-import { useEffect, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { toast } from 'sonner'
-
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger, ScrollArea 
 } from '@afilmory/ui'
-import { ScrollArea } from '@afilmory/ui'
+import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
+
 import { ExifToolManager } from '~/lib/exiftool'
 import type { PhotoManifest } from '~/types/photo'
 
@@ -348,7 +347,7 @@ export const RawExifViewer: React.FC<RawExifViewerProps> = ({
           className="cursor-pointer text-white/70 duration-200 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isLoading ? (
-            <i className="i-mingcute-loading-3-line animate-spin !duration-1000" />
+            <i className="i-mingcute-loading-3-line animate-spin" />
           ) : (
             <i className="i-mingcute-braces-line" />
           )}
@@ -369,7 +368,7 @@ export const RawExifViewer: React.FC<RawExifViewerProps> = ({
 
         {isLoading && (
           <div className="flex h-full grow flex-col items-center justify-center gap-4 text-white/70">
-            <i className="i-mingcute-loading-3-line animate-spin text-3xl !duration-1000" />
+            <i className="i-mingcute-loading-3-line animate-spin text-3xl" />
             <span className="text-sm">
               {t('exif.raw.loading', {
                 defaultValue: 'Loading EXIF data...',
