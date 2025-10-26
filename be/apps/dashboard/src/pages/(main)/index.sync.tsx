@@ -1,3 +1,4 @@
-import { OnboardingWizard } from '~/modules/onboarding/components/OnboardingWizard'
 
-export const Component = () => <OnboardingWizard />
+export const Component = () => {
+  return null
+}

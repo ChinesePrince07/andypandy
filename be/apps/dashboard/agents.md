@@ -137,9 +137,23 @@ export function RouteAwareComponent() {
 
 UI components:
 
-- Prefer primitives in src/components/ui/ for buttons, inputs, select, switch, slider, dialogs, context menus, etc.
+- **Prefer using `@afilmory/ui` components** for all common UI elements:
+  - Form elements: `Input`, `Textarea`, `Label`, `FormError`, `FormHelperText`
+  - Buttons: `Button`
+  - Layout: `ScrollArea`
+  - Others: `Checkbox`, `Switch`, `Modal`, `Tooltip`, etc.
 - Compose primitives for feature-level components under src/modules/<domain>/.
 - Use the Pastel color tokens (e.g., text-text, bg-background, border-border, bg-fill, bg-accent).
+
+UI Component Import Pattern:
+
+```tsx
+// ✅ Preferred: Import from @afilmory/ui
+import { Input, Label, FormError, Button, ScrollArea } from '@afilmory/ui'
+
+// ❌ Avoid: Manual inline styling for common elements
+<input className="w-full rounded-lg border..." />
+```
 
 Example (simple page using primitives):
 
@@ -203,7 +217,24 @@ Form Elements (Inputs, Textareas, Selects):
   - Error message: `text-xs text-red` with `mt-1` spacing
 - **Transitions**: Use `transition-all duration-200` for smooth interactions
 
-Example (text input):
+Example (using UI components):
+
+```tsx
+import { Input, Label, FormError } from '@afilmory/ui'
+
+<div className="space-y-2">
+  <Label htmlFor="field-id">Field Label</Label>
+  <Input
+    id="field-id"
+    type="text"
+    placeholder="Enter value..."
+    error={!!errors.field}
+  />
+  <FormError>{errors.field}</FormError>
+</div>
+```
+
+Example (manual styling):
 
 ```tsx
 <div>
@@ -229,7 +260,24 @@ Example (text input):
 </div>
 ```
 
-Example (textarea):
+Example (textarea using UI components):
+
+```tsx
+import { Textarea, Label, FormError } from '@afilmory/ui'
+
+<div className="space-y-2">
+  <Label htmlFor="description">Description</Label>
+  <Textarea
+    id="description"
+    rows={3}
+    placeholder="Enter description..."
+    error={!!errors.description}
+  />
+  <FormError>{errors.description}</FormError>
+</div>
+```
+
+Example (manual textarea):
 
 ```tsx
 <textarea
@@ -328,6 +376,44 @@ Linear Gradient Border Pattern:
   <div className="p-12">{/* Content */}</div>
 </div>
 ```
+
+Fixed Height Container with ScrollArea Pattern:
+
+For pages with fixed-height containers (e.g., full-page modals, wizards), use the three-section layout:
+
+```tsx
+import { ScrollArea } from '@afilmory/ui'
+
+<div className="flex h-[85vh] flex-col">
+  {/* Fixed header - won't scroll */}
+  <div className="shrink-0">
+    <Header />
+    <div className="h-[0.5px] bg-linear-to-r from-transparent via-text/20 to-transparent" />
+  </div>
+
+  {/* Scrollable content area */}
+  <div className="flex-1 overflow-hidden">
+    <ScrollArea rootClassName="h-full" viewportClassName="h-full">
+      <section className="p-12">
+        {/* Your content here */}
+      </section>
+    </ScrollArea>
+  </div>
+
+  {/* Fixed footer - won't scroll, always at bottom */}
+  <div className="shrink-0">
+    <div className="h-[0.5px] bg-linear-to-r from-transparent via-text/20 to-transparent" />
+    <Footer />
+  </div>
+</div>
+```
+
+**Key points:**
+- Use `flex h-full flex-col` on the parent container
+- `shrink-0` on header and footer prevents them from compressing
+- `flex-1 overflow-hidden` on scroll container takes remaining space
+- `ScrollArea` with `rootClassName="h-full" viewportClassName="h-full"` ensures proper scrolling
+- Fixed height (e.g., `h-[85vh]`) on the outermost container
 
 Interactive States:
 

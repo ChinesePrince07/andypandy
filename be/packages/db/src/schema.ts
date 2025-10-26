@@ -1,5 +1,6 @@
-import { generateId } from '@afilmory/be-utils'
 import { boolean, pgEnum, pgTable, text, timestamp, unique } from 'drizzle-orm/pg-core'
+
+import { generateId } from './snowflake'
 
 function createSnowflakeId(name: string) {
   return text(name).$defaultFn(() => generateId())
@@ -22,6 +23,7 @@ export const tenants = pgTable(
     name: text('name').notNull(),
     status: tenantStatusEnum('status').notNull().default('inactive'),
     primaryDomain: text('primary_domain'),
+    isPrimary: boolean('is_primary').notNull().default(false),
     createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
   },

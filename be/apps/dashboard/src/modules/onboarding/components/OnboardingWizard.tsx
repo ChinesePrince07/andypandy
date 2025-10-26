@@ -92,10 +92,7 @@ export const OnboardingWizard: FC = () => {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-10">
-      <LinearBorderContainer
-        useAdvancedLayout
-        className="w-full max-w-7xl h-[85vh] bg-background-tertiary"
-      >
+      <LinearBorderContainer className="w-full max-w-7xl h-[85vh] bg-background-tertiary">
         <div className="grid h-full lg:grid-cols-[280px_1fr]">
           {/* Sidebar */}
           <div className="relative h-full">
@@ -122,8 +119,8 @@ export const OnboardingWizard: FC = () => {
             </div>
 
             {/* Scrollable content area */}
-            <div className="flex-1 overflow-hidden">
-              <ScrollArea rootClassName="h-full" viewportClassName="h-full">
+            <div className="flex-1 h-0 flex relative">
+              <ScrollArea rootClassName="absolute! inset-0 h-full w-full">
                 <section className="p-12">
                   {stepContent[currentStep.id]}
                 </section>

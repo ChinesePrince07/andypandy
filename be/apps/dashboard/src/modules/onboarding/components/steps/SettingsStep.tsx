@@ -23,7 +23,7 @@ export const SettingsStep: FC<SettingsStepProps> = ({
     {ONBOARDING_SETTING_SECTIONS.map((section) => (
       <div
         key={section.id}
-        className="rounded-lg border border-fill-tertiary bg-background p-6"
+        className="rounded border border-fill-tertiary bg-background p-6"
       >
         <header className="flex flex-col gap-1 mb-5">
           <h3 className="text-sm font-semibold text-text">{section.title}</h3>
@@ -39,7 +39,7 @@ export const SettingsStep: FC<SettingsStepProps> = ({
             return (
               <div
                 key={field.key}
-                className="rounded-lg border border-fill-tertiary bg-fill p-5"
+                className="rounded border border-fill-tertiary bg-fill p-5"
               >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="flex-1">

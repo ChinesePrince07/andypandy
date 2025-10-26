@@ -22,19 +22,25 @@ export const WelcomeStep: FC = () => (
       </h3>
       <ul className="space-y-2 text-sm text-text-secondary">
         <li className="flex items-start gap-2">
-          <i className="i-mingcute-check-line text-accent mt-0.5 flex-shrink-0" />
-          <span>Ensure the core service can access email providers or authentication
-          callbacks if configured.</span>
+          <i className="i-mingcute-check-line text-accent mt-0.5 shrink-0" />
+          <span>
+            Ensure the core service can access email providers or authentication
+            callbacks if configured.
+          </span>
         </li>
         <li className="flex items-start gap-2">
-          <i className="i-mingcute-check-line text-accent mt-0.5 flex-shrink-0" />
-          <span>Keep the terminal open to capture the super administrator
-          credentials printed after initialization.</span>
+          <i className="i-mingcute-check-line text-accent mt-0.5 shrink-0" />
+          <span>
+            Keep the terminal open to capture the super administrator
+            credentials printed after initialization.
+          </span>
         </li>
         <li className="flex items-start gap-2">
-          <i className="i-mingcute-check-line text-accent mt-0.5 flex-shrink-0" />
-          <span>Prepare OAuth credentials or continue without them; you can
-          configure integrations later.</span>
+          <i className="i-mingcute-check-line text-accent mt-0.5 shrink-0" />
+          <span>
+            Prepare OAuth credentials or continue without them; you can
+            configure integrations later.
+          </span>
         </li>
       </ul>
     </div>
@@ -42,7 +48,9 @@ export const WelcomeStep: FC = () => (
     <div className="h-[0.5px] bg-linear-to-r from-transparent via-text/20 to-transparent" />
 
     <div>
-      <h3 className="text-sm font-semibold text-text mb-4">What we will collect</h3>
+      <h3 className="text-sm font-semibold text-text mb-4">
+        What we will collect
+      </h3>
       <div className="grid gap-6 sm:grid-cols-3">
         <div>
           <p className="text-sm font-semibold text-text">Tenant profile</p>

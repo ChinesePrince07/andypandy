@@ -1,3 +1,5 @@
+import 'dotenv/config'
+
 import { fileURLToPath, resolve } from 'node:url'
 
 import tailwindcss from '@tailwindcss/vite'
@@ -12,6 +14,7 @@ import { astPlugin } from '../../../plugins/vite/ast'
 import PKG from './package.json'
 
 const ROOT = fileURLToPath(new URL('./', import.meta.url))
+const API_TARGET = process.env.CORE_API_URL || 'http://localhost:3000'
 
 export default defineConfig({
   plugins: [
@@ -36,5 +39,18 @@ export default defineConfig({
   define: {
     APP_DEV_CWD: JSON.stringify(process.cwd()),
     APP_NAME: JSON.stringify(PKG.name),
+  },
+  server: {
+    cors: {
+      origin: true,
+      credentials: true,
+    },
+    proxy: {
+      '/api': {
+        target: API_TARGET,
+        changeOrigin: true,
+        // keep path as-is so /api -> backend /api
+      },
+    },
   },
 })

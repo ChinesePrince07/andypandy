@@ -14,7 +14,7 @@ export const OnboardingHeader: FC<OnboardingHeaderProps> = ({
   step,
 }) => (
   <header className="p-8 pb-6">
-    <div className="inline-flex items-center gap-2 bg-accent/10 px-3 py-1.5 text-xs font-medium text-accent">
+    <div className="rounded inline-flex items-center gap-2 bg-accent/10 px-3 py-1.5 text-xs font-medium text-accent">
       Step {currentStepIndex + 1} of {totalSteps}
     </div>
     <h1 className="mt-4 text-3xl font-bold text-text">{step.title}</h1>

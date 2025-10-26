@@ -49,7 +49,7 @@ export const TenantStep: FC<TenantStepProps> = ({
           <Button
             type="button"
             variant="ghost"
-            className="rounded-lg px-6 py-2.5 min-w-[120px] text-sm font-medium text-text-secondary hover:text-text hover:bg-fill/50 transition-all duration-200"
+            className="rounded px-6 py-2.5 min-w-[120px] text-sm font-medium text-text-secondary hover:text-text hover:bg-fill/50 transition-all duration-200"
             onClick={onSuggestSlug}
           >
             Suggest
