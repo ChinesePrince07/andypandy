@@ -8,6 +8,7 @@ import { checker } from 'vite-plugin-checker'
 import { routeBuilderPlugin } from 'vite-plugin-route-builder'
 import tsconfigPaths from 'vite-tsconfig-paths'
 
+import { astPlugin } from '../../../plugins/vite/ast'
 import PKG from './package.json'
 
 const ROOT = fileURLToPath(new URL('./', import.meta.url))
@@ -30,6 +31,7 @@ export default defineConfig({
       outputPath: `${resolve(ROOT, './src/generated-routes.ts')}`,
       enableInDev: true,
     }),
+    astPlugin,
   ],
   define: {
     APP_DEV_CWD: JSON.stringify(process.cwd()),

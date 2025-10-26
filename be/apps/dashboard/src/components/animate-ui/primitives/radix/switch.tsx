@@ -1,5 +1,6 @@
 'use client'
 
+import { useControlledState } from '@afilmory/hooks'
 import type {
   HTMLMotionProps,
   LegacyAnimationControls,
@@ -10,7 +11,6 @@ import { m as motion } from 'motion/react'
 import { Switch as SwitchPrimitives } from 'radix-ui'
 import * as React from 'react'
 
-import { useControlledState } from '~/hooks/use-controlled-state'
 import { getStrictContext } from '~/lib/get-strict-context'
 
 type SwitchContextType = {

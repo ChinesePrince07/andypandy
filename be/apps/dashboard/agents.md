@@ -169,6 +169,193 @@ export const Component = () => {
 }
 ```
 
+UI Design Guidelines:
+
+This dashboard follows a **linear design language** with clean lines and subtle gradients. The design emphasizes simplicity and clarity without rounded corners or heavy visual effects.
+
+Core Design Principles:
+
+- **No rounded corners**: All elements use sharp, clean edges
+- **Linear gradient borders**: Use subtle gradient borders for visual separation
+- **Minimal backgrounds**: Use solid colors (`bg-background`, `bg-background-tertiary`)
+- **Clean typography**: Clear hierarchy with appropriate font sizes
+- **Subtle interactions**: Focus rings and hover states with minimal animation
+
+Form Elements (Inputs, Textareas, Selects):
+
+- **Shape**: **NO** `rounded-xl` - use straight edges
+- **Background**: Use `bg-background` for standard inputs
+- **Border**: Use `border border-fill-tertiary` for default state
+- **Padding**: Standard padding is `px-3 py-2` for inputs
+- **Text Size**: Use `text-sm` for consistency
+- **Text Colors**:
+  - Input text: `text-text`
+  - Placeholder: `placeholder:text-text-tertiary/70`
+  - Labels: `text-text` with `font-medium`
+- **Focus State**:
+  - Remove default outline: `focus:outline-none`
+  - Add focus ring: `focus:ring-2 focus:ring-accent/40`
+- **Error State**:
+  - Border: `border-red/60`
+  - Focus ring: `focus:ring-red/30`
+  - Error message: `text-xs text-red` with `mt-1` spacing
+- **Transitions**: Use `transition-all duration-200` for smooth interactions
+
+Example (text input):
+
+```tsx
+<div>
+  <label
+    htmlFor="field-id"
+    className="block text-sm font-medium text-text mb-2"
+  >
+    Field Label
+  </label>
+  <input
+    id="field-id"
+    type="text"
+    className={cx(
+      'w-full border border-fill-tertiary bg-background',
+      'px-3 py-2 text-sm text-text placeholder:text-text-tertiary/70',
+      'focus:outline-none focus:ring-2 focus:ring-accent/40',
+      'transition-all duration-200',
+      hasError && 'border-red/60 focus:ring-red/30',
+    )}
+    placeholder="Enter value..."
+  />
+  {error && <p className="mt-1 text-xs text-red">{error}</p>}
+</div>
+```
+
+Example (textarea):
+
+```tsx
+<textarea
+  className={cx(
+    'w-full border border-fill-tertiary bg-background',
+    'px-3 py-2 text-sm text-text placeholder:text-text-tertiary/70',
+    'focus:outline-none focus:ring-2 focus:ring-accent/40',
+    'transition-all duration-200',
+  )}
+  rows={3}
+  placeholder="Enter description..."
+/>
+```
+
+Buttons:
+
+- **Shape**: **NO** `rounded-xl` - use straight edges
+- **Padding**: Standard is `px-6 py-2.5` for medium buttons
+- **Text Size**: Use `text-sm` with `font-medium`
+- **Primary Button**:
+  - Background: `bg-accent`
+  - Text: `text-white`
+  - Hover: `hover:bg-accent/90`
+  - Focus: `focus:outline-none focus:ring-2 focus:ring-accent/40`
+  - Active: `active:scale-[0.98]` for subtle press feedback
+- **Secondary/Ghost Button**:
+  - Background: `bg-transparent`
+  - Text: `text-text-secondary`
+  - Hover: `hover:text-text hover:bg-fill/50`
+  - **NO borders** for ghost buttons
+- **Transitions**: Use `transition-all duration-200`
+
+Example (primary button):
+
+```tsx
+<button
+  type="submit"
+  className={cx(
+    'px-6 py-2.5',
+    'bg-accent text-white font-medium text-sm',
+    'transition-all duration-200',
+    'hover:bg-accent/90',
+    'active:scale-[0.98]',
+    'focus:outline-none focus:ring-2 focus:ring-accent/40',
+  )}
+>
+  Submit
+</button>
+```
+
+Example (ghost button):
+
+```tsx
+<button
+  type="button"
+  className={cx(
+    'px-6 py-2.5',
+    'text-sm font-medium text-text-secondary',
+    'hover:text-text hover:bg-fill/50',
+    'transition-all duration-200',
+  )}
+>
+  Cancel
+</button>
+```
+
+Cards and Containers:
+
+- **Shape**: **NO rounded corners** - use sharp edges
+- **Borders**: Use linear gradient borders for main containers
+- **Dividers**: Use horizontal gradient dividers for section separation
+  - Example: `<div className="h-[0.5px] bg-linear-to-r from-transparent via-text/20 to-transparent" />`
+- **Backgrounds**: Use solid colors (`bg-background`, `bg-background-tertiary`)
+- **Spacing**: Use consistent padding (e.g., `p-6`, `p-8`, `p-12` depending on size)
+
+Linear Gradient Border Pattern:
+
+```tsx
+<div className="relative bg-background-tertiary">
+  {/* Top border */}
+  <div className="absolute left-0 top-0 right-0 h-[0.5px] bg-linear-to-r from-transparent via-text to-transparent" />
+
+  {/* Right border */}
+  <div className="absolute top-0 right-0 bottom-0 w-[0.5px] bg-linear-to-b from-transparent via-text to-transparent" />
+
+  {/* Bottom border */}
+  <div className="absolute left-0 bottom-0 right-0 h-[0.5px] bg-linear-to-r from-transparent via-text to-transparent" />
+
+  {/* Left border */}
+  <div className="absolute top-0 left-0 bottom-0 w-[0.5px] bg-linear-to-b from-transparent via-text to-transparent" />
+
+  <div className="p-12">{/* Content */}</div>
+</div>
+```
+
+Interactive States:
+
+- **Hover**: Subtle background or color changes with `duration-200` transitions
+- **Focus**: Always include focus rings (`focus:ring-2 focus:ring-accent/40`)
+- **Active/Press**: Use `active:scale-[0.98]` for tactile feedback on clickable elements
+- **Disabled**: Add `opacity-70` and `cursor-default` or `cursor-not-allowed`
+
+Spacing and Layout:
+
+- **Form Fields**: Use `mb-6` between form fields, `mb-8` before submit buttons
+- **Grid Layouts**: Use `gap-5` for form grids (e.g., `grid gap-5 md:grid-cols-2`)
+- **Sections**: Use `space-y-6` for vertical spacing in forms
+
+Typography:
+
+- **Headings**: Use semantic sizes (e.g., `text-3xl font-bold` for page titles)
+- **Body Text**: Default is `text-sm` for forms and UI elements
+- **Labels**: `text-sm font-medium text-text`
+- **Helper Text**: `text-xs text-text-tertiary` with `mt-2` spacing
+- **Error Messages**: `text-xs text-red` with `mt-1` spacing
+
+Do NOT:
+
+- ❌ Use rounded corners (`rounded-xl`, `rounded-2xl`, `rounded-full`, etc.) - this design language uses **sharp edges**
+- ❌ Use heavy borders or box shadows - use subtle linear gradients instead
+- ❌ Use animated bottom borders or underlines on inputs (outdated pattern)
+- ❌ Use large padding (`py-3`, `py-4`) on standard inputs - stick to `py-2` or `py-2.5`
+- ❌ Use `border-separator` - use `border-fill-tertiary` instead
+- ❌ Skip focus states - always include `focus:ring-2 focus:ring-accent/40`
+- ❌ Use complex hover effects with gradients - keep it simple with opacity/color changes
+- ❌ Mix design patterns - maintain consistency with existing components
+- ❌ Add borders to ghost buttons - they should be borderless
+
 Color system:
 
 - Use the Pastel-based semantic tokens:
@@ -265,4 +452,9 @@ Change checklist (agents):
 - Pastel color tokens used
 - Atoms created via createAtomHooks; selectors stable
 - No edits to auto-generated files
+- **UI Design**: Form inputs use **NO rounded corners**, `bg-background`, `border-fill-tertiary`, and `focus:ring-2 focus:ring-accent/40`
+- **UI Design**: Buttons use **NO rounded corners**, `px-6 py-2.5`, `text-sm font-medium`
+- **UI Design**: Main containers use linear gradient borders (see login.tsx example)
+- **UI Design**: All interactive elements have proper focus states and transitions
+- **UI Design**: NO `rounded-xl`, `rounded-2xl`, or any border-radius classes
 - Code passes pnpm lint, pnpm format, and pnpm build
