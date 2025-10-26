@@ -1,5 +1,4 @@
-import { Button } from '@afilmory/ui'
-import { cx } from '@afilmory/utils'
+import { Button, FormError, Input, Label } from '@afilmory/ui'
 import type { FC } from 'react'
 
 import type { OnboardingErrors, TenantFormState } from '../../types'
@@ -23,76 +22,55 @@ export const TenantStep: FC<TenantStepProps> = ({
 }) => (
   <form className="space-y-6" onSubmit={(event) => event.preventDefault()}>
     <div className="grid gap-5 md:grid-cols-2">
-      <div>
-        <label className="text-sm font-medium text-text" htmlFor="tenant-name">
-          Workspace name
-        </label>
-        <input
+      <div className="space-y-2">
+        <Label htmlFor="tenant-name">Workspace name</Label>
+        <Input
           id="tenant-name"
           value={tenant.name}
           onInput={(event) => onNameChange(event.currentTarget.value)}
           placeholder="Afilmory Studio"
-          className={cx(
-            'mt-2 w-full border border-fill-tertiary bg-background px-3 py-2 text-sm text-text placeholder:text-text-tertiary/70 focus:outline-none focus:ring-2 focus:ring-accent/40 transition-all duration-200',
-            errors['tenant.name'] && 'border-red/60 focus:ring-red/30',
-          )}
+          error={!!errors['tenant.name']}
           autoComplete="organization"
         />
-        {errors['tenant.name'] && (
-          <p className="mt-1 text-xs text-red">{errors['tenant.name']}</p>
-        )}
+        <FormError>{errors['tenant.name']}</FormError>
       </div>
 
-      <div>
-        <label className="text-sm font-medium text-text" htmlFor="tenant-slug">
-          Tenant slug
-        </label>
-        <div className="mt-2 flex gap-2">
-          <input
+      <div className="space-y-2">
+        <Label htmlFor="tenant-slug">Tenant slug</Label>
+        <div className="flex gap-2">
+          <Input
             id="tenant-slug"
             value={tenant.slug}
             onInput={(event) => onSlugChange(event.currentTarget.value)}
             placeholder="afilmory"
-            className={cx(
-              'w-full border border-fill-tertiary bg-background px-3 py-2 text-sm text-text placeholder:text-text-tertiary/70 focus:outline-none focus:ring-2 focus:ring-accent/40 transition-all duration-200',
-              errors['tenant.slug'] && 'border-red/60 focus:ring-red/30',
-            )}
+            error={!!errors['tenant.slug']}
             autoComplete="off"
           />
           <Button
             type="button"
             variant="ghost"
-            className="px-6 py-2.5 min-w-[120px] text-sm font-medium text-text-secondary hover:text-text hover:bg-fill/50 transition-all duration-200"
+            className="rounded-lg px-6 py-2.5 min-w-[120px] text-sm font-medium text-text-secondary hover:text-text hover:bg-fill/50 transition-all duration-200"
             onClick={onSuggestSlug}
           >
             Suggest
           </Button>
         </div>
-        {errors['tenant.slug'] && (
-          <p className="mt-1 text-xs text-red">{errors['tenant.slug']}</p>
-        )}
+        <FormError>{errors['tenant.slug']}</FormError>
       </div>
     </div>
 
-    <div>
-      <label className="text-sm font-medium text-text" htmlFor="tenant-domain">
-        Custom domain (optional)
-      </label>
-      <input
+    <div className="space-y-2">
+      <Label htmlFor="tenant-domain">Custom domain (optional)</Label>
+      <Input
         id="tenant-domain"
         value={tenant.domain}
         onInput={(event) => onDomainChange(event.currentTarget.value)}
         placeholder="gallery.afilmory.app"
-        className={cx(
-          'mt-2 w-full border border-fill-tertiary bg-background px-3 py-2 text-sm text-text placeholder:text-text-tertiary/70 focus:outline-none focus:ring-2 focus:ring-accent/40 transition-all duration-200',
-          errors['tenant.domain'] && 'border-red/60 focus:ring-red/30',
-        )}
+        error={!!errors['tenant.domain']}
         autoComplete="off"
       />
-      {errors['tenant.domain'] && (
-        <p className="mt-1 text-xs text-red">{errors['tenant.domain']}</p>
-      )}
-      <p className="mt-2 text-xs text-text-tertiary">
+      <FormError>{errors['tenant.domain']}</FormError>
+      <p className="text-xs text-text-tertiary">
         Domains enable automatic routing for tenant-specific dashboards.
         Configure DNS separately after initialization.
       </p>

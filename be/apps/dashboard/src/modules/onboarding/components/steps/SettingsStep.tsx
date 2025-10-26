@@ -1,4 +1,4 @@
-import { Button } from '@afilmory/ui'
+import { Button, FormError, Input, Textarea } from '@afilmory/ui'
 import { cx } from '@afilmory/utils'
 import type { FC } from 'react'
 
@@ -23,7 +23,7 @@ export const SettingsStep: FC<SettingsStepProps> = ({
     {ONBOARDING_SETTING_SECTIONS.map((section) => (
       <div
         key={section.id}
-        className="border border-fill-tertiary bg-background p-6"
+        className="rounded-lg border border-fill-tertiary bg-background p-6"
       >
         <header className="flex flex-col gap-1 mb-5">
           <h3 className="text-sm font-semibold text-text">{section.title}</h3>
@@ -39,7 +39,7 @@ export const SettingsStep: FC<SettingsStepProps> = ({
             return (
               <div
                 key={field.key}
-                className="border border-fill-tertiary bg-fill p-5"
+                className="rounded-lg border border-fill-tertiary bg-fill p-5"
               >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="flex-1">
@@ -66,42 +66,32 @@ export const SettingsStep: FC<SettingsStepProps> = ({
                 </div>
 
                 {state.enabled && (
-                  <div className="mt-4">
+                  <div className="mt-4 space-y-2">
                     {field.multiline ? (
-                      <textarea
+                      <Textarea
                         value={state.value}
                         onInput={(event) =>
                           onChange(field.key, event.currentTarget.value)
                         }
-                        className={cx(
-                          'w-full border border-fill-tertiary bg-background px-3 py-2 text-sm text-text placeholder:text-text-tertiary/70 focus:outline-none focus:ring-2 focus:ring-accent/40 transition-all duration-200',
-                          hasError && 'border-red/60 focus:ring-red/30',
-                        )}
                         rows={3}
                         placeholder={field.placeholder}
+                        error={hasError}
                       />
                     ) : (
-                      <input
+                      <Input
                         type={field.sensitive ? 'password' : 'text'}
                         value={state.value}
                         onInput={(event) =>
                           onChange(field.key, event.currentTarget.value)
                         }
                         placeholder={field.placeholder}
-                        className={cx(
-                          'w-full border border-fill-tertiary bg-background px-3 py-2 text-sm text-text placeholder:text-text-tertiary/70 focus:outline-none focus:ring-2 focus:ring-accent/40 transition-all duration-200',
-                          hasError && 'border-red/60 focus:ring-red/30',
-                        )}
+                        error={hasError}
                         autoComplete="off"
                       />
                     )}
-                    {errors[errorKey] && (
-                      <p className="mt-1 text-xs text-red">
-                        {errors[errorKey]}
-                      </p>
-                    )}
+                    <FormError>{errors[errorKey]}</FormError>
                     {field.helper && (
-                      <p className="mt-2 text-[11px] text-text-tertiary">
+                      <p className="text-[11px] text-text-tertiary">
                         {field.helper}
                       </p>
                     )}

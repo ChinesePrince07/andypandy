@@ -2,7 +2,6 @@ import { Checkbox } from '@afilmory/ui'
 import type { FC } from 'react'
 
 import type {
-  OnboardingSettingKey,
   SettingFieldDefinition,
 } from '../../constants'
 import type {
@@ -35,7 +34,7 @@ export const ReviewStep: FC<ReviewStepProps> = ({
   onAcknowledgeChange,
 }) => (
   <div className="space-y-6">
-    <div className="border border-fill-tertiary bg-background p-6">
+    <div className="rounded-lg border border-fill-tertiary bg-background p-6">
       <h3 className="text-sm font-semibold text-text mb-4">Tenant summary</h3>
       <dl className="grid gap-4 text-sm text-text-secondary sm:grid-cols-2">
         <div>
@@ -53,7 +52,7 @@ export const ReviewStep: FC<ReviewStepProps> = ({
       </dl>
     </div>
 
-    <div className="border border-fill-tertiary bg-background p-6">
+    <div className="rounded-lg border border-fill-tertiary bg-background p-6">
       <h3 className="text-sm font-semibold text-text mb-4">Administrator</h3>
       <dl className="grid gap-4 text-sm text-text-secondary sm:grid-cols-2">
         <div>
@@ -71,7 +70,7 @@ export const ReviewStep: FC<ReviewStepProps> = ({
       </dl>
     </div>
 
-    <div className="border border-fill-tertiary bg-background p-6">
+    <div className="rounded-lg border border-fill-tertiary bg-background p-6">
       <h3 className="text-sm font-semibold text-text mb-4">
         Enabled integrations
       </h3>
@@ -85,7 +84,7 @@ export const ReviewStep: FC<ReviewStepProps> = ({
           {reviewSettings.map(({ definition, value }) => (
             <li
               key={definition.key}
-              className="border border-fill-tertiary bg-background px-4 py-3"
+              className="rounded-lg border border-fill-tertiary bg-background px-4 py-3"
             >
               <p className="text-sm font-medium text-text">
                 {definition.label}
@@ -99,7 +98,7 @@ export const ReviewStep: FC<ReviewStepProps> = ({
       )}
     </div>
 
-    <div className="border border-orange/40 bg-orange/5 p-6">
+    <div className="rounded-lg border border-orange/40 bg-orange/5 p-6">
       <h3 className="flex items-center gap-2 text-sm font-semibold text-orange mb-2">
         <i className="i-mingcute-alert-fill" />
         Important

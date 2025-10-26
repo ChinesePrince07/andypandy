@@ -175,15 +175,17 @@ This dashboard follows a **linear design language** with clean lines and subtle 
 
 Core Design Principles:
 
-- **No rounded corners**: All elements use sharp, clean edges
-- **Linear gradient borders**: Use subtle gradient borders for visual separation
+- **Hierarchical rounding**: 
+  - Main page containers: Sharp edges with linear gradient borders
+  - Interactive elements (inputs, buttons, cards): `rounded-lg` for approachable feel
+- **Linear gradient borders**: Use subtle gradient borders for main container separation
 - **Minimal backgrounds**: Use solid colors (`bg-background`, `bg-background-tertiary`)
 - **Clean typography**: Clear hierarchy with appropriate font sizes
 - **Subtle interactions**: Focus rings and hover states with minimal animation
 
 Form Elements (Inputs, Textareas, Selects):
 
-- **Shape**: **NO** `rounded-xl` - use straight edges
+- **Shape**: Use `rounded-lg` for subtle rounded corners (NOT sharp edges, NOT heavy rounding like `rounded-xl`)
 - **Background**: Use `bg-background` for standard inputs
 - **Border**: Use `border border-fill-tertiary` for default state
 - **Padding**: Standard padding is `px-3 py-2` for inputs
@@ -215,7 +217,7 @@ Example (text input):
     id="field-id"
     type="text"
     className={cx(
-      'w-full border border-fill-tertiary bg-background',
+      'w-full rounded-lg border border-fill-tertiary bg-background',
       'px-3 py-2 text-sm text-text placeholder:text-text-tertiary/70',
       'focus:outline-none focus:ring-2 focus:ring-accent/40',
       'transition-all duration-200',
@@ -232,7 +234,7 @@ Example (textarea):
 ```tsx
 <textarea
   className={cx(
-    'w-full border border-fill-tertiary bg-background',
+    'w-full rounded-lg border border-fill-tertiary bg-background',
     'px-3 py-2 text-sm text-text placeholder:text-text-tertiary/70',
     'focus:outline-none focus:ring-2 focus:ring-accent/40',
     'transition-all duration-200',
@@ -244,7 +246,7 @@ Example (textarea):
 
 Buttons:
 
-- **Shape**: **NO** `rounded-xl` - use straight edges
+- **Shape**: Use `rounded-lg` for subtle rounded corners (consistent with form elements)
 - **Padding**: Standard is `px-6 py-2.5` for medium buttons
 - **Text Size**: Use `text-sm` with `font-medium`
 - **Primary Button**:
@@ -266,7 +268,7 @@ Example (primary button):
 <button
   type="submit"
   className={cx(
-    'px-6 py-2.5',
+    'rounded-lg px-6 py-2.5',
     'bg-accent text-white font-medium text-sm',
     'transition-all duration-200',
     'hover:bg-accent/90',
@@ -284,7 +286,7 @@ Example (ghost button):
 <button
   type="button"
   className={cx(
-    'px-6 py-2.5',
+    'rounded-lg px-6 py-2.5',
     'text-sm font-medium text-text-secondary',
     'hover:text-text hover:bg-fill/50',
     'transition-all duration-200',
@@ -296,8 +298,12 @@ Example (ghost button):
 
 Cards and Containers:
 
-- **Shape**: **NO rounded corners** - use sharp edges
-- **Borders**: Use linear gradient borders for main containers
+- **Shape**: 
+  - **Main page containers** (e.g., OnboardingWizard): **NO rounded corners** - use sharp edges with linear gradient borders
+  - **Inner content cards** (e.g., form sections, review cards): Use `rounded-lg` for visual hierarchy
+- **Borders**: 
+  - Main containers: Use linear gradient borders
+  - Inner cards: Use `border border-fill-tertiary`
 - **Dividers**: Use horizontal gradient dividers for section separation
   - Example: `<div className="h-[0.5px] bg-linear-to-r from-transparent via-text/20 to-transparent" />`
 - **Backgrounds**: Use solid colors (`bg-background`, `bg-background-tertiary`)
@@ -346,7 +352,9 @@ Typography:
 
 Do NOT:
 
-- ❌ Use rounded corners (`rounded-xl`, `rounded-2xl`, `rounded-full`, etc.) - this design language uses **sharp edges**
+- ❌ Use heavy rounding (`rounded-xl`, `rounded-2xl`, `rounded-full`) - use `rounded-lg` for form elements and cards
+- ❌ Use sharp edges (no rounding) on form elements - always use `rounded-lg` for inputs, buttons, and cards
+- ❌ Mix rounding styles - main page containers are sharp, all interactive elements use `rounded-lg`
 - ❌ Use heavy borders or box shadows - use subtle linear gradients instead
 - ❌ Use animated bottom borders or underlines on inputs (outdated pattern)
 - ❌ Use large padding (`py-3`, `py-4`) on standard inputs - stick to `py-2` or `py-2.5`
@@ -452,9 +460,9 @@ Change checklist (agents):
 - Pastel color tokens used
 - Atoms created via createAtomHooks; selectors stable
 - No edits to auto-generated files
-- **UI Design**: Form inputs use **NO rounded corners**, `bg-background`, `border-fill-tertiary`, and `focus:ring-2 focus:ring-accent/40`
-- **UI Design**: Buttons use **NO rounded corners**, `px-6 py-2.5`, `text-sm font-medium`
-- **UI Design**: Main containers use linear gradient borders (see login.tsx example)
+- **UI Design**: Form inputs use `rounded-lg`, `bg-background`, `border-fill-tertiary`, and `focus:ring-2 focus:ring-accent/40`
+- **UI Design**: Buttons use `rounded-lg`, `px-6 py-2.5`, `text-sm font-medium`
+- **UI Design**: Inner content cards use `rounded-lg` for visual hierarchy
+- **UI Design**: Main page containers use linear gradient borders with sharp edges
 - **UI Design**: All interactive elements have proper focus states and transitions
-- **UI Design**: NO `rounded-xl`, `rounded-2xl`, or any border-radius classes
 - Code passes pnpm lint, pnpm format, and pnpm build
