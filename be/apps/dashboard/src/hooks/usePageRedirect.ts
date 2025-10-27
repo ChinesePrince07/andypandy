@@ -17,6 +17,8 @@ const ONBOARDING_STATUS_QUERY_KEY = ['onboarding', 'status'] as const
 const DEFAULT_LOGIN_PATH = '/login'
 const DEFAULT_ONBOARDING_PATH = '/onboarding'
 const DEFAULT_AUTHENTICATED_PATH = '/'
+const SUPERADMIN_ROOT_PATH = '/superadmin'
+const SUPERADMIN_DEFAULT_PATH = '/superadmin/settings'
 
 const AUTH_FAILURE_STATUSES = new Set([401, 403, 419])
 
@@ -89,12 +91,26 @@ export const usePageRedirect = () => {
     const { pathname } = location
     const session = sessionQuery.data
     const onboardingInitialized = onboardingQuery.data?.initialized ?? false
+    const isSuperAdmin = session?.user.role === 'superadmin'
+    const isOnSuperAdminPage = pathname.startsWith(SUPERADMIN_ROOT_PATH)
 
     // If onboarding is not complete, redirect to onboarding
     if (!onboardingInitialized) {
       if (pathname !== DEFAULT_ONBOARDING_PATH) {
         navigate(DEFAULT_ONBOARDING_PATH, { replace: true })
       }
+      return
+    }
+
+    if (session && isSuperAdmin) {
+      if (!isOnSuperAdminPage || pathname === DEFAULT_LOGIN_PATH) {
+        navigate(SUPERADMIN_DEFAULT_PATH, { replace: true })
+      }
+      return
+    }
+
+    if (session && !isSuperAdmin && isOnSuperAdminPage) {
+      navigate(DEFAULT_AUTHENTICATED_PATH, { replace: true })
       return
     }
 

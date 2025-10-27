@@ -44,7 +44,9 @@ export const useLogin = () => {
       queryClient.setQueryData(AUTH_SESSION_QUERY_KEY, session)
       setAuthUser(session.user)
       setErrorMessage(null)
-      navigate('/', { replace: true })
+      const destination =
+        session.user.role === 'superadmin' ? '/superadmin/settings' : '/'
+      navigate(destination, { replace: true })
     },
     onError: (error: Error) => {
       if (error instanceof FetchError) {

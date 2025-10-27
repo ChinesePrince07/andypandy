@@ -12,7 +12,15 @@ import { DataSyncModule } from './data-sync/data-sync.module'
 import { OnboardingModule } from './onboarding/onboarding.module'
 import { PhotoModule } from './photo/photo.module'
 import { SettingModule } from './setting/setting.module'
+import { SuperAdminModule } from './super-admin/super-admin.module'
+import { SystemSettingModule } from './system-setting/system-setting.module'
 import { TenantModule } from './tenant/tenant.module'
+
+function createEventModuleOptions(redis: RedisAccessor) {
+  return {
+    redisClient: redis.get(),
+  }
+}
 
 @Module({
   imports: [
@@ -20,16 +28,14 @@ import { TenantModule } from './tenant/tenant.module'
     RedisModule,
     AuthModule,
     SettingModule,
+    SystemSettingModule,
+    SuperAdminModule,
     OnboardingModule,
     PhotoModule,
     TenantModule,
     DataSyncModule,
     EventModule.forRootAsync({
-      useFactory: async (redis: RedisAccessor) => {
-        return {
-          redisClient: redis.get(),
-        }
-      },
+      useFactory: createEventModuleOptions,
       inject: [RedisAccessor],
     }),
   ],

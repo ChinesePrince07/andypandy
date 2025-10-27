@@ -15,6 +15,13 @@
       "when": 1761492038684,
       "tag": "0001_data_sync_module",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1761586496779,
+      "tag": "0002_funny_captain_cross",
+      "breakpoints": true
     }
   ]
 }

@@ -139,6 +139,20 @@ export const settings = pgTable(
   (t) => [unique('uq_settings_tenant_key').on(t.tenantId, t.key)],
 )
 
+export const systemSettings = pgTable(
+  'system_setting',
+  {
+    id: snowflakeId,
+    key: text('key').notNull(),
+    value: jsonb('value').$type<unknown | null>().default(null),
+    isSensitive: boolean('is_sensitive').notNull().default(false),
+    description: text('description'),
+    createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
+  },
+  (t) => [unique('uq_system_setting_key').on(t.key)],
+)
+
 export const photoAssets = pgTable(
   'photo_asset',
   {
@@ -175,6 +189,7 @@ export const dbSchema = {
   authSessions,
   authAccounts,
   settings,
+  systemSettings,
   photoAssets,
 }
 
