@@ -20,7 +20,7 @@ Repository rules (must follow):
 - Never edit auto-generated files (e.g., src/generated-routes.ts). Add/rename files under src/pages/ to affect routing.
 - Use the path alias ~/ for all src imports (configured in tsconfig).
 - Use Framer Motion’s LazyMotion with m._ components only. Do not use motion._ directly.
-- Prefer Spring presets from ~/lib/spring for animations.
+- Prefer Spring presets from @afilmory/utils for animations.
 - Use the Pastel color system classes instead of raw Tailwind colors.
 - Follow component organization:
   - Base UI primitives -> src/components/ui/

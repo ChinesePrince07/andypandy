@@ -8,6 +8,7 @@ import { RedisAccessor } from 'core/redis/redis.provider'
 import { DatabaseModule } from '../database/database.module'
 import { RedisModule } from '../redis/redis.module'
 import { AuthModule } from './auth/auth.module'
+import { DataSyncModule } from './data-sync/data-sync.module'
 import { OnboardingModule } from './onboarding/onboarding.module'
 import { PhotoModule } from './photo/photo.module'
 import { SettingModule } from './setting/setting.module'
@@ -22,6 +23,7 @@ import { TenantModule } from './tenant/tenant.module'
     OnboardingModule,
     PhotoModule,
     TenantModule,
+    DataSyncModule,
     EventModule.forRootAsync({
       useFactory: async (redis: RedisAccessor) => {
         return {
