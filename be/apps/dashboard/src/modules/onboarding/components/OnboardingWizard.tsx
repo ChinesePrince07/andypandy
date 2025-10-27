@@ -1,5 +1,6 @@
 import { ScrollArea } from '@afilmory/ui'
 import type { FC, ReactNode } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 
 import { ONBOARDING_STEPS } from '../constants'
 import { useOnboardingWizard } from '../hooks/useOnboardingWizard'
@@ -35,13 +36,79 @@ export const OnboardingWizard: FC = () => {
     errors,
     updateTenantName,
     updateTenantSlug,
-    suggestSlug,
+
     updateTenantDomain,
     updateAdminField,
     toggleSetting,
     updateSettingValue,
     reviewSettings,
   } = wizard
+
+  // Autofocus management: focus first focusable control when step changes
+  const contentRef = useRef<HTMLElement | null>(null)
+
+  useEffect(() => {
+    const root = contentRef.current
+    if (!root) return
+
+    const rafId = requestAnimationFrame(() => {
+      const selector = [
+        'input:not([type="hidden"]):not([disabled])',
+        'textarea:not([disabled])',
+        'select:not([disabled])',
+        '[contenteditable="true"]',
+        '[tabindex]:not([tabindex="-1"])',
+      ].join(',')
+
+      const candidates = Array.from(
+        root.querySelectorAll<HTMLElement>(selector),
+      )
+      const firstVisible = candidates.find((el) => {
+        // Skip elements that are aria-hidden or not rendered
+        if (el.getAttribute('aria-hidden') === 'true') return false
+        const rect = el.getBoundingClientRect()
+        if (rect.width === 0 || rect.height === 0) return false
+        // Skip disabled switches/buttons
+        if ((el as HTMLInputElement).disabled) return false
+        return true
+      })
+
+      firstVisible?.focus({ preventScroll: true })
+    })
+
+    return () => cancelAnimationFrame(rafId)
+  }, [currentStepIndex, currentStep.id])
+
+  // Enter-to-next: advance when pressing Enter on inputs (not textarea or composing)
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent) => {
+      if (event.key !== 'Enter') return
+      if (event.shiftKey || event.metaKey || event.ctrlKey || event.altKey)
+        return
+      // Avoid while IME composing
+      const nativeEvent = event.nativeEvent as unknown as {
+        isComposing?: boolean
+      }
+      if (nativeEvent?.isComposing) return
+
+      const target = event.target as HTMLElement
+      if (target.isContentEditable) return
+      if (target.tagName === 'TEXTAREA') return
+
+      // Let buttons/links behave naturally
+      if (target.tagName === 'BUTTON' || target.tagName === 'A') return
+
+      // Avoid toggles like checkbox/radio
+      if (target.tagName === 'INPUT') {
+        const { type } = target as HTMLInputElement
+        if (type === 'checkbox' || type === 'radio') return
+      }
+
+      event.preventDefault()
+      goToNext()
+    },
+    [goToNext],
+  )
 
   if (query.isLoading) {
     return <LoadingState />
@@ -64,7 +131,6 @@ export const OnboardingWizard: FC = () => {
         onNameChange={updateTenantName}
         onSlugChange={updateTenantSlug}
         onDomainChange={updateTenantDomain}
-        onSuggestSlug={suggestSlug}
       />
     ),
     admin: (
@@ -121,7 +187,11 @@ export const OnboardingWizard: FC = () => {
             {/* Scrollable content area */}
             <div className="flex-1 h-0 flex relative">
               <ScrollArea rootClassName="absolute! inset-0 h-full w-full">
-                <section className="p-12">
+                <section
+                  ref={contentRef}
+                  className="p-12"
+                  onKeyDown={handleKeyDown}
+                >
                   {stepContent[currentStep.id]}
                 </section>
               </ScrollArea>

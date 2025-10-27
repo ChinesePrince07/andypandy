@@ -1,6 +1,6 @@
-import * as React from 'react'
+import { createContext, use } from 'react'
 
-function getStrictContext<T>(
+export function getStrictContext<T>(
   name?: string,
 ): readonly [
   ({
@@ -12,7 +12,7 @@ function getStrictContext<T>(
   }) => React.JSX.Element,
   () => T,
 ] {
-  const Context = React.createContext<T | undefined>(undefined)
+  const Context = createContext<T | undefined>(undefined)
 
   const Provider = ({
     value,
@@ -23,7 +23,7 @@ function getStrictContext<T>(
   }) => <Context value={value}>{children}</Context>
 
   const useSafeContext = () => {
-    const ctx = React.use(Context)
+    const ctx = use(Context)
     if (ctx === undefined) {
       throw new Error(`useContext must be used within ${name ?? 'a Provider'}`)
     }
@@ -32,5 +32,3 @@ function getStrictContext<T>(
 
   return [Provider, useSafeContext] as const
 }
-
-export { getStrictContext }

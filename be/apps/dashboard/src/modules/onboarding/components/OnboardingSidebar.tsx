@@ -22,7 +22,9 @@ export const OnboardingSidebar: FC<OnboardingSidebarProps> = ({
         Launch your photo platform
       </h2>
     </div>
-    <div className="space-y-2">
+
+    {/* Timeline container */}
+    <div className="relative flex-1">
       {ONBOARDING_STEPS.map((step, index) => {
         const status: 'done' | 'current' | 'pending' =
           index < currentStepIndex
@@ -31,60 +33,120 @@ export const OnboardingSidebar: FC<OnboardingSidebarProps> = ({
               ? 'current'
               : 'pending'
 
+        const isLast = index === ONBOARDING_STEPS.length - 1
+        const isClickable = canNavigateTo(index)
+
         return (
-          <button
-            key={step.id}
-            type="button"
-            className={cx(
-              'w-full px-4 py-3 text-left transition-all rounded duration-200',
-              status === 'done' && 'bg-accent/5 text-text hover:bg-accent/10',
-              status === 'current' && 'bg-accent/10 text-text',
-              status === 'pending' && 'text-text-tertiary hover:bg-fill/50',
-              !canNavigateTo(index) && 'cursor-default opacity-60',
-            )}
-            onClick={() => {
-              if (canNavigateTo(index)) {
-                onStepSelect(index)
-              }
-            }}
-          >
-            <div className="flex items-center gap-3">
-              <div
-                className={cx(
-                  'flex h-7 w-7 flex-shrink-0 items-center justify-center rounded text-xs font-semibold transition-all duration-200',
-                  status === 'done' && 'bg-accent text-white',
-                  status === 'current' && 'bg-accent text-white',
-                  status === 'pending' && 'bg-fill text-text-tertiary',
+          <div key={step.id} className="relative flex gap-3">
+            {/* Vertical line - only show if not last item */}
+            {!isLast && (
+              <div className="absolute left-[13px] top-7 bottom-0 w-[1.5px]">
+                {/* Completed segment */}
+                {status === 'done' && (
+                  <div className="h-full w-full bg-accent" />
                 )}
-              >
-                {status === 'done' ? (
-                  <i className="i-mingcute-check-fill text-sm" />
-                ) : (
-                  index + 1
+                {/* Current segment - gradient transition */}
+                {status === 'current' && (
+                  <div
+                    className="h-full w-full"
+                    style={{
+                      background:
+                        'linear-gradient(to bottom, var(--color-accent) 0%, var(--color-accent) 30%, color-mix(in srgb, var(--color-text) 15%, transparent) 100%)',
+                    }}
+                  />
+                )}
+                {/* Pending segment */}
+                {status === 'pending' && (
+                  <div className="h-full w-full bg-text/15" />
                 )}
               </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium">{step.title}</p>
-                <p className="text-xs text-text-tertiary truncate">
+            )}
+
+            {/* Step node and content */}
+            <button
+              type="button"
+              className={cx(
+                'relative flex w-full items-start gap-3 pb-6 text-left transition-all duration-200',
+                isClickable ? 'cursor-pointer' : 'cursor-default',
+                !isClickable && 'opacity-60',
+              )}
+              onClick={() => {
+                if (isClickable) {
+                  onStepSelect(index)
+                }
+              }}
+              disabled={!isClickable}
+            >
+              {/* Circle node */}
+              <div className="relative z-10 shrink-0 pt-0.5">
+                <div
+                  className={cx(
+                    'flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold transition-all duration-200',
+                    // Done state
+                    status === 'done' &&
+                      'bg-accent text-white ring-4 ring-accent/10',
+                    // Current state with subtle glow
+                    status === 'current' &&
+                      'bg-accent text-white ring-4 ring-accent/25',
+                    // Pending state
+                    status === 'pending' &&
+                      'border-[1.5px] border-text/20 bg-background text-text-tertiary',
+                  )}
+                >
+                  {status === 'done' ? (
+                    <i className="i-mingcute-check-fill text-sm" />
+                  ) : (
+                    <span>{index + 1}</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Step content */}
+              <div className="min-w-0 flex-1 pt-0.5">
+                <p
+                  className={cx(
+                    'text-sm font-medium transition-colors duration-200',
+                    status === 'done' && 'text-text',
+                    status === 'current' && 'text-accent',
+                    status === 'pending' && 'text-text-tertiary',
+                    isClickable &&
+                      status !== 'current' &&
+                      'group-hover:text-text',
+                  )}
+                >
+                  {step.title}
+                </p>
+                <p
+                  className={cx(
+                    'mt-0.5 text-xs transition-colors duration-200',
+                    status === 'done' && 'text-text-secondary',
+                    status === 'current' && 'text-text-secondary',
+                    status === 'pending' && 'text-text-tertiary',
+                  )}
+                >
                   {step.description}
                 </p>
               </div>
-            </div>
-          </button>
+            </button>
+          </div>
         )
       })}
     </div>
-    <div className="mt-auto pt-4">
+
+    {/* Progress footer */}
+    <div className="pt-4">
       {/* Horizontal divider */}
-      <div className="h-[0.5px] bg-linear-to-r from-transparent via-text/30 to-transparent mb-4" />
+      <div className="h-[0.5px] bg-linear-to-r from-transparent via-text/20 to-transparent mb-4" />
 
       <div className="flex items-center justify-between text-xs text-text-tertiary mb-2">
-        <span>Progress</span>
-        <span className="font-medium">{stepProgress(currentStepIndex)}%</span>
+        <span>Overall Progress</span>
+        <span className="font-medium text-accent">
+          {stepProgress(currentStepIndex)}%
+        </span>
       </div>
-      <div className="relative h-1 bg-material-medium/50 rounded-sm">
+      <div className="relative h-1.5 bg-fill-tertiary rounded-full overflow-hidden">
         <div
-          className="absolute top-0 left-0 h-full bg-accent transition-all duration-300 rounded-sm"
+          className="absolute top-0 left-0 h-full bg-accent transition-all duration-500 ease-out"
           style={{ width: `${stepProgress(currentStepIndex)}%` }}
         />
       </div>

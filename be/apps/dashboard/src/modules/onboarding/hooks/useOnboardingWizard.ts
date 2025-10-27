@@ -289,12 +289,6 @@ export const useOnboardingWizard = () => {
     setFieldError('tenant.slug', null)
   }
 
-  const suggestSlug = () => {
-    setSlugLocked(false)
-    setTenant((prev) => ({ ...prev, slug: slugify(prev.name) }))
-    setFieldError('tenant.slug', null)
-  }
-
   const updateTenantDomain = (value: string) => {
     setTenant((prev) => ({ ...prev, domain: value }))
     setFieldError('tenant.domain', null)
@@ -353,7 +347,7 @@ export const useOnboardingWizard = () => {
     errors,
     updateTenantName,
     updateTenantSlug,
-    suggestSlug,
+
     updateTenantDomain,
     updateAdminField,
     toggleSetting,

@@ -1,4 +1,4 @@
-import { Button, FormError, Input, Label } from '@afilmory/ui'
+import { FormError, Input, Label } from '@afilmory/ui'
 import type { FC } from 'react'
 
 import type { OnboardingErrors, TenantFormState } from '../../types'
@@ -9,7 +9,6 @@ type TenantStepProps = {
   onNameChange: (value: string) => void
   onSlugChange: (value: string) => void
   onDomainChange: (value: string) => void
-  onSuggestSlug: () => void
 }
 
 export const TenantStep: FC<TenantStepProps> = ({
@@ -18,7 +17,6 @@ export const TenantStep: FC<TenantStepProps> = ({
   onNameChange,
   onSlugChange,
   onDomainChange,
-  onSuggestSlug,
 }) => (
   <form className="space-y-6" onSubmit={(event) => event.preventDefault()}>
     <div className="grid gap-5 md:grid-cols-2">
@@ -46,14 +44,6 @@ export const TenantStep: FC<TenantStepProps> = ({
             error={!!errors['tenant.slug']}
             autoComplete="off"
           />
-          <Button
-            type="button"
-            variant="ghost"
-            className="rounded px-6 py-2.5 min-w-[120px] text-sm font-medium text-text-secondary hover:text-text hover:bg-fill/50 transition-all duration-200"
-            onClick={onSuggestSlug}
-          >
-            Suggest
-          </Button>
         </div>
         <FormError>{errors['tenant.slug']}</FormError>
       </div>

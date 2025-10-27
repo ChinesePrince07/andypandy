@@ -17,23 +17,29 @@ export const OnboardingFooter: FC<OnboardingFooterProps> = ({
   isLastStep,
 }) => (
   <footer className="p-8 pt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-    <div className="text-xs text-text-tertiary">
-      Need to revisit an earlier step? Use the sidebar or go back to adjust your
-      inputs.
-    </div>
+    {!disableBack ? (
+      <div className="text-xs text-text-tertiary">
+        Need to revisit an earlier step? Use the sidebar or go back to adjust
+        your inputs.
+      </div>
+    ) : (
+      <div />
+    )}
     <div className="flex gap-2">
+      {!disableBack && (
+        <Button
+          type="button"
+          variant="ghost"
+          className="rounded-lg shadow-none px-6 py-2.5 min-w-[140px] text-sm font-medium text-text-secondary hover:text-text hover:bg-fill/50 transition-all duration-200"
+          onClick={onBack}
+          isLoading={isSubmitting}
+        >
+          Back
+        </Button>
+      )}
       <Button
         type="button"
-        variant="ghost"
-        className="rounded px-6 py-2.5 min-w-[120px] text-sm font-medium text-text-secondary hover:text-text hover:bg-fill/50 transition-all duration-200"
-        onClick={onBack}
-        disabled={disableBack || isSubmitting}
-      >
-        Back
-      </Button>
-      <Button
-        type="button"
-        className="rounded px-6 py-2.5 min-w-[140px] bg-accent text-white text-sm font-medium hover:bg-accent/90 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-accent/40 transition-all duration-200"
+        className="rounded-lg px-6 py-2.5 min-w-[140px] bg-accent text-white text-sm font-medium hover:bg-accent/90 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-accent/40 transition-all duration-200"
         onClick={onNext}
         isLoading={isSubmitting}
       >
