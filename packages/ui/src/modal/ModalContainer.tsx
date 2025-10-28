@@ -1,11 +1,11 @@
 import { clsxm, Spring } from '@afilmory/utils'
-import { Dialog } from '@radix-ui/react-dialog'
+import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { useAtomValue, useStore } from 'jotai'
 import { AnimatePresence } from 'motion/react'
 import { useEffect, useMemo, useState } from 'react'
 import { useEventCallback } from 'usehooks-ts'
 
-import { DialogContent } from './Dialog'
+import { Dialog, DialogContent } from './Dialog'
 import type { ModalItem } from './ModalManager'
 import { Modal, modalItemsAtom } from './ModalManager'
 import { modalStore } from './store'

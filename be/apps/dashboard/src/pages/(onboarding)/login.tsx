@@ -89,28 +89,36 @@ export const Component = () => {
               {/* Submit Button */}
               <Button
                 type="submit"
-                disabled={isLoading || !email.trim() || !password.trim()}
-                className="w-full rounded-lg px-6 py-2.5 text-sm font-medium"
+                variant="primary"
+                size="md"
+                className="w-full"
+                disabled={!email.trim() || !password.trim()}
+                isLoading={isLoading}
+                loadingText="Signing in..."
               >
-                {isLoading ? 'Signing in...' : 'Sign In'}
+                Sign In
               </Button>
 
               {/* Additional Links */}
               <div className="mt-6 flex items-center justify-between text-sm">
-                <button
+                <Button
                   type="button"
-                  className="text-text-tertiary transition-colors duration-200 hover:text-accent"
+                  variant="ghost"
+                  size="sm"
+                  className="text-text-tertiary hover:text-accent"
                   disabled={isLoading}
                 >
                   Forgot password?
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
-                  className="text-text-tertiary transition-colors duration-200 hover:text-accent"
+                  variant="ghost"
+                  size="sm"
+                  className="text-text-tertiary hover:text-accent"
                   disabled={isLoading}
                 >
                   Create account
-                </button>
+                </Button>
               </div>
             </div>
           </form>

@@ -1,26 +1,22 @@
 import { Spring } from '@afilmory/utils'
 import { m } from 'motion/react'
 
+import { MainPageLayout } from '~/components/layouts/MainPageLayout'
+
 export const Component = () => {
   return (
-    <m.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={Spring.presets.smooth}
-      className="space-y-6"
+    <MainPageLayout
+      title="Analytics"
+      description="Track your photo collection statistics and trends"
     >
-      {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-text">Analytics</h1>
-        <p className="mt-1 text-sm text-text-secondary">
-          Track your photo collection statistics and trends
-        </p>
-      </div>
-
-      {/* Charts Grid */}
       <div className="grid gap-4 md:grid-cols-2">
         {/* Upload Trends */}
-        <div className="rounded-lg border border-border/50 bg-background-tertiary p-5">
+        <div className="relative bg-background-tertiary p-5">
+          <div className="absolute left-0 top-0 right-0 h-[0.5px] bg-gradient-to-r from-transparent via-text/20 to-transparent" />
+          <div className="absolute top-0 right-0 bottom-0 w-[0.5px] bg-gradient-to-b from-transparent via-text/20 to-transparent" />
+          <div className="absolute left-0 bottom-0 right-0 h-[0.5px] bg-gradient-to-r from-transparent via-text/20 to-transparent" />
+          <div className="absolute top-0 left-0 bottom-0 w-[0.5px] bg-gradient-to-b from-transparent via-text/20 to-transparent" />
+
           <h2 className="mb-4 text-sm font-semibold text-text">
             Upload Trends
           </h2>
@@ -30,7 +26,12 @@ export const Component = () => {
         </div>
 
         {/* Storage Usage */}
-        <div className="rounded-lg border border-border/50 bg-background-tertiary p-5">
+        <div className="relative bg-background-tertiary p-5">
+          <div className="absolute left-0 top-0 right-0 h-[0.5px] bg-gradient-to-r from-transparent via-text/20 to-transparent" />
+          <div className="absolute top-0 right-0 bottom-0 w-[0.5px] bg-gradient-to-b from-transparent via-text/20 to-transparent" />
+          <div className="absolute left-0 bottom-0 right-0 h-[0.5px] bg-gradient-to-r from-transparent via-text/20 to-transparent" />
+          <div className="absolute top-0 left-0 bottom-0 w-[0.5px] bg-gradient-to-b from-transparent via-text/20 to-transparent" />
+
           <h2 className="mb-4 text-sm font-semibold text-text">
             Storage Usage
           </h2>
@@ -40,7 +41,12 @@ export const Component = () => {
         </div>
 
         {/* Popular Tags */}
-        <div className="rounded-lg border border-border/50 bg-background-tertiary p-5">
+        <div className="relative bg-background-tertiary p-5">
+          <div className="absolute left-0 top-0 right-0 h-[0.5px] bg-gradient-to-r from-transparent via-text/20 to-transparent" />
+          <div className="absolute top-0 right-0 bottom-0 w-[0.5px] bg-gradient-to-b from-transparent via-text/20 to-transparent" />
+          <div className="absolute left-0 bottom-0 right-0 h-[0.5px] bg-gradient-to-r from-transparent via-text/20 to-transparent" />
+          <div className="absolute top-0 left-0 bottom-0 w-[0.5px] bg-gradient-to-b from-transparent via-text/20 to-transparent" />
+
           <h2 className="mb-4 text-sm font-semibold text-text">Popular Tags</h2>
           <div className="space-y-1.5">
             {[
@@ -51,7 +57,7 @@ export const Component = () => {
             ].map((item) => (
               <div
                 key={item.tag}
-                className="flex items-center justify-between rounded-md bg-fill/10 px-3 py-2 transition-colors hover:bg-fill/20"
+                className="flex items-center justify-between bg-fill/10 px-3 py-2 transition-colors hover:bg-fill/20"
               >
                 <span className="text-[13px] text-text">{item.tag}</span>
                 <span className="text-[13px] font-medium text-accent">
@@ -63,7 +69,12 @@ export const Component = () => {
         </div>
 
         {/* Device Stats */}
-        <div className="rounded-lg border border-border/50 bg-background-tertiary p-5">
+        <div className="relative bg-background-tertiary p-5">
+          <div className="absolute left-0 top-0 right-0 h-[0.5px] bg-gradient-to-r from-transparent via-text/20 to-transparent" />
+          <div className="absolute top-0 right-0 bottom-0 w-[0.5px] bg-gradient-to-b from-transparent via-text/20 to-transparent" />
+          <div className="absolute left-0 bottom-0 right-0 h-[0.5px] bg-gradient-to-r from-transparent via-text/20 to-transparent" />
+          <div className="absolute top-0 left-0 bottom-0 w-[0.5px] bg-gradient-to-b from-transparent via-text/20 to-transparent" />
+
           <h2 className="mb-4 text-sm font-semibold text-text">Top Devices</h2>
           <div className="space-y-1.5">
             {[
@@ -74,7 +85,7 @@ export const Component = () => {
             ].map((item) => (
               <div
                 key={item.device}
-                className="flex items-center justify-between rounded-md bg-fill/10 px-3 py-2 transition-colors hover:bg-fill/20"
+                className="flex items-center justify-between bg-fill/10 px-3 py-2 transition-colors hover:bg-fill/20"
               >
                 <span className="text-[13px] text-text">{item.device}</span>
                 <span className="text-[13px] font-medium text-accent">
@@ -85,6 +96,6 @@ export const Component = () => {
           </div>
         </div>
       </div>
-    </m.div>
+    </MainPageLayout>
   )
 }

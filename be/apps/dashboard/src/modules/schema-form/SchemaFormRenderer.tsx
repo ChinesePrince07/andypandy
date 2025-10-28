@@ -1,4 +1,5 @@
 import {
+  Button,
   FormHelperText,
   Input,
   Label,
@@ -26,18 +27,6 @@ import type {
   UiSlotComponent,
 } from './types'
 
-const glassCardStyles = {
-  backgroundImage:
-    'linear-gradient(to bottom right, color-mix(in srgb, var(--color-background) 98%, transparent), color-mix(in srgb, var(--color-background) 95%, transparent))',
-  boxShadow:
-    '0 8px 32px color-mix(in srgb, var(--color-accent) 8%, transparent), 0 4px 16px color-mix(in srgb, var(--color-accent) 6%, transparent), 0 2px 8px rgba(0, 0, 0, 0.08)',
-} as const
-
-const glassGlowStyles = {
-  background:
-    'linear-gradient(to bottom right, color-mix(in srgb, var(--color-accent) 5%, transparent), transparent, color-mix(in srgb, var(--color-accent) 5%, transparent))',
-} as const
-
 export const GlassPanel = ({
   className,
   children,
@@ -45,17 +34,13 @@ export const GlassPanel = ({
   className?: string
   children: ReactNode
 }) => (
-  <div
-    className={clsxm(
-      'group relative overflow-hidden rounded-2xl border border-accent/20 backdrop-blur-2xl',
-      className,
-    )}
-    style={glassCardStyles}
-  >
-    <div
-      className="pointer-events-none absolute inset-0 rounded-2xl opacity-60"
-      style={glassGlowStyles}
-    />
+  <div className={clsxm('group relative overflow-hidden -mx-6', className)}>
+    {/* Linear gradient borders - sharp edges */}
+    <div className="absolute left-0 top-0 right-0 h-[0.5px] bg-linear-to-r from-transparent via-text/20 to-transparent" />
+    <div className="absolute top-0 right-0 bottom-0 w-[0.5px] bg-linear-to-b from-transparent via-text/20 to-transparent" />
+    <div className="absolute left-0 bottom-0 right-0 h-[0.5px] bg-linear-to-r from-transparent via-text/20 to-transparent" />
+    <div className="absolute top-0 left-0 bottom-0 w-[0.5px] bg-linear-to-b from-transparent via-text/20 to-transparent" />
+
     <div className="relative">{children}</div>
   </div>
 )
@@ -108,13 +93,15 @@ const SecretFieldInput = <Key extends string>({
         className="flex-1 bg-background/60"
       />
       {component.revealable ? (
-        <button
+        <Button
           type="button"
           onClick={() => setRevealed((prev) => !prev)}
-          className="h-9 rounded-lg border border-accent/30 px-3 text-xs font-medium text-accent transition-all duration-200 hover:bg-accent/10"
+          variant="ghost"
+          size="sm"
+          className="border border-accent/30 text-accent hover:bg-accent/10"
         >
           {revealed ? '隐藏' : '显示'}
-        </button>
+        </Button>
       ) : null}
     </div>
   )
@@ -263,8 +250,14 @@ const renderGroup = <Key extends string>(
   return (
     <div
       key={node.id}
-      className="rounded-2xl border border-accent/10 bg-accent/2 p-5 backdrop-blur-xl transition-all duration-200"
+      className="relative bg-accent/2 p-5 transition-all duration-200"
     >
+      {/* Subtle gradient borders for nested groups */}
+      <div className="absolute left-0 top-0 right-0 h-[0.5px] bg-linear-to-r from-transparent via-accent/15 to-transparent" />
+      <div className="absolute top-0 right-0 bottom-0 w-[0.5px] bg-linear-to-b from-transparent via-accent/15 to-transparent" />
+      <div className="absolute left-0 bottom-0 right-0 h-[0.5px] bg-linear-to-r from-transparent via-accent/15 to-transparent" />
+      <div className="absolute top-0 left-0 bottom-0 w-[0.5px] bg-linear-to-b from-transparent via-accent/15 to-transparent" />
+
       <div className="flex items-center gap-2">
         <SchemaIcon name={node.icon} className="text-accent" />
         <h3 className="text-sm font-semibold text-text">{node.title}</h3>
@@ -298,7 +291,7 @@ const renderField = <Key extends string>(
     return (
       <div
         key={field.id}
-        className="rounded-xl border border-fill/30 bg-background/40 p-4"
+        className="rounded-lg border border-fill/30 bg-background/40 p-4"
       >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -326,7 +319,7 @@ const renderField = <Key extends string>(
   return (
     <div
       key={field.id}
-      className="space-y-2 rounded-xl border border-fill-tertiary/40 bg-background/30 p-4"
+      className="space-y-2 rounded-lg border border-fill-tertiary/40 bg-background/30 p-4"
     >
       <div className="flex items-start justify-between gap-3">
         <div>

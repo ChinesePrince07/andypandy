@@ -1,4 +1,4 @@
-import { ScrollArea } from '@afilmory/ui'
+import { Button, ScrollArea } from '@afilmory/ui'
 import { Spring } from '@afilmory/utils'
 import { m } from 'motion/react'
 import { useState } from 'react'
@@ -103,14 +103,17 @@ export const Component = () => {
               </div>
             )}
 
-            <button
+            <Button
               type="button"
               onClick={handleLogout}
               disabled={isLoggingOut}
-              className="rounded-md bg-accent px-3 py-1.5 text-[13px] font-medium text-white transition-all duration-150 hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-60"
+              isLoading={isLoggingOut}
+              loadingText="Logging out..."
+              variant="primary"
+              size="sm"
             >
-              {isLoggingOut ? 'Logging out...' : 'Logout'}
-            </button>
+              Logout
+            </Button>
           </div>
         </div>
       </nav>

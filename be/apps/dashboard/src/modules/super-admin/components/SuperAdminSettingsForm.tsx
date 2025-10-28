@@ -1,4 +1,5 @@
-import { clsxm, Spring } from '@afilmory/utils'
+import { Button } from '@afilmory/ui'
+import { Spring } from '@afilmory/utils'
 import { m } from 'motion/react'
 import {
   startTransition,
@@ -368,16 +369,16 @@ export const SuperAdminSettingsForm = () => {
 
       <div className="flex items-center justify-end gap-3">
         <span className="text-xs text-text-tertiary">{mutationMessage}</span>
-        <button
+        <Button
           type="submit"
-          disabled={updateMutation.isPending || !hasChanges}
-          className={clsxm(
-            'rounded-xl border border-accent/40 bg-accent px-4 py-2 text-sm font-semibold text-white transition-all duration-200',
-            'hover:bg-accent/90 disabled:cursor-not-allowed disabled:border-accent/20 disabled:bg-accent/30 disabled:text-white/60',
-          )}
+          disabled={!hasChanges}
+          isLoading={updateMutation.isPending}
+          loadingText="保存中..."
+          variant="primary"
+          size="sm"
         >
-          {updateMutation.isPending ? '保存中...' : '保存修改'}
-        </button>
+          保存修改
+        </Button>
       </div>
     </m.form>
   )

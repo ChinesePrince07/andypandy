@@ -1,4 +1,4 @@
-import { ScrollArea } from '@afilmory/ui'
+import { Button, ScrollArea } from '@afilmory/ui'
 import { Spring } from '@afilmory/utils'
 import { m } from 'motion/react'
 import { useState } from 'react'
@@ -33,19 +33,22 @@ export const Component = () => {
 
   return (
     <div className="flex h-screen flex-col">
-      {/* Top Navigation - Vercel Style */}
-      <nav className="shrink-0 border-b border-border/50 bg-background-tertiary px-6 py-3">
+      {/* Top Navigation - Sharp Edges Design */}
+      <nav className="relative shrink-0 bg-background-tertiary px-6 py-3">
+        {/* Bottom border with gradient */}
+        <div className="absolute bottom-0 left-0 right-0 h-[0.5px] bg-gradient-to-r from-transparent via-text/20 to-transparent" />
+
         <div className="flex items-center gap-6">
           {/* Logo/Brand */}
           <div className="text-base font-semibold text-text">Afilmory</div>
 
-          {/* Navigation Tabs - minimal pills */}
+          {/* Navigation Tabs - subtle rounded corners */}
           <div className="flex flex-1 items-center gap-1">
             {navigationTabs.map((tab) => (
               <NavLink key={tab.path} to={tab.path} end={tab.path === '/'}>
                 {({ isActive }) => (
                   <m.div
-                    className="relative overflow-hidden rounded-md px-3 py-1.5"
+                    className="relative overflow-hidden rounded-lg px-3 py-1.5"
                     initial={false}
                     animate={{
                       backgroundColor: isActive
@@ -97,14 +100,17 @@ export const Component = () => {
               </div>
             )}
 
-            <button
+            <Button
               type="button"
               onClick={handleLogout}
               disabled={isLoggingOut}
-              className="rounded-md bg-accent px-3 py-1.5 text-[13px] font-medium text-white transition-all duration-150 hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-60"
+              isLoading={isLoggingOut}
+              loadingText="Logging out..."
+              variant="primary"
+              size="sm"
             >
-              {isLoggingOut ? 'Logging out...' : 'Logout'}
-            </button>
+              Logout
+            </Button>
           </div>
         </div>
       </nav>
