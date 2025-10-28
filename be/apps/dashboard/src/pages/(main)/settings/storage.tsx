@@ -1,6 +1,6 @@
+import { MainPageLayout } from '~/components/layouts/MainPageLayout'
 import { SettingsNavigation } from '~/modules/settings'
 import { StorageProvidersManager } from '~/modules/storage-providers'
-import { MainPageLayout } from '~/components/layouts/MainPageLayout'
 
 export const Component = () => {
   return (

@@ -74,7 +74,7 @@ export const AdminStep: FC<AdminStepProps> = ({ admin, errors, onChange }) => (
       </div>
     </div>
 
-    <p className="text-xs text-text-tertiary">
+    <p className="text-text-tertiary text-xs">
       After onboarding completes a global super administrator will also be
       generated. Those credentials are written to the backend logs for security
       reasons.

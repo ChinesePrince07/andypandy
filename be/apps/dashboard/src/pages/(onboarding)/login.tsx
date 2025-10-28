@@ -33,14 +33,14 @@ export const Component = () => {
 
   return (
     <div className="relative flex min-h-dvh flex-1 flex-col">
-      <div className="flex flex-1 items-center justify-center bg-background">
+      <div className="bg-background flex flex-1 items-center justify-center">
         <LinearBorderContainer>
           <form
             onSubmit={handleSubmit}
-            className="relative w-[600px] bg-background-tertiary"
+            className="bg-background-tertiary relative w-[600px]"
           >
             <div className="p-12">
-              <h1 className="mb-10 text-3xl font-bold text-text">Login</h1>
+              <h1 className="text-text mb-10 text-3xl font-bold">Login</h1>
 
               {/* Error Message */}
               {error && (
@@ -49,9 +49,9 @@ export const Component = () => {
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
                   transition={Spring.presets.snappy}
-                  className="mb-6 rounded-lg border border-red/60 bg-red/10 px-4 py-3"
+                  className="border-red/60 bg-red/10 mb-6 rounded-lg border px-4 py-3"
                 >
-                  <p className="text-sm text-red">{error}</p>
+                  <p className="text-red text-sm">{error}</p>
                 </m.div>
               )}
 

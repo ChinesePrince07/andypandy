@@ -90,16 +90,16 @@ const MainPageLayoutBase = ({
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={Spring.presets.smooth}
-        className="space-y-6 mt-8"
+        className="mt-8 space-y-6"
       >
         {/* Header - Sharp edges with gradient borders */}
         <header className="relative flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           {/* Linear gradient borders */}
 
           <div className="relative space-y-1.5">
-            <h1 className="text-2xl font-semibold text-text">{title}</h1>
+            <h1 className="text-text text-2xl font-semibold">{title}</h1>
             {description ? (
-              <p className="text-sm text-text-secondary">{description}</p>
+              <p className="text-text-secondary text-sm">{description}</p>
             ) : null}
           </div>
 

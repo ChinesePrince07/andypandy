@@ -46,7 +46,7 @@ export const SettingsStep: FC<SettingsStepProps> = ({
   }
 
   return (
-    <div className="space-y-3 -m-10">
+    <div className="-m-10 space-y-3">
       {ONBOARDING_SETTING_SECTIONS.map((section) => {
         const isOpen = expandedSections.has(section.id)
         const enabledCount = section.fields.filter(
@@ -58,29 +58,29 @@ export const SettingsStep: FC<SettingsStepProps> = ({
             key={section.id}
             open={isOpen}
             onOpenChange={() => toggleSection(section.id)}
-            className="rounded-lg border border-fill-tertiary bg-background transition-all duration-200"
+            className="border-fill-tertiary bg-background rounded-lg border transition-all duration-200"
           >
-            <CollapsibleTrigger className={'px-6 py-4 hover:bg-fill/30'}>
+            <CollapsibleTrigger className={'hover:bg-fill/30 px-6 py-4'}>
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-semibold text-text">
+                  <h3 className="text-text text-sm font-semibold">
                     {section.title}
                   </h3>
                   {enabledCount > 0 && (
-                    <span className="rounded-full bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent">
+                    <span className="bg-accent/10 text-accent rounded-full px-2 py-0.5 text-xs font-medium">
                       {enabledCount} enabled
                     </span>
                   )}
                 </div>
-                <p className="mt-1 text-sm text-text-tertiary">
+                <p className="text-text-tertiary mt-1 text-sm">
                   {section.description}
                 </p>
               </div>
-              <CollapsibleIcon className="ml-4 text-text-tertiary" />
+              <CollapsibleIcon className="text-text-tertiary ml-4" />
             </CollapsibleTrigger>
 
             <CollapsibleContent>
-              <div className="space-y-3 border-t border-fill-tertiary p-6 pt-4">
+              <div className="border-fill-tertiary space-y-3 border-t p-6 pt-4">
                 {section.fields.map((field) => {
                   const state = settingsState[field.key]
                   const errorKey = `settings.${field.key}`
@@ -89,17 +89,17 @@ export const SettingsStep: FC<SettingsStepProps> = ({
                   return (
                     <div
                       key={field.key}
-                      className="rounded-lg border border-fill-tertiary bg-fill p-5 transition-all duration-200"
+                      className="border-fill-tertiary bg-fill rounded-lg border p-5 transition-all duration-200"
                     >
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                         <div className="flex-1">
                           <label
                             htmlFor={`switch-${field.key}`}
-                            className="text-sm font-medium text-text cursor-pointer"
+                            className="text-text cursor-pointer text-sm font-medium"
                           >
                             {field.label}
                           </label>
-                          <p className="mt-1 text-sm text-text-tertiary">
+                          <p className="text-text-tertiary mt-1 text-sm">
                             {field.description}
                           </p>
                         </div>
@@ -145,7 +145,7 @@ export const SettingsStep: FC<SettingsStepProps> = ({
                             )}
                             <FormError>{errors[errorKey]}</FormError>
                             {field.helper && (
-                              <p className="text-[11px] text-text-tertiary">
+                              <p className="text-text-tertiary text-[11px]">
                                 {field.helper}
                               </p>
                             )}

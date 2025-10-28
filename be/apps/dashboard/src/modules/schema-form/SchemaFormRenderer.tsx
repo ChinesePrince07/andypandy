@@ -36,10 +36,10 @@ export const GlassPanel = ({
 }) => (
   <div className={clsxm('group relative overflow-hidden -mx-6', className)}>
     {/* Linear gradient borders - sharp edges */}
-    <div className="absolute left-0 top-0 right-0 h-[0.5px] bg-linear-to-r from-transparent via-text/20 to-transparent" />
-    <div className="absolute top-0 right-0 bottom-0 w-[0.5px] bg-linear-to-b from-transparent via-text/20 to-transparent" />
-    <div className="absolute left-0 bottom-0 right-0 h-[0.5px] bg-linear-to-r from-transparent via-text/20 to-transparent" />
-    <div className="absolute top-0 left-0 bottom-0 w-[0.5px] bg-linear-to-b from-transparent via-text/20 to-transparent" />
+    <div className="via-text/20 absolute top-0 right-0 left-0 h-[0.5px] bg-linear-to-r from-transparent to-transparent" />
+    <div className="via-text/20 absolute top-0 right-0 bottom-0 w-[0.5px] bg-linear-to-b from-transparent to-transparent" />
+    <div className="via-text/20 absolute right-0 bottom-0 left-0 h-[0.5px] bg-linear-to-r from-transparent to-transparent" />
+    <div className="via-text/20 absolute top-0 bottom-0 left-0 w-[0.5px] bg-linear-to-b from-transparent to-transparent" />
 
     <div className="relative">{children}</div>
   </div>
@@ -50,7 +50,7 @@ const FieldDescription = ({ description }: { description?: string | null }) => {
     return null
   }
 
-  return <p className="mt-1 text-xs text-text-tertiary">{description}</p>
+  return <p className="text-text-tertiary mt-1 text-xs">{description}</p>
 }
 
 const SchemaIcon = ({
@@ -90,7 +90,7 @@ const SecretFieldInput = <Key extends string>({
         onInput={(event) => onChange(fieldKey, event.currentTarget.value)}
         placeholder={component.placeholder ?? ''}
         autoComplete={component.autoComplete}
-        className="flex-1 bg-background/60"
+        className="bg-background/60 flex-1"
       />
       {component.revealable ? (
         <Button
@@ -98,7 +98,7 @@ const SecretFieldInput = <Key extends string>({
           onClick={() => setRevealed((prev) => !prev)}
           variant="ghost"
           size="sm"
-          className="border border-accent/30 text-accent hover:bg-accent/10"
+          className="border-accent/30 text-accent hover:bg-accent/10 border"
         >
           {revealed ? '隐藏' : '显示'}
         </Button>
@@ -199,7 +199,7 @@ const FieldRenderer = <Key extends string>({
           onCheckedChange={(next) => onChange(field.key, next)}
         />
         {label ? (
-          <span className="text-xs text-text-secondary">{label}</span>
+          <span className="text-text-secondary text-xs">{label}</span>
         ) : null}
       </div>
     )
@@ -250,17 +250,17 @@ const renderGroup = <Key extends string>(
   return (
     <div
       key={node.id}
-      className="relative bg-accent/2 p-5 transition-all duration-200"
+      className="bg-accent/2 relative p-5 transition-all duration-200"
     >
       {/* Subtle gradient borders for nested groups */}
-      <div className="absolute left-0 top-0 right-0 h-[0.5px] bg-linear-to-r from-transparent via-accent/15 to-transparent" />
-      <div className="absolute top-0 right-0 bottom-0 w-[0.5px] bg-linear-to-b from-transparent via-accent/15 to-transparent" />
-      <div className="absolute left-0 bottom-0 right-0 h-[0.5px] bg-linear-to-r from-transparent via-accent/15 to-transparent" />
-      <div className="absolute top-0 left-0 bottom-0 w-[0.5px] bg-linear-to-b from-transparent via-accent/15 to-transparent" />
+      <div className="via-accent/15 absolute top-0 right-0 left-0 h-[0.5px] bg-linear-to-r from-transparent to-transparent" />
+      <div className="via-accent/15 absolute top-0 right-0 bottom-0 w-[0.5px] bg-linear-to-b from-transparent to-transparent" />
+      <div className="via-accent/15 absolute right-0 bottom-0 left-0 h-[0.5px] bg-linear-to-r from-transparent to-transparent" />
+      <div className="via-accent/15 absolute top-0 bottom-0 left-0 w-[0.5px] bg-linear-to-b from-transparent to-transparent" />
 
       <div className="flex items-center gap-2">
         <SchemaIcon name={node.icon} className="text-accent" />
-        <h3 className="text-sm font-semibold text-text">{node.title}</h3>
+        <h3 className="text-text text-sm font-semibold">{node.title}</h3>
       </div>
       <FieldDescription description={node.description} />
 
@@ -291,11 +291,11 @@ const renderField = <Key extends string>(
     return (
       <div
         key={field.id}
-        className="rounded-lg border border-fill/30 bg-background/40 p-4"
+        className="border-fill/30 bg-background/40 rounded-lg border p-4"
       >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <Label className="text-sm font-medium text-text">
+            <Label className="text-text text-sm font-medium">
               {field.title}
             </Label>
             <FieldDescription description={field.description} />
@@ -319,11 +319,11 @@ const renderField = <Key extends string>(
   return (
     <div
       key={field.id}
-      className="space-y-2 rounded-lg border border-fill-tertiary/40 bg-background/30 p-4"
+      className="border-fill-tertiary/40 bg-background/30 space-y-2 rounded-lg border p-4"
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <Label className="text-sm font-medium text-text">{field.title}</Label>
+          <Label className="text-text text-sm font-medium">{field.title}</Label>
           <FieldDescription description={field.description} />
         </div>
         <SchemaIcon name={icon} className="text-text-tertiary" />
@@ -393,8 +393,8 @@ const renderNode = <Key extends string>(
   return (
     <Fragment key={node.id}>
       <div className="flex items-center gap-2">
-        <SchemaIcon name={node.icon} className="h-5 w-5 text-accent" />
-        <h2 className="text-base font-semibold text-text">{node.title}</h2>
+        <SchemaIcon name={node.icon} className="text-accent h-5 w-5" />
+        <h2 className="text-text text-base font-semibold">{node.title}</h2>
       </div>
       <FieldDescription description={node.description} />
       <div className="grid gap-4">{renderedChildren}</div>
@@ -457,9 +457,9 @@ export const SchemaFormRenderer = <Key extends string>({
                 <div className="flex items-center gap-2">
                   <SchemaIcon
                     name={section.icon}
-                    className="h-5 w-5 text-accent"
+                    className="text-accent h-5 w-5"
                   />
-                  <h2 className="text-lg font-semibold text-text">
+                  <h2 className="text-text text-lg font-semibold">
                     {section.title}
                   </h2>
                 </div>

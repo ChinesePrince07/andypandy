@@ -15,10 +15,10 @@ export const OnboardingSidebar: FC<OnboardingSidebarProps> = ({
   canNavigateTo,
   onStepSelect,
 }) => (
-  <aside className="hidden flex-col gap-6 p-6 lg:flex min-h-full">
+  <aside className="hidden min-h-full flex-col gap-6 p-6 lg:flex">
     <div>
-      <p className="text-xs font-medium text-accent">Setup Journey</p>
-      <h2 className="mt-2 text-base font-semibold text-text">
+      <p className="text-accent text-xs font-medium">Setup Journey</p>
+      <h2 className="text-text mt-2 text-base font-semibold">
         Launch your photo platform
       </h2>
     </div>
@@ -40,10 +40,10 @@ export const OnboardingSidebar: FC<OnboardingSidebarProps> = ({
           <div key={step.id} className="relative flex gap-3">
             {/* Vertical line - only show if not last item */}
             {!isLast && (
-              <div className="absolute left-[13px] top-7 bottom-0 w-[1.5px]">
+              <div className="absolute top-7 bottom-0 left-[13px] w-[1.5px]">
                 {/* Completed segment */}
                 {status === 'done' && (
-                  <div className="h-full w-full bg-accent" />
+                  <div className="bg-accent h-full w-full" />
                 )}
                 {/* Current segment - gradient transition */}
                 {status === 'current' && (
@@ -57,7 +57,7 @@ export const OnboardingSidebar: FC<OnboardingSidebarProps> = ({
                 )}
                 {/* Pending segment */}
                 {status === 'pending' && (
-                  <div className="h-full w-full bg-text/15" />
+                  <div className="bg-text/15 h-full w-full" />
                 )}
               </div>
             )}
@@ -136,17 +136,17 @@ export const OnboardingSidebar: FC<OnboardingSidebarProps> = ({
     {/* Progress footer */}
     <div className="pt-4">
       {/* Horizontal divider */}
-      <div className="h-[0.5px] bg-linear-to-r from-transparent via-text/20 to-transparent mb-4" />
+      <div className="via-text/20 mb-4 h-[0.5px] bg-linear-to-r from-transparent to-transparent" />
 
-      <div className="flex items-center justify-between text-xs text-text-tertiary mb-2">
+      <div className="text-text-tertiary mb-2 flex items-center justify-between text-xs">
         <span>Overall Progress</span>
-        <span className="font-medium text-accent">
+        <span className="text-accent font-medium">
           {stepProgress(currentStepIndex)}%
         </span>
       </div>
-      <div className="relative h-1.5 bg-fill-tertiary rounded-full overflow-hidden">
+      <div className="bg-fill-tertiary relative h-1.5 overflow-hidden rounded-full">
         <div
-          className="absolute top-0 left-0 h-full bg-accent transition-all duration-500 ease-out"
+          className="bg-accent absolute top-0 left-0 h-full transition-all duration-500 ease-out"
           style={{ width: `${stepProgress(currentStepIndex)}%` }}
         />
       </div>

@@ -34,13 +34,13 @@ export const Component = () => {
   return (
     <div className="flex h-screen flex-col">
       {/* Top Navigation - Sharp Edges Design */}
-      <nav className="relative shrink-0 bg-background-tertiary px-6 py-3">
+      <nav className="bg-background-tertiary relative shrink-0 px-6 py-3">
         {/* Bottom border with gradient */}
-        <div className="absolute bottom-0 left-0 right-0 h-[0.5px] bg-gradient-to-r from-transparent via-text/20 to-transparent" />
+        <div className="via-text/20 absolute right-0 bottom-0 left-0 h-[0.5px] bg-gradient-to-r from-transparent to-transparent" />
 
         <div className="flex items-center gap-6">
           {/* Logo/Brand */}
-          <div className="text-base font-semibold text-text">Afilmory</div>
+          <div className="text-text text-base font-semibold">Afilmory</div>
 
           {/* Navigation Tabs - subtle rounded corners */}
           <div className="flex flex-1 items-center gap-1">
@@ -83,10 +83,10 @@ export const Component = () => {
             {user && (
               <div className="flex items-center gap-2">
                 <div className="text-right">
-                  <div className="text-[13px] font-medium text-text">
+                  <div className="text-text text-[13px] font-medium">
                     {user.name || user.email}
                   </div>
-                  <div className="text-[11px] capitalize text-text-tertiary">
+                  <div className="text-text-tertiary text-[11px] capitalize">
                     {user.role}
                   </div>
                 </div>
@@ -116,7 +116,7 @@ export const Component = () => {
       </nav>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-hidden bg-background">
+      <main className="bg-background flex-1 overflow-hidden">
         <ScrollArea rootClassName="h-full" viewportClassName="h-full">
           <div className="mx-auto max-w-7xl px-6 py-6">
             <Outlet />

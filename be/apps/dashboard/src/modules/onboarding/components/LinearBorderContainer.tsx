@@ -46,13 +46,13 @@ export const LinearBorderContainer: FC<LinearBorderContainerProps> = ({
       <div className={clsxm('flex flex-row', className)}>
         {/* Top border */}
         <div
-          className="absolute left-0 right-0 h-[0.5px] z-1"
+          className="absolute right-0 left-0 z-1 h-[0.5px]"
           style={horizontalGradient}
         />
 
         {/* Left border */}
         <div
-          className="absolute top-0 bottom-0 w-[0.5px] z-1"
+          className="absolute top-0 bottom-0 z-1 w-[0.5px]"
           style={verticalGradient}
         />
 
@@ -60,18 +60,18 @@ export const LinearBorderContainer: FC<LinearBorderContainerProps> = ({
         {children}
 
         {/* Right border container */}
-        <div className="flex flex-col shrink-0">
+        <div className="flex shrink-0 flex-col">
           <div
-            className="absolute bottom-0 top-0 w-[0.5px] z-1"
+            className="absolute top-0 bottom-0 z-1 w-[0.5px]"
             style={verticalGradient}
           />
         </div>
       </div>
 
       {/* Bottom border container */}
-      <div className="shrink-0 w-[2px]">
+      <div className="w-[2px] shrink-0">
         <div
-          className="absolute left-0 right-0 h-[0.5px] z-1"
+          className="absolute right-0 left-0 z-1 h-[0.5px]"
           style={horizontalGradient}
         />
       </div>

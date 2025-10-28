@@ -1,6 +1,3 @@
-import { Spring } from '@afilmory/utils'
-import { m } from 'motion/react'
-
 import { MainPageLayout } from '~/components/layouts/MainPageLayout'
 
 export const Component = () => {
@@ -11,43 +8,43 @@ export const Component = () => {
     >
       <div className="grid gap-4 md:grid-cols-2">
         {/* Upload Trends */}
-        <div className="relative bg-background-tertiary p-5">
-          <div className="absolute left-0 top-0 right-0 h-[0.5px] bg-gradient-to-r from-transparent via-text/20 to-transparent" />
-          <div className="absolute top-0 right-0 bottom-0 w-[0.5px] bg-gradient-to-b from-transparent via-text/20 to-transparent" />
-          <div className="absolute left-0 bottom-0 right-0 h-[0.5px] bg-gradient-to-r from-transparent via-text/20 to-transparent" />
-          <div className="absolute top-0 left-0 bottom-0 w-[0.5px] bg-gradient-to-b from-transparent via-text/20 to-transparent" />
+        <div className="bg-background-tertiary relative p-5">
+          <div className="via-text/20 absolute top-0 right-0 left-0 h-[0.5px] bg-gradient-to-r from-transparent to-transparent" />
+          <div className="via-text/20 absolute top-0 right-0 bottom-0 w-[0.5px] bg-gradient-to-b from-transparent to-transparent" />
+          <div className="via-text/20 absolute right-0 bottom-0 left-0 h-[0.5px] bg-gradient-to-r from-transparent to-transparent" />
+          <div className="via-text/20 absolute top-0 bottom-0 left-0 w-[0.5px] bg-gradient-to-b from-transparent to-transparent" />
 
-          <h2 className="mb-4 text-sm font-semibold text-text">
+          <h2 className="text-text mb-4 text-sm font-semibold">
             Upload Trends
           </h2>
-          <div className="flex h-64 items-center justify-center text-[13px] text-text-tertiary">
+          <div className="text-text-tertiary flex h-64 items-center justify-center text-[13px]">
             Chart placeholder
           </div>
         </div>
 
         {/* Storage Usage */}
-        <div className="relative bg-background-tertiary p-5">
-          <div className="absolute left-0 top-0 right-0 h-[0.5px] bg-gradient-to-r from-transparent via-text/20 to-transparent" />
-          <div className="absolute top-0 right-0 bottom-0 w-[0.5px] bg-gradient-to-b from-transparent via-text/20 to-transparent" />
-          <div className="absolute left-0 bottom-0 right-0 h-[0.5px] bg-gradient-to-r from-transparent via-text/20 to-transparent" />
-          <div className="absolute top-0 left-0 bottom-0 w-[0.5px] bg-gradient-to-b from-transparent via-text/20 to-transparent" />
+        <div className="bg-background-tertiary relative p-5">
+          <div className="via-text/20 absolute top-0 right-0 left-0 h-[0.5px] bg-gradient-to-r from-transparent to-transparent" />
+          <div className="via-text/20 absolute top-0 right-0 bottom-0 w-[0.5px] bg-gradient-to-b from-transparent to-transparent" />
+          <div className="via-text/20 absolute right-0 bottom-0 left-0 h-[0.5px] bg-gradient-to-r from-transparent to-transparent" />
+          <div className="via-text/20 absolute top-0 bottom-0 left-0 w-[0.5px] bg-gradient-to-b from-transparent to-transparent" />
 
-          <h2 className="mb-4 text-sm font-semibold text-text">
+          <h2 className="text-text mb-4 text-sm font-semibold">
             Storage Usage
           </h2>
-          <div className="flex h-64 items-center justify-center text-[13px] text-text-tertiary">
+          <div className="text-text-tertiary flex h-64 items-center justify-center text-[13px]">
             Chart placeholder
           </div>
         </div>
 
         {/* Popular Tags */}
-        <div className="relative bg-background-tertiary p-5">
-          <div className="absolute left-0 top-0 right-0 h-[0.5px] bg-gradient-to-r from-transparent via-text/20 to-transparent" />
-          <div className="absolute top-0 right-0 bottom-0 w-[0.5px] bg-gradient-to-b from-transparent via-text/20 to-transparent" />
-          <div className="absolute left-0 bottom-0 right-0 h-[0.5px] bg-gradient-to-r from-transparent via-text/20 to-transparent" />
-          <div className="absolute top-0 left-0 bottom-0 w-[0.5px] bg-gradient-to-b from-transparent via-text/20 to-transparent" />
+        <div className="bg-background-tertiary relative p-5">
+          <div className="via-text/20 absolute top-0 right-0 left-0 h-[0.5px] bg-gradient-to-r from-transparent to-transparent" />
+          <div className="via-text/20 absolute top-0 right-0 bottom-0 w-[0.5px] bg-gradient-to-b from-transparent to-transparent" />
+          <div className="via-text/20 absolute right-0 bottom-0 left-0 h-[0.5px] bg-gradient-to-r from-transparent to-transparent" />
+          <div className="via-text/20 absolute top-0 bottom-0 left-0 w-[0.5px] bg-gradient-to-b from-transparent to-transparent" />
 
-          <h2 className="mb-4 text-sm font-semibold text-text">Popular Tags</h2>
+          <h2 className="text-text mb-4 text-sm font-semibold">Popular Tags</h2>
           <div className="space-y-1.5">
             {[
               { tag: 'Nature', count: 234 },
@@ -57,10 +54,10 @@ export const Component = () => {
             ].map((item) => (
               <div
                 key={item.tag}
-                className="flex items-center justify-between bg-fill/10 px-3 py-2 transition-colors hover:bg-fill/20"
+                className="bg-fill/10 hover:bg-fill/20 flex items-center justify-between px-3 py-2 transition-colors"
               >
-                <span className="text-[13px] text-text">{item.tag}</span>
-                <span className="text-[13px] font-medium text-accent">
+                <span className="text-text text-[13px]">{item.tag}</span>
+                <span className="text-accent text-[13px] font-medium">
                   {item.count}
                 </span>
               </div>
@@ -69,13 +66,13 @@ export const Component = () => {
         </div>
 
         {/* Device Stats */}
-        <div className="relative bg-background-tertiary p-5">
-          <div className="absolute left-0 top-0 right-0 h-[0.5px] bg-gradient-to-r from-transparent via-text/20 to-transparent" />
-          <div className="absolute top-0 right-0 bottom-0 w-[0.5px] bg-gradient-to-b from-transparent via-text/20 to-transparent" />
-          <div className="absolute left-0 bottom-0 right-0 h-[0.5px] bg-gradient-to-r from-transparent via-text/20 to-transparent" />
-          <div className="absolute top-0 left-0 bottom-0 w-[0.5px] bg-gradient-to-b from-transparent via-text/20 to-transparent" />
+        <div className="bg-background-tertiary relative p-5">
+          <div className="via-text/20 absolute top-0 right-0 left-0 h-[0.5px] bg-gradient-to-r from-transparent to-transparent" />
+          <div className="via-text/20 absolute top-0 right-0 bottom-0 w-[0.5px] bg-gradient-to-b from-transparent to-transparent" />
+          <div className="via-text/20 absolute right-0 bottom-0 left-0 h-[0.5px] bg-gradient-to-r from-transparent to-transparent" />
+          <div className="via-text/20 absolute top-0 bottom-0 left-0 w-[0.5px] bg-gradient-to-b from-transparent to-transparent" />
 
-          <h2 className="mb-4 text-sm font-semibold text-text">Top Devices</h2>
+          <h2 className="text-text mb-4 text-sm font-semibold">Top Devices</h2>
           <div className="space-y-1.5">
             {[
               { device: 'iPhone 15 Pro', count: 456 },
@@ -85,10 +82,10 @@ export const Component = () => {
             ].map((item) => (
               <div
                 key={item.device}
-                className="flex items-center justify-between bg-fill/10 px-3 py-2 transition-colors hover:bg-fill/20"
+                className="bg-fill/10 hover:bg-fill/20 flex items-center justify-between px-3 py-2 transition-colors"
               >
-                <span className="text-[13px] text-text">{item.device}</span>
-                <span className="text-[13px] font-medium text-accent">
+                <span className="text-text text-[13px]">{item.device}</span>
+                <span className="text-accent text-[13px] font-medium">
                   {item.count}
                 </span>
               </div>

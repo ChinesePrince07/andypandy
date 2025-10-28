@@ -1,5 +1,5 @@
-import { SettingsForm, SettingsNavigation } from '~/modules/settings'
 import { MainPageLayout } from '~/components/layouts/MainPageLayout'
+import { SettingsForm, SettingsNavigation } from '~/modules/settings'
 
 export const Component = () => {
   return (

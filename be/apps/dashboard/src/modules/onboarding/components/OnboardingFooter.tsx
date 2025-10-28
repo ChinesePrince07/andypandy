@@ -16,9 +16,9 @@ export const OnboardingFooter: FC<OnboardingFooterProps> = ({
   isSubmitting,
   isLastStep,
 }) => (
-  <footer className="p-8 pt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+  <footer className="flex flex-col gap-3 p-8 pt-6 sm:flex-row sm:items-center sm:justify-between">
     {!disableBack ? (
-      <div className="text-xs text-text-tertiary">
+      <div className="text-text-tertiary text-xs">
         Need to revisit an earlier step? Use the sidebar or go back to adjust
         your inputs.
       </div>
@@ -31,7 +31,7 @@ export const OnboardingFooter: FC<OnboardingFooterProps> = ({
           type="button"
           variant="ghost"
           size="md"
-          className="min-w-[140px] text-text-secondary hover:text-text hover:bg-fill/50"
+          className="text-text-secondary hover:text-text hover:bg-fill/50 min-w-[140px]"
           onClick={onBack}
           disabled={isSubmitting}
         >

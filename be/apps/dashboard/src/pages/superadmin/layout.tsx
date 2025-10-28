@@ -37,9 +37,9 @@ export const Component = () => {
 
   return (
     <div className="flex h-screen flex-col">
-      <nav className="shrink-0 border-b border-border/50 bg-background-tertiary px-6 py-3">
+      <nav className="border-border/50 bg-background-tertiary shrink-0 border-b px-6 py-3">
         <div className="flex items-center gap-6">
-          <div className="text-base font-semibold text-text">
+          <div className="text-text text-base font-semibold">
             Afilmory · Superadmin
           </div>
 
@@ -86,10 +86,10 @@ export const Component = () => {
             {user && (
               <div className="flex items-center gap-2">
                 <div className="text-right">
-                  <div className="text-[13px] font-medium text-text">
+                  <div className="text-text text-[13px] font-medium">
                     {user.name || user.email}
                   </div>
-                  <div className="text-[11px] capitalize text-text-tertiary">
+                  <div className="text-text-tertiary text-[11px] capitalize">
                     {user.role}
                   </div>
                 </div>
@@ -118,7 +118,7 @@ export const Component = () => {
         </div>
       </nav>
 
-      <main className="flex-1 overflow-hidden bg-background">
+      <main className="bg-background flex-1 overflow-hidden">
         <ScrollArea rootClassName="h-full" viewportClassName="h-full">
           <div className="mx-auto max-w-5xl px-6 py-6">
             <Outlet />

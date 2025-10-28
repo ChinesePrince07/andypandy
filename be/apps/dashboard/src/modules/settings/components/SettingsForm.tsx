@@ -1,15 +1,19 @@
-/* eslint-disable react-hooks/refs */
 import { Button } from '@afilmory/ui'
 import { Spring } from '@afilmory/utils'
 import { m } from 'motion/react'
 import {
+  startTransition,
   useCallback,
   useEffect,
   useId,
   useMemo,
-  useRef,
   useState,
 } from 'react'
+
+import {
+  MainPageLayout,
+  useMainPageLayout,
+} from '~/components/layouts/MainPageLayout'
 
 import type { SchemaFormRendererProps } from '../../schema-form/SchemaFormRenderer'
 import {
@@ -24,10 +28,6 @@ import type {
   SettingUiSchemaResponse,
   SettingValueState,
 } from '../types'
-import {
-  MainPageLayout,
-  useMainPageLayout,
-} from '~/components/layouts/MainPageLayout'
 
 const providerGroupVisibility: Record<string, string> = {
   'builder-storage-s3': 's3',
@@ -59,9 +59,8 @@ export const SettingsForm = () => {
   const [formState, setFormState] = useState<SettingValueState<string>>(
     {} as SettingValueState<string>,
   )
-  const initialStateRef = useRef<SettingValueState<string>>(
-    {} as SettingValueState<string>,
-  )
+  const [initialState, setInitialState] =
+    useState<SettingValueState<string> | null>(null)
 
   useEffect(() => {
     if (!data) {
@@ -69,8 +68,10 @@ export const SettingsForm = () => {
     }
 
     const initialValues = buildInitialState(data.schema, data.values)
-    setFormState(initialValues)
-    initialStateRef.current = initialValues
+    startTransition(() => {
+      setFormState(initialValues)
+      setInitialState(initialValues)
+    })
   }, [data])
 
   const providerValue = formState['builder.storage.provider'] ?? ''
@@ -96,16 +97,18 @@ export const SettingsForm = () => {
   const changedEntries = useMemo<SettingEntryInput[]>(() => {
     const entries: SettingEntryInput[] = []
 
+    if (!initialState) {
+      return entries
+    }
+
     for (const [key, value] of Object.entries(formState)) {
-      if (
-        (initialStateRef.current as SettingValueState<string>)[key] !== value
-      ) {
+      if (initialState[key] !== value) {
         entries.push({ key, value })
       }
     }
 
     return entries
-  }, [formState])
+  }, [formState, initialState])
 
   const handleChange = useCallback((key: string, value: SchemaFormValue) => {
     setFormState((prev) => ({
@@ -176,13 +179,13 @@ export const SettingsForm = () => {
         {headerActionPortal}
         <GlassPanel className="p-6">
           <div className="space-y-4">
-            <div className="h-5 w-1/2 animate-pulse rounded-lg bg-fill/40" />
+            <div className="bg-fill/40 h-5 w-1/2 animate-pulse rounded-lg" />
             <div className="space-y-3">
               {['skeleton-1', 'skeleton-2', 'skeleton-3', 'skeleton-4'].map(
                 (key) => (
                   <div
                     key={key}
-                    className="h-20 animate-pulse rounded-lg bg-fill/30"
+                    className="bg-fill/30 h-20 animate-pulse rounded-lg"
                   />
                 ),
               )}
@@ -198,7 +201,7 @@ export const SettingsForm = () => {
       <>
         {headerActionPortal}
         <GlassPanel className="p-6">
-          <div className="flex items-center gap-3 text-sm text-red">
+          <div className="text-red flex items-center gap-3 text-sm">
             <i className="i-mingcute-close-circle-fill text-lg" />
             <span>
               {`无法加载设置：${error instanceof Error ? error.message : '未知错误'}`}
@@ -234,7 +237,7 @@ export const SettingsForm = () => {
         />
 
         <div className="flex justify-end">
-          <div className="text-xs text-text-tertiary">
+          <div className="text-text-tertiary text-xs">
             {mutationErrorMessage
               ? `保存失败：${mutationErrorMessage}`
               : updateSettingsMutation.isSuccess && changedEntries.length === 0

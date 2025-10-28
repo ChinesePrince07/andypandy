@@ -24,29 +24,26 @@ export const AddProviderCard: FC<AddProviderCardProps> = ({ onClick }) => {
       )}
     >
       {/* Linear gradient borders with accent color on hover */}
-      <div className="absolute left-0 top-0 right-0 h-[0.5px] bg-linear-to-r from-transparent via-text/20 to-transparent transition-opacity group-hover:via-accent/60" />
-      <div className="absolute top-0 right-0 bottom-0 w-[0.5px] bg-linear-to-b from-transparent via-text/20 to-transparent transition-opacity group-hover:via-accent/60" />
-      <div className="absolute left-0 bottom-0 right-0 h-[0.5px] bg-linear-to-r from-transparent via-text/20 to-transparent transition-opacity group-hover:via-accent/60" />
-      <div className="absolute top-0 left-0 bottom-0 w-[0.5px] bg-linear-to-b from-transparent via-text/20 to-transparent transition-opacity group-hover:via-accent/60" />
+      <div className="via-text/20 group-hover:via-accent/60 absolute top-0 right-0 left-0 h-[0.5px] bg-linear-to-r from-transparent to-transparent transition-opacity" />
+      <div className="via-text/20 group-hover:via-accent/60 absolute top-0 right-0 bottom-0 w-[0.5px] bg-linear-to-b from-transparent to-transparent transition-opacity" />
+      <div className="via-text/20 group-hover:via-accent/60 absolute right-0 bottom-0 left-0 h-[0.5px] bg-linear-to-r from-transparent to-transparent transition-opacity" />
+      <div className="via-text/20 group-hover:via-accent/60 absolute top-0 bottom-0 left-0 w-[0.5px] bg-linear-to-b from-transparent to-transparent transition-opacity" />
 
       {/* Icon */}
       <div className="relative">
-        <div className="flex h-12 w-12 items-center justify-center rounded-lg border-2 border-dashed border-accent/30 bg-accent/5 transition-all duration-200 group-hover:border-accent/60 group-hover:bg-accent/10">
+        <div className="border-accent/30 bg-accent/5 group-hover:border-accent/60 group-hover:bg-accent/10 flex h-12 w-12 items-center justify-center rounded-lg border-2 border-dashed transition-all duration-200">
           <DynamicIcon
             name="plus"
-            className="h-6 w-6 text-accent transition-transform duration-200 group-hover:scale-110"
+            className="text-accent h-6 w-6 transition-transform duration-200 group-hover:scale-110"
           />
         </div>
       </div>
 
       {/* Text */}
       <div className="relative text-center">
-        <p className="text-sm font-semibold text-text">Add Provider</p>
-        <p className="text-xs text-text-tertiary">
-          Configure a new storage
-        </p>
+        <p className="text-text text-sm font-semibold">Add Provider</p>
+        <p className="text-text-tertiary text-xs">Configure a new storage</p>
       </div>
     </m.button>
   )
 }
-

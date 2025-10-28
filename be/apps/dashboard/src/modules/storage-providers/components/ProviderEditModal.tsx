@@ -1,7 +1,6 @@
 import type { ModalComponentProps } from '@afilmory/ui'
 import {
   Button,
-  DialogContent,
   FormHelperText,
   Input,
   Label,
@@ -125,10 +124,10 @@ export const ProviderEditModal = ({
             />
           </div>
           <div className="flex-1 space-y-1">
-            <h2 className="text-xl font-semibold text-text">
+            <h2 className="text-text text-xl font-semibold">
               {isNewProvider ? 'Add Storage Provider' : 'Edit Provider'}
             </h2>
-            <p className="text-sm text-text-tertiary">
+            <p className="text-text-tertiary text-sm">
               {isNewProvider
                 ? 'Configure a new storage provider for your photos'
                 : 'Update provider configuration and credentials'}
@@ -137,7 +136,7 @@ export const ProviderEditModal = ({
         </div>
 
         {/* Horizontal divider */}
-        <div className="h-[0.5px] bg-linear-to-r from-transparent via-text/20 to-transparent" />
+        <div className="via-text/20 h-[0.5px] bg-linear-to-r from-transparent to-transparent" />
       </div>
 
       {/* Scrollable Content */}
@@ -151,7 +150,7 @@ export const ProviderEditModal = ({
           >
             {/* Basic Information */}
             <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-text">
+              <h3 className="text-text text-sm font-semibold">
                 Basic Information
               </h3>
               <div className="grid gap-4 md:grid-cols-2">
@@ -192,7 +191,7 @@ export const ProviderEditModal = ({
             {/* Configuration Fields */}
             {selectedFields.length > 0 && (
               <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-text">
+                <h3 className="text-text text-sm font-semibold">
                   Connection Configuration
                 </h3>
                 <div className="space-y-4">
@@ -201,7 +200,7 @@ export const ProviderEditModal = ({
                     return (
                       <div
                         key={field.key}
-                        className="space-y-2 rounded border border-fill-tertiary/40 bg-background/30 p-4"
+                        className="border-fill-tertiary/40 bg-background/30 space-y-2 rounded border p-4"
                       >
                         <div className="space-y-1">
                           <Label
@@ -211,7 +210,7 @@ export const ProviderEditModal = ({
                             {field.label}
                           </Label>
                           {field.description && (
-                            <p className="text-xs text-text-tertiary">
+                            <p className="text-text-tertiary text-xs">
                               {field.description}
                             </p>
                           )}
@@ -262,9 +261,9 @@ export const ProviderEditModal = ({
       </div>
 
       {/* Footer */}
-      <div className="shrink-0 px-6 pb-6 pt-4">
+      <div className="shrink-0 px-6 pt-4 pb-6">
         {/* Horizontal divider */}
-        <div className="mb-4 h-[0.5px] bg-linear-to-r from-transparent via-text/20 to-transparent" />
+        <div className="via-text/20 mb-4 h-[0.5px] bg-linear-to-r from-transparent to-transparent" />
 
         {isNewProvider ? (
           // Add mode: Simple cancel + create actions
@@ -314,7 +313,7 @@ export const ProviderEditModal = ({
               </Button>
 
               {isActive ? (
-                <span className="inline-flex items-center gap-1.5 rounded bg-accent px-4 py-2 text-xs font-semibold uppercase text-white">
+                <span className="bg-accent inline-flex items-center gap-1.5 rounded px-4 py-2 text-xs font-semibold text-white uppercase">
                   <DynamicIcon name="check-circle" className="h-3.5 w-3.5" />
                   Active
                 </span>
@@ -324,7 +323,7 @@ export const ProviderEditModal = ({
                   onClick={handleSetActive}
                   variant="ghost"
                   size="sm"
-                  className="border border-accent/30 bg-accent/10 text-accent hover:bg-accent/20"
+                  className="border-accent/30 bg-accent/10 text-accent hover:bg-accent/20 border"
                 >
                   <DynamicIcon name="check" className="h-3.5 w-3.5" />
                   <span>Set Active</span>

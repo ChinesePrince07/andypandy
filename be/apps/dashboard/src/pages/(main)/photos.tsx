@@ -44,15 +44,15 @@ export const Component = () => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ ...Spring.presets.smooth, delay: index * 0.05 }}
-            className="group relative aspect-square overflow-hidden bg-background-tertiary transition-all"
+            className="group bg-background-tertiary relative aspect-square overflow-hidden transition-all"
           >
             {/* Gradient borders */}
-            <div className="absolute left-0 top-0 right-0 h-[0.5px] bg-gradient-to-r from-transparent via-text/20 to-transparent transition-opacity group-hover:via-text/40" />
-            <div className="absolute top-0 right-0 bottom-0 w-[0.5px] bg-gradient-to-b from-transparent via-text/20 to-transparent transition-opacity group-hover:via-text/40" />
-            <div className="absolute left-0 bottom-0 right-0 h-[0.5px] bg-gradient-to-r from-transparent via-text/20 to-transparent transition-opacity group-hover:via-text/40" />
-            <div className="absolute top-0 left-0 bottom-0 w-[0.5px] bg-gradient-to-b from-transparent via-text/20 to-transparent transition-opacity group-hover:via-text/40" />
+            <div className="via-text/20 group-hover:via-text/40 absolute top-0 right-0 left-0 h-[0.5px] bg-gradient-to-r from-transparent to-transparent transition-opacity" />
+            <div className="via-text/20 group-hover:via-text/40 absolute top-0 right-0 bottom-0 w-[0.5px] bg-gradient-to-b from-transparent to-transparent transition-opacity" />
+            <div className="via-text/20 group-hover:via-text/40 absolute right-0 bottom-0 left-0 h-[0.5px] bg-gradient-to-r from-transparent to-transparent transition-opacity" />
+            <div className="via-text/20 group-hover:via-text/40 absolute top-0 bottom-0 left-0 w-[0.5px] bg-gradient-to-b from-transparent to-transparent transition-opacity" />
 
-            <div className="flex h-full items-center justify-center text-[13px] text-text-tertiary">
+            <div className="text-text-tertiary flex h-full items-center justify-center text-[13px]">
               Photo {index + 1}
             </div>
           </m.div>

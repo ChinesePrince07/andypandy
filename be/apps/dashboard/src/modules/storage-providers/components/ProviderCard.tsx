@@ -3,7 +3,7 @@ import { DynamicIcon } from 'lucide-react/dynamic'
 import { m } from 'motion/react'
 import type { FC } from 'react'
 
-import type { StorageProvider, StorageProviderType } from '../types'
+import type { StorageProvider } from '../types'
 
 const providerTypeConfig = {
   s3: {
@@ -57,18 +57,24 @@ export const ProviderCard: FC<ProviderCardProps> = ({
   const getPreviewInfo = () => {
     const cfg = provider.config
     switch (provider.type) {
-      case 's3':
+      case 's3': {
         return cfg.region || cfg.bucket || 'Not configured'
-      case 'github':
+      }
+      case 'github': {
         return cfg.repo || 'Not configured'
-      case 'local':
+      }
+      case 'local': {
         return cfg.path || 'Not configured'
-      case 'minio':
+      }
+      case 'minio': {
         return cfg.endpoint || 'Not configured'
-      case 'eagle':
+      }
+      case 'eagle': {
         return cfg.libraryPath || 'Not configured'
-      default:
+      }
+      default: {
         return 'Storage provider'
+      }
     }
   }
 
@@ -87,15 +93,15 @@ export const ProviderCard: FC<ProviderCardProps> = ({
       )}
     >
       {/* Linear gradient borders */}
-      <div className="absolute left-0 top-0 right-0 h-[0.5px] bg-linear-to-r from-transparent via-text/20 to-transparent transition-opacity group-hover:via-accent/40" />
-      <div className="absolute top-0 right-0 bottom-0 w-[0.5px] bg-linear-to-b from-transparent via-text/20 to-transparent transition-opacity group-hover:via-accent/40" />
-      <div className="absolute left-0 bottom-0 right-0 h-[0.5px] bg-linear-to-r from-transparent via-text/20 to-transparent transition-opacity group-hover:via-accent/40" />
-      <div className="absolute top-0 left-0 bottom-0 w-[0.5px] bg-linear-to-b from-transparent via-text/20 to-transparent transition-opacity group-hover:via-accent/40" />
+      <div className="via-text/20 group-hover:via-accent/40 absolute top-0 right-0 left-0 h-[0.5px] bg-linear-to-r from-transparent to-transparent transition-opacity" />
+      <div className="via-text/20 group-hover:via-accent/40 absolute top-0 right-0 bottom-0 w-[0.5px] bg-linear-to-b from-transparent to-transparent transition-opacity" />
+      <div className="via-text/20 group-hover:via-accent/40 absolute right-0 bottom-0 left-0 h-[0.5px] bg-linear-to-r from-transparent to-transparent transition-opacity" />
+      <div className="via-text/20 group-hover:via-accent/40 absolute top-0 bottom-0 left-0 w-[0.5px] bg-linear-to-b from-transparent to-transparent transition-opacity" />
 
       {/* Active Badge */}
       {isActive && (
-        <div className="absolute right-3 top-3">
-          <span className="inline-flex items-center gap-1 rounded bg-accent px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+        <div className="absolute top-3 right-3">
+          <span className="bg-accent inline-flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-semibold tracking-wide text-white uppercase">
             <DynamicIcon name="check-circle" className="h-3 w-3" />
             Active
           </span>
@@ -110,24 +116,27 @@ export const ProviderCard: FC<ProviderCardProps> = ({
             config.bgColor,
           )}
         >
-          <DynamicIcon name={config.icon as any} className={clsxm('h-6 w-6', config.color)} />
+          <DynamicIcon
+            name={config.icon as any}
+            className={clsxm('h-6 w-6', config.color)}
+          />
         </div>
       </div>
 
       {/* Provider Info */}
       <div className="relative flex-1 space-y-1">
-        <h3 className="text-sm font-semibold text-text">
+        <h3 className="text-text text-sm font-semibold">
           {provider.name || '未命名存储'}
         </h3>
-        <p className="text-xs font-medium text-text-tertiary">{config.label}</p>
-        <p className="truncate text-xs text-text-tertiary/70">
+        <p className="text-text-tertiary text-xs font-medium">{config.label}</p>
+        <p className="text-text-tertiary/70 truncate text-xs">
           {getPreviewInfo()}
         </p>
       </div>
 
       {/* Hover Edit Indicator */}
-      <div className="absolute inset-0 flex items-center justify-center bg-accent/0 opacity-0 transition-all duration-200 group-hover:bg-accent/5 group-hover:opacity-100">
-        <span className="flex items-center gap-1.5 rounded bg-accent px-3 py-1.5 text-xs font-medium text-white shadow-lg">
+      <div className="bg-accent/0 group-hover:bg-accent/5 absolute inset-0 flex items-center justify-center opacity-0 transition-all duration-200 group-hover:opacity-100">
+        <span className="bg-accent flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-medium text-white shadow-lg">
           <DynamicIcon name="pencil" className="h-3.5 w-3.5" />
           Edit
         </span>
@@ -135,4 +144,3 @@ export const ProviderCard: FC<ProviderCardProps> = ({
     </m.button>
   )
 }
-

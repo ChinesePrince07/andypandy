@@ -1,7 +1,7 @@
 import { Button, Modal } from '@afilmory/ui'
 import { Spring } from '@afilmory/utils'
 import { m } from 'motion/react'
-import { useEffect, useMemo, useState } from 'react'
+import { startTransition, useEffect, useState } from 'react'
 
 import {
   MainPageLayout,
@@ -36,16 +36,15 @@ export const StorageProvidersManager = () => {
     const activeId =
       data.activeProviderId ??
       (initialProviders.length > 0 ? initialProviders[0].id : null)
-    setProviders(initialProviders)
-    setActiveProviderId(activeId)
-    setIsDirty(false)
+
+    startTransition(() => {
+      setProviders(initialProviders)
+      setActiveProviderId(activeId)
+      setIsDirty(false)
+    })
   }, [data])
 
-  // eslint-disable-next-line react-compiler/react-compiler
-  const orderedProviders = useMemo(
-    () => reorderProvidersByActive(providers, activeProviderId),
-    [providers, activeProviderId],
-  )
+  const orderedProviders = reorderProvidersByActive(providers, activeProviderId)
 
   const markDirty = () => setIsDirty(true)
 
@@ -174,7 +173,7 @@ export const StorageProvidersManager = () => {
           {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
-              className="h-[180px] animate-pulse rounded bg-background-tertiary"
+              className="bg-background-tertiary h-[180px] animate-pulse rounded"
             />
           ))}
         </m.div>
@@ -186,7 +185,7 @@ export const StorageProvidersManager = () => {
     return (
       <>
         {headerActionPortal}
-        <div className="flex items-center justify-center gap-3 rounded bg-background-tertiary p-8 text-sm text-red">
+        <div className="bg-background-tertiary text-red flex items-center justify-center gap-3 rounded p-8 text-sm">
           <span>
             无法加载存储配置：
             <span>{error instanceof Error ? error.message : '未知错误'}</span>
@@ -241,7 +240,7 @@ export const StorageProvidersManager = () => {
           transition={{ ...Spring.presets.smooth, delay: 0.2 }}
           className="mt-4 text-center"
         >
-          <p className="text-xs text-text-tertiary">
+          <p className="text-text-tertiary text-xs">
             <span>
               {updateMutation.isError && updateMutation.error
                 ? `保存失败：${updateMutation.error instanceof Error ? updateMutation.error.message : '未知错误'}`

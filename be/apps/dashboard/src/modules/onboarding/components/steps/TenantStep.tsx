@@ -60,7 +60,7 @@ export const TenantStep: FC<TenantStepProps> = ({
         autoComplete="off"
       />
       <FormError>{errors['tenant.domain']}</FormError>
-      <p className="text-xs text-text-tertiary">
+      <p className="text-text-tertiary text-xs">
         Domains enable automatic routing for tenant-specific dashboards.
         Configure DNS separately after initialization.
       </p>

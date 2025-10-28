@@ -287,7 +287,7 @@ export const SuperAdminSettingsForm = () => {
   if (isError) {
     return (
       <GlassPanel className="p-6">
-        <div className="text-sm text-red">
+        <div className="text-red text-sm">
           <span>
             {`无法加载超级管理员设置：${error instanceof Error ? error.message : '未知错误'}`}
           </span>
@@ -298,13 +298,13 @@ export const SuperAdminSettingsForm = () => {
 
   if (isLoading || !formState || !data) {
     return (
-      <GlassPanel className="p-6 space-y-4">
-        <div className="h-6 w-1/3 animate-pulse rounded-full bg-fill/40" />
+      <GlassPanel className="space-y-4 p-6">
+        <div className="bg-fill/40 h-6 w-1/3 animate-pulse rounded-full" />
         <div className="space-y-4">
           {['skeleton-1', 'skeleton-2', 'skeleton-3'].map((key) => (
             <div
               key={key}
-              className="h-20 animate-pulse rounded-xl bg-fill/30"
+              className="bg-fill/30 h-20 animate-pulse rounded-xl"
             />
           ))}
         </div>
@@ -349,26 +349,26 @@ export const SuperAdminSettingsForm = () => {
       <div className="grid gap-4 md:grid-cols-2">
         <GlassPanel className="p-6">
           <div className="space-y-1">
-            <p className="text-xs uppercase tracking-wide text-text-tertiary">
+            <p className="text-text-tertiary text-xs tracking-wide uppercase">
               当前用户总数
             </p>
-            <p className="text-3xl font-semibold text-text">
+            <p className="text-text text-3xl font-semibold">
               {typeof totalUsers === 'number' ? totalUsers : 0}
             </p>
           </div>
         </GlassPanel>
         <GlassPanel className="p-6">
           <div className="space-y-1">
-            <p className="text-xs uppercase tracking-wide text-text-tertiary">
+            <p className="text-text-tertiary text-xs tracking-wide uppercase">
               剩余可注册名额
             </p>
-            <p className="text-3xl font-semibold text-text">{remainingLabel}</p>
+            <p className="text-text text-3xl font-semibold">{remainingLabel}</p>
           </div>
         </GlassPanel>
       </div>
 
       <div className="flex items-center justify-end gap-3">
-        <span className="text-xs text-text-tertiary">{mutationMessage}</span>
+        <span className="text-text-tertiary text-xs">{mutationMessage}</span>
         <Button
           type="submit"
           disabled={!hasChanges}
