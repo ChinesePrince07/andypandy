@@ -38,6 +38,14 @@ export class PhotoController {
   @Post('assets/upload')
   async uploadAssets(@ContextParam() context: Context) {
     const payload = await context.req.parseBody()
+    let directory: string | null = null
+
+    if (typeof payload['directory'] === 'string') {
+      directory = payload['directory']
+    } else if (Array.isArray(payload['directory'])) {
+      const candidate = payload['directory'].find((entry) => typeof entry === 'string')
+      directory = typeof candidate === 'string' ? candidate : null
+    }
 
     const files: File[] = []
     for (const value of Object.values(payload)) {
@@ -63,6 +71,7 @@ export class PhotoController {
         filename: file.name,
         buffer: Buffer.from(await file.arrayBuffer()),
         contentType: file.type || undefined,
+        directory,
       })),
     )
 

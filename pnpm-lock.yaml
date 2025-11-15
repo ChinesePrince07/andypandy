@@ -1113,6 +1113,9 @@ importers:
       usehooks-ts:
         specifier: 3.1.1
         version: 3.1.1(react@19.2.0)
+      zustand:
+        specifier: 5.0.8
+        version: 5.0.8(@types/react@19.2.3)(immer@10.2.0)(react@19.2.0)(use-sync-external-store@1.6.0(react@19.2.0))
     devDependencies:
       '@egoist/tailwindcss-icons':
         specifier: 1.9.0

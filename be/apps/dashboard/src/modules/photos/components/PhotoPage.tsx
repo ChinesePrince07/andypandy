@@ -31,6 +31,7 @@ import type {
 import { DeleteFromStorageOption } from './library/DeleteFromStorageOption'
 import type { DeleteAssetOptions } from './library/PhotoLibraryGrid'
 import { PhotoLibraryGrid } from './library/PhotoLibraryGrid'
+import type { PhotoUploadRequestOptions } from './library/upload.types'
 import { PhotoPageActions } from './PhotoPageActions'
 import { PhotoSyncConflictsPanel } from './sync/PhotoSyncConflictsPanel'
 import { PhotoSyncProgressPanel } from './sync/PhotoSyncProgressPanel'
@@ -106,6 +107,25 @@ export function PhotoPage() {
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds])
   const isListLoading = listQuery.isLoading || listQuery.isFetching
   const libraryAssetCount = listQuery.data?.length ?? 0
+  const availableTags = useMemo(() => {
+    if (!listQuery.data || listQuery.data.length === 0) {
+      return []
+    }
+    const tagSet = new Set<string>()
+    for (const asset of listQuery.data) {
+      const tags = asset.manifest?.data?.tags
+      if (!Array.isArray(tags)) {
+        continue
+      }
+      for (const tag of tags) {
+        const normalized = typeof tag === 'string' ? tag.trim() : ''
+        if (normalized) {
+          tagSet.add(normalized)
+        }
+      }
+    }
+    return Array.from(tagSet).sort((a, b) => a.localeCompare(b))
+  }, [listQuery.data])
 
   const handleToggleSelect = (id: string) => {
     setSelectedIds((prev) => {
@@ -277,16 +297,22 @@ export function PhotoPage() {
   )
 
   const handleUploadAssets = useCallback(
-    async (files: FileList) => {
+    async (files: FileList, options?: PhotoUploadRequestOptions) => {
       const fileArray = Array.from(files)
       if (fileArray.length === 0) return
       try {
-        await uploadMutation.mutateAsync(fileArray)
+        await uploadMutation.mutateAsync({
+          files: fileArray,
+          onProgress: options?.onUploadProgress,
+          signal: options?.signal,
+          directory: options?.directory ?? undefined,
+        })
         toast.success(`成功上传 ${fileArray.length} 张图片`)
         void listQuery.refetch()
       } catch (error) {
         const message = getRequestErrorMessage(error, '上传失败，请稍后重试。')
         toast.error('上传失败', { description: message })
+        throw error
       }
     },
     [listQuery, uploadMutation],
@@ -518,6 +544,7 @@ export function PhotoPage() {
         onDeleteSelected={handleDeleteSelected}
         onClearSelection={handleClearSelection}
         onSelectAll={handleSelectAll}
+        availableTags={availableTags}
         onSyncCompleted={handleSyncCompleted}
         onSyncProgress={handleProgressEvent}
         onSyncError={handleSyncError}

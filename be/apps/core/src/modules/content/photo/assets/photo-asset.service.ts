@@ -49,6 +49,7 @@ export interface UploadAssetInput {
   filename: string
   buffer: Buffer
   contentType?: string
+  directory?: string | null
 }
 
 const VIDEO_EXTENSIONS = new Set(['mov', 'mp4'])
@@ -723,9 +724,11 @@ export class PhotoAssetService {
     const base = path.basename(input.filename, ext).trim()
 
     const timestamp = Date.now().toString()
-    const directory = this.resolveStorageDirectory(storageConfig)
+    const storageDirectory = this.resolveStorageDirectory(storageConfig)
+    const customDirectory = this.normalizeDirectory(input.directory)
+    const combinedDirectory = this.joinStorageSegments(storageDirectory, customDirectory)
     const keySegment = base || timestamp
-    const normalized = directory ? `${directory}/${keySegment}${ext}` : `${keySegment}${ext}`
+    const normalized = combinedDirectory ? `${combinedDirectory}/${keySegment}${ext}` : `${keySegment}${ext}`
     return this.normalizeKeyPath(normalized)
   }
 

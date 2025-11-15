@@ -5,13 +5,15 @@ import type { ChangeEventHandler } from 'react'
 import { useRef } from 'react'
 
 import { PhotoUploadConfirmModal } from './PhotoUploadConfirmModal'
+import type { PhotoUploadRequestOptions } from './upload.types'
 
 type PhotoLibraryActionBarProps = {
   selectionCount: number
   totalCount: number
   isUploading: boolean
   isDeleting: boolean
-  onUpload: (files: FileList) => void | Promise<void>
+  availableTags: string[]
+  onUpload: (files: FileList, options?: PhotoUploadRequestOptions) => void | Promise<void>
   onDeleteSelected: () => void
   onClearSelection: () => void
   onSelectAll: () => void
@@ -22,6 +24,7 @@ export function PhotoLibraryActionBar({
   totalCount,
   isUploading,
   isDeleting,
+  availableTags,
   onUpload,
   onDeleteSelected,
   onClearSelection,
@@ -44,9 +47,8 @@ export function PhotoLibraryActionBar({
 
     Modal.present(PhotoUploadConfirmModal, {
       files: selectedFiles,
-      onConfirm: (confirmedFiles) => {
-        void onUpload(confirmedFiles)
-      },
+      availableTags,
+      onUpload,
     })
 
     if (fileInputRef.current) {
@@ -118,7 +120,7 @@ export function PhotoLibraryActionBar({
           onClick={onSelectAll}
           className="flex items-center gap-1 text-text-secondary hover:text-text"
         >
-          <DynamicIcon name={canSelectAll ? 'square' : 'check-square'} className="h-3.5 w-3.5" />
+          <DynamicIcon name={canSelectAll ? 'square' : 'check-square'} className="size-4" />
           {hasAssets ? (canSelectAll ? '全选' : '已全选') : '全选'}
         </Button>
       </div>

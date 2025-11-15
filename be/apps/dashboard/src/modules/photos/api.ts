@@ -20,6 +20,26 @@ type RunPhotoSyncOptions = {
   onEvent?: (event: PhotoSyncProgressEvent) => void
 }
 
+export type PhotoUploadFileProgress = {
+  index: number
+  name: string
+  size: number
+  uploadedBytes: number
+  progress: number
+}
+
+export type PhotoUploadProgressSnapshot = {
+  totalBytes: number
+  uploadedBytes: number
+  files: PhotoUploadFileProgress[]
+}
+
+export type UploadPhotoAssetsOptions = {
+  directory?: string
+  signal?: AbortSignal
+  onProgress?: (snapshot: PhotoUploadProgressSnapshot) => void
+}
+
 export async function runPhotoSync(
   payload: RunPhotoSyncPayload,
   options?: RunPhotoSyncOptions,
@@ -176,8 +196,12 @@ export async function deletePhotoAssets(ids: string[], options?: { deleteFromSto
 
 export async function uploadPhotoAssets(
   files: File[],
-  options?: { directory?: string },
+  options?: UploadPhotoAssetsOptions,
 ): Promise<PhotoAssetListItem[]> {
+  if (files.length === 0) {
+    return []
+  }
+
   const formData = new FormData()
 
   if (options?.directory) {
@@ -188,14 +212,116 @@ export async function uploadPhotoAssets(
     formData.append('files', file)
   }
 
-  const response = await coreApi<{ assets: PhotoAssetListItem[] }>('/photos/assets/upload', {
-    method: 'POST',
-    body: formData,
+  if (typeof XMLHttpRequest === 'undefined') {
+    const fallbackResponse = await coreApi<{ assets: PhotoAssetListItem[] }>('/photos/assets/upload', {
+      method: 'POST',
+      body: formData,
+    })
+    const fallbackData = camelCaseKeys<{ assets: PhotoAssetListItem[] }>(fallbackResponse)
+    return fallbackData.assets
+  }
+
+  const fileMetadata = files.map((file, index) => ({
+    index,
+    name: file.name,
+    size: file.size,
+  }))
+  const totalBytes = fileMetadata.reduce((sum, file) => sum + file.size, 0)
+
+  const snapshotFromLoaded = (loaded: number): PhotoUploadProgressSnapshot => {
+    let remaining = loaded
+    const filesProgress: PhotoUploadFileProgress[] = fileMetadata.map((meta) => {
+      const uploadedForFile = Math.max(0, Math.min(meta.size, remaining))
+      remaining -= uploadedForFile
+      return {
+        index: meta.index,
+        name: meta.name,
+        size: meta.size,
+        uploadedBytes: uploadedForFile,
+        progress: meta.size === 0 ? 1 : Math.min(1, uploadedForFile / meta.size),
+      }
+    })
+
+    return {
+      totalBytes,
+      uploadedBytes: Math.min(loaded, totalBytes),
+      files: filesProgress,
+    }
+  }
+
+  return await new Promise<PhotoAssetListItem[]>((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', `${coreApiBaseURL}/photos/assets/upload`, true)
+    xhr.withCredentials = true
+    xhr.responseType = 'json'
+
+    const handleAbort = () => {
+      xhr.abort()
+    }
+
+    const cleanup = () => {
+      if (options?.signal) {
+        options.signal.removeEventListener('abort', handleAbort)
+      }
+    }
+
+    if (options?.signal) {
+      if (options.signal.aborted) {
+        cleanup()
+        reject(new DOMException('Upload aborted', 'AbortError'))
+        return
+      }
+      options.signal.addEventListener('abort', handleAbort)
+    }
+
+    xhr.upload.onprogress = (event: ProgressEvent<EventTarget>) => {
+      if (!options?.onProgress) {
+        return
+      }
+      const loaded = event.lengthComputable ? event.loaded : totalBytes
+      options.onProgress(snapshotFromLoaded(loaded))
+    }
+
+    xhr.onerror = () => {
+      cleanup()
+      reject(new Error('上传过程中出现网络错误，请稍后再试。'))
+    }
+
+    xhr.onabort = () => {
+      cleanup()
+      reject(new DOMException('Upload aborted', 'AbortError'))
+    }
+
+    xhr.onload = () => {
+      cleanup()
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const rawResponse = typeof xhr.response === 'string' ? JSON.parse(xhr.response) : xhr.response
+          const parsed = camelCaseKeys<{ assets: PhotoAssetListItem[] }>(rawResponse)
+          resolve(parsed.assets)
+        } catch (error) {
+          reject(error instanceof Error ? error : new Error('无法解析上传响应'))
+        }
+        return
+      }
+
+      let message = `上传失败：${xhr.status}`
+      const {responseText} = xhr
+      if (responseText) {
+        try {
+          const parsed = JSON.parse(responseText)
+          if (parsed && typeof parsed.message === 'string') {
+            message = parsed.message
+          }
+        } catch {
+          // ignore parse error
+        }
+      }
+      reject(new Error(message))
+    }
+
+    xhr.send(formData)
   })
-
-  const data = camelCaseKeys<{ assets: PhotoAssetListItem[] }>(response)
-
-  return data.assets
 }
 
 export async function getPhotoStorageUrl(storageKey: string): Promise<string> {

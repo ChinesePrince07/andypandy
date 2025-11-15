@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
+import type { UploadPhotoAssetsOptions } from './api'
 import {
   deletePhotoAssets,
   getPhotoAssetSummary,
@@ -78,8 +79,22 @@ export function useUploadPhotoAssetsMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (files: File[]) => {
-      return await uploadPhotoAssets(files)
+    mutationFn: async ({
+      files,
+      directory,
+      signal,
+      onProgress,
+    }: {
+      files: File[]
+      directory?: string | null
+      signal?: AbortSignal
+      onProgress?: UploadPhotoAssetsOptions['onProgress']
+    }) => {
+      return await uploadPhotoAssets(files, {
+        directory: directory ?? undefined,
+        signal,
+        onProgress,
+      })
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({

@@ -1,7 +1,18 @@
-import { Button, Modal, Prompt, Thumbhash } from '@afilmory/ui'
+import {
+  Button,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  Modal,
+  Prompt,
+  Thumbhash,
+} from '@afilmory/ui'
 import { clsxm } from '@afilmory/utils'
 import { useAtomValue } from 'jotai'
 import { DynamicIcon } from 'lucide-react/dynamic'
+import type { ReactNode } from 'react'
+import { useMemo, useState } from 'react'
 
 import { viewportAtom } from '~/atoms/viewport'
 import { LinearBorderPanel } from '~/components/common/GlassPanel'
@@ -24,6 +35,35 @@ type PhotoLibraryGridProps = {
   onOpenAsset: (asset: PhotoAssetListItem) => void
   onDeleteAsset: (asset: PhotoAssetListItem, options?: DeleteAssetOptions) => Promise<void> | void
   isDeleting?: boolean
+}
+
+type PhotoLibrarySortBy = 'uploadedAt' | 'capturedAt'
+type PhotoLibrarySortOrder = 'desc' | 'asc'
+
+const SORT_BY_OPTIONS: { value: PhotoLibrarySortBy; label: string; icon: string }[] = [
+  { value: 'uploadedAt', label: '按上传时间', icon: 'upload' },
+  { value: 'capturedAt', label: '按拍摄时间', icon: 'camera' },
+]
+
+const SORT_ORDER_OPTIONS: { value: PhotoLibrarySortOrder; label: string; icon: string }[] = [
+  { value: 'desc', label: '最新优先', icon: 'arrow-down' },
+  { value: 'asc', label: '最早优先', icon: 'arrow-up' },
+]
+
+function parseDate(value?: string | number | null) {
+  if (!value) return 0
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : 0
+  }
+  const timestamp = Date.parse(value)
+  return Number.isNaN(timestamp) ? 0 : timestamp
+}
+
+function getSortTimestamp(asset: PhotoAssetListItem, sortBy: PhotoLibrarySortBy) {
+  if (sortBy === 'capturedAt') {
+    return parseDate(asset.manifest?.data?.dateTaken) || parseDate(asset.manifest?.data?.exif?.DateTimeOriginal)
+  }
+  return parseDate(asset.createdAt)
 }
 
 function PhotoGridItem({
@@ -193,9 +233,21 @@ export function PhotoLibraryGrid({
 }: PhotoLibraryGridProps) {
   const viewport = useAtomValue(viewportAtom)
   const columnWidth = viewport.sm ? 320 : 160
+  const [sortBy, setSortBy] = useState<PhotoLibrarySortBy>('uploadedAt')
+  const [sortOrder, setSortOrder] = useState<PhotoLibrarySortOrder>('desc')
+
+  const sortedAssets = useMemo(() => {
+    if (!assets) return
+    return assets.toSorted((a, b) => {
+      const diff = getSortTimestamp(b, sortBy) - getSortTimestamp(a, sortBy)
+      return sortOrder === 'desc' ? diff : -diff
+    })
+  }, [assets, sortBy, sortOrder])
+
+  let content: ReactNode
 
   if (isLoading) {
-    return (
+    content = (
       <div className="columns-1 gap-4 sm:columns-2 lg:columns-3">
         {Array.from({ length: 6 }, (_, i) => `photo-skeleton-${i + 1}`).map((key) => (
           <div key={key} className="mb-4 break-inside-avoid">
@@ -204,35 +256,98 @@ export function PhotoLibraryGrid({
         ))}
       </div>
     )
-  }
-
-  if (!assets || assets.length === 0) {
-    return (
+  } else if (!sortedAssets || sortedAssets.length === 0) {
+    content = (
       <LinearBorderPanel className="bg-background-tertiary relative overflow-hidden p-4 sm:p-8 text-center">
         <p className="text-text text-sm sm:text-base font-semibold">当前没有图片资源</p>
         <p className="text-text-tertiary mt-2 text-xs sm:text-sm">使用右上角的"上传图片"按钮可以为图库添加新的照片。</p>
       </LinearBorderPanel>
     )
+  } else {
+    content = (
+      <div className="lg:mx-[calc(calc((3rem+100vw)-(var(--container-7xl)))*-1/2)] -mx-2 lg:mt-0 mt-12 p-1">
+        <Masonry
+          items={sortedAssets}
+          columnGutter={8}
+          columnWidth={columnWidth}
+          itemKey={(asset) => asset.id}
+          render={({ data }) => (
+            <PhotoGridItem
+              asset={data}
+              isSelected={selectedIds.has(data.id)}
+              onToggleSelect={onToggleSelect}
+              onOpenAsset={onOpenAsset}
+              onDeleteAsset={onDeleteAsset}
+              isDeleting={isDeleting}
+            />
+          )}
+        />
+      </div>
+    )
   }
 
+  const currentSortBy = SORT_BY_OPTIONS.find((option) => option.value === sortBy) ?? SORT_BY_OPTIONS[0]
+  const currentSortOrder = SORT_ORDER_OPTIONS.find((option) => option.value === sortOrder) ?? SORT_ORDER_OPTIONS[0]
+
   return (
-    <div className="lg:mx-[calc(calc((3rem+100vw)-(var(--container-7xl)))*-1/2)] -mx-2 lg:mt-0 mt-12 p-1">
-      <Masonry
-        items={assets}
-        columnGutter={8}
-        columnWidth={columnWidth}
-        itemKey={(asset) => asset.id}
-        render={({ data }) => (
-          <PhotoGridItem
-            asset={data}
-            isSelected={selectedIds.has(data.id)}
-            onToggleSelect={onToggleSelect}
-            onOpenAsset={onOpenAsset}
-            onDeleteAsset={onDeleteAsset}
-            isDeleting={isDeleting}
-          />
-        )}
-      />
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center justify-end gap-2 text-xs absolute lg:translate-y-[-50px] -translate-y-10 -translate-x-2 lg:translate-x-0 lg:right-[calc((100vw-var(--container-7xl))/2+0.75rem+100px)]">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="hover:bg-background-secondary/70 flex items-center gap-1.5 rounded-full border px-3 h-8 text-text"
+            >
+              <DynamicIcon name={currentSortBy.icon as any} className="size-4" />
+              <span className="font-medium">{currentSortBy.label}</span>
+              <DynamicIcon name="chevron-down" className="h-3 w-3 text-text-tertiary" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="min-w-[180px]">
+            {SORT_BY_OPTIONS.map((option) => (
+              <DropdownMenuItem
+                key={option.value}
+                active={option.value === sortBy}
+                icon={<DynamicIcon name={option.icon as any} className="size-4" />}
+                onSelect={() => setSortBy(option.value)}
+              >
+                {option.label}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="hover:bg-background-secondary/70 flex items-center gap-1.5 rounded-full border px-3 h-8 text-text"
+            >
+              <DynamicIcon name={currentSortOrder.icon as any} className="size-4" />
+              <span className="font-medium">{currentSortOrder.label}</span>
+              <DynamicIcon name="chevron-down" className="h-3 w-3 text-text-tertiary" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="min-w-[180px]">
+            {SORT_ORDER_OPTIONS.map((option) => (
+              <DropdownMenuItem
+                key={option.value}
+                active={option.value === sortOrder}
+                icon={<DynamicIcon name={option.icon as any} className="size-4" />}
+                onSelect={() => setSortOrder(option.value)}
+              >
+                {option.label}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {content}
     </div>
   )
 }

@@ -4,6 +4,7 @@ import { MainPageLayout } from '~/components/layouts/MainPageLayout'
 
 import type { PhotoSyncProgressEvent, PhotoSyncResult } from '../types'
 import { PhotoLibraryActionBar } from './library/PhotoLibraryActionBar'
+import type { PhotoUploadRequestOptions } from './library/upload.types'
 import type { PhotoPageTab } from './PhotoPage'
 import { PhotoSyncActions } from './sync/PhotoSyncActions'
 
@@ -13,7 +14,8 @@ type PhotoPageActionsProps = {
   libraryTotalCount: number
   isUploading: boolean
   isDeleting: boolean
-  onUpload: (files: FileList) => void | Promise<void>
+  availableTags: string[]
+  onUpload: (files: FileList, options?: PhotoUploadRequestOptions) => void | Promise<void>
   onDeleteSelected: () => void
   onClearSelection: () => void
   onSelectAll: () => void
@@ -28,6 +30,7 @@ export function PhotoPageActions({
   libraryTotalCount,
   isUploading,
   isDeleting,
+  availableTags,
   onUpload,
   onDeleteSelected,
   onClearSelection,
@@ -56,6 +59,7 @@ export function PhotoPageActions({
           totalCount={libraryTotalCount}
           isUploading={isUploading}
           isDeleting={isDeleting}
+          availableTags={availableTags}
           onUpload={onUpload}
           onDeleteSelected={onDeleteSelected}
           onClearSelection={onClearSelection}
