@@ -4,6 +4,7 @@ import { useAtomValue } from 'jotai'
 import { DynamicIcon } from 'lucide-react/dynamic'
 
 import { viewportAtom } from '~/atoms/viewport'
+import { LinearBorderPanel } from '~/components/common/GlassPanel'
 import { stopPropagation } from '~/lib/dom'
 
 import type { PhotoAssetListItem } from '../../types'
@@ -207,10 +208,10 @@ export function PhotoLibraryGrid({
 
   if (!assets || assets.length === 0) {
     return (
-      <div className="bg-background-tertiary relative overflow-hidden rounded-xl p-4 sm:p-8 text-center">
+      <LinearBorderPanel className="bg-background-tertiary relative overflow-hidden p-4 sm:p-8 text-center">
         <p className="text-text text-sm sm:text-base font-semibold">当前没有图片资源</p>
         <p className="text-text-tertiary mt-2 text-xs sm:text-sm">使用右上角的"上传图片"按钮可以为图库添加新的照片。</p>
-      </div>
+      </LinearBorderPanel>
     )
   }
 

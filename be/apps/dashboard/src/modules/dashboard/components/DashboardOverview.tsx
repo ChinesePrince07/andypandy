@@ -276,12 +276,6 @@ export function DashboardOverview() {
     },
   ]
 
-  const syncSummary = [
-    { key: 'synced', value: stats.sync.synced },
-    { key: 'pending', value: stats.sync.pending },
-    { key: 'conflict', value: stats.sync.conflicts },
-  ] as const
-
   return (
     <MainPageLayout title="Dashboard" description="掌握图库运行状态与最近同步活动">
       <div className="space-y-4 sm:space-y-5">
@@ -309,77 +303,28 @@ export function DashboardOverview() {
               ))}
         </div>
 
-        <div className="grid gap-4 sm:gap-5 grid-cols-1 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-          <LinearBorderPanel className="bg-background-tertiary/60 relative overflow-hidden px-4 sm:px-5 py-4 sm:py-5">
-            <div className="space-y-1 sm:space-y-1.5">
-              <h2 className="text-text text-sm sm:text-base font-semibold">最近活动</h2>
-              <p className="text-text-tertiary text-xs sm:text-sm leading-relaxed">
-                {data?.recentActivity?.length
-                  ? `展示最近 ${data.recentActivity.length} 次上传和同步记录`
-                  : '还没有任何上传，快来添加第一张照片吧～'}
-              </p>
+        <LinearBorderPanel className="bg-background-tertiary/60 relative overflow-hidden px-4 sm:px-5 py-4 sm:py-5">
+          <div className="space-y-1 sm:space-y-1.5">
+            <h2 className="text-text text-sm sm:text-base font-semibold">最近活动</h2>
+            <p className="text-text-tertiary text-xs sm:text-sm leading-relaxed">
+              {data?.recentActivity?.length
+                ? `展示最近 ${data.recentActivity.length} 次上传和同步记录`
+                : '还没有任何上传，快来添加第一张照片吧～'}
+            </p>
+          </div>
+
+          {isLoading ? (
+            <div className="mt-5 space-y-2.5">
+              {Array.from({ length: 3 }, (_, i) => `activity-skeleton-${i}`).map((key) => (
+                <ActivitySkeleton key={key} />
+              ))}
             </div>
-
-            {isLoading ? (
-              <div className="mt-5 space-y-2.5">
-                {Array.from({ length: 3 }, (_, i) => `activity-skeleton-${i}`).map((key) => (
-                  <ActivitySkeleton key={key} />
-                ))}
-              </div>
-            ) : isError ? (
-              <div className="mt-5 text-sm text-red-400">无法获取活动数据，请稍后再试。</div>
-            ) : (
-              <ActivityList items={data?.recentActivity ?? []} />
-            )}
-          </LinearBorderPanel>
-
-          <LinearBorderPanel className="bg-background-tertiary/60 relative overflow-hidden px-4 sm:px-5 py-4 sm:py-5">
-            <div className="space-y-1 sm:space-y-1.5">
-              <h2 className="text-text text-sm sm:text-base font-semibold">同步概览</h2>
-              <p className="text-text-tertiary text-xs sm:text-sm leading-relaxed">
-                了解当前同步状态，及时处理异常项。
-              </p>
-            </div>
-
-            <div className="mt-5 space-y-4">
-              {syncSummary.map((entry) => {
-                const meta = STATUS_META[entry.key]
-                const percent = statusTotal ? Math.round((entry.value / statusTotal) * 100) : 0
-
-                return (
-                  <div key={entry.key} className="space-y-2">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-text-secondary inline-flex items-center gap-1.5">
-                        <span className={`size-2 rounded-full ${meta.dotClass}`} />
-                        {meta.label}
-                      </span>
-                      <span className="text-text font-medium">
-                        {plainNumberFormatter.format(entry.value)}
-                        <span className="text-text-tertiary ml-1.5">{percent}%</span>
-                      </span>
-                    </div>
-                    <div className="bg-fill/20 h-1.5 w-full overflow-hidden rounded-full">
-                      <div
-                        className={`h-full rounded-full transition-all duration-300 ${meta.barClass}`}
-                        style={{ width: `${statusTotal ? Math.max(percent, entry.value > 0 ? 4 : 0) : 0}%` }}
-                      />
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-
-            <LinearDivider className="mt-12" />
-
-            <div className="text-text-secondary mt-5 px-3.5 py-2.5 text-xs leading-relaxed">
-              {statusTotal === 0
-                ? '暂无同步任务，添加照片后即可查看同步健康度。'
-                : syncCompletion !== null && syncCompletion >= 0.85
-                  ? '同步状态良好，保持当前处理效率即可。'
-                  : '存在待处理或冲突的项目，建议尽快检查同步日志。'}
-            </div>
-          </LinearBorderPanel>
-        </div>
+          ) : isError ? (
+            <div className="mt-5 text-sm text-red-400">无法获取活动数据，请稍后再试。</div>
+          ) : (
+            <ActivityList items={data?.recentActivity ?? []} />
+          )}
+        </LinearBorderPanel>
       </div>
     </MainPageLayout>
   )

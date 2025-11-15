@@ -43,6 +43,7 @@ export const RegistrationWizard: FC = () => {
   const slugManuallyEditedRef = useRef(false)
   const [lockedTenantSlug, setLockedTenantSlug] = useState<string | null>(null)
   const siteDefaultsAppliedRef = useRef(false)
+  const siteAutofillAppliedRef = useRef(false)
 
   const siteSchemaQuery = useQuery({
     queryKey: ['welcome', 'site-schema'],
@@ -150,6 +151,72 @@ export const RegistrationWizard: FC = () => {
         : (SITE_SETTINGS_KEYS as TenantSiteFieldKey[]),
     [siteFieldMap],
   )
+
+  useEffect(() => {
+    if (siteAutofillAppliedRef.current) {
+      return
+    }
+    if (!authUser) {
+      return
+    }
+    if (!siteFieldMap || siteFieldMap.size === 0) {
+      return
+    }
+
+    const resolveDisplayName = () => {
+      const rawName = authUser.name?.trim()
+      if (rawName) {
+        return rawName
+      }
+      const emailLocal = authUser.email?.split('@')[0]?.trim()
+      if (emailLocal) {
+        return emailLocal
+      }
+      return 'My'
+    }
+
+    const formatPossessive = (value: string) => {
+      if (!value) {
+        return 'My'
+      }
+      const trimmed = value.trim()
+      return /s$/i.test(trimmed) ? `${trimmed}'` : `${trimmed}'s`
+    }
+
+    const isEmptyValue = (value: unknown) => {
+      if (value == null) {
+        return true
+      }
+      if (typeof value === 'string') {
+        return value.trim().length === 0
+      }
+      return false
+    }
+
+    const prefillField = (key: TenantSiteFieldKey, value: string) => {
+      if (!siteFieldMap.has(key)) {
+        return false
+      }
+      const current = form.getFieldValue(key)
+      if (!isEmptyValue(current)) {
+        return false
+      }
+      form.setFieldValue(key, () => value)
+      return true
+    }
+
+    const displayName = resolveDisplayName()
+    const possessiveName = formatPossessive(displayName)
+    const defaultSiteName = `${possessiveName} Afilmory`
+    const defaultTitle = defaultSiteName
+    const defaultDescription = `A curated photo gallery by ${displayName} on Afilmory.`
+
+    prefillField('site.name', defaultSiteName)
+    prefillField('site.title', defaultTitle)
+    prefillField('site.description', defaultDescription)
+
+    siteAutofillAppliedRef.current = true
+  }, [authUser, form, siteFieldMap])
 
   const getStepFields = useCallback(
     (stepId: (typeof REGISTRATION_STEPS)[number]['id']) => {
@@ -431,6 +498,7 @@ export const RegistrationWizard: FC = () => {
     form,
     formValues,
     isLoading,
+    lockedTenantSlug,
     onFieldInteraction,
     siteFieldErrors,
     siteSchema,
