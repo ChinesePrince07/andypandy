@@ -38,6 +38,21 @@ export class SystemSettingService {
       SYSTEM_SETTING_DEFINITIONS.maxRegistrableUsers.schema,
       SYSTEM_SETTING_DEFINITIONS.maxRegistrableUsers.defaultValue,
     )
+    const maxPhotoUploadSizeMb = this.parseSetting(
+      rawValues[SYSTEM_SETTING_DEFINITIONS.maxPhotoUploadSizeMb.key],
+      SYSTEM_SETTING_DEFINITIONS.maxPhotoUploadSizeMb.schema,
+      SYSTEM_SETTING_DEFINITIONS.maxPhotoUploadSizeMb.defaultValue,
+    )
+    const maxDataSyncObjectSizeMb = this.parseSetting(
+      rawValues[SYSTEM_SETTING_DEFINITIONS.maxDataSyncObjectSizeMb.key],
+      SYSTEM_SETTING_DEFINITIONS.maxDataSyncObjectSizeMb.schema,
+      SYSTEM_SETTING_DEFINITIONS.maxDataSyncObjectSizeMb.defaultValue,
+    )
+    const maxPhotoLibraryItems = this.parseSetting(
+      rawValues[SYSTEM_SETTING_DEFINITIONS.maxPhotoLibraryItems.key],
+      SYSTEM_SETTING_DEFINITIONS.maxPhotoLibraryItems.schema,
+      SYSTEM_SETTING_DEFINITIONS.maxPhotoLibraryItems.defaultValue,
+    )
 
     const localProviderEnabled = this.parseSetting(
       rawValues[SYSTEM_SETTING_DEFINITIONS.localProviderEnabled.key],
@@ -84,6 +99,9 @@ export class SystemSettingService {
     return {
       allowRegistration,
       maxRegistrableUsers,
+      maxPhotoUploadSizeMb,
+      maxDataSyncObjectSizeMb,
+      maxPhotoLibraryItems,
       localProviderEnabled,
       baseDomain,
       oauthGatewayUrl,
@@ -145,6 +163,30 @@ export class SystemSettingService {
         }
 
         enqueueUpdate('maxRegistrableUsers', normalized)
+      }
+    }
+
+    if (patch.maxPhotoUploadSizeMb !== undefined) {
+      const normalized =
+        patch.maxPhotoUploadSizeMb === null ? null : Math.max(1, Math.trunc(patch.maxPhotoUploadSizeMb))
+      if (normalized !== current.maxPhotoUploadSizeMb) {
+        enqueueUpdate('maxPhotoUploadSizeMb', normalized)
+      }
+    }
+
+    if (patch.maxDataSyncObjectSizeMb !== undefined) {
+      const normalized =
+        patch.maxDataSyncObjectSizeMb === null ? null : Math.max(1, Math.trunc(patch.maxDataSyncObjectSizeMb))
+      if (normalized !== current.maxDataSyncObjectSizeMb) {
+        enqueueUpdate('maxDataSyncObjectSizeMb', normalized)
+      }
+    }
+
+    if (patch.maxPhotoLibraryItems !== undefined) {
+      const normalized =
+        patch.maxPhotoLibraryItems === null ? null : Math.max(0, Math.trunc(patch.maxPhotoLibraryItems))
+      if (normalized !== current.maxPhotoLibraryItems) {
+        enqueueUpdate('maxPhotoLibraryItems', normalized)
       }
     }
 

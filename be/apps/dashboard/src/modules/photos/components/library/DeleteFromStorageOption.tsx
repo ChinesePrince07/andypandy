@@ -19,9 +19,7 @@ export function DeleteFromStorageOption({ defaultChecked = false, disabled, onCh
       />
       <div className="space-y-1 text-sm leading-relaxed">
         <p className="font-medium">同时删除存储文件</p>
-        <p className="text-xs text-text-tertiary">
-          勾选后将一并移除对象存储或 Git 仓库中的原始文件与缩略图，默认为保留远程文件。
-        </p>
+        <p className="text-xs text-text-tertiary">勾选后将一并移除对象存储中的原始文件与缩略图</p>
       </div>
     </label>
   )

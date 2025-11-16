@@ -52,12 +52,19 @@ export function createFileEntries(files: File[]): FileProgressEntry[] {
   }))
 }
 
+export function normalizeStageCount(value: number | null | undefined, fallback = 0): number {
+  if (typeof value === 'number' && Number.isFinite(value) && value >= 0) {
+    return value
+  }
+  return fallback
+}
+
 export function createStageStateFromTotals(
   totals: PhotoSyncStageTotals,
 ): Record<PhotoSyncProgressStage, ProcessingStageState> {
   return STAGE_ORDER.reduce<Record<PhotoSyncProgressStage, ProcessingStageState>>(
     (acc, stage) => {
-      const total = totals[stage]
+      const total = normalizeStageCount(totals?.[stage], 0)
       acc[stage] = {
         status: total === 0 ? 'completed' : 'pending',
         processed: 0,

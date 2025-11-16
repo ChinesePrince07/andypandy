@@ -12,6 +12,16 @@ import { CURRENT_PHOTO_MANIFEST_VERSION, DATABASE_ONLY_PROVIDER, photoAssets } f
 import { EventEmitterService } from '@afilmory/framework'
 import { DbAccessor } from 'core/database/database.provider'
 import { BizException, ErrorCode } from 'core/errors'
+import { SystemSettingService } from 'core/modules/configuration/system-setting/system-setting.service'
+import { runWithBuilderLogRelay } from 'core/modules/infrastructure/data-sync/builder-log-relay'
+import type {
+  DataSyncAction,
+  DataSyncLogLevel,
+  DataSyncProgressEmitter,
+  DataSyncProgressEvent,
+  DataSyncResultSummary,
+  DataSyncStageTotals,
+} from 'core/modules/infrastructure/data-sync/data-sync.types'
 import { requireTenantContext } from 'core/modules/platform/tenant/tenant.context'
 import { and, eq, inArray, sql } from 'drizzle-orm'
 import { injectable } from 'tsyringe'
@@ -63,6 +73,11 @@ type PreparedUploadPlan = {
   isExisting?: boolean
 }
 
+type UploadAssetsOptions = {
+  progress?: DataSyncProgressEmitter
+  abortSignal?: AbortSignal
+}
+
 declare module '@afilmory/framework' {
   interface Events {
     'photo.manifest.changed': { tenantId: string }
@@ -76,6 +91,7 @@ export class PhotoAssetService {
     private readonly dbAccessor: DbAccessor,
     private readonly photoBuilderService: PhotoBuilderService,
     private readonly photoStorageService: PhotoStorageService,
+    private readonly systemSettingService: SystemSettingService,
   ) {}
 
   private async emitManifestChanged(tenantId: string): Promise<void> {
@@ -222,13 +238,18 @@ export class PhotoAssetService {
     await this.emitManifestChanged(tenant.tenant.id)
   }
 
-  async uploadAssets(inputs: readonly UploadAssetInput[]): Promise<PhotoAssetListItem[]> {
+  async uploadAssets(
+    inputs: readonly UploadAssetInput[],
+    options?: UploadAssetsOptions,
+  ): Promise<PhotoAssetListItem[]> {
     if (inputs.length === 0) {
       return []
     }
 
     const tenant = requireTenantContext()
     const db = this.dbAccessor.get()
+    const systemSettings = await this.systemSettingService.getSettings()
+    this.enforceUploadSizeLimit(inputs, systemSettings.maxPhotoUploadSizeMb)
     const { builderConfig, storageConfig } = await this.photoStorageService.resolveConfigForTenant(tenant.tenant.id)
 
     const builder = this.photoBuilderService.createBuilder(builderConfig)
@@ -238,13 +259,54 @@ export class PhotoAssetService {
     const { photoPlans, videoPlans } = this.prepareUploadPlans(inputs, storageConfig)
     const unmatchedVideoBaseNames = this.validateLivePhotoPairs(photoPlans, videoPlans)
 
+    const emitProgress = async (event: DataSyncProgressEvent) => {
+      if (!options?.progress) {
+        return
+      }
+      await options.progress(event)
+    }
+
+    const builderLogEmitter: DataSyncProgressEmitter | undefined = options?.progress
+      ? async (event) => {
+          if (event.type === 'log') {
+            await emitProgress(event)
+          }
+        }
+      : undefined
+
+    const emitLog = async (message: string, level: DataSyncLogLevel = 'info') => {
+      if (!options?.progress) {
+        return
+      }
+      await options.progress({
+        type: 'log',
+        payload: {
+          level,
+          message,
+          timestamp: new Date().toISOString(),
+          stage: 'missing-in-db',
+        },
+      })
+    }
+
+    const throwIfAborted = () => {
+      if (options?.abortSignal?.aborted) {
+        throw new DOMException('Upload aborted', 'AbortError')
+      }
+    }
+
+    await emitLog(`收到 ${inputs.length} 个上传文件，准备处理。`)
+    throwIfAborted()
+
     const {
       items: existingItemsRaw,
       keySet: existingPhotoKeySet,
       baseNameMap: existingBaseNameMap,
     } = await this.collectExistingPhotoRecords(photoPlans, videoPlans, tenant.tenant.id, storageManager, db)
+    throwIfAborted()
 
     const existingPhotoIds = await this.collectExistingPhotoIds(photoPlans, tenant.tenant.id, db)
+    throwIfAborted()
 
     const groupOverrides = this.ensureUploadPlanKeyUniqueness(photoPlans, existingPhotoKeySet, existingPhotoIds)
     if (groupOverrides.size > 0) {
@@ -252,6 +314,13 @@ export class PhotoAssetService {
     }
 
     const pendingPhotoPlans = photoPlans.filter((plan) => !existingPhotoKeySet.has(plan.storageKey))
+    await this.ensurePhotoLibraryCapacity(
+      tenant.tenant.id,
+      db,
+      pendingPhotoPlans.length,
+      systemSettings.maxPhotoLibraryItems,
+    )
+    throwIfAborted()
 
     const additionalPhotoPlans = this.createExistingPhotoPlansForVideos(unmatchedVideoBaseNames, existingBaseNameMap)
 
@@ -267,9 +336,6 @@ export class PhotoAssetService {
     }
 
     const allPendingPhotoPlans = [...pendingPhotoPlans, ...additionalPhotoPlans]
-    if (allPendingPhotoPlans.length === 0) {
-      return existingItemsRaw
-    }
 
     const reprocessedKeys = new Set(allPendingPhotoPlans.map((plan) => plan.storageKey))
     const existingItems = existingItemsRaw.filter((item) => !reprocessedKeys.has(item.storageKey))
@@ -282,6 +348,76 @@ export class PhotoAssetService {
     )
     const videoObjectsByBaseName = await this.prepareVideoObjects(activeVideoPlans, storageManager, existingStorageMap)
 
+    let processedCount = 0
+    const summary = this.createUploadSummary(allPendingPhotoPlans.length, existingItemsRaw.length)
+    const totals = this.createUploadStageTotals(allPendingPhotoPlans.length)
+    const actions: DataSyncAction[] = []
+
+    if (options?.progress) {
+      await emitProgress({
+        type: 'start',
+        payload: {
+          summary: { ...summary },
+          totals,
+          options: { dryRun: false },
+        },
+      })
+      await emitProgress({
+        type: 'stage',
+        payload: {
+          stage: 'missing-in-db',
+          status: 'start',
+          processed: 0,
+          total: totals['missing-in-db'],
+          summary: { ...summary },
+        },
+      })
+      await emitProgress({
+        type: 'stage',
+        payload: {
+          stage: 'metadata-conflicts',
+          status: 'start',
+          processed: 0,
+          total: totals['metadata-conflicts'],
+          summary: { ...summary },
+        },
+      })
+    }
+
+    if (allPendingPhotoPlans.length === 0) {
+      await emitLog('所有文件均已存在，跳过上传。', 'warn')
+      if (options?.progress) {
+        await emitProgress({
+          type: 'stage',
+          payload: {
+            stage: 'missing-in-db',
+            status: 'complete',
+            processed: 0,
+            total: totals['missing-in-db'],
+            summary: { ...summary },
+          },
+        })
+        await emitProgress({
+          type: 'stage',
+          payload: {
+            stage: 'metadata-conflicts',
+            status: 'complete',
+            processed: 0,
+            total: totals['metadata-conflicts'],
+            summary: { ...summary },
+          },
+        })
+        await emitProgress({
+          type: 'complete',
+          payload: {
+            summary: { ...summary },
+            actions,
+          },
+        })
+      }
+      return existingItemsRaw
+    }
+
     const processedItems = await this.processPendingPhotos({
       pendingPhotoPlans: allPendingPhotoPlans,
       videoObjectsByBaseName,
@@ -292,9 +428,72 @@ export class PhotoAssetService {
       tenantId: tenant.tenant.id,
       db,
       existingStorageMap,
+      abortSignal: options?.abortSignal,
+      builderLogEmitter,
+      onProcessed: async ({ storageObject, manifestItem }) => {
+        throwIfAborted()
+        processedCount += 1
+        summary.inserted += 1
+        const action = this.createUploadAction(storageObject, manifestItem)
+        actions.push(action)
+        if (options?.progress) {
+          await emitProgress({
+            type: 'action',
+            payload: {
+              stage: 'missing-in-db',
+              index: processedCount,
+              total: totals['missing-in-db'],
+              action,
+              summary: { ...summary },
+            },
+          })
+          await emitProgress({
+            type: 'action',
+            payload: {
+              stage: 'metadata-conflicts',
+              index: processedCount,
+              total: totals['metadata-conflicts'],
+              action,
+              summary: { ...summary },
+            },
+          })
+        }
+        await emitLog(`已处理 ${processedCount}/${totals['missing-in-db']}：${manifestItem.title || manifestItem.id}`)
+      },
     })
 
     const result = [...existingItems, ...processedItems]
+
+    if (options?.progress) {
+      await emitProgress({
+        type: 'stage',
+        payload: {
+          stage: 'missing-in-db',
+          status: 'complete',
+          processed: processedCount,
+          total: totals['missing-in-db'],
+          summary: { ...summary },
+        },
+      })
+      await emitProgress({
+        type: 'stage',
+        payload: {
+          stage: 'metadata-conflicts',
+          status: 'complete',
+          processed: processedCount,
+          total: totals['metadata-conflicts'],
+          summary: { ...summary },
+        },
+      })
+      await emitProgress({
+        type: 'complete',
+        payload: {
+          summary: { ...summary },
+          actions,
+        },
+      })
+      await emitLog('所有文件处理完成。', 'success')
+    }
 
     if (processedItems.length > 0) {
       await this.emitManifestChanged(tenant.tenant.id)
@@ -622,6 +821,13 @@ export class PhotoAssetService {
     tenantId: string
     db: ReturnType<DbAccessor['get']>
     existingStorageMap: Map<string, StorageObject>
+    abortSignal?: AbortSignal
+    builderLogEmitter?: DataSyncProgressEmitter
+    onProcessed?: (payload: {
+      plan: PreparedUploadPlan
+      storageObject: StorageObject
+      manifestItem: PhotoManifestItem
+    }) => Promise<void> | void
   }): Promise<PhotoAssetListItem[]> {
     const {
       pendingPhotoPlans,
@@ -633,11 +839,21 @@ export class PhotoAssetService {
       tenantId,
       db,
       existingStorageMap,
+      abortSignal,
+      builderLogEmitter,
+      onProcessed,
     } = params
 
     const results: PhotoAssetListItem[] = []
 
+    const throwIfAborted = () => {
+      if (abortSignal?.aborted) {
+        throw new DOMException('Upload aborted', 'AbortError')
+      }
+    }
+
     for (const plan of pendingPhotoPlans) {
+      throwIfAborted()
       let storageObject = existingStorageMap.get(plan.storageKey)
       if (!storageObject) {
         if (plan.isExisting) {
@@ -659,16 +875,18 @@ export class PhotoAssetService {
       const videoObject = videoObjectsByBaseName.get(plan.baseName)
       const livePhotoMap = videoObject ? new Map([[resolvedPhotoKey, videoObject]]) : undefined
 
-      const processed = await this.photoBuilderService.processPhotoFromStorageObject(storageObject, {
-        builder,
-        builderConfig,
-        processorOptions: {
-          isForceMode: true,
-          isForceManifest: true,
-          isForceThumbnails: true,
-        },
-        livePhotoMap,
-      })
+      const processed = await runWithBuilderLogRelay(builderLogEmitter, () =>
+        this.photoBuilderService.processPhotoFromStorageObject(storageObject, {
+          builder,
+          builderConfig,
+          processorOptions: {
+            isForceMode: true,
+            isForceManifest: true,
+            isForceThumbnails: true,
+          },
+          livePhotoMap,
+        }),
+      )
 
       const item = processed?.item
       if (!item) {
@@ -735,6 +953,10 @@ export class PhotoAssetService {
 
       const publicUrl = await Promise.resolve(storageManager.generatePublicUrl(resolvedPhotoKey))
 
+      if (onProcessed) {
+        await onProcessed({ plan, storageObject, manifestItem: item })
+      }
+
       results.push({
         id: saved.id,
         photoId: saved.photoId,
@@ -758,6 +980,43 @@ export class PhotoAssetService {
     const { builderConfig, storageConfig } = await this.photoStorageService.resolveConfigForTenant(tenant.tenant.id)
     const storageManager = this.createStorageManager(builderConfig, storageConfig)
     return await Promise.resolve(storageManager.generatePublicUrl(storageKey))
+  }
+
+  private createUploadSummary(pendingCount: number, existingRecords: number): DataSyncResultSummary {
+    return {
+      storageObjects: pendingCount,
+      databaseRecords: existingRecords,
+      inserted: 0,
+      updated: 0,
+      deleted: 0,
+      conflicts: 0,
+      skipped: 0,
+      errors: 0,
+    }
+  }
+
+  private createUploadStageTotals(pendingCount: number): DataSyncStageTotals {
+    return {
+      'missing-in-db': pendingCount,
+      'orphan-in-db': 0,
+      'metadata-conflicts': pendingCount,
+      'status-reconciliation': 0,
+    }
+  }
+
+  private createUploadAction(storageObject: StorageObject, manifestItem: PhotoManifestItem): DataSyncAction {
+    const snapshot = this.createStorageSnapshot(storageObject)
+    return {
+      type: 'insert',
+      storageKey: storageObject.key ?? manifestItem.s3Key,
+      photoId: manifestItem.id,
+      applied: true,
+      reason: 'Uploaded via dashboard',
+      snapshots: {
+        after: snapshot,
+      },
+      manifestAfter: structuredClone(manifestItem),
+    }
   }
 
   private createStorageManager(builderConfig: BuilderConfig, storageConfig: StorageConfig): StorageManager {
@@ -796,6 +1055,64 @@ export class PhotoAssetService {
       version: CURRENT_PHOTO_MANIFEST_VERSION,
       data: structuredClone(item),
     }
+  }
+
+  private enforceUploadSizeLimit(inputs: readonly UploadAssetInput[], limitMb: number | null): void {
+    const maxBytes = this.convertMbToBytes(limitMb)
+    if (maxBytes === null || inputs.length === 0) {
+      return
+    }
+
+    for (const input of inputs) {
+      const size = input.buffer?.length ?? 0
+      if (size <= maxBytes) {
+        continue
+      }
+
+      const displayLimit = limitMb ?? this.formatBytesToMb(maxBytes)
+      const actualSize = this.formatBytesToMb(size)
+      throw new BizException(ErrorCode.COMMON_BAD_REQUEST, {
+        message: `文件 ${input.filename} (${actualSize} MB) 超出允许的单张大小 ${displayLimit} MB`,
+      })
+    }
+  }
+
+  private convertMbToBytes(value: number | null): number | null {
+    if (value === null) {
+      return null
+    }
+    return value * 1024 * 1024
+  }
+
+  private formatBytesToMb(value: number): number {
+    const mb = value / (1024 * 1024)
+    return Number(mb.toFixed(2))
+  }
+
+  private async ensurePhotoLibraryCapacity(
+    tenantId: string,
+    db: ReturnType<DbAccessor['get']>,
+    newPhotos: number,
+    limit: number | null,
+  ): Promise<void> {
+    if (limit === null || newPhotos === 0) {
+      return
+    }
+
+    const current = await this.countTenantPhotos(tenantId, db)
+    if (current + newPhotos > limit) {
+      throw new BizException(ErrorCode.COMMON_BAD_REQUEST, {
+        message: `当前图库已有 ${current} 张图片，超过上限 ${limit}，无法继续上传`,
+      })
+    }
+  }
+
+  private async countTenantPhotos(tenantId: string, db: ReturnType<DbAccessor['get']>): Promise<number> {
+    const [row] = await db
+      .select({ total: sql<number>`count(*)` })
+      .from(photoAssets)
+      .where(eq(photoAssets.tenantId, tenantId))
+    return typeof row?.total === 'number' ? row.total : Number(row?.total ?? 0)
   }
 
   private splitStorageKey(storageKey: string): { basePath: string; extension: string } {

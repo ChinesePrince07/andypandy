@@ -1,5 +1,6 @@
 import { coreApi, coreApiBaseURL } from '~/lib/api-client'
 import { camelCaseKeys } from '~/lib/case'
+import { getRequestErrorMessage } from '~/lib/errors'
 
 import type {
   PhotoAssetListItem,
@@ -14,6 +15,52 @@ import type {
 } from './types'
 
 const STABLE_NEWLINE = /\r?\n/
+
+function normalizeServerMessage(payload: unknown): string | null {
+  const message = getRequestErrorMessage(payload, '')
+  if (!message) {
+    return null
+  }
+  const trimmed = message.trim()
+  return trimmed.length > 0 ? trimmed : null
+}
+
+function parseRawPayload(raw: string | null | undefined): unknown | null {
+  if (!raw) {
+    return null
+  }
+  const trimmed = raw.trim()
+  if (!trimmed) {
+    return null
+  }
+  try {
+    return JSON.parse(trimmed)
+  } catch {
+    return trimmed
+  }
+}
+
+function extractMessageFromRaw(raw: string | null | undefined): string | null {
+  const payload = parseRawPayload(raw)
+  if (payload == null) {
+    return null
+  }
+  return normalizeServerMessage(payload)
+}
+
+async function readResponseErrorMessage(response: Response): Promise<string | null> {
+  try {
+    const text = await response.text()
+    return extractMessageFromRaw(text)
+  } catch {
+    return null
+  }
+}
+
+function extractMessageFromXhr(xhr: XMLHttpRequest): string | null {
+  const raw = typeof xhr.response === 'string' && xhr.response.length > 0 ? xhr.response : (xhr.responseText ?? '')
+  return extractMessageFromRaw(raw)
+}
 
 type RunPhotoSyncOptions = {
   signal?: AbortSignal
@@ -39,6 +86,7 @@ export type UploadPhotoAssetsOptions = {
   signal?: AbortSignal
   onProgress?: (snapshot: PhotoUploadProgressSnapshot) => void
   timeoutMs?: number
+  onServerEvent?: (event: PhotoSyncProgressEvent) => void
 }
 
 export async function runPhotoSync(
@@ -57,8 +105,9 @@ export async function runPhotoSync(
   })
 
   if (!response.ok || !response.body) {
-    const message = `同步请求失败：${response.status} ${response.statusText}`
-    throw new Error(message)
+    const fallback = `同步请求失败：${response.status} ${response.statusText}`
+    const serverMessage = await readResponseErrorMessage(response)
+    throw new Error(serverMessage ?? fallback)
   }
 
   const reader = response.body.getReader()
@@ -254,7 +303,7 @@ export async function uploadPhotoAssets(
     const xhr = new XMLHttpRequest()
     xhr.open('POST', `${coreApiBaseURL}/photos/assets/upload`, true)
     xhr.withCredentials = true
-    xhr.responseType = 'json'
+    xhr.setRequestHeader('accept', 'text/event-stream')
     if (options?.timeoutMs && Number.isFinite(options.timeoutMs)) {
       xhr.timeout = Math.max(0, options.timeoutMs)
     }
@@ -286,47 +335,114 @@ export async function uploadPhotoAssets(
       options.onProgress(snapshotFromLoaded(loaded))
     }
 
-    xhr.onerror = () => {
+    let buffer = ''
+    let lastIndex = 0
+    let settled = false
+    let completed = false
+
+    const settle = (resolver: () => void, rejecter?: (error: Error) => void, error?: Error) => {
+      if (settled) return
+      settled = true
       cleanup()
-      reject(new Error('上传过程中出现网络错误，请稍后再试。'))
+      if (error && rejecter) {
+        rejecter(error)
+        return
+      }
+      resolver()
     }
 
-    xhr.onabort = () => {
-      cleanup()
-      reject(new DOMException('Upload aborted', 'AbortError'))
+    const processBuffer = () => {
+      const text = xhr.responseText
+      if (!text || text.length === lastIndex) {
+        return
+      }
+      const chunk = text.slice(lastIndex)
+      lastIndex = text.length
+      buffer += chunk
+
+      let boundary = buffer.indexOf('\n\n')
+      while (boundary !== -1) {
+        const rawEvent = buffer.slice(0, boundary)
+        buffer = buffer.slice(boundary + 2)
+        handleSseEvent(rawEvent)
+        boundary = buffer.indexOf('\n\n')
+      }
     }
 
-    xhr.ontimeout = () => {
-      cleanup()
-      reject(new Error('上传超时，请稍后再试。'))
-    }
+    const handleSseEvent = (rawEvent: string) => {
+      const lines = rawEvent.split(STABLE_NEWLINE)
+      let eventName: string | null = null
+      const dataLines: string[] = []
 
-    xhr.onload = () => {
-      cleanup()
-      if (xhr.status >= 200 && xhr.status < 300) {
-        try {
-          const rawResponse = typeof xhr.response === 'string' ? JSON.parse(xhr.response) : xhr.response
-          const parsed = camelCaseKeys<{ assets: PhotoAssetListItem[] }>(rawResponse)
-          resolve(parsed.assets)
-        } catch (error) {
-          reject(error instanceof Error ? error : new Error('无法解析上传响应'))
+      for (const line of lines) {
+        if (!line) {
+          continue
         }
+        if (line.startsWith(':')) {
+          continue
+        }
+        if (line.startsWith('event:')) {
+          eventName = line.slice(6).trim()
+          continue
+        }
+        if (line.startsWith('data:')) {
+          dataLines.push(line.slice(5).trim())
+        }
+      }
+
+      if (eventName !== 'progress' || dataLines.length === 0) {
         return
       }
 
-      let message = `上传失败：${xhr.status}`
-      const { responseText } = xhr
-      if (responseText) {
-        try {
-          const parsed = JSON.parse(responseText)
-          if (parsed && typeof parsed.message === 'string') {
-            message = parsed.message
-          }
-        } catch {
-          // ignore parse error
+      try {
+        const parsed = JSON.parse(dataLines.join('\n'))
+        const event = camelCaseKeys<PhotoSyncProgressEvent>(parsed)
+        options?.onServerEvent?.(event)
+        if (event.type === 'error') {
+          settle(() => {}, reject, new Error(event.payload.message || '服务器处理失败'))
+          xhr.abort()
+          return
         }
+        if (event.type === 'complete') {
+          completed = true
+        }
+      } catch (error) {
+        console.error('Failed to parse upload progress event', error)
       }
-      reject(new Error(message))
+    }
+
+    xhr.onreadystatechange = () => {
+      if (xhr.readyState === XMLHttpRequest.LOADING || xhr.readyState === XMLHttpRequest.DONE) {
+        processBuffer()
+      }
+    }
+
+    xhr.onprogress = () => {
+      processBuffer()
+    }
+
+    xhr.onerror = () => {
+      settle(() => {}, reject, new Error('上传过程中出现网络错误，请稍后再试。'))
+    }
+
+    xhr.onabort = () => {
+      settle(() => {}, reject, new DOMException('Upload aborted', 'AbortError'))
+    }
+
+    xhr.ontimeout = () => {
+      settle(() => {}, reject, new Error('上传超时，请稍后再试。'))
+    }
+
+    xhr.onload = () => {
+      processBuffer()
+      if (xhr.status >= 200 && xhr.status < 300 && completed) {
+        settle(() => resolve([]))
+        return
+      }
+
+      const fallbackMessage = xhr.status >= 200 && xhr.status < 300 ? '上传响应未完成' : `上传失败：${xhr.status}`
+      const serverMessage = extractMessageFromXhr(xhr)
+      settle(() => {}, reject, new Error(serverMessage ?? fallbackMessage))
     }
 
     xhr.send(formData)

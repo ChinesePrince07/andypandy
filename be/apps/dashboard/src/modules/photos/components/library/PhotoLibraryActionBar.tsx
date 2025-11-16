@@ -113,7 +113,7 @@ export function PhotoLibraryActionBar({
             <DynamicIcon name="trash-2" className="h-3.5 w-3.5" />
             删除
           </Button>
-          <Button type="button" variant="ghost" size="sm" onClick={onClearSelection}>
+          <Button type="button" className="gap-1" variant="ghost" size="sm" onClick={onClearSelection}>
             <DynamicIcon name="x" className="h-3.5 w-3.5" />
             清除选择
           </Button>

@@ -5,6 +5,9 @@ const updateSuperAdminSettingsSchema = z
   .object({
     allowRegistration: z.boolean().optional(),
     maxRegistrableUsers: z.number().int().min(0).nullable().optional(),
+    maxPhotoUploadSizeMb: z.number().int().positive().nullable().optional(),
+    maxDataSyncObjectSizeMb: z.number().int().positive().nullable().optional(),
+    maxPhotoLibraryItems: z.number().int().min(0).nullable().optional(),
     localProviderEnabled: z.boolean().optional(),
     baseDomain: z
       .string()

@@ -40,7 +40,7 @@ export function ProcessingPanel({ state, logs }: ProcessingPanelProps) {
 
   return (
     <div className="space-y-3">
-      <div className="space-y-2">
+      <div className="space-y-2 mt-4">
         {STAGE_ORDER.map((stage) => {
           const stageState = state.stages[stage]
           const ratio = stageState.total === 0 ? 1 : Math.min(1, stageState.processed / stageState.total)
@@ -73,12 +73,7 @@ export function ProcessingPanel({ state, logs }: ProcessingPanelProps) {
           </LinearBorderPanel>
         ))}
       </div>
-      {state.latestLog ? (
-        <LinearBorderPanel className="bg-background/50 px-3 py-2 text-[11px] text-text-tertiary">
-          <span className="font-medium text-text">最新日志：</span>
-          <span className="ml-1">{state.latestLog.message}</span>
-        </LinearBorderPanel>
-      ) : null}
+
       <LinearBorderPanel className="bg-background/50 px-3 py-2">
         <div className="flex items-center justify-between text-xs">
           <span className="text-text font-medium">服务器日志</span>
@@ -88,7 +83,7 @@ export function ProcessingPanel({ state, logs }: ProcessingPanelProps) {
           {logs.length === 0 ? (
             <p className="text-text-tertiary text-xs">等待日志输出...</p>
           ) : (
-            <ul className="space-y-1.5 text-xs font-mono">
+            <ul className="space-y-1.5 text-xs font-mono flex flex-col-reverse">
               {logs.map((log) => {
                 const levelConfig = LOG_LEVEL_CONFIG[log.level]
                 return (

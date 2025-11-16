@@ -4,7 +4,6 @@ import type { StoreApi } from 'zustand'
 import { useStore } from 'zustand'
 import { createStore } from 'zustand/vanilla'
 
-import { runPhotoSync } from '../../../api'
 import type { PhotoSyncProgressEvent } from '../../../types'
 import type { PhotoUploadRequestOptions } from '../upload.types'
 import type { FileProgressEntry, ProcessingLogEntry, ProcessingState, WorkflowPhase } from './types'
@@ -17,6 +16,7 @@ import {
   createStageStateFromTotals,
   deriveDirectoryFromTags,
   getErrorMessage,
+  normalizeStageCount,
 } from './utils'
 
 type PhotoUploadStoreState = {
@@ -65,7 +65,6 @@ export function createPhotoUploadStore(params: PhotoUploadStoreParams): PhotoUpl
   const { unmatched: unmatchedMovFiles, hasMov } = collectUnmatchedMovFiles(initialFiles)
 
   let uploadAbortController: AbortController | null = null
-  let processingAbortController: AbortController | null = null
 
   const store = createStore<PhotoUploadStoreState>((set, get) => {
     const updateEntries = (updater: (entries: FileProgressEntry[]) => FileProgressEntry[]) => {
@@ -80,10 +79,18 @@ export function createPhotoUploadStore(params: PhotoUploadStoreParams): PhotoUpl
 
     const handleProcessingEvent = (event: PhotoSyncProgressEvent) => {
       if (event.type === 'start') {
-        const { summary, totals, options } = event.payload
+        updateEntries((entries) =>
+          entries.map((entry) => ({
+            ...entry,
+            status: entry.status === 'uploading' ? 'processing' : entry.status,
+          })),
+        )
+        const { summary, totals, options: eventOptions } = event.payload
         set({
+          phase: 'processing',
+          processingError: null,
           processingState: {
-            dryRun: options.dryRun ?? false,
+            dryRun: eventOptions?.dryRun ?? false,
             summary,
             totals,
             stages: createStageStateFromTotals(totals),
@@ -95,14 +102,46 @@ export function createPhotoUploadStore(params: PhotoUploadStoreParams): PhotoUpl
       }
 
       set((state) => {
+        if (event.type === 'log') {
+          const timestamp = Date.parse(event.payload.timestamp)
+          const logEntry: ProcessingLogEntry = {
+            id: `log-${processingLogSequence++}`,
+            message: event.payload.message,
+            level: event.payload.level,
+            timestamp: Number.isNaN(timestamp) ? Date.now() : timestamp,
+          }
+          return {
+            processingState: state.processingState
+              ? {
+                  ...state.processingState,
+                  latestLog: {
+                    message: logEntry.message,
+                    level: logEntry.level,
+                    timestamp: logEntry.timestamp,
+                  },
+                }
+              : state.processingState,
+            processingLogs: [...state.processingLogs, logEntry].slice(-MAX_PROCESSING_LOGS),
+          }
+        }
+
         const prev = state.processingState
         if (!prev) {
+          if (event.type === 'error') {
+            return {
+              phase: 'error',
+              processingError: event.payload.message,
+            }
+          }
           return {}
         }
 
         switch (event.type) {
           case 'stage': {
             const { stage, status, processed, total, summary } = event.payload
+            const prevStage = prev.stages[stage]
+            const normalizedTotal = normalizeStageCount(total, prevStage?.total ?? 0)
+            const normalizedProcessed = normalizeStageCount(processed, prevStage?.processed ?? 0)
             return {
               processingState: {
                 ...prev,
@@ -110,9 +149,9 @@ export function createPhotoUploadStore(params: PhotoUploadStoreParams): PhotoUpl
                 stages: {
                   ...prev.stages,
                   [stage]: {
-                    status: status === 'complete' || total === 0 ? 'completed' : 'running',
-                    processed,
-                    total,
+                    status: status === 'complete' || normalizedTotal === 0 ? 'completed' : 'running',
+                    processed: Math.min(normalizedProcessed, normalizedTotal),
+                    total: normalizedTotal,
                   },
                 },
               },
@@ -120,6 +159,9 @@ export function createPhotoUploadStore(params: PhotoUploadStoreParams): PhotoUpl
           }
           case 'action': {
             const { stage, index, total, summary } = event.payload
+            const prevStage = prev.stages[stage]
+            const normalizedTotal = normalizeStageCount(total, prevStage?.total ?? 0)
+            const normalizedProcessed = normalizeStageCount(index, prevStage?.processed ?? 0)
             return {
               processingState: {
                 ...prev,
@@ -127,36 +169,24 @@ export function createPhotoUploadStore(params: PhotoUploadStoreParams): PhotoUpl
                 stages: {
                   ...prev.stages,
                   [stage]: {
-                    status: total === 0 ? 'completed' : 'running',
-                    processed: index,
-                    total,
+                    status: normalizedTotal === 0 ? 'completed' : 'running',
+                    processed: Math.min(normalizedProcessed, normalizedTotal),
+                    total: normalizedTotal,
                   },
                 },
               },
             }
           }
-          case 'log': {
-            const timestamp = Date.parse(event.payload.timestamp)
-            const logEntry: ProcessingLogEntry = {
-              id: `log-${processingLogSequence++}`,
-              message: event.payload.message,
-              level: event.payload.level,
-              timestamp: Number.isNaN(timestamp) ? Date.now() : timestamp,
-            }
-            return {
-              processingState: {
-                ...prev,
-                latestLog: {
-                  message: logEntry.message,
-                  level: logEntry.level,
-                  timestamp: logEntry.timestamp,
-                },
-              },
-              processingLogs: [...state.processingLogs, logEntry].slice(-MAX_PROCESSING_LOGS),
-            }
-          }
           case 'error': {
+            updateEntries((entries) =>
+              entries.map((entry) => ({
+                ...entry,
+                status: entry.status === 'processing' ? 'error' : entry.status,
+              })),
+            )
             return {
+              phase: 'error',
+              processingError: event.payload.message,
               processingState: {
                 ...prev,
                 error: event.payload.message,
@@ -164,7 +194,16 @@ export function createPhotoUploadStore(params: PhotoUploadStoreParams): PhotoUpl
             }
           }
           case 'complete': {
+            updateEntries((entries) =>
+              entries.map((entry) => ({
+                ...entry,
+                status: entry.status === 'processing' ? 'done' : entry.status,
+                progress: 1,
+                uploadedBytes: entry.size,
+              })),
+            )
             return {
+              phase: 'completed',
               processingState: {
                 ...prev,
                 summary: event.payload.summary,
@@ -177,68 +216,6 @@ export function createPhotoUploadStore(params: PhotoUploadStoreParams): PhotoUpl
           }
         }
       })
-    }
-
-    const startProcessing = async () => {
-      set((state) => ({
-        phase: 'processing',
-        processingError: null,
-        processingState: state.processingState,
-      }))
-
-      updateEntries((entries) =>
-        entries.map((entry) => ({
-          ...entry,
-          status: entry.status === 'uploaded' ? 'processing' : entry.status,
-        })),
-      )
-
-      const controller = new AbortController()
-      processingAbortController = controller
-
-      try {
-        await runPhotoSync(
-          { dryRun: false },
-          {
-            signal: controller.signal,
-            onEvent: handleProcessingEvent,
-          },
-        )
-
-        updateEntries((entries) =>
-          entries.map((entry) => ({
-            ...entry,
-            status: entry.status === 'processing' ? 'done' : entry.status,
-          })),
-        )
-
-        set((state) => ({
-          phase: 'completed',
-          processingState: state.processingState
-            ? {
-                ...state.processingState,
-                completed: true,
-              }
-            : state.processingState,
-        }))
-      } catch (error) {
-        const isAbort = (error as DOMException)?.name === 'AbortError'
-        const message = isAbort ? '服务器处理已终止' : getErrorMessage(error, '服务器处理失败，请稍后再试。')
-
-        updateEntries((entries) =>
-          entries.map((entry) => ({
-            ...entry,
-            status: entry.status === 'processing' ? 'error' : entry.status,
-          })),
-        )
-
-        set({
-          processingError: message,
-          phase: 'error',
-        })
-      } finally {
-        processingAbortController = null
-      }
     }
 
     const handleUploadProgress: NonNullable<PhotoUploadRequestOptions['onUploadProgress']> = (snapshot) => {
@@ -332,18 +309,8 @@ export function createPhotoUploadStore(params: PhotoUploadStoreParams): PhotoUpl
             directory: directory ?? undefined,
             onUploadProgress: handleUploadProgress,
             timeoutMs: UPLOAD_REQUEST_TIMEOUT_MS,
+            onServerEvent: handleProcessingEvent,
           })
-
-          updateEntries((entries) =>
-            entries.map((entry) => ({
-              ...entry,
-              status: 'uploaded',
-              progress: 1,
-              uploadedBytes: entry.size,
-            })),
-          )
-
-          await startProcessing()
         } catch (error) {
           const isAbort = (error as DOMException)?.name === 'AbortError'
           if (isAbort) {
@@ -378,8 +345,8 @@ export function createPhotoUploadStore(params: PhotoUploadStoreParams): PhotoUpl
           return
         }
         if (phase === 'processing') {
-          processingAbortController?.abort()
-          processingAbortController = null
+          uploadAbortController?.abort()
+          uploadAbortController = null
           set({
             processingError: '服务器处理已终止',
             phase: 'error',
@@ -395,9 +362,7 @@ export function createPhotoUploadStore(params: PhotoUploadStoreParams): PhotoUpl
       },
       reset: () => {
         uploadAbortController?.abort()
-        processingAbortController?.abort()
         uploadAbortController = null
-        processingAbortController = null
         set({
           phase: 'review',
           uploadError: null,
@@ -417,9 +382,7 @@ export function createPhotoUploadStore(params: PhotoUploadStoreParams): PhotoUpl
       },
       cleanup: () => {
         uploadAbortController?.abort()
-        processingAbortController?.abort()
         uploadAbortController = null
-        processingAbortController = null
       },
     }
   })

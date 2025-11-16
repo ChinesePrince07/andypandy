@@ -1,6 +1,8 @@
 import { Body, ContextParam, Controller, Delete, Get, Post, Query } from '@afilmory/framework'
 import { BizException, ErrorCode } from 'core/errors'
 import { Roles } from 'core/guards/roles.decorator'
+import type { DataSyncProgressEvent } from 'core/modules/infrastructure/data-sync/data-sync.types'
+import { createProgressSseResponse } from 'core/modules/shared/http/sse'
 import type { Context } from 'hono'
 import { inject } from 'tsyringe'
 
@@ -36,40 +38,54 @@ export class PhotoController {
   }
 
   @Post('assets/upload')
-  async uploadAssets(@ContextParam() context: Context) {
-    const formData = await context.req.formData()
-    let directory: string | null = null
+  async uploadAssets(@ContextParam() context: Context): Promise<Response> {
+    return createProgressSseResponse<DataSyncProgressEvent>({
+      context,
+      handler: async ({ sendEvent, abortSignal }) => {
+        try {
+          const formData = await context.req.formData()
+          let directory: string | null = null
 
-    const directoryEntries = formData.getAll('directory')
-    if (directoryEntries.length > 0) {
-      const candidate = directoryEntries.find((entry): entry is string => typeof entry === 'string')
-      directory = candidate ?? null
-    }
+          const directoryEntries = formData.getAll('directory')
+          if (directoryEntries.length > 0) {
+            const candidate = directoryEntries.find((entry): entry is string => typeof entry === 'string')
+            directory = candidate ?? null
+          }
 
-    const files: File[] = []
-    for (const entry of formData.getAll('files')) {
-      if (entry instanceof File) {
-        files.push(entry)
-      }
-    }
+          const files: File[] = []
+          for (const entry of formData.getAll('files')) {
+            if (entry instanceof File) {
+              files.push(entry)
+            }
+          }
 
-    if (files.length === 0) {
-      throw new BizException(ErrorCode.COMMON_BAD_REQUEST, {
-        message: '未找到可上传的文件',
-      })
-    }
+          if (files.length === 0) {
+            throw new BizException(ErrorCode.COMMON_BAD_REQUEST, {
+              message: '未找到可上传的文件',
+            })
+          }
 
-    const inputs = await Promise.all(
-      files.map(async (file) => ({
-        filename: file.name,
-        buffer: Buffer.from(await file.arrayBuffer()),
-        contentType: file.type || undefined,
-        directory,
-      })),
-    )
+          const inputs = await Promise.all(
+            files.map(async (file) => ({
+              filename: file.name,
+              buffer: Buffer.from(await file.arrayBuffer()),
+              contentType: file.type || undefined,
+              directory,
+            })),
+          )
 
-    const assets = await this.photoAssetService.uploadAssets(inputs)
-    return { assets }
+          await this.photoAssetService.uploadAssets(inputs, {
+            progress: async (event) => {
+              sendEvent(event)
+            },
+            abortSignal,
+          })
+        } catch (error) {
+          const message = error instanceof Error ? error.message : '上传失败'
+          sendEvent({ type: 'error', payload: { message } })
+        }
+      },
+    })
   }
 
   @Get('storage-url')

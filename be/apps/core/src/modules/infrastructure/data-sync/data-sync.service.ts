@@ -4,6 +4,7 @@ import { CURRENT_PHOTO_MANIFEST_VERSION, DATABASE_ONLY_PROVIDER, photoAssets, ph
 import { createLogger, EventEmitterService } from '@afilmory/framework'
 import { DbAccessor } from 'core/database/database.provider'
 import { BizException, ErrorCode } from 'core/errors'
+import { SystemSettingService } from 'core/modules/configuration/system-setting/system-setting.service'
 import { PhotoBuilderService } from 'core/modules/content/photo/builder/photo-builder.service'
 import { PhotoStorageService } from 'core/modules/content/photo/storage/photo-storage.service'
 import { requireTenantContext } from 'core/modules/platform/tenant/tenant.context'
@@ -74,6 +75,7 @@ export class DataSyncService {
     private readonly dbAccessor: DbAccessor,
     private readonly photoBuilderService: PhotoBuilderService,
     private readonly photoStorageService: PhotoStorageService,
+    private readonly systemSettingService: SystemSettingService,
   ) {}
 
   private async emitManifestChanged(tenantId: string): Promise<void> {
@@ -83,8 +85,19 @@ export class DataSyncService {
   async runSync(options: DataSyncOptions, onProgress?: DataSyncProgressEmitter): Promise<DataSyncResult> {
     const tenant = requireTenantContext()
     const runStartedAt = new Date()
+    const systemSettings = await this.systemSettingService.getSettings()
+    const syncLimits = {
+      maxObjectBytes: this.convertMbToBytes(systemSettings.maxDataSyncObjectSizeMb),
+      maxObjectSizeMb: systemSettings.maxDataSyncObjectSizeMb,
+      libraryLimit: systemSettings.maxPhotoLibraryItems,
+    }
     const { builderConfig, storageConfig } = await this.resolveBuilderConfigForTenant(tenant.tenant.id, options)
     const context = await this.prepareSyncContext(tenant.tenant.id, builderConfig, storageConfig)
+    this.ensureLibraryCapacityLimit({
+      current: context.records.length,
+      incoming: context.missingInDb.length,
+      limit: syncLimits.libraryLimit,
+    })
     const summary = this.createSummary(context)
     const actions: DataSyncAction[] = []
     const totals = this.buildStageTotals(context)
@@ -98,7 +111,10 @@ export class DataSyncService {
       processed: 0,
       summary,
     })
-    const missingProcessed = await this.handleNewStorageObjects(context, summary, actions, options.dryRun, onProgress)
+    const missingProcessed = await this.handleNewStorageObjects(context, summary, actions, options.dryRun, onProgress, {
+      maxObjectBytes: syncLimits.maxObjectBytes,
+      maxObjectSizeMb: syncLimits.maxObjectSizeMb,
+    })
     await this.emitStageProgress(onProgress, {
       stage: 'missing-in-db',
       status: 'complete',
@@ -395,6 +411,10 @@ export class DataSyncService {
     actions: DataSyncAction[],
     dryRun: boolean,
     onProgress?: DataSyncProgressEmitter,
+    limits?: {
+      maxObjectBytes: number | null
+      maxObjectSizeMb: number | null
+    },
   ): Promise<number> {
     const total = context.missingInDb.length
     if (total === 0) {
@@ -408,6 +428,7 @@ export class DataSyncService {
     for (const storageObject of context.missingInDb) {
       processed += 1
       const storageSnapshot = this.createStorageSnapshot(storageObject)
+      this.ensureStorageObjectSizeWithinLimit(storageObject, storageSnapshot.size, limits)
 
       if (dryRun) {
         summary.inserted += 1
@@ -1255,6 +1276,52 @@ export class DataSyncService {
       version: CURRENT_PHOTO_MANIFEST_VERSION,
       data: structuredClone(item),
     }
+  }
+
+  private convertMbToBytes(value: number | null): number | null {
+    if (value === null) {
+      return null
+    }
+    return value * 1024 * 1024
+  }
+
+  private formatBytesToMb(size: number): number {
+    const mb = size / (1024 * 1024)
+    return Number(mb.toFixed(2))
+  }
+
+  private ensureLibraryCapacityLimit(payload: { current: number; incoming: number; limit: number | null }): void {
+    if (payload.limit === null || payload.incoming === 0) {
+      return
+    }
+
+    if (payload.current + payload.incoming > payload.limit) {
+      throw new BizException(ErrorCode.COMMON_BAD_REQUEST, {
+        message: `当前已有 ${payload.current} 张照片，超过上限 ${payload.limit}，无法同步 ${payload.incoming} 张新照片`,
+      })
+    }
+  }
+
+  private ensureStorageObjectSizeWithinLimit(
+    storageObject: StorageObject,
+    size: number | null,
+    limits?: { maxObjectBytes: number | null; maxObjectSizeMb: number | null },
+  ): void {
+    const maxBytes = limits?.maxObjectBytes ?? null
+    if (maxBytes === null || size === null) {
+      return
+    }
+
+    if (size <= maxBytes) {
+      return
+    }
+
+    const readableLimit = limits?.maxObjectSizeMb ?? this.formatBytesToMb(maxBytes)
+    const actualSize = this.formatBytesToMb(size)
+
+    throw new BizException(ErrorCode.COMMON_BAD_REQUEST, {
+      message: `存储对象 ${storageObject.key} (${actualSize} MB) 超出允许的同步大小 ${readableLimit} MB`,
+    })
   }
 
   private mapRecordToConflict(record: PhotoAssetRecord): DataSyncConflict {

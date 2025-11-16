@@ -4,6 +4,7 @@ type ToasterProps = React.ComponentProps<typeof Sonner>
 
 const toastStyles = {
   toast: tw`
+    z-[10000]
     group relative flex w-full items-center justify-between gap-3 rounded-2xl p-4
     backdrop-blur-2xl duration-300 ease-out overflow-hidden
     max-w-md min-w-[320px]

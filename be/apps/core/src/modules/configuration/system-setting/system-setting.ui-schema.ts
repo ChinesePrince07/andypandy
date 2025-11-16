@@ -2,7 +2,7 @@ import type { UiNode, UiSchema } from 'core/modules/ui/ui-schema/ui-schema.type'
 
 import type { SystemSettingField } from './system-setting.constants'
 
-export const SYSTEM_SETTING_UI_SCHEMA_VERSION = '1.3.0'
+export const SYSTEM_SETTING_UI_SCHEMA_VERSION = '1.4.0'
 
 export const SYSTEM_SETTING_UI_SCHEMA: UiSchema<SystemSettingField> = {
   version: SYSTEM_SETTING_UI_SCHEMA_VERSION,
@@ -55,6 +55,54 @@ export const SYSTEM_SETTING_UI_SCHEMA: UiSchema<SystemSettingField> = {
           description: '达到上限后将阻止新的注册，留空表示不限制用户数量。',
           helperText: '设置为 0 时将立即阻止新的用户注册。',
           key: 'maxRegistrableUsers',
+          component: {
+            type: 'text',
+            inputType: 'number',
+            placeholder: '无限制',
+          },
+        },
+      ],
+    },
+    {
+      type: 'section',
+      id: 'photo-constraints',
+      title: '照片库资源限制',
+      description: '统一设置照片上传、同步及照片总量的上限，确保资源消耗在可控范围内。',
+      icon: 'image-up',
+      children: [
+        {
+          type: 'field',
+          id: 'photo-upload-max-size',
+          title: '单张上传大小上限 (MB)',
+          description: '限制用户通过后台上传的照片文件体积，超出限制将被拒绝。',
+          helperText: '留空表示不限制，最小值 1 MB。',
+          key: 'maxPhotoUploadSizeMb',
+          component: {
+            type: 'text',
+            inputType: 'number',
+            placeholder: '无限制',
+          },
+        },
+        {
+          type: 'field',
+          id: 'photo-sync-max-size',
+          title: 'Data Sync 单文件上限 (MB)',
+          description: '控制数据同步时允许导入的存储文件大小，避免超大素材拖慢同步。',
+          helperText: '留空表示不限制，最小值 1 MB。',
+          key: 'maxDataSyncObjectSizeMb',
+          component: {
+            type: 'text',
+            inputType: 'number',
+            placeholder: '无限制',
+          },
+        },
+        {
+          type: 'field',
+          id: 'photo-library-max-items',
+          title: '单租户可管理照片数量',
+          description: '达到上限后用户无法再新增图片，可留空表示不限制。',
+          helperText: '设置为 0 将阻止任何新增图片。',
+          key: 'maxPhotoLibraryItems',
           component: {
             type: 'text',
             inputType: 'number',

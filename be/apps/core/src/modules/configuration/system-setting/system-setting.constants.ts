@@ -22,6 +22,24 @@ export const SYSTEM_SETTING_DEFINITIONS = {
     defaultValue: null as number | null,
     isSensitive: false,
   },
+  maxPhotoUploadSizeMb: {
+    key: 'system.photo.upload.maxSizeMb',
+    schema: z.number().int().positive().nullable(),
+    defaultValue: null as number | null,
+    isSensitive: false,
+  },
+  maxDataSyncObjectSizeMb: {
+    key: 'system.photo.sync.maxObjectSizeMb',
+    schema: z.number().int().positive().nullable(),
+    defaultValue: null as number | null,
+    isSensitive: false,
+  },
+  maxPhotoLibraryItems: {
+    key: 'system.photo.library.maxItems',
+    schema: z.number().int().min(0).nullable(),
+    defaultValue: null as number | null,
+    isSensitive: false,
+  },
   localProviderEnabled: {
     key: 'system.auth.localProvider.enabled',
     schema: z.boolean(),
