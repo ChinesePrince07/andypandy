@@ -8,12 +8,6 @@ import { NocturneButton } from '~/components/landing/NocturneButton'
 import { blur, radius, transition } from '~/lib/design-tokens'
 import { clsxm } from '~/lib/helper'
 
-const navItems = [
-  { label: '光影叙事', href: '#chapters' },
-  { label: '策展体验', href: '#journey' },
-  { label: '作品预览', href: '#preview' },
-]
-
 export const PageHeader = () => {
   const { scrollY } = useScroll()
   const [scrollPos, setScrollPos] = useState(0)
@@ -99,34 +93,6 @@ export const PageHeader = () => {
             </p>
           </div>
         </Link>
-
-        {/* 导航菜单 */}
-        <nav className="hidden items-center gap-0.5 lg:flex">
-          {navItems.map((item, index) => (
-            <m.div
-              key={item.label}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 + index * 0.05 }}
-            >
-              <Link
-                href={item.href}
-                className={clsxm(
-                  'relative rounded-md px-3 py-1.5 text-xs font-medium transition-all',
-                  'text-white/70 hover:text-white hover:bg-white/5',
-                  transition.normal,
-                )}
-              >
-                {item.label}
-                <m.span
-                  className="absolute bottom-0.5 left-1/2 h-0.5 w-0 -translate-x-1/2 bg-white/40"
-                  whileHover={{ width: '60%' }}
-                  transition={{ duration: 0.3, ease: 'easeOut' }}
-                />
-              </Link>
-            </m.div>
-          ))}
-        </nav>
 
         {/* CTA 按钮组 */}
         <div className="relative z-10 flex items-center gap-2">
