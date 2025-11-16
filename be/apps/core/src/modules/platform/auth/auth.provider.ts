@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 
-import { authAccounts, authSessions, authUsers, authVerifications, generateId } from '@afilmory/db'
+import { authAccounts, authSessions, authUsers, authVerifications, creemSubscriptions, generateId } from '@afilmory/db'
 import { env } from '@afilmory/env'
 import type { OnModuleInit } from '@afilmory/framework'
 import { createLogger, HttpContext } from '@afilmory/framework'
@@ -212,6 +212,7 @@ export class AuthProvider implements OnModuleInit {
           session: authSessions,
           account: authAccounts,
           verification: authVerifications,
+          subscription: creemSubscriptions,
         },
       }),
       socialProviders: socialProviders as any,
@@ -223,6 +224,7 @@ export class AuthProvider implements OnModuleInit {
         additionalFields: {
           tenantId: { type: 'string', input: false },
           role: { type: 'string', input: false },
+          creemCustomerId: { type: 'string', input: false },
         },
       },
       databaseHooks: {
@@ -304,58 +306,6 @@ export class AuthProvider implements OnModuleInit {
           apiKey: env.CREEM_API_KEY,
           webhookSecret: env.CREEM_WEBHOOK_SECRET,
           persistSubscriptions: true,
-          schema: {
-            user: {
-              modelName: 'auth_user',
-              fields: {
-                creemCustomerId: {
-                  type: 'string',
-                  fieldName: 'creem_customer_id',
-                },
-              },
-            },
-            subscription: {
-              modelName: 'creem_subscription',
-              fields: {
-                productId: {
-                  type: 'string',
-                  fieldName: 'product_id',
-                },
-                referenceId: {
-                  type: 'string',
-                  fieldName: 'reference_id',
-                },
-                creemCustomerId: {
-                  type: 'string',
-                  fieldName: 'creem_customer_id',
-                },
-                creemSubscriptionId: {
-                  type: 'string',
-                  fieldName: 'creem_subscription_id',
-                },
-                creemOrderId: {
-                  type: 'string',
-                  fieldName: 'creem_order_id',
-                },
-                status: {
-                  type: 'string',
-                  fieldName: 'status',
-                },
-                periodStart: {
-                  type: 'string',
-                  fieldName: 'period_start',
-                },
-                periodEnd: {
-                  type: 'string',
-                  fieldName: 'period_end',
-                },
-                cancelAtPeriodEnd: {
-                  type: 'boolean',
-                  fieldName: 'cancel_at_period_end',
-                },
-              },
-            },
-          },
           testMode: env.NODE_ENV !== 'production',
           onGrantAccess: async ({ metadata }) => {
             await this.handleCreemGrant(metadata)

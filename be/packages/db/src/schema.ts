@@ -329,6 +329,8 @@ export const dbSchema = {
   authUsers,
   authSessions,
   authAccounts,
+  authVerifications,
+  creemSubscriptions,
   tenantAuthUsers,
   tenantAuthSessions,
   tenantAuthAccounts,

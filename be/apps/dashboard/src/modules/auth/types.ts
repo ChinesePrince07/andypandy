@@ -7,6 +7,7 @@ export interface BetterAuthUser {
   image: string | null
   tenantId: string | null
   role: BetterAuthUserRole
+  creemCustomerId?: string | null
 }
 
 export interface BetterAuthSession {

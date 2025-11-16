@@ -34,6 +34,7 @@ export function Component() {
 
   const tenantId = session?.tenant?.id ?? null
   const tenantSlug = session?.tenant?.slug ?? null
+  const creemCustomerId = session?.user?.creemCustomerId ?? null
 
   const plan = planQuery.data?.plan ?? null
   const availablePlans = planQuery.data?.availablePlans ?? []
@@ -62,7 +63,13 @@ export function Component() {
         {planQuery.isLoading || !plan ? (
           <PlanSkeleton />
         ) : (
-          <PlanList currentPlanId={plan.planId} plans={plans} tenantId={tenantId} tenantSlug={tenantSlug} />
+          <PlanList
+            currentPlanId={plan.planId}
+            plans={plans}
+            tenantId={tenantId}
+            tenantSlug={tenantSlug}
+            creemCustomerId={creemCustomerId}
+          />
         )}
       </div>
     </MainPageLayout>
@@ -74,11 +81,13 @@ function PlanList({
   plans,
   tenantId,
   tenantSlug,
+  creemCustomerId,
 }: {
   currentPlanId: string
   plans: BillingPlanSummary[]
   tenantId: string | null
   tenantSlug: string | null
+  creemCustomerId: string | null
 }) {
   return (
     <div className="grid gap-4 md:grid-cols-2">
@@ -89,6 +98,7 @@ function PlanList({
           isCurrent={plan.planId === currentPlanId}
           tenantId={tenantId}
           tenantSlug={tenantSlug}
+          creemCustomerId={creemCustomerId}
         />
       ))}
     </div>
@@ -100,11 +110,13 @@ function PlanCard({
   isCurrent,
   tenantId,
   tenantSlug,
+  creemCustomerId,
 }: {
   plan: BillingPlanSummary
   isCurrent: boolean
   tenantId: string | null
   tenantSlug: string | null
+  creemCustomerId: string | null
 }) {
   const [checkoutLoading, setCheckoutLoading] = useState(false)
   const [portalLoading, setPortalLoading] = useState(false)
@@ -112,7 +124,7 @@ function PlanCard({
 
   const canCheckout = Boolean(!isCurrent && tenantId && productId)
 
-  const showPortalButton = isCurrent && plan.planId !== 'free' && Boolean(productId)
+  const showPortalButton = isCurrent && plan.planId !== 'free' && Boolean(productId && creemCustomerId)
 
   const handleCheckout = async () => {
     if (!canCheckout || !tenantId || !productId) {
@@ -150,12 +162,14 @@ function PlanCard({
   }
 
   const handlePortal = async () => {
-    if (!showPortalButton) {
+    if (!showPortalButton || !creemCustomerId) {
+      toast.error('找不到订阅账户，请稍后再试。')
       return
     }
     setPortalLoading(true)
     try {
-      const { data, error } = await authClient.creem.createPortal()
+      const portalPayload = creemCustomerId ? { customerId: creemCustomerId } : undefined
+      const { data, error } = await authClient.creem.createPortal(portalPayload)
       if (error) {
         throw new Error(error.message ?? '无法打开订阅管理')
       }
