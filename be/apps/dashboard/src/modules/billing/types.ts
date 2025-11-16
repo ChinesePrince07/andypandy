@@ -10,6 +10,13 @@ export interface BillingPlanSummary {
   name: string
   description: string
   quotas: BillingPlanQuota
+  pricing?: {
+    monthlyPrice: number | null
+    currency: string | null
+  }
+  payment?: {
+    creemProductId?: string | null
+  }
 }
 
 export interface BillingPlanResponse {

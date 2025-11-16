@@ -9,7 +9,7 @@ import type { BillingUsageOverview } from './billing-usage.service'
 import { BillingUsageService } from './billing-usage.service'
 
 const usageQuerySchema = z.object({
-  limit: z.number().optional(),
+  limit: z.coerce.number().positive().int().optional().default(10),
 })
 class UsageQueryDto extends createZodSchemaDto(usageQuerySchema) {}
 

@@ -1,8 +1,112 @@
+import { BILLING_PLAN_DEFINITIONS, BILLING_PLAN_IDS } from 'core/modules/platform/billing/billing-plan.constants'
 import type { UiNode, UiSchema } from 'core/modules/ui/ui-schema/ui-schema.type'
 
 import type { SystemSettingField } from './system-setting.constants'
 
 export const SYSTEM_SETTING_UI_SCHEMA_VERSION = '1.4.0'
+
+const PLAN_QUOTA_FIELDS = [
+  {
+    suffix: 'monthlyAssetProcessLimit',
+    title: '每月可新增照片 (张)',
+    description: '达到上限后将阻止新增照片。留空表示回退到默认值或不限。',
+    placeholder: '例如 300',
+  },
+  {
+    suffix: 'libraryItemLimit',
+    title: '图库容量限制 (张)',
+    description: '限制单个租户可管理的照片数量，0 表示完全禁止新增。',
+    placeholder: '例如 500',
+  },
+  {
+    suffix: 'maxUploadSizeMb',
+    title: '后台上传大小上限 (MB)',
+    description: '单次上传的最大文件体积，留空表示默认值或无限制。',
+    placeholder: '例如 20',
+  },
+  {
+    suffix: 'maxSyncObjectSizeMb',
+    title: '同步素材大小上限 (MB)',
+    description: 'Data Sync 导入时允许的最大文件尺寸。',
+    placeholder: '例如 50',
+  },
+] as const
+
+const PLAN_PRICING_FIELDS = [
+  {
+    suffix: 'monthlyPrice',
+    title: '月度定价',
+    description: '用于展示的价格或 Creem 产品价格，留空保留默认值。',
+    placeholder: '例如 49',
+  },
+  {
+    suffix: 'currency',
+    title: '币种',
+    description: 'ISO 货币代码，如 CNY、USD 等。',
+    placeholder: 'CNY',
+  },
+] as const
+
+const PLAN_PAYMENT_FIELDS = [
+  {
+    suffix: 'creemProductId',
+    title: 'Creem Product ID',
+    description: '用于创建结算会话的 Creem 商品 ID。留空表示该计划不会显示升级入口。',
+    placeholder: 'prod_xxx',
+  },
+] as const
+
+const BILLING_PLAN_GROUPS: ReadonlyArray<UiNode<SystemSettingField>> = BILLING_PLAN_IDS.map((planId) => {
+  const metadata = BILLING_PLAN_DEFINITIONS[planId]
+  const quotaFields = PLAN_QUOTA_FIELDS.map((field) => ({
+    type: 'field' as const,
+    id: `${planId}-${field.suffix}`,
+    title: field.title,
+    description: field.description,
+    helperText: '留空表示遵循默认或不限，填写数字后将覆盖对应计划。',
+    key: `billingPlan.${planId}.quota.${field.suffix}` as SystemSettingField,
+    component: {
+      type: 'text' as const,
+      inputType: 'number' as const,
+      placeholder: field.placeholder,
+    },
+  }))
+
+  const pricingFields = PLAN_PRICING_FIELDS.map((field) => ({
+    type: 'field' as const,
+    id: `${planId}-pricing-${field.suffix}`,
+    title: field.title,
+    description: field.description,
+    helperText: field.suffix === 'monthlyPrice' ? '留空表示暂不展示定价信息。' : '留空表示使用默认币种或不展示。',
+    key: `billingPlan.${planId}.pricing.${field.suffix}` as SystemSettingField,
+    component: {
+      type: 'text' as const,
+      inputType: field.suffix === 'monthlyPrice' ? ('number' as const) : ('text' as const),
+      placeholder: field.placeholder,
+    },
+  }))
+
+  const paymentFields = PLAN_PAYMENT_FIELDS.map((field) => ({
+    type: 'field' as const,
+    id: `${planId}-payment-${field.suffix}`,
+    title: field.title,
+    description: field.description,
+    helperText: '为空将隐藏升级入口。',
+    key: `billingPlan.${planId}.payment.${field.suffix}` as SystemSettingField,
+    component: {
+      type: 'text' as const,
+      placeholder: field.placeholder,
+    },
+  }))
+
+  return {
+    type: 'group' as const,
+    id: `billing-plan-${planId}`,
+    title: `${metadata.name} (${planId})`,
+    description: metadata.description,
+    children: [...quotaFields, ...pricingFields, ...paymentFields],
+  } satisfies UiNode<SystemSettingField>
+})
 
 export const SYSTEM_SETTING_UI_SCHEMA: UiSchema<SystemSettingField> = {
   version: SYSTEM_SETTING_UI_SCHEMA_VERSION,
@@ -56,7 +160,7 @@ export const SYSTEM_SETTING_UI_SCHEMA: UiSchema<SystemSettingField> = {
           helperText: '设置为 0 时将立即阻止新的用户注册。',
           key: 'maxRegistrableUsers',
           component: {
-            type: 'text',
+            type: 'text' as const,
             inputType: 'number',
             placeholder: '无限制',
           },
@@ -65,51 +169,11 @@ export const SYSTEM_SETTING_UI_SCHEMA: UiSchema<SystemSettingField> = {
     },
     {
       type: 'section',
-      id: 'photo-constraints',
-      title: '照片库资源限制',
-      description: '统一设置照片上传、同步及照片总量的上限，确保资源消耗在可控范围内。',
-      icon: 'image-up',
-      children: [
-        {
-          type: 'field',
-          id: 'photo-upload-max-size',
-          title: '单张上传大小上限 (MB)',
-          description: '限制用户通过后台上传的照片文件体积，超出限制将被拒绝。',
-          helperText: '留空表示不限制，最小值 1 MB。',
-          key: 'maxPhotoUploadSizeMb',
-          component: {
-            type: 'text',
-            inputType: 'number',
-            placeholder: '无限制',
-          },
-        },
-        {
-          type: 'field',
-          id: 'photo-sync-max-size',
-          title: 'Data Sync 单文件上限 (MB)',
-          description: '控制数据同步时允许导入的存储文件大小，避免超大素材拖慢同步。',
-          helperText: '留空表示不限制，最小值 1 MB。',
-          key: 'maxDataSyncObjectSizeMb',
-          component: {
-            type: 'text',
-            inputType: 'number',
-            placeholder: '无限制',
-          },
-        },
-        {
-          type: 'field',
-          id: 'photo-library-max-items',
-          title: '单租户可管理照片数量',
-          description: '达到上限后用户无法再新增图片，可留空表示不限制。',
-          helperText: '设置为 0 将阻止任何新增图片。',
-          key: 'maxPhotoLibraryItems',
-          component: {
-            type: 'text',
-            inputType: 'number',
-            placeholder: '无限制',
-          },
-        },
-      ],
+      id: 'billing-plan-settings',
+      title: '订阅计划配置',
+      description: '为每个订阅计划定义资源限制、展示价格以及 Creem 商品映射。',
+      icon: 'badge-dollar-sign',
+      children: BILLING_PLAN_GROUPS,
     },
     {
       type: 'section',

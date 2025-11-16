@@ -2,20 +2,37 @@ import { authUsers } from '@afilmory/db'
 import { DbAccessor } from 'core/database/database.provider'
 import { BizException, ErrorCode } from 'core/errors'
 import type { SocialProvidersConfig } from 'core/modules/platform/auth/auth.config'
-import { BILLING_PLAN_OVERRIDES_SETTING_KEY } from 'core/modules/platform/billing/billing-plan.constants'
-import type { BillingPlanOverrides } from 'core/modules/platform/billing/billing-plan.types'
+import {
+  BILLING_PLAN_OVERRIDES_SETTING_KEY,
+  BILLING_PLAN_PRICING_SETTING_KEY,
+  BILLING_PLAN_PRODUCTS_SETTING_KEY,
+} from 'core/modules/platform/billing/billing-plan.constants'
+import type {
+  BillingPlanId,
+  BillingPlanOverrides,
+  BillingPlanPaymentInfo,
+  BillingPlanPricing,
+  BillingPlanPricingConfigs,
+  BillingPlanProductConfigs,
+  BillingPlanQuota,
+} from 'core/modules/platform/billing/billing-plan.types'
 import { sql } from 'drizzle-orm'
 import { injectable } from 'tsyringe'
-import type {ZodType} from 'zod';
-import { z  } from 'zod'
+import type { ZodType } from 'zod'
+import { z } from 'zod'
 
-import { SYSTEM_SETTING_DEFINITIONS, SYSTEM_SETTING_KEYS } from './system-setting.constants'
+import type { SystemSettingDbField } from './system-setting.constants'
+import {
+  BILLING_PLAN_FIELD_DESCRIPTORS,
+  SYSTEM_SETTING_DEFINITIONS,
+  SYSTEM_SETTING_KEYS,
+} from './system-setting.constants'
 import { SystemSettingStore } from './system-setting.store.service'
 import type {
-  SystemSettingField,
   SystemSettingOverview,
   SystemSettings,
   SystemSettingStats,
+  SystemSettingValueMap,
   UpdateSystemSettingsInput,
 } from './system-setting.types'
 import { SYSTEM_SETTING_UI_SCHEMA } from './system-setting.ui-schema'
@@ -40,21 +57,6 @@ export class SystemSettingService {
       rawValues[SYSTEM_SETTING_DEFINITIONS.maxRegistrableUsers.key],
       SYSTEM_SETTING_DEFINITIONS.maxRegistrableUsers.schema,
       SYSTEM_SETTING_DEFINITIONS.maxRegistrableUsers.defaultValue,
-    )
-    const maxPhotoUploadSizeMb = this.parseSetting(
-      rawValues[SYSTEM_SETTING_DEFINITIONS.maxPhotoUploadSizeMb.key],
-      SYSTEM_SETTING_DEFINITIONS.maxPhotoUploadSizeMb.schema,
-      SYSTEM_SETTING_DEFINITIONS.maxPhotoUploadSizeMb.defaultValue,
-    )
-    const maxDataSyncObjectSizeMb = this.parseSetting(
-      rawValues[SYSTEM_SETTING_DEFINITIONS.maxDataSyncObjectSizeMb.key],
-      SYSTEM_SETTING_DEFINITIONS.maxDataSyncObjectSizeMb.schema,
-      SYSTEM_SETTING_DEFINITIONS.maxDataSyncObjectSizeMb.defaultValue,
-    )
-    const maxPhotoLibraryItems = this.parseSetting(
-      rawValues[SYSTEM_SETTING_DEFINITIONS.maxPhotoLibraryItems.key],
-      SYSTEM_SETTING_DEFINITIONS.maxPhotoLibraryItems.schema,
-      SYSTEM_SETTING_DEFINITIONS.maxPhotoLibraryItems.defaultValue,
     )
 
     const localProviderEnabled = this.parseSetting(
@@ -99,12 +101,24 @@ export class SystemSettingService {
       SYSTEM_SETTING_DEFINITIONS.oauthGithubClientSecret.schema,
       SYSTEM_SETTING_DEFINITIONS.oauthGithubClientSecret.defaultValue,
     )
+    const billingPlanOverrides = this.parseSetting(
+      rawValues[SYSTEM_SETTING_DEFINITIONS.billingPlanOverrides.key],
+      BILLING_PLAN_OVERRIDES_SCHEMA,
+      {},
+    ) as BillingPlanOverrides
+    const billingPlanProducts = this.parseSetting(
+      rawValues[SYSTEM_SETTING_DEFINITIONS.billingPlanProducts.key],
+      BILLING_PLAN_PRODUCTS_SCHEMA,
+      {},
+    ) as BillingPlanProductConfigs
+    const billingPlanPricing = this.parseSetting(
+      rawValues[SYSTEM_SETTING_DEFINITIONS.billingPlanPricing.key],
+      BILLING_PLAN_PRICING_SCHEMA,
+      {},
+    ) as BillingPlanPricingConfigs
     return {
       allowRegistration,
       maxRegistrableUsers,
-      maxPhotoUploadSizeMb,
-      maxDataSyncObjectSizeMb,
-      maxPhotoLibraryItems,
       localProviderEnabled,
       baseDomain,
       oauthGatewayUrl,
@@ -112,28 +126,34 @@ export class SystemSettingService {
       oauthGoogleClientSecret,
       oauthGithubClientId,
       oauthGithubClientSecret,
+      billingPlanOverrides,
+      billingPlanProducts,
+      billingPlanPricing,
     }
   }
 
   async getBillingPlanOverrides(): Promise<BillingPlanOverrides> {
-    const raw = await this.systemSettingStore.getRaw(BILLING_PLAN_OVERRIDES_SETTING_KEY)
-    const parsed = BILLING_PLAN_OVERRIDES_SCHEMA.safeParse(raw)
-    return parsed.success ? (parsed.data as BillingPlanOverrides) : {}
+    const settings = await this.getSettings()
+    return settings.billingPlanOverrides ?? {}
   }
 
-  async getStats(): Promise<SystemSettingStats> {
+  async getBillingPlanProducts(): Promise<BillingPlanProductConfigs> {
     const settings = await this.getSettings()
-    const totalUsers = await this.getTotalUserCount()
-    return this.buildStats(settings, totalUsers)
+    return settings.billingPlanProducts ?? {}
+  }
+
+  async getBillingPlanPricing(): Promise<BillingPlanPricingConfigs> {
+    const settings = await this.getSettings()
+    return settings.billingPlanPricing ?? {}
   }
 
   async getOverview(): Promise<SystemSettingOverview> {
-    const values = await this.getSettings()
+    const settings = await this.getSettings()
     const totalUsers = await this.getTotalUserCount()
-    const stats = this.buildStats(values, totalUsers)
+    const stats = this.buildStats(settings, totalUsers)
     return {
       schema: SYSTEM_SETTING_UI_SCHEMA,
-      values,
+      values: this.buildValueMap(settings),
       stats,
     }
   }
@@ -144,11 +164,16 @@ export class SystemSettingService {
     }
 
     const current = await this.getSettings()
-    const updates: Array<{ field: SystemSettingField; value: SystemSettings[SystemSettingField] }> = []
+    const planFieldUpdates = this.extractPlanFieldUpdates(patch)
+    if (planFieldUpdates.hasUpdates) {
+      await this.applyPlanFieldUpdates(current, planFieldUpdates)
+    }
 
-    const enqueueUpdate = <K extends SystemSettingField>(field: K, value: SystemSettings[K]) => {
+    const updates: Array<{ field: SystemSettingDbField; value: unknown }> = []
+
+    const enqueueUpdate = <K extends SystemSettingDbField>(field: K, value: unknown) => {
       updates.push({ field, value })
-      current[field] = value
+      ;(current as unknown as Record<string, unknown>)[field] = value
     }
 
     if (patch.allowRegistration !== undefined && patch.allowRegistration !== current.allowRegistration) {
@@ -172,30 +197,6 @@ export class SystemSettingService {
         }
 
         enqueueUpdate('maxRegistrableUsers', normalized)
-      }
-    }
-
-    if (patch.maxPhotoUploadSizeMb !== undefined) {
-      const normalized =
-        patch.maxPhotoUploadSizeMb === null ? null : Math.max(1, Math.trunc(patch.maxPhotoUploadSizeMb))
-      if (normalized !== current.maxPhotoUploadSizeMb) {
-        enqueueUpdate('maxPhotoUploadSizeMb', normalized)
-      }
-    }
-
-    if (patch.maxDataSyncObjectSizeMb !== undefined) {
-      const normalized =
-        patch.maxDataSyncObjectSizeMb === null ? null : Math.max(1, Math.trunc(patch.maxDataSyncObjectSizeMb))
-      if (normalized !== current.maxDataSyncObjectSizeMb) {
-        enqueueUpdate('maxDataSyncObjectSizeMb', normalized)
-      }
-    }
-
-    if (patch.maxPhotoLibraryItems !== undefined) {
-      const normalized =
-        patch.maxPhotoLibraryItems === null ? null : Math.max(0, Math.trunc(patch.maxPhotoLibraryItems))
-      if (normalized !== current.maxPhotoLibraryItems) {
-        enqueueUpdate('maxPhotoLibraryItems', normalized)
       }
     }
 
@@ -251,13 +252,181 @@ export class SystemSettingService {
         const definition = SYSTEM_SETTING_DEFINITIONS[entry.field]
         return {
           key: definition.key,
-          value: (entry.value ?? null) as SystemSettings[typeof entry.field] | null,
+          value: (entry.value ?? null) as unknown,
           options: { isSensitive: definition.isSensitive ?? false },
         }
       }),
     )
 
     return current
+  }
+
+  private buildValueMap(settings: SystemSettings): SystemSettingValueMap {
+    const map = {} as SystemSettingValueMap
+
+    ;(Object.keys(SYSTEM_SETTING_DEFINITIONS) as SystemSettingDbField[]).forEach((field) => {
+      ;(map as Record<string, unknown>)[field] = settings[field]
+    })
+
+    const overrides = settings.billingPlanOverrides ?? {}
+    BILLING_PLAN_FIELD_DESCRIPTORS.quotas.forEach((descriptor) => {
+      const planOverrides = overrides[descriptor.planId]
+      if (planOverrides && descriptor.key in (planOverrides as object)) {
+        ;(map as Record<string, unknown>)[descriptor.field] =
+          (planOverrides as BillingPlanQuota)[descriptor.key as keyof BillingPlanQuota] ?? null
+      } else {
+        ;(map as Record<string, unknown>)[descriptor.field] = descriptor.defaultValue ?? null
+      }
+    })
+
+    const pricing = settings.billingPlanPricing ?? {}
+    BILLING_PLAN_FIELD_DESCRIPTORS.pricing.forEach((descriptor) => {
+      const entry = pricing[descriptor.planId]
+      if (descriptor.key === 'currency') {
+        ;(map as Record<string, unknown>)[descriptor.field] = entry?.currency ?? null
+      } else if (descriptor.key === 'monthlyPrice') {
+        ;(map as Record<string, unknown>)[descriptor.field] = entry?.monthlyPrice ?? null
+      }
+    })
+
+    const products = settings.billingPlanProducts ?? {}
+    BILLING_PLAN_FIELD_DESCRIPTORS.payment.forEach((descriptor) => {
+      const entry = products[descriptor.planId]
+      ;(map as Record<string, unknown>)[descriptor.field] = entry?.creemProductId ?? null
+    })
+
+    return map
+  }
+
+  private extractPlanFieldUpdates(patch: UpdateSystemSettingsInput): PlanFieldUpdateSummary {
+    const summary: PlanFieldUpdateSummary = {
+      hasUpdates: false,
+      quotas: {},
+      pricing: {},
+      products: {},
+    }
+
+    for (const descriptor of BILLING_PLAN_FIELD_DESCRIPTORS.quotas) {
+      if (!(descriptor.field in patch)) {
+        continue
+      }
+      summary.hasUpdates = true
+      const raw = patch[descriptor.field]
+      delete (patch as Record<string, unknown>)[descriptor.field]
+      const numericValue = raw === null || raw === undefined ? null : typeof raw === 'number' ? raw : Number(raw)
+
+      const planPatch = summary.quotas[descriptor.planId] ?? {}
+      planPatch[descriptor.key as keyof BillingPlanQuota] =
+        numericValue === null || Number.isNaN(numericValue) ? null : numericValue
+      summary.quotas[descriptor.planId] = planPatch
+    }
+
+    for (const descriptor of BILLING_PLAN_FIELD_DESCRIPTORS.pricing) {
+      if (!(descriptor.field in patch)) {
+        continue
+      }
+      summary.hasUpdates = true
+      const raw = patch[descriptor.field]
+      delete (patch as Record<string, unknown>)[descriptor.field]
+      const planPatch = summary.pricing[descriptor.planId] ?? {}
+
+      if (descriptor.key === 'currency') {
+        const normalized =
+          raw === null || raw === undefined
+            ? null
+            : typeof raw === 'string'
+              ? this.normalizeNullableString(raw)
+              : this.normalizeNullableString(String(raw))
+        planPatch.currency = normalized
+      } else if (descriptor.key === 'monthlyPrice') {
+        const numericValue = raw === null || raw === undefined ? null : typeof raw === 'number' ? raw : Number(raw)
+        planPatch.monthlyPrice = numericValue === null || Number.isNaN(numericValue) ? null : numericValue
+      }
+
+      summary.pricing[descriptor.planId] = planPatch
+    }
+
+    for (const descriptor of BILLING_PLAN_FIELD_DESCRIPTORS.payment) {
+      if (!(descriptor.field in patch)) {
+        continue
+      }
+      summary.hasUpdates = true
+      const raw = patch[descriptor.field]
+      delete (patch as Record<string, unknown>)[descriptor.field]
+      const normalized =
+        raw === null || raw === undefined
+          ? null
+          : typeof raw === 'string'
+            ? this.normalizeNullableString(raw)
+            : this.normalizeNullableString(String(raw))
+      summary.products[descriptor.planId] = { creemProductId: normalized }
+    }
+
+    return summary
+  }
+
+  private async applyPlanFieldUpdates(current: SystemSettings, updates: PlanFieldUpdateSummary): Promise<void> {
+    if (!updates.hasUpdates) {
+      return
+    }
+
+    if (Object.keys(updates.quotas).length > 0) {
+      const nextOverrides: BillingPlanOverrides = structuredClone(current.billingPlanOverrides ?? {})
+      for (const [planId, quotaPatch] of Object.entries(updates.quotas) as Array<[
+        BillingPlanId,
+        Partial<BillingPlanQuota>,
+      ]>) {
+        const existing = { ...nextOverrides[planId] }
+        for (const [quotaKey, value] of Object.entries(quotaPatch) as Array<[keyof BillingPlanQuota, number | null]>) {
+          if (value === null || value === undefined || Number.isNaN(value)) {
+            delete existing[quotaKey]
+          } else {
+            existing[quotaKey] = value
+          }
+        }
+        if (Object.keys(existing).length === 0) {
+          delete nextOverrides[planId]
+        } else {
+          nextOverrides[planId] = existing
+        }
+      }
+      await this.systemSettingStore.set(BILLING_PLAN_OVERRIDES_SETTING_KEY, nextOverrides)
+      current.billingPlanOverrides = nextOverrides
+    }
+
+    if (Object.keys(updates.pricing).length > 0) {
+      const nextPricing: BillingPlanPricingConfigs = structuredClone(current.billingPlanPricing ?? {})
+      for (const [planId, pricingPatch] of Object.entries(updates.pricing) as Array<[
+        BillingPlanId,
+        Partial<BillingPlanPricing>,
+      ]>) {
+        const entry: BillingPlanPricing = {
+          monthlyPrice: pricingPatch.monthlyPrice ?? null,
+          currency: pricingPatch.currency ?? null,
+        }
+        if (entry.monthlyPrice === null && !entry.currency) {
+          delete nextPricing[planId]
+        } else {
+          nextPricing[planId] = entry
+        }
+      }
+      await this.systemSettingStore.set(BILLING_PLAN_PRICING_SETTING_KEY, nextPricing)
+      current.billingPlanPricing = nextPricing
+    }
+
+    if (Object.keys(updates.products).length > 0) {
+      const nextProducts: BillingPlanProductConfigs = structuredClone(current.billingPlanProducts ?? {})
+      for (const [planId, product] of Object.entries(updates.products) as Array<[BillingPlanId, BillingPlanPaymentInfo]>) {
+        const normalized = this.normalizeNullableString(product.creemProductId)
+        if (!normalized) {
+          delete nextProducts[planId]
+        } else {
+          nextProducts[planId] = { creemProductId: normalized }
+        }
+      }
+      await this.systemSettingStore.set(BILLING_PLAN_PRODUCTS_SETTING_KEY, nextProducts)
+      current.billingPlanProducts = nextProducts
+    }
   }
 
   async ensureRegistrationAllowed(): Promise<void> {
@@ -381,3 +550,27 @@ const PLAN_OVERRIDE_ENTRY_SCHEMA = z.object({
 })
 
 const BILLING_PLAN_OVERRIDES_SCHEMA = z.record(z.string(), PLAN_OVERRIDE_ENTRY_SCHEMA).default({})
+
+const PLAN_PRODUCT_ENTRY_SCHEMA = z.object({
+  creemProductId: z.string().trim().min(1).optional(),
+})
+
+const BILLING_PLAN_PRODUCTS_SCHEMA = z.record(z.string(), PLAN_PRODUCT_ENTRY_SCHEMA).default({})
+
+const PLAN_PRICING_ENTRY_SCHEMA = z.object({
+  monthlyPrice: z.number().min(0).nullable().optional(),
+  currency: z.string().trim().min(1).nullable().optional(),
+})
+
+const BILLING_PLAN_PRICING_SCHEMA = z.record(z.string(), PLAN_PRICING_ENTRY_SCHEMA).default({})
+
+type PlanQuotaUpdateMap = Partial<Record<BillingPlanId, Partial<BillingPlanQuota>>>
+type PlanPricingUpdateMap = Partial<Record<BillingPlanId, Partial<BillingPlanPricing>>>
+type PlanProductUpdateMap = Partial<Record<BillingPlanId, BillingPlanPaymentInfo>>
+
+interface PlanFieldUpdateSummary {
+  hasUpdates: boolean
+  quotas: PlanQuotaUpdateMap
+  pricing: PlanPricingUpdateMap
+  products: PlanProductUpdateMap
+}

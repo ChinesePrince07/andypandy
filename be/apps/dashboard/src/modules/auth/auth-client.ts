@@ -1,4 +1,5 @@
-import { createAuthClient } from 'better-auth/react'
+import { creemClient } from '@creem_io/better-auth/client'
+import { createCreemAuthClient } from '@creem_io/better-auth/create-creem-auth-client'
 import { FetchError } from 'ofetch'
 
 const apiBase = import.meta.env.VITE_APP_API_BASE?.replace(/\/$/, '') || '/api'
@@ -11,8 +12,9 @@ const commonOptions = {
   },
 }
 
-export const authClient = createAuthClient({
+export const authClient = createCreemAuthClient({
   baseURL: authBase,
+  plugins: [creemClient()],
   ...commonOptions,
 })
 

@@ -3,13 +3,38 @@ import { BILLING_PLAN_IDS } from 'core/modules/platform/billing/billing-plan.con
 import type { BillingPlanId } from 'core/modules/platform/billing/billing-plan.types'
 import { z } from 'zod'
 
+const planQuotaFields = (() => {
+  const fields: Record<string, z.ZodTypeAny> = {}
+  for (const planId of BILLING_PLAN_IDS) {
+    fields[`billingPlan.${planId}.quota.monthlyAssetProcessLimit`] = z.number().int().min(0).nullable().optional()
+    fields[`billingPlan.${planId}.quota.libraryItemLimit`] = z.number().int().min(0).nullable().optional()
+    fields[`billingPlan.${planId}.quota.maxUploadSizeMb`] = z.number().int().min(1).nullable().optional()
+    fields[`billingPlan.${planId}.quota.maxSyncObjectSizeMb`] = z.number().int().min(1).nullable().optional()
+  }
+  return fields
+})()
+
+const planPricingFields = (() => {
+  const fields: Record<string, z.ZodTypeAny> = {}
+  for (const planId of BILLING_PLAN_IDS) {
+    fields[`billingPlan.${planId}.pricing.monthlyPrice`] = z.number().min(0).nullable().optional()
+    fields[`billingPlan.${planId}.pricing.currency`] = z.string().trim().min(1).nullable().optional()
+  }
+  return fields
+})()
+
+const planProductFields = (() => {
+  const fields: Record<string, z.ZodTypeAny> = {}
+  for (const planId of BILLING_PLAN_IDS) {
+    fields[`billingPlan.${planId}.payment.creemProductId`] = z.string().trim().min(1).nullable().optional()
+  }
+  return fields
+})()
+
 const updateSuperAdminSettingsSchema = z
   .object({
     allowRegistration: z.boolean().optional(),
     maxRegistrableUsers: z.number().int().min(0).nullable().optional(),
-    maxPhotoUploadSizeMb: z.number().int().positive().nullable().optional(),
-    maxDataSyncObjectSizeMb: z.number().int().positive().nullable().optional(),
-    maxPhotoLibraryItems: z.number().int().min(0).nullable().optional(),
     localProviderEnabled: z.boolean().optional(),
     baseDomain: z
       .string()
@@ -30,6 +55,9 @@ const updateSuperAdminSettingsSchema = z
     oauthGoogleClientSecret: z.string().trim().min(1).nullable().optional(),
     oauthGithubClientId: z.string().trim().min(1).nullable().optional(),
     oauthGithubClientSecret: z.string().trim().min(1).nullable().optional(),
+    ...planQuotaFields,
+    ...planPricingFields,
+    ...planProductFields,
   })
   .refine((value) => Object.values(value).some((entry) => entry !== undefined), {
     message: '至少需要更新一项设置',

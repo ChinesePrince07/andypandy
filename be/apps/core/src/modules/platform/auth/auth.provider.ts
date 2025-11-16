@@ -1,8 +1,10 @@
 import { createHash } from 'node:crypto'
 
 import { authAccounts, authSessions, authUsers, authVerifications, generateId } from '@afilmory/db'
+import { env } from '@afilmory/env'
 import type { OnModuleInit } from '@afilmory/framework'
 import { createLogger, HttpContext } from '@afilmory/framework'
+import { creem } from '@creem_io/better-auth'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { APIError, createAuthMiddleware } from 'better-auth/api'
@@ -10,6 +12,9 @@ import { admin } from 'better-auth/plugins'
 import { DrizzleProvider } from 'core/database/database.provider'
 import { BizException } from 'core/errors'
 import { SystemSettingService } from 'core/modules/configuration/system-setting/system-setting.service'
+import { BILLING_PLAN_IDS } from 'core/modules/platform/billing/billing-plan.constants'
+import { BillingPlanService } from 'core/modules/platform/billing/billing-plan.service'
+import type { BillingPlanId } from 'core/modules/platform/billing/billing-plan.types'
 import type { Context } from 'hono'
 import { injectable } from 'tsyringe'
 
@@ -33,6 +38,7 @@ export class AuthProvider implements OnModuleInit {
     private readonly drizzleProvider: DrizzleProvider,
     private readonly systemSettings: SystemSettingService,
     private readonly tenantService: TenantService,
+    private readonly billingPlanService: BillingPlanService,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -294,6 +300,70 @@ export class AuthProvider implements OnModuleInit {
           defaultRole: 'user',
           defaultBanReason: 'Spamming',
         }),
+        creem({
+          apiKey: env.CREEM_API_KEY,
+          webhookSecret: env.CREEM_WEBHOOK_SECRET,
+          persistSubscriptions: true,
+          schema: {
+            user: {
+              modelName: 'auth_user',
+              fields: {
+                creemCustomerId: {
+                  type: 'string',
+                  fieldName: 'creem_customer_id',
+                },
+              },
+            },
+            subscription: {
+              modelName: 'creem_subscription',
+              fields: {
+                productId: {
+                  type: 'string',
+                  fieldName: 'product_id',
+                },
+                referenceId: {
+                  type: 'string',
+                  fieldName: 'reference_id',
+                },
+                creemCustomerId: {
+                  type: 'string',
+                  fieldName: 'creem_customer_id',
+                },
+                creemSubscriptionId: {
+                  type: 'string',
+                  fieldName: 'creem_subscription_id',
+                },
+                creemOrderId: {
+                  type: 'string',
+                  fieldName: 'creem_order_id',
+                },
+                status: {
+                  type: 'string',
+                  fieldName: 'status',
+                },
+                periodStart: {
+                  type: 'string',
+                  fieldName: 'period_start',
+                },
+                periodEnd: {
+                  type: 'string',
+                  fieldName: 'period_end',
+                },
+                cancelAtPeriodEnd: {
+                  type: 'boolean',
+                  fieldName: 'cancel_at_period_end',
+                },
+              },
+            },
+          },
+          testMode: env.NODE_ENV !== 'production',
+          onGrantAccess: async ({ metadata }) => {
+            await this.handleCreemGrant(metadata)
+          },
+          onRevokeAccess: async ({ metadata }) => {
+            await this.handleCreemRevoke(metadata)
+          },
+        }),
       ],
       hooks: {
         before: createAuthMiddleware(async (ctx) => {
@@ -365,6 +435,61 @@ export class AuthProvider implements OnModuleInit {
 
     hash.update(JSON.stringify(providerEntries))
     return hash.digest('hex')
+  }
+
+  private async handleCreemGrant(metadata?: Record<string, unknown>): Promise<void> {
+    const tenantId = this.extractMetadataValue(metadata, 'tenantId')
+    const planId = this.extractPlanIdFromMetadata(metadata)
+
+    if (!tenantId || !planId) {
+      logger.warn('[AuthProvider] Creem grant event missing tenantId or planId metadata')
+      return
+    }
+
+    try {
+      await this.billingPlanService.updateTenantPlan(tenantId, planId)
+      logger.info(`[AuthProvider] Tenant ${tenantId} upgraded to ${planId} via Creem`)
+    } catch (error) {
+      logger.error(`[AuthProvider] Failed to update tenant ${tenantId} plan from Creem grant`, error)
+    }
+  }
+
+  private async handleCreemRevoke(metadata?: Record<string, unknown>): Promise<void> {
+    const tenantId = this.extractMetadataValue(metadata, 'tenantId')
+    if (!tenantId) {
+      logger.warn('[AuthProvider] Creem revoke event missing tenantId metadata')
+      return
+    }
+
+    try {
+      await this.billingPlanService.updateTenantPlan(tenantId, 'free')
+      logger.info(`[AuthProvider] Tenant ${tenantId} downgraded to free via Creem revoke`)
+    } catch (error) {
+      logger.error(`[AuthProvider] Failed to downgrade tenant ${tenantId} after Creem revoke`, error)
+    }
+  }
+
+  private extractPlanIdFromMetadata(metadata?: Record<string, unknown>): BillingPlanId | null {
+    const planId = this.extractMetadataValue(metadata, 'planId')
+    if (!planId) {
+      return null
+    }
+    if (BILLING_PLAN_IDS.includes(planId as BillingPlanId)) {
+      return planId as BillingPlanId
+    }
+    return null
+  }
+
+  private extractMetadataValue(metadata: Record<string, unknown> | undefined, key: string): string | null {
+    if (!metadata) {
+      return null
+    }
+    const raw = metadata[key]
+    if (typeof raw !== 'string') {
+      return null
+    }
+    const trimmed = raw.trim()
+    return trimmed.length > 0 ? trimmed : null
   }
 
   async handler(context: Context): Promise<Response> {

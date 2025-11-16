@@ -1,7 +1,6 @@
 import type { BillingPlanDefinition, BillingPlanId } from './billing-plan.types'
 
 export const BILLING_PLAN_IDS: readonly BillingPlanId[] = ['free', 'pro', 'friend']
-export const PUBLIC_PLAN_IDS: readonly BillingPlanId[] = ['free']
 
 export const BILLING_PLAN_DEFINITIONS: Record<BillingPlanId, BillingPlanDefinition> = {
   free: {
@@ -28,7 +27,7 @@ export const BILLING_PLAN_DEFINITIONS: Record<BillingPlanId, BillingPlanDefiniti
   },
   friend: {
     id: 'friend',
-    name: 'Friend (Internal)',
+    name: 'Friend',
     description: '内部使用的好友方案，没有任何限制，仅超级管理员可设置。',
     quotas: {
       monthlyAssetProcessLimit: null,
@@ -40,3 +39,5 @@ export const BILLING_PLAN_DEFINITIONS: Record<BillingPlanId, BillingPlanDefiniti
 }
 
 export const BILLING_PLAN_OVERRIDES_SETTING_KEY = 'system.billing.planOverrides'
+export const BILLING_PLAN_PRODUCTS_SETTING_KEY = 'system.billing.planProducts'
+export const BILLING_PLAN_PRICING_SETTING_KEY = 'system.billing.planPricing'

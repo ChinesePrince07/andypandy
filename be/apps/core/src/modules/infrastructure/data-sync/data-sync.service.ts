@@ -4,7 +4,6 @@ import { CURRENT_PHOTO_MANIFEST_VERSION, DATABASE_ONLY_PROVIDER, photoAssets, ph
 import { createLogger, EventEmitterService } from '@afilmory/framework'
 import { DbAccessor } from 'core/database/database.provider'
 import { BizException, ErrorCode } from 'core/errors'
-import { SystemSettingService } from 'core/modules/configuration/system-setting/system-setting.service'
 import { PhotoBuilderService } from 'core/modules/content/photo/builder/photo-builder.service'
 import { PhotoStorageService } from 'core/modules/content/photo/storage/photo-storage.service'
 import { BILLING_USAGE_EVENT } from 'core/modules/platform/billing/billing.constants'
@@ -78,7 +77,6 @@ export class DataSyncService {
     private readonly dbAccessor: DbAccessor,
     private readonly photoBuilderService: PhotoBuilderService,
     private readonly photoStorageService: PhotoStorageService,
-    private readonly systemSettingService: SystemSettingService,
     private readonly billingPlanService: BillingPlanService,
     private readonly billingUsageService: BillingUsageService,
   ) {}
@@ -90,13 +88,12 @@ export class DataSyncService {
   async runSync(options: DataSyncOptions, onProgress?: DataSyncProgressEmitter): Promise<DataSyncResult> {
     const tenant = requireTenantContext()
     const runStartedAt = new Date()
-    const systemSettings = await this.systemSettingService.getSettings()
     const planQuota = await this.billingPlanService.getQuotaForTenant(tenant.tenant.id)
-    const effectiveMaxObjectMb = planQuota.maxSyncObjectSizeMb ?? systemSettings.maxDataSyncObjectSizeMb
+    const effectiveMaxObjectMb = planQuota.maxSyncObjectSizeMb
     const syncLimits = {
       maxObjectBytes: this.convertMbToBytes(effectiveMaxObjectMb),
       maxObjectSizeMb: effectiveMaxObjectMb,
-      libraryLimit: planQuota.libraryItemLimit ?? systemSettings.maxPhotoLibraryItems,
+      libraryLimit: planQuota.libraryItemLimit,
     }
     const { builderConfig, storageConfig } = await this.resolveBuilderConfigForTenant(tenant.tenant.id, options)
     const context = await this.prepareSyncContext(tenant.tenant.id, builderConfig, storageConfig)

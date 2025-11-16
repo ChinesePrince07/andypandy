@@ -29,6 +29,13 @@
       "when": 1763292246073,
       "tag": "0003_natural_ultimates",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1763315183401,
+      "tag": "0004_aromatic_bishop",
+      "breakpoints": true
     }
   ]
 }

@@ -149,7 +149,11 @@ export class AuthController {
     return {
       user: authContext.user,
       session: authContext.session,
-      tenant: tenantContext,
+      tenant: {
+        isPlaceholder: tenantContext.isPlaceholder,
+        requestedSlug: tenantContext.requestedSlug,
+        ...tenantContext.tenant,
+      },
     }
   }
 

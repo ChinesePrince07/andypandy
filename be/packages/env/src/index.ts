@@ -23,6 +23,10 @@ export const env = createEnv({
 
     CONFIG_ENCRYPTION_KEY: z.string().min(1),
 
+    // Payment
+    CREEM_API_KEY: z.string().min(1),
+    CREEM_WEBHOOK_SECRET: z.string().min(1),
+
     DEFAULT_SUPERADMIN_EMAIL: z.email().default('root@local.host'),
     DEFAULT_SUPERADMIN_USERNAME: z
       .string()

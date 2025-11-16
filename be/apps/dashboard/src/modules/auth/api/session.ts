@@ -4,9 +4,10 @@ import { camelCaseKeys } from '~/lib/case'
 import type { BetterAuthSession, BetterAuthUser } from '../types'
 
 export interface SessionTenant {
+  isPlaceholder: boolean
+  requestedSlug: string | null
   id: string
   slug: string | null
-  isPlaceholder: boolean
 }
 
 export type SessionResponse = {

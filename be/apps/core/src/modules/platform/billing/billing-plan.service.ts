@@ -7,11 +7,15 @@ import { eq } from 'drizzle-orm'
 import { injectable } from 'tsyringe'
 
 import { BILLING_USAGE_EVENT } from './billing.constants'
-import { BILLING_PLAN_DEFINITIONS, BILLING_PLAN_IDS, PUBLIC_PLAN_IDS } from './billing-plan.constants'
+import { BILLING_PLAN_DEFINITIONS, BILLING_PLAN_IDS } from './billing-plan.constants'
 import type {
   BillingPlanDefinition,
   BillingPlanId,
   BillingPlanOverrides,
+  BillingPlanPaymentInfo,
+  BillingPlanPricing,
+  BillingPlanPricingConfigs,
+  BillingPlanProductConfigs,
   BillingPlanQuota,
   BillingPlanQuotaOverride,
 } from './billing-plan.types'
@@ -62,29 +66,42 @@ export class BillingPlanService {
   }
 
   async getPlanSummaryForTenant(tenantId: string): Promise<BillingPlanSummary> {
-    const planId = await this.resolvePlanIdForTenant(tenantId)
+    const [planId, overrides, productConfigs, pricingConfigs] = await Promise.all([
+      this.resolvePlanIdForTenant(tenantId),
+      this.getPlanOverrides(),
+      this.getPlanProducts(),
+      this.getPlanPricing(),
+    ])
+
     const definition = BILLING_PLAN_DEFINITIONS[planId]
-    const overrides = await this.getPlanOverrides()
     const quotas = this.applyOverrides(definition.quotas, overrides[planId])
     return {
       planId,
       name: definition.name,
       description: definition.description,
       quotas,
+      payment: this.buildPaymentInfo(productConfigs[planId]),
+      pricing: this.buildPricingInfo(pricingConfigs[planId]),
     }
   }
 
   async getPublicPlanSummaries(): Promise<BillingPlanSummary[]> {
-    const overrides = await this.getPlanOverrides()
-    return PUBLIC_PLAN_IDS.map((id) => {
+    const [overrides, productConfigs, pricingConfigs] = await Promise.all([
+      this.getPlanOverrides(),
+      this.getPlanProducts(),
+      this.getPlanPricing(),
+    ])
+    return BILLING_PLAN_IDS.map((id) => {
       const definition = BILLING_PLAN_DEFINITIONS[id]
       return {
         planId: id,
         name: definition.name,
         description: definition.description,
         quotas: this.applyOverrides(definition.quotas, overrides[id]),
+        payment: this.buildPaymentInfo(productConfigs[id]),
+        pricing: this.buildPricingInfo(pricingConfigs[id]),
       }
-    })
+    }).filter((plan) => this.shouldExposePlan(plan.planId, plan.payment))
   }
 
   async ensurePhotoProcessingAllowance(tenantId: string, incomingItems: number): Promise<void> {
@@ -129,6 +146,14 @@ export class BillingPlanService {
     return await this.systemSettingService.getBillingPlanOverrides()
   }
 
+  private async getPlanProducts(): Promise<BillingPlanProductConfigs> {
+    return await this.systemSettingService.getBillingPlanProducts()
+  }
+
+  private async getPlanPricing(): Promise<BillingPlanPricingConfigs> {
+    return await this.systemSettingService.getBillingPlanPricing()
+  }
+
   private applyOverrides(base: BillingPlanQuota, override?: BillingPlanQuotaOverride): BillingPlanQuota {
     if (!override) {
       return { ...base }
@@ -144,6 +169,48 @@ export class BillingPlanService {
         override.maxSyncObjectSizeMb !== undefined ? override.maxSyncObjectSizeMb : base.maxSyncObjectSizeMb,
     }
   }
+
+  private buildPaymentInfo(entry?: BillingPlanPaymentInfo): BillingPlanPaymentInfo | undefined {
+    if (!entry) {
+      return undefined
+    }
+    const creemProductId = this.normalizeString(entry.creemProductId)
+    if (!creemProductId) {
+      return undefined
+    }
+    return { creemProductId }
+  }
+
+  private shouldExposePlan(planId: BillingPlanId, payment?: BillingPlanPaymentInfo): boolean {
+    if (planId === 'free') {
+      return true
+    }
+
+    return Boolean(payment?.creemProductId)
+  }
+
+  private buildPricingInfo(entry?: BillingPlanPricing): BillingPlanPricing | undefined {
+    if (!entry) {
+      return undefined
+    }
+    const hasPrice = entry.monthlyPrice !== null && !Number.isNaN(entry.monthlyPrice ?? undefined)
+    const hasCurrency = !!entry.currency
+    if (!hasPrice && !hasCurrency) {
+      return undefined
+    }
+    return {
+      monthlyPrice: hasPrice ? entry.monthlyPrice : null,
+      currency: entry.currency ?? null,
+    }
+  }
+
+  private normalizeString(value?: string | null): string | null {
+    if (typeof value !== 'string') {
+      return null
+    }
+    const trimmed = value.trim()
+    return trimmed.length > 0 ? trimmed : null
+  }
 }
 
 export interface BillingPlanSummary {
@@ -151,4 +218,6 @@ export interface BillingPlanSummary {
   name: string
   description: string
   quotas: BillingPlanQuota
+  pricing?: BillingPlanPricing
+  payment?: BillingPlanPaymentInfo
 }

@@ -22,6 +22,7 @@ This document tracks the current subscription plans, quota knobs, and the design
 
 1. **Plan definitions** live in `billing-plan.constants.ts`. Each entry carries human-friendly metadata for the super-admin dashboard plus a `quotas` object.
 2. **Overrides** are stored under `system.billing.planOverrides`. This is a JSON blob keyed by plan id. It is parsed through zod (`SystemSettingService.getBillingPlanOverrides`) and merged in the billing plan service.
+3. **Payment product mapping** lives in `system.billing.planProducts`. Each plan id can map to provider specific identifiers (e.g. `creemProductId`). Plans that require checkout (like `pro`) stay hidden until a product id is configured, which prevents exposing upgrade buttons in environments that are not ready.
 3. **Tenant assignment** is tracked via `tenant.plan_id` and can only be changed by superadmins (see `/super-admin/tenants` backend+dashboard). The Friend plan is intentionally absent from any public selector.
 4. **Quota enforcement** is performed in:
    - `PhotoAssetService` (manual upload size + library limit + monthly process allowance)

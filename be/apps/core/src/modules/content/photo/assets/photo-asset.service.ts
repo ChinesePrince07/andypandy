@@ -12,7 +12,6 @@ import { CURRENT_PHOTO_MANIFEST_VERSION, DATABASE_ONLY_PROVIDER, photoAssets } f
 import { EventEmitterService } from '@afilmory/framework'
 import { DbAccessor } from 'core/database/database.provider'
 import { BizException, ErrorCode } from 'core/errors'
-import { SystemSettingService } from 'core/modules/configuration/system-setting/system-setting.service'
 import { runWithBuilderLogRelay } from 'core/modules/infrastructure/data-sync/builder-log-relay'
 import type {
   DataSyncAction,
@@ -94,7 +93,6 @@ export class PhotoAssetService {
     private readonly dbAccessor: DbAccessor,
     private readonly photoBuilderService: PhotoBuilderService,
     private readonly photoStorageService: PhotoStorageService,
-    private readonly systemSettingService: SystemSettingService,
     private readonly billingPlanService: BillingPlanService,
     private readonly billingUsageService: BillingUsageService,
   ) {}
@@ -264,9 +262,8 @@ export class PhotoAssetService {
 
     const tenant = requireTenantContext()
     const db = this.dbAccessor.get()
-    const systemSettings = await this.systemSettingService.getSettings()
     const planQuota = await this.billingPlanService.getQuotaForTenant(tenant.tenant.id)
-    const uploadSizeLimit = planQuota.maxUploadSizeMb ?? systemSettings.maxPhotoUploadSizeMb
+    const uploadSizeLimit = planQuota.maxUploadSizeMb
     this.enforceUploadSizeLimit(inputs, uploadSizeLimit)
     const { builderConfig, storageConfig } = await this.photoStorageService.resolveConfigForTenant(tenant.tenant.id)
 
@@ -333,7 +330,7 @@ export class PhotoAssetService {
 
     const pendingPhotoPlans = photoPlans.filter((plan) => !existingPhotoKeySet.has(plan.storageKey))
     await this.billingPlanService.ensurePhotoProcessingAllowance(tenant.tenant.id, pendingPhotoPlans.length)
-    const libraryLimit = planQuota.libraryItemLimit ?? systemSettings.maxPhotoLibraryItems
+    const libraryLimit = planQuota.libraryItemLimit
     await this.ensurePhotoLibraryCapacity(tenant.tenant.id, db, pendingPhotoPlans.length, libraryLimit)
     throwIfAborted()
 

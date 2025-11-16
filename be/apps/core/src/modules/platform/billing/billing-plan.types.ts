@@ -17,3 +17,16 @@ export interface BillingPlanDefinition {
 export type BillingPlanQuotaOverride = Partial<BillingPlanQuota>
 
 export type BillingPlanOverrides = Record<BillingPlanId | string, BillingPlanQuotaOverride>
+
+export interface BillingPlanPaymentInfo {
+  creemProductId?: string | null
+}
+
+export type BillingPlanProductConfigs = Record<BillingPlanId | string, BillingPlanPaymentInfo | undefined>
+
+export interface BillingPlanPricing {
+  monthlyPrice: number | null
+  currency: string | null
+}
+
+export type BillingPlanPricingConfigs = Record<BillingPlanId | string, BillingPlanPricing | undefined>

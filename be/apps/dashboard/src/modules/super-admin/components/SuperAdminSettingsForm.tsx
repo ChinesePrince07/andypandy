@@ -7,7 +7,7 @@ import { startTransition, useCallback, useEffect, useMemo, useRef, useState } fr
 import { LinearBorderPanel } from '~/components/common/GlassPanel'
 
 import { SchemaFormRenderer } from '../../schema-form/SchemaFormRenderer'
-import type { SchemaFormState, SchemaFormValue } from '../../schema-form/types'
+import type { SchemaFormState, SchemaFormValue, UiNode } from '../../schema-form/types'
 import { useSuperAdminSettingsQuery, useUpdateSuperAdminSettingsMutation } from '../hooks'
 import type { SuperAdminSettingsResponse, UpdateSuperAdminSettingsPayload } from '../types'
 import type { SuperAdminFieldMap } from '../utils/schema-form-adapter'
@@ -45,7 +45,11 @@ function extractRawSettings(payload: SuperAdminSettingsResponse): Record<string,
   return null
 }
 
-export function SuperAdminSettingsForm() {
+interface SuperAdminSettingsFormProps {
+  visibleSectionIds?: readonly string[]
+}
+
+export function SuperAdminSettingsForm({ visibleSectionIds }: SuperAdminSettingsFormProps = {}) {
   const { data, isLoading, isError, error } = useSuperAdminSettingsQuery()
   const [fieldMap, setFieldMap] = useState<SuperAdminFieldMap>(() => new Map())
   const [formState, setFormState] = useState<FormState | null>(null)
@@ -145,6 +149,19 @@ export function SuperAdminSettingsForm() {
     return '所有设置已同步'
   }, [hasChanges, updateMutation.error, updateMutation.isError, updateMutation.isPending, updateMutation.isSuccess])
 
+  const shouldRenderNode = useMemo(() => {
+    if (!visibleSectionIds || visibleSectionIds.length === 0) {
+      return
+    }
+    const allowed = new Set(visibleSectionIds)
+    return (node: UiNode<string>) => {
+      if (node.type === 'section') {
+        return allowed.has(node.id)
+      }
+      return true
+    }
+  }, [visibleSectionIds])
+
   if (isError) {
     return (
       <LinearBorderPanel className="p-6">
@@ -190,7 +207,12 @@ export function SuperAdminSettingsForm() {
       transition={Spring.presets.smooth}
       className="space-y-6"
     >
-      <SchemaFormRenderer schema={data.schema} values={formState} onChange={handleChange} />
+      <SchemaFormRenderer
+        schema={data.schema}
+        values={formState}
+        onChange={handleChange}
+        shouldRenderNode={shouldRenderNode}
+      />
 
       <div className="grid gap-4 md:grid-cols-2">
         <LinearBorderPanel className="p-6">

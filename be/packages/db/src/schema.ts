@@ -76,6 +76,7 @@ export const authUsers = pgTable('auth_user', {
   email: text('email').notNull().unique(),
   emailVerified: boolean('email_verified').default(false).notNull(),
   image: text('image'),
+  creemCustomerId: text('creem_customer_id'),
   role: userRoleEnum('role').notNull().default('user'),
   tenantId: text('tenant_id').references(() => tenants.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
@@ -127,6 +128,21 @@ export const authVerifications = pgTable('auth_verification', {
   identifier: text('identifier').notNull(),
   value: text('value').notNull(),
   expiresAt: timestamp('expires_at', { mode: 'string' }).notNull(),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
+})
+
+export const creemSubscriptions = pgTable('creem_subscription', {
+  id: text('id').primaryKey(),
+  productId: text('product_id').notNull(),
+  referenceId: text('reference_id').notNull(),
+  creemCustomerId: text('creem_customer_id'),
+  creemSubscriptionId: text('creem_subscription_id'),
+  creemOrderId: text('creem_order_id'),
+  status: text('status').notNull().default('pending'),
+  periodStart: timestamp('period_start', { mode: 'string' }),
+  periodEnd: timestamp('period_end', { mode: 'string' }),
+  cancelAtPeriodEnd: boolean('cancel_at_period_end').default(false).notNull(),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
 })
