@@ -2,43 +2,6 @@
 
 import Link from 'next/link'
 
-const footerNav = [
-  {
-    title: '策展主题',
-    links: [
-      { label: '城市夜行', href: '#' },
-      { label: '肖像诗篇', href: '#' },
-      { label: '记忆胶片', href: '#' },
-    ],
-  },
-  {
-    title: '体验',
-    links: [
-      { label: '预约沉浸导览', href: '#' },
-      { label: '私享展陈', href: '#' },
-      { label: '影像叙事工作坊', href: '#' },
-    ],
-  },
-  {
-    title: '合作',
-    links: [
-      { label: '品牌共创', href: '#' },
-      { label: '艺术项目', href: '#' },
-      { label: '驻地策展', href: '#' },
-    ],
-  },
-]
-
-const ContactRow = () => (
-  <div className="flex flex-wrap gap-4 text-sm text-white/70">
-    <span>hello@afilmory.studio</span>
-    <span className="text-white/40">/</span>
-    <span>WeChat · AFILMORY</span>
-    <span className="text-white/40">/</span>
-    <span>IG · @afilmory.gallery</span>
-  </div>
-)
-
 export const Footer = () => {
   return (
     <footer className="relative mt-24 overflow-hidden rounded-t-[48px] border border-white/10 bg-linear-to-b from-black/80 via-black/60 to-black px-6 py-14 text-white sm:px-10">
@@ -60,42 +23,17 @@ export const Footer = () => {
               Afilmory
               致力于为摄影师、策展人和品牌打造沉浸的展示体验。我们以黑色背景延展出一条长廊，观众在其中聆听故事，而非参数。
             </p>
-            <ContactRow />
-          </div>
-          <div className="grid gap-8 sm:grid-cols-3">
-            {footerNav.map((column) => (
-              <div key={column.title} className="space-y-4">
-                <p className="text-xs tracking-[0.4em] text-white/45 uppercase">
-                  {column.title}
-                </p>
-                <ul className="space-y-3 text-sm text-white/70">
-                  {column.links.map((link) => (
-                    <li key={link.label}>
-                      <Link
-                        href={link.href}
-                        className="transition hover:text-white"
-                      >
-                        {link.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
           </div>
         </div>
         <div className="border-t border-white/10 pt-6 text-sm text-white/60">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <p>© 2025 Afilmory Studio · 光与记忆的私享馆</p>
+            <p>© 2025 Afilmory.art</p>
             <div className="flex gap-6 text-white/70">
-              <Link href="#" className="transition hover:text-white">
-                策展预约
+              <Link href="/privacy" className="transition hover:text-white">
+                Privacy Policy
               </Link>
-              <Link href="#" className="transition hover:text-white">
-                私人藏家
-              </Link>
-              <Link href="#" className="transition hover:text-white">
-                媒体合作
+              <Link href="/terms" className="transition hover:text-white">
+                Terms of Service
               </Link>
             </div>
           </div>

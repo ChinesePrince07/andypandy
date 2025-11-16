@@ -1,3 +1,4 @@
+import { Prompt } from '@afilmory/ui'
 import type { ReactNode } from 'react'
 import { createContext, use, useEffect, useRef } from 'react'
 import { toast } from 'sonner'
@@ -10,6 +11,7 @@ import { getRequestErrorMessage } from '~/lib/errors'
 import { getPhotoStorageUrl } from '../../api'
 import { useDeletePhotoAssetsMutation, usePhotoAssetListQuery, useUploadPhotoAssetsMutation } from '../../hooks'
 import type { PhotoAssetListItem } from '../../types'
+import { DeleteFromStorageOption } from './DeleteFromStorageOption'
 import type { DeleteAssetOptions } from './types'
 import type { PhotoUploadRequestOptions } from './upload.types'
 
@@ -51,6 +53,35 @@ function createPhotoLibraryStore(params: CreatePhotoLibraryStoreParams) {
   const { requestDeleteAssets, requestUploadAssets, requestStorageUrl, refetchAssets } = params
 
   return createStore<PhotoLibraryStoreState>((set, get) => {
+    const getAssetLabel = (asset: PhotoAssetListItem) =>
+      asset.manifest?.data?.title ?? asset.manifest?.data?.id ?? asset.photoId
+
+    const presentDeletePrompt = (
+      label: string,
+      onConfirm: (options: DeleteAssetOptions) => Promise<void> | void,
+    ): Promise<void> => {
+      let deleteFromStorage = false
+
+      return new Promise((resolve) => {
+        Prompt.prompt({
+          title: '确认删除该资源？',
+          description: `删除后将无法恢复，是否继续删除「${label}」？如需同时删除远程存储文件，可勾选下方选项。`,
+          variant: 'danger',
+          onConfirmText: '删除',
+          onCancelText: '取消',
+          content: (
+            <DeleteFromStorageOption
+              onChange={(checked) => {
+                deleteFromStorage = checked
+              }}
+            />
+          ),
+          onConfirm: () => Promise.resolve(onConfirm({ deleteFromStorage })).finally(resolve),
+          onCancel: resolve,
+        })
+      })
+    }
+
     const performDelete = async (ids: string[], options?: DeleteAssetOptions) => {
       if (ids.length === 0) return
       set({ isDeleting: true })
@@ -125,8 +156,27 @@ function createPhotoLibraryStore(params: CreatePhotoLibraryStoreParams) {
           }
           return { selectedIds: state.assets.map((asset) => asset.id) }
         }),
-      deleteAsset: (asset, options) => performDelete([asset.id], options),
-      deleteSelected: () => performDelete(get().selectedIds),
+      deleteAsset: (asset, options) => {
+        if (options) {
+          return performDelete([asset.id], options)
+        }
+
+        const assetLabel = getAssetLabel(asset)
+        return presentDeletePrompt(assetLabel, (promptOptions) => performDelete([asset.id], promptOptions))
+      },
+      deleteSelected: () => {
+        const ids = get().selectedIds
+        if (ids.length === 0) {
+          return Promise.resolve()
+        }
+
+        const assets = get().assets ?? []
+        const selectedAssets = assets.filter((asset) => ids.includes(asset.id))
+        const targetLabel =
+          selectedAssets.length === 1 ? getAssetLabel(selectedAssets[0]) : `选中的 ${ids.length} 个资源`
+
+        return presentDeletePrompt(targetLabel, (promptOptions) => performDelete(ids, promptOptions))
+      },
       uploadAssets: (files, options) => performUpload(Array.from(files), options),
       openAsset: performOpenAsset,
       refetchAssets,

@@ -4,6 +4,9 @@ import type { Viewport } from 'next'
 
 import { HydrationEndDetector } from '~/components/common/HydrationEndDetector'
 import { ScrollTop } from '~/components/common/ScrollTop'
+import { NocturneBackground } from '~/components/landing/NocturneBackground'
+import { Footer } from '~/components/layout'
+import { PageHeader } from '~/components/layout/PageHeader'
 import { Root } from '~/components/layout/root/Root'
 import { sansFont, serifFont } from '~/lib/fonts'
 
@@ -100,7 +103,12 @@ export default async function RootLayout({
         >
           <Providers>
             <div data-theme>
-              <Root>{children}</Root>
+              <Root>
+                <NocturneBackground />
+                <PageHeader />
+                {children}
+                <Footer />
+              </Root>
             </div>
           </Providers>
 

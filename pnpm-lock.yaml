@@ -345,7 +345,7 @@ importers:
         version: 12.23.24(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       next:
         specifier: 16.0.1
-        version: 16.0.1(@babel/core@7.28.5)(babel-plugin-react-compiler@19.1.0-rc.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+        version: 16.0.1(@babel/core@7.28.5)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       next-themes:
         specifier: 0.4.6
         version: 0.4.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -364,6 +364,9 @@ importers:
       react-intersection-observer:
         specifier: 10.0.0
         version: 10.0.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      react-markdown:
+        specifier: ^9.0.1
+        version: 9.1.0(@types/react@19.2.3)(react@19.2.0)
       sonner:
         specifier: 2.0.7
         version: 2.0.7(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -575,7 +578,7 @@ importers:
         version: 0.31.6
       next:
         specifier: 16.0.1
-        version: 16.0.1(@babel/core@7.28.5)(babel-plugin-react-compiler@19.1.0-rc.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+        version: 16.0.1(@babel/core@7.28.5)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       postcss:
         specifier: 8.5.6
         version: 8.5.6
@@ -623,7 +626,7 @@ importers:
         version: 2.2.9(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       '@lobehub/fluent-emoji':
         specifier: 2.0.0
-        version: 2.0.0(@babel/core@7.28.5)(@types/react@19.2.3)(acorn@8.15.0)(antd@5.26.2(luxon@3.7.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(framer-motion@12.23.24(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+        version: 2.0.0(@babel/core@7.28.4)(@types/react@19.2.3)(acorn@8.15.0)(antd@5.26.2(luxon@3.7.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(framer-motion@12.23.24(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       '@maplibre/maplibre-gl-geocoder':
         specifier: ^1.9.1
         version: 1.9.1(maplibre-gl@5.12.0)
@@ -686,7 +689,7 @@ importers:
         version: 10.2.0
       jotai:
         specifier: 2.15.1
-        version: 2.15.1(@babel/core@7.28.5)(@babel/template@7.27.2)(@types/react@19.2.3)(react@19.2.0)
+        version: 2.15.1(@babel/core@7.28.4)(@babel/template@7.27.2)(@types/react@19.2.3)(react@19.2.0)
       maplibre-gl:
         specifier: ^5.12.0
         version: 5.12.0
@@ -734,7 +737,7 @@ importers:
         version: 7.9.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       react-scan:
         specifier: 0.4.3
-        version: 0.4.3(@types/react@19.2.3)(next@16.0.1(@babel/core@7.28.5)(babel-plugin-react-compiler@19.1.0-rc.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react-router-dom@6.30.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-router@7.9.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)(rollup@2.79.2)
+        version: 0.4.3(@types/react@19.2.3)(next@16.0.1(@babel/core@7.28.4)(babel-plugin-react-compiler@19.1.0-rc.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react-router-dom@6.30.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-router@7.9.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)(rollup@2.79.2)
       react-use-measure:
         specifier: 2.1.7
         version: 2.1.7(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -10462,6 +10465,12 @@ packages:
       '@types/react': '>=18'
       react: '>=18'
 
+  react-markdown@9.1.0:
+    resolution: {integrity: sha512-xaijuJB0kzGiUdG7nc2MOMDUDBWPyGAjZtUrow9XxUeua8IqeP+VlIfAZ3bphpcLTnSZXz6z9jcVC/TCwbfgdw==}
+    peerDependencies:
+      '@types/react': '>=18'
+      react: '>=18'
+
   react-merge-refs@3.0.2:
     resolution: {integrity: sha512-MSZAfwFfdbEvwkKWP5EI5chuLYnNUxNS7vyS0i1Jp+wtd8J4Ga2ddzhaE68aMol2Z4vCnRM/oGOo1a3V75UPlw==}
     peerDependencies:
@@ -12887,9 +12896,9 @@ snapshots:
       regexpu-core: 6.4.0
       semver: 6.3.1
 
-  '@babel/helper-define-polyfill-provider@0.6.4(@babel/core@7.28.5)':
+  '@babel/helper-define-polyfill-provider@0.6.4(@babel/core@7.28.4)':
     dependencies:
-      '@babel/core': 7.28.5
+      '@babel/core': 7.28.4
       '@babel/helper-compilation-targets': 7.27.2
       '@babel/helper-plugin-utils': 7.27.1
       debug: 4.4.3(supports-color@5.5.0)
@@ -13354,14 +13363,14 @@ snapshots:
       '@babel/core': 7.28.5
       '@babel/helper-plugin-utils': 7.27.1
 
-  '@babel/plugin-transform-runtime@7.27.4(@babel/core@7.28.5)':
+  '@babel/plugin-transform-runtime@7.27.4(@babel/core@7.28.4)':
     dependencies:
-      '@babel/core': 7.28.5
+      '@babel/core': 7.28.4
       '@babel/helper-module-imports': 7.27.1
       '@babel/helper-plugin-utils': 7.27.1
-      babel-plugin-polyfill-corejs2: 0.4.13(@babel/core@7.28.5)
-      babel-plugin-polyfill-corejs3: 0.11.1(@babel/core@7.28.5)
-      babel-plugin-polyfill-regenerator: 0.6.4(@babel/core@7.28.5)
+      babel-plugin-polyfill-corejs2: 0.4.13(@babel/core@7.28.4)
+      babel-plugin-polyfill-corejs3: 0.11.1(@babel/core@7.28.4)
+      babel-plugin-polyfill-regenerator: 0.6.4(@babel/core@7.28.4)
       semver: 6.3.1
     transitivePeerDependencies:
       - supports-color
@@ -14599,10 +14608,10 @@ snapshots:
 
   '@lobehub/emojilib@1.0.0': {}
 
-  '@lobehub/fluent-emoji@2.0.0(@babel/core@7.28.5)(@types/react@19.2.3)(acorn@8.15.0)(antd@5.26.2(luxon@3.7.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(framer-motion@12.23.24(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
+  '@lobehub/fluent-emoji@2.0.0(@babel/core@7.28.4)(@types/react@19.2.3)(acorn@8.15.0)(antd@5.26.2(luxon@3.7.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(framer-motion@12.23.24(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
     dependencies:
       '@lobehub/emojilib': 1.0.0
-      '@lobehub/ui': 2.7.3(@babel/core@7.28.5)(@types/react@19.2.3)(acorn@8.15.0)(antd@5.26.2(luxon@3.7.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(framer-motion@12.23.24(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      '@lobehub/ui': 2.7.3(@babel/core@7.28.4)(@types/react@19.2.3)(acorn@8.15.0)(antd@5.26.2(luxon@3.7.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(framer-motion@12.23.24(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       antd: 5.26.2(luxon@3.7.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       antd-style: 3.7.1(@types/react@19.2.3)(antd@5.26.2(luxon@3.7.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       emoji-regex: 10.4.0
@@ -14619,9 +14628,9 @@ snapshots:
       - framer-motion
       - supports-color
 
-  '@lobehub/icons@2.7.0(@babel/core@7.28.5)(@types/react@19.2.3)(acorn@8.15.0)(antd@5.26.2(luxon@3.7.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(framer-motion@12.23.24(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
+  '@lobehub/icons@2.7.0(@babel/core@7.28.4)(@types/react@19.2.3)(acorn@8.15.0)(antd@5.26.2(luxon@3.7.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(framer-motion@12.23.24(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
     dependencies:
-      '@lobehub/ui': 2.7.3(@babel/core@7.28.5)(@types/react@19.2.3)(acorn@8.15.0)(antd@5.26.2(luxon@3.7.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(framer-motion@12.23.24(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      '@lobehub/ui': 2.7.3(@babel/core@7.28.4)(@types/react@19.2.3)(acorn@8.15.0)(antd@5.26.2(luxon@3.7.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(framer-motion@12.23.24(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       antd: 5.26.2(luxon@3.7.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       antd-style: 3.7.1(@types/react@19.2.3)(antd@5.26.2(luxon@3.7.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       lucide-react: 0.469.0(react@19.2.0)
@@ -14636,7 +14645,7 @@ snapshots:
       - framer-motion
       - supports-color
 
-  '@lobehub/ui@2.7.3(@babel/core@7.28.5)(@types/react@19.2.3)(acorn@8.15.0)(antd@5.26.2(luxon@3.7.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(framer-motion@12.23.24(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
+  '@lobehub/ui@2.7.3(@babel/core@7.28.4)(@types/react@19.2.3)(acorn@8.15.0)(antd@5.26.2(luxon@3.7.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(framer-motion@12.23.24(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
     dependencies:
       '@ant-design/cssinjs': 1.23.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       '@dnd-kit/core': 6.3.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -14647,8 +14656,8 @@ snapshots:
       '@emoji-mart/react': 1.1.1(emoji-mart@5.6.0)(react@19.2.0)
       '@floating-ui/react': 0.27.12(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       '@giscus/react': 3.1.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
-      '@lobehub/fluent-emoji': 2.0.0(@babel/core@7.28.5)(@types/react@19.2.3)(acorn@8.15.0)(antd@5.26.2(luxon@3.7.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(framer-motion@12.23.24(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
-      '@lobehub/icons': 2.7.0(@babel/core@7.28.5)(@types/react@19.2.3)(acorn@8.15.0)(antd@5.26.2(luxon@3.7.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(framer-motion@12.23.24(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      '@lobehub/fluent-emoji': 2.0.0(@babel/core@7.28.4)(@types/react@19.2.3)(acorn@8.15.0)(antd@5.26.2(luxon@3.7.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(framer-motion@12.23.24(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      '@lobehub/icons': 2.7.0(@babel/core@7.28.4)(@types/react@19.2.3)(acorn@8.15.0)(antd@5.26.2(luxon@3.7.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(framer-motion@12.23.24(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       '@mdx-js/mdx': 3.1.0(acorn@8.15.0)
       '@mdx-js/react': 3.1.1(@types/react@19.2.3)(react@19.2.0)
       '@radix-ui/react-slot': 1.2.4(@types/react@19.2.3)(react@19.2.0)
@@ -14678,7 +14687,7 @@ snapshots:
       rc-menu: 9.16.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       re-resizable: 6.11.2(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       react: 19.2.0
-      react-avatar-editor: 13.0.2(@babel/core@7.28.5)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      react-avatar-editor: 13.0.2(@babel/core@7.28.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       react-dom: 19.2.0(react@19.2.0)
       react-error-boundary: 5.0.0(react@19.2.0)
       react-hotkeys-hook: 5.1.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -18149,11 +18158,11 @@ snapshots:
       cosmiconfig: 7.1.0
       resolve: 1.22.11
 
-  babel-plugin-polyfill-corejs2@0.4.13(@babel/core@7.28.5):
+  babel-plugin-polyfill-corejs2@0.4.13(@babel/core@7.28.4):
     dependencies:
       '@babel/compat-data': 7.28.0
-      '@babel/core': 7.28.5
-      '@babel/helper-define-polyfill-provider': 0.6.4(@babel/core@7.28.5)
+      '@babel/core': 7.28.4
+      '@babel/helper-define-polyfill-provider': 0.6.4(@babel/core@7.28.4)
       semver: 6.3.1
     transitivePeerDependencies:
       - supports-color
@@ -18167,10 +18176,10 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  babel-plugin-polyfill-corejs3@0.11.1(@babel/core@7.28.5):
+  babel-plugin-polyfill-corejs3@0.11.1(@babel/core@7.28.4):
     dependencies:
-      '@babel/core': 7.28.5
-      '@babel/helper-define-polyfill-provider': 0.6.4(@babel/core@7.28.5)
+      '@babel/core': 7.28.4
+      '@babel/helper-define-polyfill-provider': 0.6.4(@babel/core@7.28.4)
       core-js-compat: 3.46.0
     transitivePeerDependencies:
       - supports-color
@@ -18183,10 +18192,10 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  babel-plugin-polyfill-regenerator@0.6.4(@babel/core@7.28.5):
+  babel-plugin-polyfill-regenerator@0.6.4(@babel/core@7.28.4):
     dependencies:
-      '@babel/core': 7.28.5
-      '@babel/helper-define-polyfill-provider': 0.6.4(@babel/core@7.28.5)
+      '@babel/core': 7.28.4
+      '@babel/helper-define-polyfill-provider': 0.6.4(@babel/core@7.28.4)
     transitivePeerDependencies:
       - supports-color
 
@@ -18228,7 +18237,7 @@ snapshots:
       nanostores: 1.0.1
       zod: 4.1.12
     optionalDependencies:
-      next: 16.0.1(@babel/core@7.28.5)(babel-plugin-react-compiler@19.1.0-rc.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      next: 16.0.1(@babel/core@7.28.5)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       react: 19.2.0
       react-dom: 19.2.0(react@19.2.0)
 
@@ -20770,6 +20779,13 @@ snapshots:
 
   jose@6.1.0: {}
 
+  jotai@2.15.1(@babel/core@7.28.4)(@babel/template@7.27.2)(@types/react@19.2.3)(react@19.2.0):
+    optionalDependencies:
+      '@babel/core': 7.28.4
+      '@babel/template': 7.27.2
+      '@types/react': 19.2.3
+      react: 19.2.0
+
   jotai@2.15.1(@babel/core@7.28.5)(@babel/template@7.27.2)(@types/react@19.2.3)(react@19.2.0):
     optionalDependencies:
       '@babel/core': 7.28.5
@@ -21823,7 +21839,32 @@ snapshots:
       react: 19.2.0
       react-dom: 19.2.0(react@19.2.0)
 
-  next@16.0.1(@babel/core@7.28.5)(babel-plugin-react-compiler@19.1.0-rc.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0):
+  next@16.0.1(@babel/core@7.28.4)(babel-plugin-react-compiler@19.1.0-rc.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0):
+    dependencies:
+      '@next/env': 16.0.1
+      '@swc/helpers': 0.5.15
+      caniuse-lite: 1.0.30001752
+      postcss: 8.4.31
+      react: 19.2.0
+      react-dom: 19.2.0(react@19.2.0)
+      styled-jsx: 5.1.6(@babel/core@7.28.4)(react@19.2.0)
+    optionalDependencies:
+      '@next/swc-darwin-arm64': 16.0.1
+      '@next/swc-darwin-x64': 16.0.1
+      '@next/swc-linux-arm64-gnu': 16.0.1
+      '@next/swc-linux-arm64-musl': 16.0.1
+      '@next/swc-linux-x64-gnu': 16.0.1
+      '@next/swc-linux-x64-musl': 16.0.1
+      '@next/swc-win32-arm64-msvc': 16.0.1
+      '@next/swc-win32-x64-msvc': 16.0.1
+      babel-plugin-react-compiler: 19.1.0-rc.3
+      sharp: 0.34.5
+    transitivePeerDependencies:
+      - '@babel/core'
+      - babel-plugin-macros
+    optional: true
+
+  next@16.0.1(@babel/core@7.28.5)(react-dom@19.2.0(react@19.2.0))(react@19.2.0):
     dependencies:
       '@next/env': 16.0.1
       '@swc/helpers': 0.5.15
@@ -21841,7 +21882,6 @@ snapshots:
       '@next/swc-linux-x64-musl': 16.0.1
       '@next/swc-win32-arm64-msvc': 16.0.1
       '@next/swc-win32-x64-msvc': 16.0.1
-      babel-plugin-react-compiler: 19.1.0-rc.3
       sharp: 0.34.5
     transitivePeerDependencies:
       - '@babel/core'
@@ -22763,9 +22803,9 @@ snapshots:
       react: 19.2.0
       react-dom: 19.2.0(react@19.2.0)
 
-  react-avatar-editor@13.0.2(@babel/core@7.28.5)(react-dom@19.2.0(react@19.2.0))(react@19.2.0):
+  react-avatar-editor@13.0.2(@babel/core@7.28.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0):
     dependencies:
-      '@babel/plugin-transform-runtime': 7.27.4(@babel/core@7.28.5)
+      '@babel/plugin-transform-runtime': 7.27.4(@babel/core@7.28.4)
       '@babel/runtime': 7.28.4
       prop-types: 15.8.1
       react: 19.2.0
@@ -22889,6 +22929,24 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  react-markdown@9.1.0(@types/react@19.2.3)(react@19.2.0):
+    dependencies:
+      '@types/hast': 3.0.4
+      '@types/mdast': 4.0.4
+      '@types/react': 19.2.3
+      devlop: 1.1.0
+      hast-util-to-jsx-runtime: 2.3.6
+      html-url-attributes: 3.0.1
+      mdast-util-to-hast: 13.2.0
+      react: 19.2.0
+      remark-parse: 11.0.0
+      remark-rehype: 11.1.2
+      unified: 11.0.5
+      unist-util-visit: 5.0.0
+      vfile: 6.0.3
+    transitivePeerDependencies:
+      - supports-color
+
   react-merge-refs@3.0.2(react@19.2.0):
     optionalDependencies:
       react: 19.2.0
@@ -22946,7 +23004,7 @@ snapshots:
     optionalDependencies:
       react-dom: 19.2.0(react@19.2.0)
 
-  react-scan@0.4.3(@types/react@19.2.3)(next@16.0.1(@babel/core@7.28.5)(babel-plugin-react-compiler@19.1.0-rc.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react-router-dom@6.30.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-router@7.9.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)(rollup@2.79.2):
+  react-scan@0.4.3(@types/react@19.2.3)(next@16.0.1(@babel/core@7.28.4)(babel-plugin-react-compiler@19.1.0-rc.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react-router-dom@6.30.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-router@7.9.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)(rollup@2.79.2):
     dependencies:
       '@babel/core': 7.28.4
       '@babel/generator': 7.28.3
@@ -22968,7 +23026,7 @@ snapshots:
       react-dom: 19.2.0(react@19.2.0)
       tsx: 4.20.6
     optionalDependencies:
-      next: 16.0.1(@babel/core@7.28.5)(babel-plugin-react-compiler@19.1.0-rc.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      next: 16.0.1(@babel/core@7.28.4)(babel-plugin-react-compiler@19.1.0-rc.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       react-router: 7.9.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       react-router-dom: 6.30.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       unplugin: 2.1.0
@@ -22999,7 +23057,7 @@ snapshots:
       react-dom: 19.2.0(react@19.2.0)
       tsx: 4.20.6
     optionalDependencies:
-      next: 16.0.1(@babel/core@7.28.5)(babel-plugin-react-compiler@19.1.0-rc.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      next: 16.0.1(@babel/core@7.28.5)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       react-router: 7.9.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       react-router-dom: 6.30.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       unplugin: 2.1.0
@@ -23867,6 +23925,14 @@ snapshots:
   style-to-object@1.0.9:
     dependencies:
       inline-style-parser: 0.2.4
+
+  styled-jsx@5.1.6(@babel/core@7.28.4)(react@19.2.0):
+    dependencies:
+      client-only: 0.0.1
+      react: 19.2.0
+    optionalDependencies:
+      '@babel/core': 7.28.4
+    optional: true
 
   styled-jsx@5.1.6(@babel/core@7.28.5)(react@19.2.0):
     dependencies:
