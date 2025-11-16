@@ -5,10 +5,14 @@ import type {
   BuilderDebugProgressEvent,
   BuilderDebugResult,
   SuperAdminSettingsResponse,
+  SuperAdminTenantListResponse,
   UpdateSuperAdminSettingsPayload,
+  UpdateTenantBanPayload,
+  UpdateTenantPlanPayload,
 } from './types'
 
 const SUPER_ADMIN_SETTINGS_ENDPOINT = '/super-admin/settings'
+const SUPER_ADMIN_TENANTS_ENDPOINT = '/super-admin/tenants'
 const STABLE_NEWLINE = /\r?\n/
 
 type RunBuilderDebugOptions = {
@@ -29,6 +33,27 @@ export async function updateSuperAdminSettings(payload: UpdateSuperAdminSettings
   return await coreApi<SuperAdminSettingsResponse>(`${SUPER_ADMIN_SETTINGS_ENDPOINT}`, {
     method: 'PATCH',
     body,
+  })
+}
+
+export async function fetchSuperAdminTenants(): Promise<SuperAdminTenantListResponse> {
+  const response = await coreApi<SuperAdminTenantListResponse>(`${SUPER_ADMIN_TENANTS_ENDPOINT}`, {
+    method: 'GET',
+  })
+  return camelCaseKeys<SuperAdminTenantListResponse>(response)
+}
+
+export async function updateSuperAdminTenantPlan(payload: UpdateTenantPlanPayload): Promise<void> {
+  await coreApi(`${SUPER_ADMIN_TENANTS_ENDPOINT}/${payload.tenantId}/plan`, {
+    method: 'PATCH',
+    body: { planId: payload.planId },
+  })
+}
+
+export async function updateSuperAdminTenantBan(payload: UpdateTenantBanPayload): Promise<void> {
+  await coreApi(`${SUPER_ADMIN_TENANTS_ENDPOINT}/${payload.tenantId}/ban`, {
+    method: 'PATCH',
+    body: { banned: payload.banned },
   })
 }
 

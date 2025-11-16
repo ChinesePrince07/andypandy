@@ -50,7 +50,7 @@ export const PhotoMarkerPin = ({ marker, isSelected = false, onClick, onClose }:
                 threshold={0.1}
               />
               {/* Overlay */}
-              <div className="from-green/60 to-emerald/80 dark:from-green/70 dark:to-emerald/90 absolute inset-0 bg-gradient-to-br" />
+              <div className="from-green/60 to-emerald/80 dark:from-green/70 dark:to-emerald/90 absolute inset-0 bg-linear-to-br" />
             </div>
 
             {/* Main marker container */}
@@ -62,7 +62,7 @@ export const PhotoMarkerPin = ({ marker, isSelected = false, onClick, onClose }:
               }`}
             >
               {/* Glass morphism overlay */}
-              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/30 to-white/10 dark:from-white/20 dark:to-white/5" />
+              <div className="absolute inset-0 rounded-full bg-linear-to-br from-white/30 to-white/10 dark:from-white/20 dark:to-white/5" />
 
               {/* Camera icon */}
               <i
@@ -107,7 +107,7 @@ export const PhotoMarkerPin = ({ marker, isSelected = false, onClick, onClose }:
                 threshold={0.1}
               />
               {/* Gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+              <div className="absolute inset-0 bg-linear-to-t from-black/30 to-transparent" />
             </div>
 
             {/* Content */}

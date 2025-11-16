@@ -140,7 +140,7 @@ import { FeatureCard } from '~/components/landing'
   'relative overflow-hidden',
   radius['3xl'],
   shadows.heavy,
-  'bg-gradient-to-br from-accent/40 via-purple-600/40 to-slate-900/70',
+  'bg-linear-to-br from-accent/40 via-purple-600/40 to-slate-900/70',
   'p-10 text-white'
 )}>
   <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.25),_transparent_55%)] opacity-80" />

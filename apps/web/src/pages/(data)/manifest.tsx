@@ -43,7 +43,7 @@ const JsonHighlight = ({ data }: { data: any }) => {
 // 统计卡片组件
 const StatCard = ({ label, value, icon }: { label: string; value: string | number; icon: string }) => (
   <div className="group relative overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 backdrop-blur-sm transition-all hover:border-zinc-700 hover:bg-zinc-900/80">
-    <div className="absolute inset-0 bg-gradient-to-br from-zinc-800/0 via-zinc-800/5 to-zinc-800/10" />
+    <div className="absolute inset-0 bg-linear-to-br from-zinc-800/0 via-zinc-800/5 to-zinc-800/10" />
     <div className="relative">
       <div className="flex items-center justify-between">
         <div className="text-3xl">{icon}</div>
@@ -97,7 +97,7 @@ const ManifestStats = ({ data }: { data: any[] }) => {
 // 照片卡片组件
 const PhotoCard = ({ photo, index }: { photo: any; index: number }) => (
   <div className="group relative overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/30 backdrop-blur-sm transition-all hover:border-zinc-700 hover:bg-zinc-900/50">
-    <div className="absolute inset-0 bg-gradient-to-br from-zinc-800/0 via-zinc-800/5 to-zinc-800/10 opacity-0 transition-opacity group-hover:opacity-100" />
+    <div className="absolute inset-0 bg-linear-to-br from-zinc-800/0 via-zinc-800/5 to-zinc-800/10 opacity-0 transition-opacity group-hover:opacity-100" />
 
     <div className="relative p-6">
       <div className="flex items-start gap-4">
@@ -110,7 +110,7 @@ const PhotoCard = ({ photo, index }: { photo: any; index: number }) => (
                 alt={photo.title}
                 className="h-16 w-16 object-cover transition-transform group-hover:scale-110"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+              <div className="absolute inset-0 bg-linear-to-t from-black/20 to-transparent" />
             </div>
           ) : (
             <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-zinc-800 text-zinc-600">
@@ -214,7 +214,7 @@ export const Component = () => {
   return (
     <div className="min-h-screen bg-black">
       {/* 背景渐变 */}
-      <div className="fixed inset-0 bg-gradient-to-br from-zinc-900 via-black to-zinc-900" />
+      <div className="fixed inset-0 bg-linear-to-br from-zinc-900 via-black to-zinc-900" />
       <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/20 via-transparent to-transparent" />
 
       {/* Header */}
@@ -263,7 +263,7 @@ export const Component = () => {
                   variant="primary"
                   size="sm"
                   onClick={handleExport}
-                  className="h-9 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400"
+                  className="h-9 bg-linear-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400"
                 >
                   Export JSON
                 </Button>

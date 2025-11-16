@@ -7,6 +7,9 @@ import { BizException, ErrorCode } from 'core/errors'
 import { SystemSettingService } from 'core/modules/configuration/system-setting/system-setting.service'
 import { PhotoBuilderService } from 'core/modules/content/photo/builder/photo-builder.service'
 import { PhotoStorageService } from 'core/modules/content/photo/storage/photo-storage.service'
+import { BILLING_USAGE_EVENT } from 'core/modules/platform/billing/billing.constants'
+import { BillingPlanService } from 'core/modules/platform/billing/billing-plan.service'
+import { BillingUsageService } from 'core/modules/platform/billing/billing-usage.service'
 import { requireTenantContext } from 'core/modules/platform/tenant/tenant.context'
 import { and, desc, eq } from 'drizzle-orm'
 import { injectable } from 'tsyringe'
@@ -76,6 +79,8 @@ export class DataSyncService {
     private readonly photoBuilderService: PhotoBuilderService,
     private readonly photoStorageService: PhotoStorageService,
     private readonly systemSettingService: SystemSettingService,
+    private readonly billingPlanService: BillingPlanService,
+    private readonly billingUsageService: BillingUsageService,
   ) {}
 
   private async emitManifestChanged(tenantId: string): Promise<void> {
@@ -86,10 +91,12 @@ export class DataSyncService {
     const tenant = requireTenantContext()
     const runStartedAt = new Date()
     const systemSettings = await this.systemSettingService.getSettings()
+    const planQuota = await this.billingPlanService.getQuotaForTenant(tenant.tenant.id)
+    const effectiveMaxObjectMb = planQuota.maxSyncObjectSizeMb ?? systemSettings.maxDataSyncObjectSizeMb
     const syncLimits = {
-      maxObjectBytes: this.convertMbToBytes(systemSettings.maxDataSyncObjectSizeMb),
-      maxObjectSizeMb: systemSettings.maxDataSyncObjectSizeMb,
-      libraryLimit: systemSettings.maxPhotoLibraryItems,
+      maxObjectBytes: this.convertMbToBytes(effectiveMaxObjectMb),
+      maxObjectSizeMb: effectiveMaxObjectMb,
+      libraryLimit: planQuota.libraryItemLimit ?? systemSettings.maxPhotoLibraryItems,
     }
     const { builderConfig, storageConfig } = await this.resolveBuilderConfigForTenant(tenant.tenant.id, options)
     const context = await this.prepareSyncContext(tenant.tenant.id, builderConfig, storageConfig)
@@ -98,6 +105,9 @@ export class DataSyncService {
       incoming: context.missingInDb.length,
       limit: syncLimits.libraryLimit,
     })
+    if (!options.dryRun) {
+      await this.billingPlanService.ensurePhotoProcessingAllowance(tenant.tenant.id, context.missingInDb.length)
+    }
     const summary = this.createSummary(context)
     const actions: DataSyncAction[] = []
     const totals = this.buildStageTotals(context)
@@ -198,6 +208,16 @@ export class DataSyncService {
       startedAt: runStartedAt,
       completedAt: new Date(),
     })
+
+    if (!options.dryRun) {
+      await this.billingUsageService.recordEvent({
+        eventType: BILLING_USAGE_EVENT.DATA_SYNC_COMPLETED,
+        metadata: {
+          summary: { ...summary },
+          actionsCount: actions.length,
+        },
+      })
+    }
 
     return result
   }

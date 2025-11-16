@@ -63,7 +63,7 @@ export const HeroSection = () => (
       <div className="space-y-5">
         <h1 className="text-4xl leading-tight font-semibold text-white sm:text-5xl lg:text-6xl">
           Afilmory
-          <span className="via-accent block bg-gradient-to-r from-sky-300 to-purple-400 bg-clip-text text-transparent">
+          <span className="via-accent block bg-linear-to-r from-sky-300 to-purple-400 bg-clip-text text-transparent">
             让每一张照片都值得被看见
           </span>
         </h1>
@@ -76,7 +76,7 @@ export const HeroSection = () => (
       <div className="flex flex-wrap items-center gap-3">
         <Button
           asChild
-          className="to-accent text-background shadow-accent/30 min-w-[160px] bg-gradient-to-r from-sky-400 shadow-lg"
+          className="to-accent text-background shadow-accent/30 min-w-[160px] bg-linear-to-r from-sky-400 shadow-lg"
         >
           <Link
             href="https://afilmory.innei.in"
@@ -190,7 +190,7 @@ const HeroPreview = () => (
       <m.div
         aria-hidden
         className={clsxm(
-          'absolute bottom-6 -left-6 w-60 rounded-3xl border border-white/20 bg-gradient-to-br from-emerald-100/60 to-white/60 p-4 text-sm',
+          'absolute bottom-6 -left-6 w-60 rounded-3xl border border-white/20 bg-linear-to-br from-emerald-100/60 to-white/60 p-4 text-sm',
           blur['2xl'],
         )}
         initial={{ opacity: 0, y: 20, scale: 0.95 }}

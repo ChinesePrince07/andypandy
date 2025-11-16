@@ -208,3 +208,30 @@ export interface PhotoAssetSummary {
   conflicts: number
   pending: number
 }
+
+export type BillingUsageEventType = 'photo.asset.created' | 'photo.asset.deleted' | 'data.sync.completed'
+
+export type BillingUsageUnit = 'count' | 'byte'
+
+export interface BillingUsageEvent {
+  id: string
+  tenantId: string
+  eventType: BillingUsageEventType
+  quantity: number
+  unit: BillingUsageUnit
+  metadata: Record<string, unknown> | null
+  occurredAt: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface BillingUsageTotalsEntry {
+  eventType: BillingUsageEventType
+  totalQuantity: number
+  unit: BillingUsageUnit
+}
+
+export interface BillingUsageOverview {
+  events: BillingUsageEvent[]
+  totals: BillingUsageTotalsEntry[]
+}

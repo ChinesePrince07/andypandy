@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/method-signature-style */
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 import type { FC, PropsWithChildren } from 'react'
 
 declare global {
@@ -38,7 +40,3 @@ declare module 'react' {
     'data-testid'?: string
   }
 }
-
-export {}
-
-export {}

@@ -38,6 +38,11 @@ export class SystemSettingStore {
     )
   }
 
+  async getRaw(key: string): Promise<SystemSettingRecord['value']> {
+    const value = await this.findRaw(key)
+    return value?.value ?? null
+  }
+
   async set(
     key: SystemSettingKey,
     value: SystemSettingRecord['value'],
@@ -82,9 +87,12 @@ export class SystemSettingStore {
   }
 
   private async find(key: SystemSettingKey): Promise<SystemSettingRecord | null> {
+    return await this.findRaw(key)
+  }
+
+  private async findRaw(key: string): Promise<SystemSettingRecord | null> {
     const db = this.dbAccessor.get()
     const [record] = await db.select().from(systemSettings).where(eq(systemSettings.key, key)).limit(1)
-
     return record ?? null
   }
 }

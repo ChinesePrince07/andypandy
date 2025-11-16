@@ -1,4 +1,6 @@
 import { createZodDto } from '@afilmory/framework'
+import { BILLING_PLAN_IDS } from 'core/modules/platform/billing/billing-plan.constants'
+import type { BillingPlanId } from 'core/modules/platform/billing/billing-plan.types'
 import { z } from 'zod'
 
 const updateSuperAdminSettingsSchema = z
@@ -34,3 +36,21 @@ const updateSuperAdminSettingsSchema = z
   })
 
 export class UpdateSuperAdminSettingsDto extends createZodDto(updateSuperAdminSettingsSchema) {}
+
+const validPlanIdSchema = z
+  .string()
+  .refine((value): value is BillingPlanId => BILLING_PLAN_IDS.includes(value as BillingPlanId), {
+    message: '无效的订阅计划',
+  })
+
+const updateTenantPlanSchema = z.object({
+  planId: validPlanIdSchema,
+})
+
+export class UpdateTenantPlanDto extends createZodDto(updateTenantPlanSchema) {}
+
+const updateTenantBanSchema = z.object({
+  banned: z.boolean(),
+})
+
+export class UpdateTenantBanDto extends createZodDto(updateTenantBanSchema) {}

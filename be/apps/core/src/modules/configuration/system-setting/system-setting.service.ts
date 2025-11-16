@@ -2,9 +2,12 @@ import { authUsers } from '@afilmory/db'
 import { DbAccessor } from 'core/database/database.provider'
 import { BizException, ErrorCode } from 'core/errors'
 import type { SocialProvidersConfig } from 'core/modules/platform/auth/auth.config'
+import { BILLING_PLAN_OVERRIDES_SETTING_KEY } from 'core/modules/platform/billing/billing-plan.constants'
+import type { BillingPlanOverrides } from 'core/modules/platform/billing/billing-plan.types'
 import { sql } from 'drizzle-orm'
 import { injectable } from 'tsyringe'
-import type { ZodType } from 'zod'
+import type {ZodType} from 'zod';
+import { z  } from 'zod'
 
 import { SYSTEM_SETTING_DEFINITIONS, SYSTEM_SETTING_KEYS } from './system-setting.constants'
 import { SystemSettingStore } from './system-setting.store.service'
@@ -110,6 +113,12 @@ export class SystemSettingService {
       oauthGithubClientId,
       oauthGithubClientSecret,
     }
+  }
+
+  async getBillingPlanOverrides(): Promise<BillingPlanOverrides> {
+    const raw = await this.systemSettingStore.getRaw(BILLING_PLAN_OVERRIDES_SETTING_KEY)
+    const parsed = BILLING_PLAN_OVERRIDES_SCHEMA.safeParse(raw)
+    return parsed.success ? (parsed.data as BillingPlanOverrides) : {}
   }
 
   async getStats(): Promise<SystemSettingStats> {
@@ -363,3 +372,12 @@ export class SystemSettingService {
     return typeof row?.total === 'number' ? row.total : Number(row?.total ?? 0)
   }
 }
+
+const PLAN_OVERRIDE_ENTRY_SCHEMA = z.object({
+  monthlyAssetProcessLimit: z.number().int().min(0).nullable().optional(),
+  libraryItemLimit: z.number().int().min(0).nullable().optional(),
+  maxUploadSizeMb: z.number().int().min(1).nullable().optional(),
+  maxSyncObjectSizeMb: z.number().int().min(1).nullable().optional(),
+})
+
+const BILLING_PLAN_OVERRIDES_SCHEMA = z.record(z.string(), PLAN_OVERRIDE_ENTRY_SCHEMA).default({})

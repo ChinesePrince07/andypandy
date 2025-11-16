@@ -27,7 +27,7 @@ const GlassButton = (props: React.ComponentProps<typeof Button>) => (
     className={clsxm(
       'rounded-full border-white/20 !bg-black/70 p-3 shadow-2xl backdrop-blur-2xl',
       'h-14 w-14 border',
-      'bg-gradient-to-br from-white/20 to-white/0',
+      'bg-linear-to-br from-white/20 to-white/0',
       'transition-colors duration-300 hover:border-white/30 hover:bg-black/10',
       props.className,
     )}

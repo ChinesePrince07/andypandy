@@ -10,7 +10,7 @@ export const CTASection = () => (
   <section>
     <div
       className={clsxm(
-        'relative overflow-hidden border border-white/10 bg-gradient-to-br from-accent/40 via-purple-600/40 to-slate-900/70 p-10 text-white',
+        'relative overflow-hidden border border-white/10 bg-linear-to-br from-accent/40 via-purple-600/40 to-slate-900/70 p-10 text-white',
         radius['3xl'],
       )}
     >

@@ -246,12 +246,12 @@ import { spacing, typography } from '~/lib/design-tokens'
 
 ```tsx
 // Hero 渐变背景
-<div className="bg-gradient-to-br from-accent/40 via-purple-600/40 to-slate-900/70">
+<div className="bg-linear-to-br from-accent/40 via-purple-600/40 to-slate-900/70">
   ...
 </div>
 
 // 文字渐变
-<span className="bg-gradient-to-r from-sky-300 via-accent to-purple-400 bg-clip-text text-transparent">
+<span className="bg-linear-to-r from-sky-300 via-accent to-purple-400 bg-clip-text text-transparent">
   渐变文字
 </span>
 ```

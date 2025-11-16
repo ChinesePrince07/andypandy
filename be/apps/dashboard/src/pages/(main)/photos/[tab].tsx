@@ -4,7 +4,7 @@ import type { PhotoPageTab } from '~/modules/photos'
 import { PhotoPage } from '~/modules/photos'
 
 const isValidTab = (value: string | undefined): value is PhotoPageTab =>
-  value === 'sync' || value === 'library' || value === 'storage'
+  value === 'sync' || value === 'library' || value === 'storage' || value === 'usage'
 
 export function Component() {
   const { tab } = useParams<{ tab?: string }>()

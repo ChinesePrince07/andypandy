@@ -1,7 +1,3 @@
 export const Content: Component = ({ children }) => {
-  return (
-    <main className="relative z-[1] h-fit px-4 pt-[4.5rem] md:px-0">
-      {children}
-    </main>
-  )
+  return <main className="relative z-1 h-fit px-4 md:px-0">{children}</main>
 }

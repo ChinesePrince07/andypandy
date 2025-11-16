@@ -108,7 +108,7 @@ export const MasonryPhotoItem = ({ data, width, index: _ }: { data: PhotoManifes
       return
     }
 
-    const {video, originalUrl} = data
+    const { video, originalUrl } = data
 
     const loadVideo = async () => {
       setIsConvertingVideo(true)
@@ -296,7 +296,7 @@ export const MasonryPhotoItem = ({ data, width, index: _ }: { data: PhotoManifes
       {imageLoaded && (
         <div className="pointer-events-none">
           {/* 渐变背景 - 独立的层 */}
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+          <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
           {/* 内容层 - 独立的层以支持 backdrop-filter */}
           <div className="absolute inset-x-0 bottom-0 p-4 pb-0 text-white">

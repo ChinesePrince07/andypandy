@@ -184,6 +184,7 @@ class PhotoLoader {
 - **Manifest Building**: `pnpm run build:manifest` processes photos and updates the static `photos-manifest.json`.
 - **Type Safety**: Shared types between builder, SPA, and servers ensure consistency.
 - **Page Structure**: Keep files under `pages/` as thin routing shells; move reusable UI/logic into `modules/<domain>/**`.
+- **State Isolation**: When a UI feature has deep subtrees (e.g., photo library actions), do not thread handler props through multiple layers. Lift shared logic into colocated contexts or local stores (Jotai/Zustand) that expose hooks and let the consuming components trigger actions directly. This minimizes prop drilling and avoids unnecessary React re-renders.
 
 ### Code Quality Rules
 

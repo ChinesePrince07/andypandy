@@ -1,7 +1,8 @@
 import { clsxm } from '@afilmory/utils'
-import { NavLink } from 'react-router'
+import { NavLink, useNavigate } from 'react-router'
 
 import { useAuthUserValue } from '~/atoms/auth'
+import { useTenantPlanQuery } from '~/modules/billing'
 
 import { UserMenu } from './UserMenu'
 
@@ -14,6 +15,9 @@ const navigationTabs = [
 
 export function Header() {
   const user = useAuthUserValue()
+  const planQuery = useTenantPlanQuery({ enabled: Boolean(user) })
+  const planLabel = planQuery.data?.plan?.name ?? planQuery.data?.plan?.planId ?? null
+  const navigate = useNavigate()
 
   return (
     <header className="bg-background relative shrink-0 border-b border-fill-tertiary/50">
@@ -44,11 +48,34 @@ export function Header() {
 
         {/* Right side - User Menu */}
         {user && (
-          <div className="border-fill-tertiary/50 ml-2 sm:ml-auto border-l pl-2 sm:pl-4">
+          <div className="border-fill-tertiary/50 ml-2 sm:ml-auto flex items-center gap-3 border-l pl-2 sm:pl-4">
+            <PlanBadge label={planLabel} isLoading={planQuery.isLoading} onClick={() => navigate('/plan')} />
             <UserMenu user={user} />
           </div>
         )}
       </div>
     </header>
+  )
+}
+
+function PlanBadge({ label, isLoading, onClick }: { label: string | null; isLoading: boolean; onClick: () => void }) {
+  if (isLoading && !label) {
+    return <div className="bg-fill/30 h-6 w-24 animate-pulse rounded-lg border border-fill-tertiary/30" />
+  }
+
+  if (!label) {
+    return null
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="bg-fill/30 text-text-secondary hover:bg-fill/50 flex items-center gap-1.5 rounded border border-fill-tertiary/30 px-2.5 py-1 text-xs font-medium transition sm:text-[13px]"
+    >
+      <span className="text-text-tertiary text-[11px] sm:text-xs font-medium uppercase tracking-wide">Plan</span>
+      <span className="h-1 w-1 rounded-full bg-text-tertiary/40" aria-hidden="true" />
+      <span className="text-text font-semibold capitalize">{label}</span>
+    </button>
   )
 }

@@ -1,11 +1,10 @@
-import { atom } from 'jotai'
-import { createContext, useContext } from 'react'
+import type { PrimitiveAtom } from 'jotai'
+import { createContext, use } from 'react'
 
 import type { Field } from './types'
 
-const initialFields = atom({} as Record<string, Field>)
 export const FormContext = createContext<{
-  fields: typeof initialFields
+  fields: PrimitiveAtom<Record<string, Field>>
 
   addField: (name: string, field: Field) => void
   removeField: (name: string) => void
@@ -16,6 +15,6 @@ export const FormConfigContext = createContext<{
   showErrorMessage?: boolean
 }>(null!)
 export const useForm = () => {
-  return useContext(FormContext)
+  return use(FormContext)
 }
-export const useFormConfig = () => useContext(FormConfigContext)
+export const useFormConfig = () => use(FormConfigContext)

@@ -5,11 +5,11 @@
   "packageManager": "pnpm@9.15.9",
   "scripts": {
     "analyze": "cross-env NODE_ENV=production ANALYZE=true BUNDLE_ANALYZE=browser next build",
+    "prebuild": "rimraf .next || exit 0",
     "build": "cross-env NODE_ENV=production next build",
     "build:ci": "cross-env NODE_ENV=production CI=true next build",
     "dev": "cross-env NODE_ENV=development next dev --turbopack -p 1111",
     "lint": "eslint --cache --fix",
-    "prebuild": "rimraf .next || exit 0",
     "prepare": "pnpm exec simple-git-hooks && test -f .env || cp .env.template .env",
     "start": "npm run dev"
   },

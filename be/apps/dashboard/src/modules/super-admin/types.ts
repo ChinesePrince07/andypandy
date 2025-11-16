@@ -68,3 +68,43 @@ export interface BuilderDebugResult {
   thumbnailUrl: string | null
   filesDeleted: boolean
 }
+
+export interface BillingPlanQuota {
+  monthlyAssetProcessLimit: number | null
+  libraryItemLimit: number | null
+  maxUploadSizeMb: number | null
+  maxSyncObjectSizeMb: number | null
+}
+
+export interface BillingPlanDefinition {
+  id: string
+  name: string
+  description: string
+  quotas: BillingPlanQuota
+}
+
+export interface SuperAdminTenantSummary {
+  id: string
+  name: string
+  slug: string
+  planId: string
+  status: 'active' | 'inactive' | 'suspended'
+  banned: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface SuperAdminTenantListResponse {
+  tenants: SuperAdminTenantSummary[]
+  plans: BillingPlanDefinition[]
+}
+
+export interface UpdateTenantPlanPayload {
+  tenantId: string
+  planId: string
+}
+
+export interface UpdateTenantBanPayload {
+  tenantId: string
+  banned: boolean
+}

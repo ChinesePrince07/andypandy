@@ -1,4 +1,4 @@
-import type { PhotoSyncAction, PhotoSyncConflictType } from './types'
+import type { BillingUsageEventType, PhotoSyncAction, PhotoSyncConflictType } from './types'
 
 export const PHOTO_CONFLICT_TYPE_CONFIG: Record<PhotoSyncConflictType, { label: string; description: string }> = {
   'missing-in-storage': {
@@ -29,4 +29,29 @@ export const PHOTO_ACTION_TYPE_CONFIG: Record<PhotoSyncAction['type'], { label: 
   conflict: { label: '冲突', badgeClass: 'bg-amber-500/10 text-amber-400' },
   error: { label: '错误', badgeClass: 'bg-rose-500/20 text-rose-200' },
   noop: { label: '跳过', badgeClass: 'bg-slate-500/10 text-slate-400' },
+}
+
+export const BILLING_USAGE_EVENT_CONFIG: Record<
+  BillingUsageEventType,
+  { label: string; description: string; tone: 'accent' | 'warning' | 'muted' }
+> = {
+  'photo.asset.created': {
+    label: '新增照片',
+    description: '通过上传或同步新增的照片资产。',
+    tone: 'accent',
+  },
+  'photo.asset.deleted': {
+    label: '删除照片',
+    description: '从图库或存储中移除的照片资产。',
+    tone: 'warning',
+  },
+  'data.sync.completed': {
+    label: '同步运行',
+    description: '一次数据同步执行完成时记录的汇总事件。',
+    tone: 'muted',
+  },
+}
+
+export function getUsageEventLabel(eventType: BillingUsageEventType): string {
+  return BILLING_USAGE_EVENT_CONFIG[eventType]?.label ?? eventType
 }

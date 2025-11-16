@@ -60,6 +60,8 @@ export const tenants = pgTable(
     id: snowflakeId,
     slug: text('slug').notNull(),
     name: text('name').notNull(),
+    planId: text('plan_id').notNull().default('free'),
+    banned: boolean('banned').notNull().default(false),
     status: tenantStatusEnum('status').notNull().default('inactive'),
     createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
@@ -283,6 +285,29 @@ export const photoSyncRuns = pgTable(
   (t) => [index('idx_photo_sync_run_tenant').on(t.tenantId)],
 )
 
+export type BillingUsageMetadata = Record<string, unknown>
+
+export const billingUsageEvents = pgTable(
+  'billing_usage_event',
+  {
+    id: snowflakeId,
+    tenantId: text('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    eventType: text('event_type').notNull(),
+    quantity: integer('quantity').notNull().default(1),
+    unit: text('unit').notNull().default('count'),
+    metadata: jsonb('metadata').$type<BillingUsageMetadata | null>().default(null),
+    occurredAt: timestamp('occurred_at', { mode: 'string' }).defaultNow().notNull(),
+    createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
+  },
+  (t) => [
+    index('idx_billing_usage_event_tenant').on(t.tenantId),
+    index('idx_billing_usage_event_type').on(t.eventType),
+  ],
+)
+
 export const dbSchema = {
   tenants,
   authUsers,
@@ -296,6 +321,7 @@ export const dbSchema = {
   reactions,
   photoAssets,
   photoSyncRuns,
+  billingUsageEvents,
 }
 
 export type DBSchema = typeof dbSchema

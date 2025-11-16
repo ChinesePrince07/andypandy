@@ -15,6 +15,20 @@
       "when": 1763138147750,
       "tag": "0001_open_sentinel",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1763290193525,
+      "tag": "0002_whole_apocalypse",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1763292246073,
+      "tag": "0003_natural_ultimates",
+      "breakpoints": true
     }
   ]
 }

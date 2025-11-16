@@ -9,6 +9,7 @@ export function Component() {
   const isSuperAdmin = useIsSuperAdmin()
   const navItems = [
     { to: '/superadmin/settings', label: '系统设置', end: true },
+    { to: '/superadmin/tenants', label: '租户管理', end: true },
     {
       label: '构建器',
       to: '/settings/builder',

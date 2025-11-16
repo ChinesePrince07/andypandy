@@ -18,10 +18,14 @@ export enum ErrorCode {
   TENANT_SUSPENDED = 21,
   TENANT_INACTIVE = 22,
   TENANT_SLUG_RESERVED = 23,
+  TENANT_BANNED = 24,
 
   // Image Processing
   IMAGE_PROCESSING_FAILED = 30,
   PHOTO_MANIFEST_GENERATION_FAILED = 31,
+
+  // Billing / Subscription
+  BILLING_QUOTA_EXCEEDED = 40,
 }
 
 export interface ErrorDescriptor {
@@ -86,6 +90,10 @@ export const ERROR_CODE_DESCRIPTORS: Record<ErrorCode, ErrorDescriptor> = {
     httpStatus: 400,
     message: 'Tenant slug is reserved',
   },
+  [ErrorCode.TENANT_BANNED]: {
+    httpStatus: 403,
+    message: 'Tenant has been banned',
+  },
 
   [ErrorCode.IMAGE_PROCESSING_FAILED]: {
     httpStatus: 500,
@@ -94,5 +102,9 @@ export const ERROR_CODE_DESCRIPTORS: Record<ErrorCode, ErrorDescriptor> = {
   [ErrorCode.PHOTO_MANIFEST_GENERATION_FAILED]: {
     httpStatus: 500,
     message: 'Photo manifest generation failed',
+  },
+  [ErrorCode.BILLING_QUOTA_EXCEEDED]: {
+    httpStatus: 402,
+    message: 'Usage quota exceeded',
   },
 }

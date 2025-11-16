@@ -5,6 +5,7 @@ import {
   deletePhotoAssets,
   getPhotoAssetSummary,
   getPhotoSyncStatus,
+  getPhotoUsageOverview,
   listPhotoAssets,
   listPhotoSyncConflicts,
   resolvePhotoSyncConflict,
@@ -16,6 +17,7 @@ export const PHOTO_ASSET_SUMMARY_QUERY_KEY = ['photo-assets', 'summary'] as cons
 export const PHOTO_ASSET_LIST_QUERY_KEY = ['photo-assets', 'list'] as const
 export const PHOTO_SYNC_CONFLICTS_QUERY_KEY = ['photo-sync', 'conflicts'] as const
 export const PHOTO_SYNC_STATUS_QUERY_KEY = ['photo-sync', 'status'] as const
+export const PHOTO_USAGE_OVERVIEW_QUERY_KEY = ['photo-usage', 'overview'] as const
 
 export function usePhotoAssetSummaryQuery() {
   return useQuery({
@@ -44,6 +46,14 @@ export function usePhotoSyncConflictsQuery(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: PHOTO_SYNC_CONFLICTS_QUERY_KEY,
     queryFn: listPhotoSyncConflicts,
+    enabled: options?.enabled ?? true,
+  })
+}
+
+export function usePhotoUsageOverviewQuery(options?: { enabled?: boolean; limit?: number }) {
+  return useQuery({
+    queryKey: [...PHOTO_USAGE_OVERVIEW_QUERY_KEY, options?.limit] as const,
+    queryFn: () => getPhotoUsageOverview({ limit: options?.limit }),
     enabled: options?.enabled ?? true,
   })
 }

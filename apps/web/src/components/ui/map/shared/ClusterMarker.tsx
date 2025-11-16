@@ -79,12 +79,12 @@ export const ClusterMarker = ({
                   })}
 
                   {/* Overlay for mosaic effect */}
-                  <div className="from-blue/40 to-indigo/60 absolute inset-0 bg-gradient-to-br" />
+                  <div className="from-blue/40 to-indigo/60 absolute inset-0 bg-linear-to-br" />
                 </div>
               )}
 
               {/* Glass morphism overlay */}
-              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/30 to-white/10 dark:from-white/20 dark:to-white/5" />
+              <div className="absolute inset-0 rounded-full bg-linear-to-br from-white/30 to-white/10 dark:from-white/20 dark:to-white/5" />
 
               {/* Count display */}
               <div className="relative z-10 flex flex-col items-center text-xs">

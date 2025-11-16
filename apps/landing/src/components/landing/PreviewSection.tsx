@@ -59,7 +59,7 @@ export const PreviewSection = () => (
 
 const PreviewMockup = () => (
   <div className="relative">
-    <div className="absolute inset-x-8 -top-10 -bottom-10 rounded-[40px] bg-gradient-to-b from-white/10 via-white/5 to-transparent blur-3xl" />
+    <div className="absolute inset-x-8 -top-10 -bottom-10 rounded-[40px] bg-linear-to-b from-white/10 via-white/5 to-transparent blur-3xl" />
     <div
       className={clsxm(
         'relative border border-white/15 bg-white/5 p-6',
@@ -80,7 +80,7 @@ const PreviewMockup = () => (
         {Array.from({ length: 9 }).map((_, index) => (
           <div
             key={index}
-            className="h-24 rounded-2xl bg-gradient-to-br from-white/20 via-white/5 to-white/0 shadow-inner shadow-black/40"
+            className="h-24 rounded-2xl bg-linear-to-br from-white/20 via-white/5 to-white/0 shadow-inner shadow-black/40"
           />
         ))}
       </div>

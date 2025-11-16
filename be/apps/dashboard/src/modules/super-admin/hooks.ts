@@ -1,15 +1,35 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { fetchSuperAdminSettings, updateSuperAdminSettings } from './api'
-import type { SuperAdminSettingsResponse, UpdateSuperAdminSettingsPayload } from './types'
+import {
+  fetchSuperAdminSettings,
+  fetchSuperAdminTenants,
+  updateSuperAdminSettings,
+  updateSuperAdminTenantBan,
+  updateSuperAdminTenantPlan,
+} from './api'
+import type {
+  SuperAdminSettingsResponse,
+  SuperAdminTenantListResponse,
+  UpdateSuperAdminSettingsPayload,
+  UpdateTenantBanPayload,
+  UpdateTenantPlanPayload,
+} from './types'
 
 export const SUPER_ADMIN_SETTINGS_QUERY_KEY = ['super-admin', 'settings'] as const
+export const SUPER_ADMIN_TENANTS_QUERY_KEY = ['super-admin', 'tenants'] as const
 
 export function useSuperAdminSettingsQuery() {
   return useQuery<SuperAdminSettingsResponse>({
     queryKey: SUPER_ADMIN_SETTINGS_QUERY_KEY,
     queryFn: fetchSuperAdminSettings,
     staleTime: 60 * 1000,
+  })
+}
+
+export function useSuperAdminTenantsQuery() {
+  return useQuery<SuperAdminTenantListResponse>({
+    queryKey: SUPER_ADMIN_TENANTS_QUERY_KEY,
+    queryFn: fetchSuperAdminTenants,
   })
 }
 
@@ -25,6 +45,32 @@ export function useUpdateSuperAdminSettingsMutation(options?: SuperAdminSettings
     onSuccess: (data) => {
       queryClient.setQueryData(SUPER_ADMIN_SETTINGS_QUERY_KEY, data)
       options?.onSuccess?.(data)
+    },
+  })
+}
+
+export function useUpdateTenantPlanMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (payload: UpdateTenantPlanPayload) => {
+      await updateSuperAdminTenantPlan(payload)
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: SUPER_ADMIN_TENANTS_QUERY_KEY })
+    },
+  })
+}
+
+export function useUpdateTenantBanMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (payload: UpdateTenantBanPayload) => {
+      await updateSuperAdminTenantBan(payload)
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: SUPER_ADMIN_TENANTS_QUERY_KEY })
     },
   })
 }

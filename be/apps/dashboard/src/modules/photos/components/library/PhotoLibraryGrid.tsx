@@ -13,6 +13,7 @@ import { useAtomValue } from 'jotai'
 import { DynamicIcon } from 'lucide-react/dynamic'
 import type { ReactNode } from 'react'
 import { useMemo, useState } from 'react'
+import { useShallow } from 'zustand/shallow'
 
 import { viewportAtom } from '~/atoms/viewport'
 import { LinearBorderPanel } from '~/components/common/GlassPanel'
@@ -22,20 +23,8 @@ import type { PhotoAssetListItem } from '../../types'
 import { DeleteFromStorageOption } from './DeleteFromStorageOption'
 import { Masonry } from './Masonry'
 import { PhotoExifDetailsModal } from './PhotoExifDetailsModal'
-
-export type DeleteAssetOptions = {
-  deleteFromStorage?: boolean
-}
-
-type PhotoLibraryGridProps = {
-  assets: PhotoAssetListItem[] | undefined
-  isLoading: boolean
-  selectedIds: Set<string>
-  onToggleSelect: (id: string) => void
-  onOpenAsset: (asset: PhotoAssetListItem) => void
-  onDeleteAsset: (asset: PhotoAssetListItem, options?: DeleteAssetOptions) => Promise<void> | void
-  isDeleting?: boolean
-}
+import { usePhotoLibraryStore } from './PhotoLibraryProvider'
+import type { DeleteAssetOptions } from './types'
 
 type PhotoLibrarySortBy = 'uploadedAt' | 'capturedAt'
 type PhotoLibrarySortOrder = 'desc' | 'asc'
@@ -222,19 +211,23 @@ function PhotoGridItem({
   )
 }
 
-export function PhotoLibraryGrid({
-  assets,
-  isLoading,
-  selectedIds,
-  onToggleSelect,
-  onOpenAsset,
-  onDeleteAsset,
-  isDeleting,
-}: PhotoLibraryGridProps) {
+export function PhotoLibraryGrid() {
   const viewport = useAtomValue(viewportAtom)
   const columnWidth = viewport.sm ? 320 : 160
   const [sortBy, setSortBy] = useState<PhotoLibrarySortBy>('uploadedAt')
   const [sortOrder, setSortOrder] = useState<PhotoLibrarySortOrder>('desc')
+  const { assets, isLoading, selectedIds, toggleSelect, openAsset, deleteAsset, isDeleting } = usePhotoLibraryStore(
+    useShallow((state) => ({
+      assets: state.assets,
+      isLoading: state.isLoading,
+      selectedIds: state.selectedIds,
+      toggleSelect: state.toggleSelect,
+      openAsset: state.openAsset,
+      deleteAsset: state.deleteAsset,
+      isDeleting: state.isDeleting,
+    })),
+  )
+  const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds])
 
   const sortedAssets = useMemo(() => {
     if (!assets) return
@@ -274,10 +267,10 @@ export function PhotoLibraryGrid({
           render={({ data }) => (
             <PhotoGridItem
               asset={data}
-              isSelected={selectedIds.has(data.id)}
-              onToggleSelect={onToggleSelect}
-              onOpenAsset={onOpenAsset}
-              onDeleteAsset={onDeleteAsset}
+              isSelected={selectedSet.has(data.id)}
+              onToggleSelect={toggleSelect}
+              onOpenAsset={openAsset}
+              onDeleteAsset={deleteAsset}
               isDeleting={isDeleting}
             />
           )}

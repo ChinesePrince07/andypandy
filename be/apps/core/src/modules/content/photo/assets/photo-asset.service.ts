@@ -22,6 +22,9 @@ import type {
   DataSyncResultSummary,
   DataSyncStageTotals,
 } from 'core/modules/infrastructure/data-sync/data-sync.types'
+import { BILLING_USAGE_EVENT } from 'core/modules/platform/billing/billing.constants'
+import { BillingPlanService } from 'core/modules/platform/billing/billing-plan.service'
+import { BillingUsageService } from 'core/modules/platform/billing/billing-usage.service'
 import { requireTenantContext } from 'core/modules/platform/tenant/tenant.context'
 import { and, eq, inArray, sql } from 'drizzle-orm'
 import { injectable } from 'tsyringe'
@@ -92,6 +95,8 @@ export class PhotoAssetService {
     private readonly photoBuilderService: PhotoBuilderService,
     private readonly photoStorageService: PhotoStorageService,
     private readonly systemSettingService: SystemSettingService,
+    private readonly billingPlanService: BillingPlanService,
+    private readonly billingUsageService: BillingUsageService,
   ) {}
 
   private async emitManifestChanged(tenantId: string): Promise<void> {
@@ -235,6 +240,17 @@ export class PhotoAssetService {
     }
 
     await db.delete(photoAssets).where(and(eq(photoAssets.tenantId, tenant.tenant.id), inArray(photoAssets.id, ids)))
+
+    if (records.length > 0) {
+      await this.billingUsageService.recordEvent({
+        eventType: BILLING_USAGE_EVENT.PHOTO_ASSET_DELETED,
+        quantity: -records.length,
+        metadata: {
+          count: records.length,
+          mode: shouldDeleteFromStorage ? 'db+storage' : 'db-only',
+        },
+      })
+    }
     await this.emitManifestChanged(tenant.tenant.id)
   }
 
@@ -249,7 +265,9 @@ export class PhotoAssetService {
     const tenant = requireTenantContext()
     const db = this.dbAccessor.get()
     const systemSettings = await this.systemSettingService.getSettings()
-    this.enforceUploadSizeLimit(inputs, systemSettings.maxPhotoUploadSizeMb)
+    const planQuota = await this.billingPlanService.getQuotaForTenant(tenant.tenant.id)
+    const uploadSizeLimit = planQuota.maxUploadSizeMb ?? systemSettings.maxPhotoUploadSizeMb
+    this.enforceUploadSizeLimit(inputs, uploadSizeLimit)
     const { builderConfig, storageConfig } = await this.photoStorageService.resolveConfigForTenant(tenant.tenant.id)
 
     const builder = this.photoBuilderService.createBuilder(builderConfig)
@@ -314,12 +332,9 @@ export class PhotoAssetService {
     }
 
     const pendingPhotoPlans = photoPlans.filter((plan) => !existingPhotoKeySet.has(plan.storageKey))
-    await this.ensurePhotoLibraryCapacity(
-      tenant.tenant.id,
-      db,
-      pendingPhotoPlans.length,
-      systemSettings.maxPhotoLibraryItems,
-    )
+    await this.billingPlanService.ensurePhotoProcessingAllowance(tenant.tenant.id, pendingPhotoPlans.length)
+    const libraryLimit = planQuota.libraryItemLimit ?? systemSettings.maxPhotoLibraryItems
+    await this.ensurePhotoLibraryCapacity(tenant.tenant.id, db, pendingPhotoPlans.length, libraryLimit)
     throwIfAborted()
 
     const additionalPhotoPlans = this.createExistingPhotoPlansForVideos(unmatchedVideoBaseNames, existingBaseNameMap)
@@ -497,6 +512,14 @@ export class PhotoAssetService {
 
     if (processedItems.length > 0) {
       await this.emitManifestChanged(tenant.tenant.id)
+      await this.billingUsageService.recordEvent({
+        eventType: BILLING_USAGE_EVENT.PHOTO_ASSET_CREATED,
+        quantity: processedItems.length,
+        metadata: {
+          count: processedItems.length,
+          uploadSource: 'manual-upload',
+        },
+      })
     }
 
     return result

@@ -2,170 +2,102 @@
 
 import Link from 'next/link'
 
-import { blur } from '~/lib/design-tokens'
-import { clsxm } from '~/lib/helper'
-
-const footerLinks = {
-  product: [
-    { label: '在线示例', href: 'https://afilmory.innei.in' },
-    {
-      label: '使用文档',
-      href: 'https://github.com/Afilmory/photo-gallery-site#readme',
-    },
-    { label: 'GitHub', href: 'https://github.com/Afilmory/photo-gallery-site' },
-  ],
-  community: [
-    {
-      label: '讨论区',
-      href: 'https://github.com/Afilmory/photo-gallery-site/discussions',
-    },
-    {
-      label: '问题反馈',
-      href: 'https://github.com/Afilmory/photo-gallery-site/issues',
-    },
-    {
-      label: '贡献指南',
-      href: 'https://github.com/Afilmory/photo-gallery-site/blob/main/CONTRIBUTING.md',
-    },
-  ],
-  resources: [
-    {
-      label: '快速开始',
-      href: 'https://github.com/Afilmory/photo-gallery-site#-quick-start',
-    },
-    {
-      label: '配置说明',
-      href: 'https://github.com/Afilmory/photo-gallery-site#-configuration',
-    },
-    {
-      label: '部署教程',
-      href: 'https://github.com/Afilmory/photo-gallery-site#-deployment',
-    },
-  ],
-}
-
-const socialLinks = [
+const footerNav = [
   {
-    icon: 'i-lucide-github',
-    label: 'GitHub',
-    href: 'https://github.com/Afilmory/photo-gallery-site',
+    title: '策展主题',
+    links: [
+      { label: '城市夜行', href: '#' },
+      { label: '肖像诗篇', href: '#' },
+      { label: '记忆胶片', href: '#' },
+    ],
   },
-  { icon: 'i-lucide-twitter', label: 'Twitter', href: 'https://twitter.com' },
-  { icon: 'i-lucide-message-circle', label: 'Discord', href: '#' },
+  {
+    title: '体验',
+    links: [
+      { label: '预约沉浸导览', href: '#' },
+      { label: '私享展陈', href: '#' },
+      { label: '影像叙事工作坊', href: '#' },
+    ],
+  },
+  {
+    title: '合作',
+    links: [
+      { label: '品牌共创', href: '#' },
+      { label: '艺术项目', href: '#' },
+      { label: '驻地策展', href: '#' },
+    ],
+  },
 ]
+
+const ContactRow = () => (
+  <div className="flex flex-wrap gap-4 text-sm text-white/70">
+    <span>hello@afilmory.studio</span>
+    <span className="text-white/40">/</span>
+    <span>WeChat · AFILMORY</span>
+    <span className="text-white/40">/</span>
+    <span>IG · @afilmory.gallery</span>
+  </div>
+)
 
 export const Footer = () => {
   return (
-    <footer className={clsxm('border-t border-white/10 bg-white/40', blur.lg)}>
-      <div className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 lg:px-0">
-        {/* Main Footer */}
-        <div className="grid gap-8 lg:grid-cols-4">
-          {/* Brand */}
-          <div className="lg:col-span-1">
-            <div className="flex items-center gap-2 text-xl font-semibold text-gray-900">
-              <span className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-sky-400 to-purple-500 text-white">
-                <i className="i-lucide-camera size-5" />
-              </span>
-              <span>Afilmory</span>
-            </div>
-            <p className="mt-4 text-sm text-gray-600">
-              为摄影师打造的专业作品展示平台，让每一张照片都值得被看见。
+    <footer className="relative mt-24 overflow-hidden rounded-t-[48px] border border-white/10 bg-linear-to-b from-black/80 via-black/60 to-black px-6 py-14 text-white sm:px-10">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -top-10 left-10 h-64 w-64 rounded-full bg-white/10 blur-[140px]" />
+        <div className="absolute right-0 bottom-0 h-72 w-72 rounded-full bg-purple-500/10 blur-[160px]" />
+        <div className="absolute inset-x-0 bottom-0 h-px bg-linear-to-r from-transparent via-white/30 to-transparent opacity-60" />
+      </div>
+      <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-12">
+        <div className="grid gap-10 lg:grid-cols-[1.1fr,0.9fr]">
+          <div className="space-y-6">
+            <p className="text-xs tracking-[0.5em] text-white/50 uppercase">
+              Afilmory Studio
             </p>
-            {/* Social Links */}
-            <div className="mt-6 flex items-center gap-3">
-              {socialLinks.map((social) => (
-                <Link
-                  key={social.label}
-                  href={social.href}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex size-9 items-center justify-center rounded-lg border border-white/20 bg-white/40 text-gray-600 transition hover:bg-white/60 hover:text-gray-900"
-                  aria-label={social.label}
-                >
-                  <i className={clsxm(social.icon, 'size-4')} />
-                </Link>
-              ))}
-            </div>
+            <h3 className="font-serif text-4xl leading-tight">
+              让光圈、胶片与记忆在一座暗夜馆中互相呼吸
+            </h3>
+            <p className="text-sm text-white/70">
+              Afilmory
+              致力于为摄影师、策展人和品牌打造沉浸的展示体验。我们以黑色背景延展出一条长廊，观众在其中聆听故事，而非参数。
+            </p>
+            <ContactRow />
           </div>
-
-          {/* Links */}
-          <div className="grid grid-cols-3 gap-8 lg:col-span-3">
-            <div>
-              <h3 className="text-sm font-semibold text-gray-900">产品</h3>
-              <ul className="mt-4 space-y-3">
-                {footerLinks.product.map((link) => (
-                  <li key={link.label}>
-                    <Link
-                      href={link.href}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-sm text-gray-600 transition hover:text-gray-900"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="text-sm font-semibold text-gray-900">社区</h3>
-              <ul className="mt-4 space-y-3">
-                {footerLinks.community.map((link) => (
-                  <li key={link.label}>
-                    <Link
-                      href={link.href}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-sm text-gray-600 transition hover:text-gray-900"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="text-sm font-semibold text-gray-900">资源</h3>
-              <ul className="mt-4 space-y-3">
-                {footerLinks.resources.map((link) => (
-                  <li key={link.label}>
-                    <Link
-                      href={link.href}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-sm text-gray-600 transition hover:text-gray-900"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          <div className="grid gap-8 sm:grid-cols-3">
+            {footerNav.map((column) => (
+              <div key={column.title} className="space-y-4">
+                <p className="text-xs tracking-[0.4em] text-white/45 uppercase">
+                  {column.title}
+                </p>
+                <ul className="space-y-3 text-sm text-white/70">
+                  {column.links.map((link) => (
+                    <li key={link.label}>
+                      <Link
+                        href={link.href}
+                        className="transition hover:text-white"
+                      >
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
         </div>
-
-        {/* Bottom Bar */}
-        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 text-sm text-gray-600 sm:flex-row">
-          <p>© 2025 Afilmory. 完全开源，永久免费。</p>
-          <div className="flex items-center gap-6">
-            <Link
-              href="https://github.com/Afilmory/photo-gallery-site/blob/main/LICENSE"
-              target="_blank"
-              rel="noreferrer"
-              className="transition hover:text-gray-900"
-            >
-              MIT License
-            </Link>
-            <Link
-              href="https://github.com/Afilmory/photo-gallery-site#-features"
-              target="_blank"
-              rel="noreferrer"
-              className="transition hover:text-gray-900"
-            >
-              版本 v1.0
-            </Link>
+        <div className="border-t border-white/10 pt-6 text-sm text-white/60">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <p>© 2025 Afilmory Studio · 光与记忆的私享馆</p>
+            <div className="flex gap-6 text-white/70">
+              <Link href="#" className="transition hover:text-white">
+                策展预约
+              </Link>
+              <Link href="#" className="transition hover:text-white">
+                私人藏家
+              </Link>
+              <Link href="#" className="transition hover:text-white">
+                媒体合作
+              </Link>
+            </div>
           </div>
         </div>
       </div>

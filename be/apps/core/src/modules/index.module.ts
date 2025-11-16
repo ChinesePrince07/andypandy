@@ -25,6 +25,7 @@ import { CacheModule } from './infrastructure/cache/cache.module'
 import { DataSyncModule } from './infrastructure/data-sync/data-sync.module'
 import { StaticWebModule } from './infrastructure/static-web/static-web.module'
 import { AuthModule } from './platform/auth/auth.module'
+import { BillingModule } from './platform/billing/billing.module'
 import { DashboardModule } from './platform/dashboard/dashboard.module'
 import { DataManagementModule } from './platform/data-management/data-management.module'
 import { SuperAdminModule } from './platform/super-admin/super-admin.module'
@@ -56,6 +57,7 @@ function createEventModuleOptions(redis: RedisAccessor) {
     PhotoModule,
     ReactionModule,
     DashboardModule,
+    BillingModule,
     DataManagementModule,
     TenantModule,
     DataSyncModule,

@@ -3,33 +3,35 @@ import { clsxm } from '@afilmory/utils'
 import { DynamicIcon } from 'lucide-react/dynamic'
 import type { ChangeEventHandler } from 'react'
 import { useRef } from 'react'
+import { useShallow } from 'zustand/shallow'
 
+import { usePhotoLibraryStore } from './PhotoLibraryProvider'
 import { PhotoUploadConfirmModal } from './PhotoUploadConfirmModal'
-import type { PhotoUploadRequestOptions } from './upload.types'
 
-type PhotoLibraryActionBarProps = {
-  selectionCount: number
-  totalCount: number
-  isUploading: boolean
-  isDeleting: boolean
-  availableTags: string[]
-  onUpload: (files: FileList, options?: PhotoUploadRequestOptions) => void | Promise<void>
-  onDeleteSelected: () => void
-  onClearSelection: () => void
-  onSelectAll: () => void
-}
-
-export function PhotoLibraryActionBar({
-  selectionCount,
-  totalCount,
-  isUploading,
-  isDeleting,
-  availableTags,
-  onUpload,
-  onDeleteSelected,
-  onClearSelection,
-  onSelectAll,
-}: PhotoLibraryActionBarProps) {
+export function PhotoLibraryActionBar() {
+  const {
+    selectionCount,
+    totalCount,
+    isUploading,
+    isDeleting,
+    availableTags,
+    uploadAssets,
+    deleteSelected,
+    clearSelection,
+    selectAll,
+  } = usePhotoLibraryStore(
+    useShallow((state) => ({
+      selectionCount: state.selectedIds.length,
+      totalCount: state.libraryTotalCount,
+      isUploading: state.isUploading,
+      isDeleting: state.isDeleting,
+      availableTags: state.availableTags,
+      uploadAssets: state.uploadAssets,
+      deleteSelected: state.deleteSelected,
+      clearSelection: state.clearSelection,
+      selectAll: state.selectAll,
+    })),
+  )
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const hasSelection = selectionCount > 0
   const hasAssets = totalCount > 0
@@ -50,7 +52,7 @@ export function PhotoLibraryActionBar({
       {
         files: selectedFiles,
         availableTags,
-        onUpload,
+        onUpload: uploadAssets,
       },
       {
         dismissOnOutsideClick: false,
@@ -107,13 +109,13 @@ export function PhotoLibraryActionBar({
             variant="ghost"
             size="sm"
             disabled={isDeleting}
-            onClick={onDeleteSelected}
+            onClick={deleteSelected}
             className="flex items-center gap-1 text-rose-400 hover:text-rose-300"
           >
             <DynamicIcon name="trash-2" className="h-3.5 w-3.5" />
             删除
           </Button>
-          <Button type="button" className="gap-1" variant="ghost" size="sm" onClick={onClearSelection}>
+          <Button type="button" className="gap-1" variant="ghost" size="sm" onClick={clearSelection}>
             <DynamicIcon name="x" className="h-3.5 w-3.5" />
             清除选择
           </Button>
@@ -123,7 +125,7 @@ export function PhotoLibraryActionBar({
           variant="ghost"
           size="sm"
           disabled={!canSelectAll}
-          onClick={onSelectAll}
+          onClick={selectAll}
           className="flex items-center gap-1 text-text-secondary hover:text-text"
         >
           <DynamicIcon name={canSelectAll ? 'square' : 'check-square'} className="size-4" />

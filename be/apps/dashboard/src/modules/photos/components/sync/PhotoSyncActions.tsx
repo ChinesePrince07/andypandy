@@ -7,15 +7,11 @@ import { useMainPageLayout } from '~/components/layouts/MainPageLayout'
 import { getRequestErrorMessage } from '~/lib/errors'
 
 import { runPhotoSync } from '../../api'
-import type { PhotoSyncProgressEvent, PhotoSyncResult, RunPhotoSyncPayload } from '../../types'
+import type { RunPhotoSyncPayload } from '../../types'
+import { usePhotoSyncController } from './PhotoSyncControllerContext'
 
-type PhotoSyncActionsProps = {
-  onCompleted: (result: PhotoSyncResult, context: { dryRun: boolean }) => void
-  onProgress?: (event: PhotoSyncProgressEvent) => void
-  onError?: (error: Error) => void
-}
-
-export function PhotoSyncActions({ onCompleted, onProgress, onError }: PhotoSyncActionsProps) {
+export function PhotoSyncActions() {
+  const { onCompleted, onProgress, onError } = usePhotoSyncController()
   const { setHeaderActionState } = useMainPageLayout()
   const [pendingMode, setPendingMode] = useState<'dry-run' | 'apply' | null>(null)
   const abortRef = useRef<AbortController | null>(null)
@@ -30,9 +26,7 @@ export function PhotoSyncActions({ onCompleted, onProgress, onError }: PhotoSync
           { dryRun: variables.dryRun ?? false },
           {
             signal: controller.signal,
-            onEvent: (event) => {
-              onProgress?.(event)
-            },
+            onEvent: onProgress,
           },
         )
       } finally {
@@ -57,7 +51,7 @@ export function PhotoSyncActions({ onCompleted, onProgress, onError }: PhotoSync
 
       const message = getRequestErrorMessage(error, normalizedError.message)
       toast.error('同步失败', { description: message })
-      onError?.(normalizedError)
+      onError(normalizedError)
     },
     onSettled: () => {
       setPendingMode(null)

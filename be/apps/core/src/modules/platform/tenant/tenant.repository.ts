@@ -1,7 +1,9 @@
 import { generateId, tenants } from '@afilmory/db'
+import { isTenantSlugReserved } from '@afilmory/utils'
 import { DbAccessor } from 'core/database/database.provider'
 import { BizException, ErrorCode } from 'core/errors'
-import { eq } from 'drizzle-orm'
+import type { BillingPlanId } from 'core/modules/platform/billing/billing-plan.types'
+import { desc, eq } from 'drizzle-orm'
 import { injectable } from 'tsyringe'
 
 import type { TenantAggregate } from './tenant.types'
@@ -29,13 +31,14 @@ export class TenantRepository {
     return { tenant }
   }
 
-  async createTenant(payload: { name: string; slug: string }): Promise<TenantAggregate> {
+  async createTenant(payload: { name: string; slug: string; planId?: BillingPlanId }): Promise<TenantAggregate> {
     const db = this.dbAccessor.get()
     const tenantId = generateId()
     const tenantRecord: typeof tenants.$inferInsert = {
       id: tenantId,
       name: payload.name,
       slug: payload.slug,
+      planId: payload.planId ?? 'free',
       status: 'active',
     }
 
@@ -54,5 +57,23 @@ export class TenantRepository {
   async deleteById(id: string): Promise<void> {
     const db = this.dbAccessor.get()
     await db.delete(tenants).where(eq(tenants.id, id))
+  }
+
+  async updatePlan(id: string, planId: BillingPlanId): Promise<void> {
+    const db = this.dbAccessor.get()
+    await db.update(tenants).set({ planId, updatedAt: new Date().toISOString() }).where(eq(tenants.id, id))
+  }
+
+  async updateBanned(id: string, banned: boolean): Promise<void> {
+    const db = this.dbAccessor.get()
+    await db.update(tenants).set({ banned, updatedAt: new Date().toISOString() }).where(eq(tenants.id, id))
+  }
+
+  async listTenants(): Promise<TenantAggregate[]> {
+    const db = this.dbAccessor.get()
+    const rows = await db.select().from(tenants).orderBy(desc(tenants.createdAt))
+
+    // Ignore preseve slug
+    return rows.filter((tenant) => !isTenantSlugReserved(tenant.slug)).map((tenant) => ({ tenant }))
   }
 }

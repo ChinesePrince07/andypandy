@@ -3,6 +3,7 @@ import { camelCaseKeys } from '~/lib/case'
 import { getRequestErrorMessage } from '~/lib/errors'
 
 import type {
+  BillingUsageOverview,
   PhotoAssetListItem,
   PhotoAssetSummary,
   PhotoSyncAction,
@@ -458,6 +459,16 @@ export async function getPhotoStorageUrl(storageKey: string): Promise<string> {
   const data = camelCaseKeys<{ url: string }>(result)
 
   return data.url
+}
+
+export async function getPhotoUsageOverview(options?: { limit?: number }): Promise<BillingUsageOverview> {
+  const limit = typeof options?.limit === 'number' ? options.limit : 100
+  const response = await coreApi<BillingUsageOverview>('/billing/usage', {
+    method: 'GET',
+    query: { limit },
+  })
+
+  return camelCaseKeys<BillingUsageOverview>(response)
 }
 
 export async function getPhotoSyncStatus(): Promise<PhotoSyncStatus> {

@@ -1,5 +1,6 @@
 import { isTenantSlugReserved } from '@afilmory/utils'
 import { BizException, ErrorCode } from 'core/errors'
+import type { BillingPlanId } from 'core/modules/platform/billing/billing-plan.types'
 import { injectable } from 'tsyringe'
 
 import {
@@ -15,7 +16,7 @@ import type { TenantAggregate, TenantContext, TenantResolutionInput } from './te
 export class TenantService {
   constructor(private readonly repository: TenantRepository) {}
 
-  async createTenant(payload: { name: string; slug: string }): Promise<TenantAggregate> {
+  async createTenant(payload: { name: string; slug: string; planId?: BillingPlanId }): Promise<TenantAggregate> {
     const normalizedSlug = this.normalizeSlug(payload.slug)
 
     if (!normalizedSlug) {
@@ -134,7 +135,19 @@ export class TenantService {
     await this.repository.deleteById(id)
   }
 
+  async listTenants(): Promise<TenantAggregate[]> {
+    return await this.repository.listTenants()
+  }
+
+  async setBanned(id: string, banned: boolean): Promise<void> {
+    await this.repository.updateBanned(id, banned)
+  }
+
   private ensureTenantIsActive(tenant: TenantAggregate['tenant']): void {
+    if (tenant.banned) {
+      throw new BizException(ErrorCode.TENANT_BANNED)
+    }
+
     if (tenant.status === 'suspended') {
       throw new BizException(ErrorCode.TENANT_SUSPENDED)
     }
