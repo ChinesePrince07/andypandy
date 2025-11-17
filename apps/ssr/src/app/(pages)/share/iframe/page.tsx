@@ -13,20 +13,20 @@ export default async function Page({ searchParams }: NextPageExtractedParams<unk
 
   if (!id) return notFound()
   if (typeof id === 'string') {
-    const photo = await photoLoader.getPhoto(id)
+    const photo = photoLoader.getPhoto(id)
     if (!photo) {
       notFound()
     }
     photos = [photo]
   } else {
-    photos = await photoLoader.getPhotos(id)
+    photos = photoLoader.getPhotos(id)
     if (photos.length === 0) {
       notFound()
     }
   }
 
   if (photos.length === 1) {
-    return <PhotoItem photo={photos[0]} className="absolute inset-0 size-full !pt-0" />
+    return <PhotoItem photo={photos[0]} className="absolute inset-0 size-full pt-0!" />
   }
 
   return (
