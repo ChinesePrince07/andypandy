@@ -192,6 +192,10 @@ export class EagleStorageProvider implements StorageProvider {
     throw new Error('EagleStorageProvider: 当前不支持上传文件操作')
   }
 
+  async moveFile(_sourceKey: string, _targetKey: string): Promise<StorageObject> {
+    throw new Error('EagleStorageProvider: 当前不支持移动文件操作')
+  }
+
   async generatePublicUrl(key: string) {
     const imageName = await this.copyToDist(key)
     const publicPath = path.join(this.config.baseUrl, imageName)

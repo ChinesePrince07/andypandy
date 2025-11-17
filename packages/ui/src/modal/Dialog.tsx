@@ -162,8 +162,8 @@ function DialogContent({
               {...props}
             >
               {children}
-              <DialogPrimitive.Close className="focus:bg-fill data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-3 right-2 flex size-6 items-center justify-center rounded-md opacity-70 transition-opacity hover:opacity-100 focus:outline-none disabled:pointer-events-none">
-                <i className="i-mingcute-close-line h-4 w-4" aria-hidden="true" />
+              <DialogPrimitive.Close className="focus:bg-fill data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-3 right-2 flex size-6 items-center justify-center rounded opacity-70 transition-opacity hover:opacity-100 focus:outline-none disabled:pointer-events-none">
+                <i className="i-mingcute-close-line size-4" aria-hidden="true" />
                 <span className="sr-only">Close</span>
               </DialogPrimitive.Close>
             </motion.div>

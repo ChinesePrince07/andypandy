@@ -57,6 +57,7 @@ export interface PhotoManifestItem extends PhotoInfo {
   s3Key: string
   lastModified: string
   size: number
+  digest?: string
   exif: PickedExif | null
   toneAnalysis: ToneAnalysis | null // 影调分析结果
   isHDR?: boolean

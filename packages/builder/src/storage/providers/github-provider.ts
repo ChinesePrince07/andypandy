@@ -295,6 +295,36 @@ export class GitHubStorageProvider implements StorageProvider {
     }
   }
 
+  async moveFile(sourceKey: string, targetKey: string, options?: StorageUploadOptions): Promise<StorageObject> {
+    if (sourceKey === targetKey) {
+      const metadata = await this.fetchContentMetadata(sourceKey)
+      return {
+        key: targetKey,
+        size: metadata?.size,
+        lastModified: new Date(),
+        etag: metadata?.sha,
+      }
+    }
+
+    const buffer = await this.getFile(sourceKey)
+    if (!buffer) {
+      throw new Error(`GitHub move failed：源文件不存在 ${sourceKey}`)
+    }
+
+    const uploaded = await this.uploadFile(targetKey, buffer, options)
+    try {
+      await this.deleteFile(sourceKey)
+    } catch (error) {
+      try {
+        await this.deleteFile(targetKey)
+      } catch {
+        // ignore rollback failure
+      }
+      throw error
+    }
+    return uploaded
+  }
+
   generatePublicUrl(key: string): string {
     const fullPath = this.getFullPath(key)
 

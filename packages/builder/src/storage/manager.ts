@@ -77,6 +77,46 @@ export class StorageManager {
     return await this.provider.uploadFile(key, data, options)
   }
 
+  async moveFile(sourceKey: string, targetKey: string, options?: StorageUploadOptions): Promise<StorageObject> {
+    if (!sourceKey || !targetKey) {
+      throw new Error('moveFile requires both sourceKey and targetKey')
+    }
+
+    if (sourceKey === targetKey) {
+      const buffer = await this.provider.getFile(sourceKey)
+      if (!buffer) {
+        throw new Error(`moveFile failed: source ${sourceKey} does not exist`)
+      }
+      return {
+        key: targetKey,
+        size: buffer.length,
+        lastModified: new Date(),
+      }
+    }
+
+    if (typeof this.provider.moveFile === 'function') {
+      return await this.provider.moveFile(sourceKey, targetKey, options)
+    }
+
+    // Fallback: download, upload, delete
+    const fileBuffer = await this.provider.getFile(sourceKey)
+    if (!fileBuffer) {
+      throw new Error(`moveFile failed: source ${sourceKey} does not exist`)
+    }
+    const uploaded = await this.provider.uploadFile(targetKey, fileBuffer, options)
+    try {
+      await this.provider.deleteFile(sourceKey)
+    } catch (error) {
+      try {
+        await this.provider.deleteFile(targetKey)
+      } catch {
+        // ignore rollback error, rethrow original failure
+      }
+      throw error
+    }
+    return uploaded
+  }
+
   addExcludeFilter(filter: (key: string) => boolean): void {
     this.excludeFilters.push(filter)
   }

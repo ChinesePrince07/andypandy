@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto'
+
 import type { BuilderConfig, PhotoManifestItem, StorageConfig, StorageManager, StorageObject } from '@afilmory/builder'
 import type { PhotoAssetConflictPayload, PhotoAssetConflictSnapshot, PhotoAssetManifest } from '@afilmory/db'
 import { CURRENT_PHOTO_MANIFEST_VERSION, DATABASE_ONLY_PROVIDER, photoAssets, photoSyncRuns } from '@afilmory/db'
@@ -867,6 +869,21 @@ export class DataSyncService {
     for (const candidate of context.conflictCandidates) {
       processed += 1
       const { record, storageObject, storageSnapshot, recordSnapshot } = candidate
+
+      const resolvedWithDigest = await this.tryResolveMetadataMismatchWithDigest({
+        context,
+        candidate,
+        dryRun,
+        summary,
+        actions,
+        onProgress,
+        index: processed,
+        total,
+      })
+      if (resolvedWithDigest) {
+        continue
+      }
+
       summary.conflicts += 1
 
       const conflictPayload = this.createConflictPayload('metadata-mismatch', {
@@ -915,6 +932,84 @@ export class DataSyncService {
     }
 
     return processed
+  }
+
+  private async tryResolveMetadataMismatchWithDigest(params: {
+    context: SyncPreparation
+    candidate: ConflictCandidate
+    dryRun: boolean
+    summary: DataSyncResult['summary']
+    actions: DataSyncAction[]
+    onProgress?: DataSyncProgressEmitter
+    index: number
+    total: number
+  }): Promise<boolean> {
+    const { context, candidate, dryRun, summary, actions, onProgress, index, total } = params
+    const digest = candidate.record.manifest?.data?.digest
+    if (!digest) {
+      return false
+    }
+
+    let buffer: Buffer | null = null
+    try {
+      buffer = await context.storageManager.getFile(candidate.storageObject.key)
+    } catch (error) {
+      this.logger.warn('Failed to download object for digest comparison', {
+        key: candidate.storageObject.key,
+        error,
+      })
+      return false
+    }
+    if (!buffer) {
+      return false
+    }
+
+    const computedDigest = createHash('sha256').update(buffer).digest('hex')
+    if (computedDigest !== digest) {
+      return false
+    }
+
+    if (!dryRun) {
+      const now = this.nowIso()
+      await context.db
+        .update(photoAssets)
+        .set({
+          syncStatus: 'synced',
+          conflictReason: null,
+          conflictPayload: null,
+          size: candidate.storageSnapshot.size ?? null,
+          etag: candidate.storageSnapshot.etag ?? null,
+          lastModified: candidate.storageSnapshot.lastModified ?? null,
+          metadataHash: candidate.storageSnapshot.metadataHash,
+          syncedAt: now,
+          updatedAt: now,
+        })
+        .where(and(eq(photoAssets.id, candidate.record.id), eq(photoAssets.tenantId, context.tenantId)))
+    }
+
+    summary.updated += 1
+    const action: DataSyncAction = {
+      type: 'update',
+      storageKey: candidate.storageObject.key,
+      photoId: candidate.record.photoId,
+      applied: !dryRun,
+      reason: 'Storage metadata refreshed (content digest matched)',
+      snapshots: {
+        before: candidate.recordSnapshot,
+        after: candidate.storageSnapshot,
+      },
+      manifestBefore: candidate.record.manifest.data,
+      manifestAfter: candidate.record.manifest.data,
+    }
+    actions.push(action)
+    await this.emitActionProgress(onProgress, {
+      stage: 'metadata-conflicts',
+      index,
+      total,
+      action,
+      summary,
+    })
+    return true
   }
 
   private async handleStatusReconciliation(

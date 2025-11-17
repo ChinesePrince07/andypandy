@@ -165,6 +165,7 @@ export async function executePhotoProcessingPipeline(
     if (!processedData) return null
 
     const { sharpInstance, imageBuffer, metadata } = processedData
+    const contentDigest = crypto.createHash('sha256').update(imageBuffer).digest('hex')
 
     // 3. 处理缩略图和 blurhash
     const thumbnailResult = await processThumbnailAndBlurhash(imageBuffer, photoId, existingItem, options)
@@ -223,23 +224,24 @@ export async function executePhotoProcessingPipeline(
       s3Key: photoKey,
       lastModified: obj.LastModified?.toISOString() || new Date().toISOString(),
       size: obj.Size || 0,
+      digest: contentDigest,
       exif: exifData,
       toneAnalysis,
       // Video source (Motion Photo or Live Photo)
       video:
         motionPhotoMetadata?.isMotionPhoto && motionPhotoMetadata.motionPhotoOffset !== undefined
           ? {
-            type: 'motion-photo',
-            offset: motionPhotoMetadata.motionPhotoOffset,
-            size: motionPhotoMetadata.motionPhotoVideoSize,
-            presentationTimestamp: motionPhotoMetadata.presentationTimestampUs,
-          }
+              type: 'motion-photo',
+              offset: motionPhotoMetadata.motionPhotoOffset,
+              size: motionPhotoMetadata.motionPhotoVideoSize,
+              presentationTimestamp: motionPhotoMetadata.presentationTimestampUs,
+            }
           : livePhotoResult.isLivePhoto
             ? {
-              type: 'live-photo',
-              videoUrl: livePhotoResult.livePhotoVideoUrl!,
-              s3Key: livePhotoResult.livePhotoVideoS3Key!,
-            }
+                type: 'live-photo',
+                videoUrl: livePhotoResult.livePhotoVideoUrl!,
+                s3Key: livePhotoResult.livePhotoVideoS3Key!,
+              }
             : undefined,
       // HDR 相关字段
       isHDR:

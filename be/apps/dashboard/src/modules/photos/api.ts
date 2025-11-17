@@ -226,7 +226,7 @@ export async function resolvePhotoSyncConflict(
 export async function listPhotoAssets(): Promise<PhotoAssetListItem[]> {
   const assets = await coreApi<PhotoAssetListItem[]>('/photos/assets')
 
-  return camelCaseKeys<PhotoAssetListItem[]>(assets)
+  return assets
 }
 
 export async function getPhotoAssetSummary(): Promise<PhotoAssetSummary> {
@@ -243,6 +243,15 @@ export async function deletePhotoAssets(ids: string[], options?: { deleteFromSto
       deleteFromStorage: options?.deleteFromStorage === true,
     },
   })
+}
+
+export async function updatePhotoAssetTags(id: string, tags: string[]): Promise<PhotoAssetListItem> {
+  const asset = await coreApi<PhotoAssetListItem>(`/photos/assets/${id}/tags`, {
+    method: 'PATCH',
+    body: { tags },
+  })
+
+  return camelCaseKeys<PhotoAssetListItem>(asset)
 }
 
 export async function uploadPhotoAssets(

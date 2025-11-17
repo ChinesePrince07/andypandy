@@ -69,6 +69,14 @@ export interface StorageProvider {
    * @param options 上传选项
    */
   uploadFile: (key: string, data: Buffer, options?: StorageUploadOptions) => Promise<StorageObject>
+
+  /**
+   * 将存储中的文件移动到新的键值/路径
+   * @param sourceKey 原文件键值
+   * @param targetKey 目标文件键值
+   * @param options 上传选项（供部分存储在复制时复用）
+   */
+  moveFile: (sourceKey: string, targetKey: string, options?: StorageUploadOptions) => Promise<StorageObject>
 }
 
 export type S3Config = {

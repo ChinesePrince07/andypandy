@@ -2,10 +2,11 @@ import { Button, Modal } from '@afilmory/ui'
 import { clsxm } from '@afilmory/utils'
 import { DynamicIcon } from 'lucide-react/dynamic'
 import type { ChangeEventHandler } from 'react'
-import { useRef } from 'react'
+import { useMemo, useRef } from 'react'
 import { useShallow } from 'zustand/shallow'
 
 import { usePhotoLibraryStore } from './PhotoLibraryProvider'
+import { PhotoTagEditorModal } from './PhotoTagEditorModal'
 import { PhotoUploadConfirmModal } from './PhotoUploadConfirmModal'
 
 export function PhotoLibraryActionBar() {
@@ -19,6 +20,8 @@ export function PhotoLibraryActionBar() {
     deleteSelected,
     clearSelection,
     selectAll,
+    selectedIds,
+    assets,
   } = usePhotoLibraryStore(
     useShallow((state) => ({
       selectionCount: state.selectedIds.length,
@@ -30,12 +33,21 @@ export function PhotoLibraryActionBar() {
       deleteSelected: state.deleteSelected,
       clearSelection: state.clearSelection,
       selectAll: state.selectAll,
+      selectedIds: state.selectedIds,
+      assets: state.assets ?? [],
     })),
   )
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const hasSelection = selectionCount > 0
   const hasAssets = totalCount > 0
   const canSelectAll = hasAssets && selectionCount < totalCount
+  const selectedAssets = useMemo(() => {
+    if (!assets || assets.length === 0 || selectedIds.length === 0) {
+      return []
+    }
+    const idSet = new Set(selectedIds)
+    return assets.filter((asset) => idSet.has(asset.id))
+  }, [assets, selectedIds])
 
   const handleUploadClick = () => {
     fileInputRef.current?.click()
@@ -62,6 +74,16 @@ export function PhotoLibraryActionBar() {
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
+  }
+
+  const handleEditSelectedTags = () => {
+    if (selectedAssets.length === 0) {
+      return
+    }
+    Modal.present(PhotoTagEditorModal, {
+      assets: selectedAssets,
+      availableTags,
+    })
   }
 
   return (
@@ -104,6 +126,17 @@ export function PhotoLibraryActionBar() {
           >
             已选 {selectionCount} 项
           </span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={selectedAssets.length === 0}
+            onClick={handleEditSelectedTags}
+            className="flex items-center gap-1 text-text-secondary hover:text-text"
+          >
+            <DynamicIcon name="tags" className="h-3.5 w-3.5" />
+            修改标签
+          </Button>
           <Button
             type="button"
             variant="ghost"

@@ -12,7 +12,7 @@ import { clsxm } from '@afilmory/utils'
 import { useAtomValue } from 'jotai'
 import { DynamicIcon } from 'lucide-react/dynamic'
 import type { ReactNode } from 'react'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useShallow } from 'zustand/shallow'
 
 import { viewportAtom } from '~/atoms/viewport'
@@ -24,6 +24,7 @@ import { DeleteFromStorageOption } from './DeleteFromStorageOption'
 import { Masonry } from './Masonry'
 import { PhotoExifDetailsModal } from './PhotoExifDetailsModal'
 import { usePhotoLibraryStore } from './PhotoLibraryProvider'
+import { PhotoTagEditorModal } from './PhotoTagEditorModal'
 import type { DeleteAssetOptions } from './types'
 
 type PhotoLibrarySortBy = 'uploadedAt' | 'capturedAt'
@@ -61,6 +62,7 @@ function PhotoGridItem({
   onToggleSelect,
   onOpenAsset,
   onDeleteAsset,
+  onEditTags,
   isDeleting,
 }: {
   asset: PhotoAssetListItem
@@ -68,6 +70,7 @@ function PhotoGridItem({
   onToggleSelect: (id: string) => void
   onOpenAsset: (asset: PhotoAssetListItem) => void
   onDeleteAsset: (asset: PhotoAssetListItem, options?: DeleteAssetOptions) => Promise<void> | void
+  onEditTags: (asset: PhotoAssetListItem) => void
   isDeleting?: boolean
 }) {
   const manifest = asset.manifest?.data
@@ -165,45 +168,67 @@ function PhotoGridItem({
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-2 p-3">
-          <div className="flex flex-col text-[10px] text-white/80">
-            <span>{deviceLabel}</span>
-            <span>{updatedAtLabel}</span>
-            <span>{fileSizeLabel}</span>
+        <div className="flex items-end justify-between gap-3 p-3">
+          <div className="flex flex-col gap-1.5 min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 text-[10px] text-white/80">
+              <DynamicIcon name="camera" className="h-3 w-3 shrink-0 text-white/60" />
+              <span className="truncate">{deviceLabel}</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-[10px] text-white/80">
+              <DynamicIcon name="clock" className="h-3 w-3 shrink-0 text-white/60" />
+              <span className="truncate">{updatedAtLabel}</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-[10px] text-white/80">
+              <DynamicIcon name="hard-drive" className="h-3 w-3 shrink-0 text-white/60" />
+              <span className="truncate">{fileSizeLabel}</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2" onClick={stopPropagation} tabIndex={-1}>
+          <div className="flex items-center gap-1.5 shrink-0" onClick={stopPropagation} tabIndex={-1}>
             <Button
               type="button"
               variant="ghost"
               size="xs"
-              className="bg-black/40 text-white hover:bg-black/60"
+              className="bg-black/40 text-white hover:bg-black/60 h-7 px-2.5"
               onClick={() => onOpenAsset(asset)}
             >
-              <DynamicIcon name="external-link" className="mr-1 h-3.5 w-3.5" />
-              <span>查看</span>
+              <DynamicIcon name="external-link" className="h-3.5 w-3.5" />
             </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="xs"
-              className="bg-black/40 text-white hover:bg-black/60"
-              disabled={!manifest}
-              onClick={handleViewExif}
-            >
-              <DynamicIcon name="info" className="mr-1 h-3.5 w-3.5" />
-              <span>EXIF</span>
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="xs"
-              className="bg-red/20 text-rose-50 hover:bg-red!"
-              disabled={isDeleting}
-              onClick={handleDelete}
-            >
-              <DynamicIcon name="trash-2" className="mr-1 h-3.5 w-3.5" />
-              <span>删除</span>
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="xs"
+                  className="bg-black/40 text-white hover:bg-black/60 h-7 px-2.5"
+                >
+                  <DynamicIcon name="more-horizontal" className="h-3.5 w-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-[140px]">
+                <DropdownMenuItem
+                  icon={<DynamicIcon name="tags" className="size-4" />}
+                  onSelect={() => onEditTags(asset)}
+                >
+                  编辑标签
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  icon={<DynamicIcon name="info" className="size-4" />}
+                  disabled={!manifest}
+                  onSelect={handleViewExif}
+                >
+                  查看 EXIF
+                </DropdownMenuItem>
+                <div className="h-[0.5px] bg-border my-1" />
+                <DropdownMenuItem
+                  icon={<DynamicIcon name="trash-2" className="size-4" />}
+                  disabled={isDeleting}
+                  onSelect={handleDelete}
+                  className="text-red focus:text-red focus:bg-red/10"
+                >
+                  删除资源
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
@@ -216,18 +241,29 @@ export function PhotoLibraryGrid() {
   const columnWidth = viewport.sm ? 320 : 160
   const [sortBy, setSortBy] = useState<PhotoLibrarySortBy>('uploadedAt')
   const [sortOrder, setSortOrder] = useState<PhotoLibrarySortOrder>('desc')
-  const { assets, isLoading, selectedIds, toggleSelect, openAsset, deleteAsset, isDeleting } = usePhotoLibraryStore(
-    useShallow((state) => ({
-      assets: state.assets,
-      isLoading: state.isLoading,
-      selectedIds: state.selectedIds,
-      toggleSelect: state.toggleSelect,
-      openAsset: state.openAsset,
-      deleteAsset: state.deleteAsset,
-      isDeleting: state.isDeleting,
-    })),
-  )
+  const { assets, isLoading, selectedIds, toggleSelect, openAsset, deleteAsset, availableTags, isDeleting } =
+    usePhotoLibraryStore(
+      useShallow((state) => ({
+        assets: state.assets,
+        isLoading: state.isLoading,
+        selectedIds: state.selectedIds,
+        toggleSelect: state.toggleSelect,
+        openAsset: state.openAsset,
+        deleteAsset: state.deleteAsset,
+        isDeleting: state.isDeleting,
+        availableTags: state.availableTags,
+      })),
+    )
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds])
+  const handleEditTags = useCallback(
+    (asset: PhotoAssetListItem) => {
+      Modal.present(PhotoTagEditorModal, {
+        assets: [asset],
+        availableTags,
+      })
+    },
+    [availableTags],
+  )
 
   const sortedAssets = useMemo(() => {
     if (!assets) return
@@ -271,6 +307,7 @@ export function PhotoLibraryGrid() {
               onToggleSelect={toggleSelect}
               onOpenAsset={openAsset}
               onDeleteAsset={deleteAsset}
+              onEditTags={handleEditTags}
               isDeleting={isDeleting}
             />
           )}
@@ -283,8 +320,8 @@ export function PhotoLibraryGrid() {
   const currentSortOrder = SORT_ORDER_OPTIONS.find((option) => option.value === sortOrder) ?? SORT_ORDER_OPTIONS[0]
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap items-center justify-end gap-2 text-xs absolute lg:translate-y-[-50px] -translate-y-10 -translate-x-2 lg:translate-x-0 lg:right-[calc((100vw-var(--container-7xl))/2+0.75rem+100px)]">
+    <div className="space-y-3 relative">
+      <div className="flex flex-wrap items-center justify-end gap-2 text-xs absolute lg:translate-y-[-50px] -translate-y-10 -translate-x-2 lg:translate-x-0 lg:right-20">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button

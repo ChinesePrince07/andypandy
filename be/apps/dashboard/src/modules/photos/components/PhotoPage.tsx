@@ -256,8 +256,12 @@ function PhotoPageContent({ activeTab }: PhotoPageContentProps) {
       void summaryQuery.refetch()
       refetchLibraryAssets()
       void refetchSyncStatus()
+      // 如果同步结果中有冲突，刷新冲突列表
+      if (data.summary.conflicts > 0) {
+        void conflictsQuery.refetch()
+      }
     },
-    [summaryQuery, refetchLibraryAssets, refetchSyncStatus],
+    [summaryQuery, refetchLibraryAssets, refetchSyncStatus, conflictsQuery],
   )
 
   const handleResolveConflict = useCallback(
@@ -336,7 +340,10 @@ function PhotoPageContent({ activeTab }: PhotoPageContentProps) {
   )
 
   const showConflictsPanel =
-    conflictsQuery.isLoading || conflictsQuery.isFetching || (conflictsQuery.data?.length ?? 0) > 0
+    conflictsQuery.isLoading ||
+    conflictsQuery.isFetching ||
+    (conflictsQuery.data?.length ?? 0) > 0 ||
+    (result?.summary.conflicts ?? 0) > 0
 
   let tabContent: ReactNode | null = null
 

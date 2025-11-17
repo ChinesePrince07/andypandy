@@ -9,6 +9,7 @@ import {
   listPhotoAssets,
   listPhotoSyncConflicts,
   resolvePhotoSyncConflict,
+  updatePhotoAssetTags,
   uploadPhotoAssets,
 } from './api'
 import type { PhotoAssetListItem, PhotoSyncResolution } from './types'
@@ -136,6 +137,22 @@ export function useResolvePhotoSyncConflictMutation() {
     onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: PHOTO_SYNC_CONFLICTS_QUERY_KEY,
+      })
+    },
+  })
+}
+
+export function useUpdatePhotoTagsMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (variables: { id: string; tags: string[] }) => {
+      return await updatePhotoAssetTags(variables.id, variables.tags)
+    },
+    onSuccess: (asset) => {
+      queryClient.setQueryData<PhotoAssetListItem[] | undefined>(PHOTO_ASSET_LIST_QUERY_KEY, (previous) => {
+        if (!previous) return previous
+        return previous.map((item) => (item.id === asset.id ? asset : item))
       })
     },
   })

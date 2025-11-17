@@ -6,9 +6,9 @@ import { backoffDelay, sleep } from '../../../../utils/src/backoff.js'
 import { Semaphore } from '../../../../utils/src/semaphore.js'
 import { SUPPORTED_FORMATS } from '../../constants/index.js'
 import { logger } from '../../logger/index.js'
-import type { SimpleS3Client } from '../../s3/client.js'
-import { createS3Client, encodeS3Key } from '../../s3/client.js'
 import type { ProgressCallback, S3Config, StorageObject, StorageProvider, StorageUploadOptions } from '../interfaces'
+import { S3ProviderClient } from './s3-client.js'
+import { sanitizeS3Etag } from './s3-utils.js'
 
 // 将 AWS S3 对象转换为通用存储对象
 const xmlParser = new XMLParser({ ignoreAttributes: false })
@@ -110,17 +110,13 @@ function formatS3ErrorBody(body?: string | null): string {
 
 export class S3StorageProvider implements StorageProvider {
   private config: S3Config
-  private client: SimpleS3Client
+  private client: S3ProviderClient
   private limiter: Semaphore
 
   constructor(config: S3Config) {
     this.config = config
-    this.client = createS3Client(config)
+    this.client = new S3ProviderClient(config)
     this.limiter = new Semaphore(this.config.downloadConcurrency ?? 16)
-  }
-
-  private buildObjectUrl(key?: string): string {
-    return this.client.buildObjectUrl(key)
   }
 
   private async readStreamWithIdleTimeout(
@@ -184,8 +180,7 @@ export class S3StorageProvider implements StorageProvider {
         try {
           logger.s3.info(`下载开始：${key} (attempt ${attempt}/${maxAttempts})`)
 
-          const response = await this.client.fetch(this.buildObjectUrl(key), {
-            method: 'GET',
+          const response = await this.client.getObject(key, {
             signal: controller.signal,
           })
 
@@ -331,17 +326,10 @@ export class S3StorageProvider implements StorageProvider {
   }
 
   private async listObjects(): Promise<StorageObject[]> {
-    const url = new URL(this.buildObjectUrl())
-    url.search = ''
-    url.searchParams.set('list-type', '2')
-    if (this.config.prefix) {
-      url.searchParams.set('prefix', encodeS3Key(this.config.prefix))
-    }
-    if (this.config.maxFileLimit) {
-      url.searchParams.set('max-keys', String(this.config.maxFileLimit))
-    }
-
-    const response = await this.client.fetch(url.toString(), { method: 'GET' })
+    const response = await this.client.listObjects({
+      prefix: this.config.prefix,
+      maxKeys: this.config.maxFileLimit,
+    })
     const text = await response.text()
     if (!response.ok) {
       throw new Error(`列出 S3 对象失败 (status ${response.status}): ${formatS3ErrorBody(text)}`)
@@ -357,16 +345,14 @@ export class S3StorageProvider implements StorageProvider {
           key,
           size: item?.Size !== undefined ? Number(item.Size) : undefined,
           lastModified: item?.LastModified ? new Date(item.LastModified) : undefined,
-          etag: typeof item?.ETag === 'string' ? item.ETag.replaceAll('"', '') : undefined,
+          etag: sanitizeS3Etag(typeof item?.ETag === 'string' ? item.ETag : undefined),
         } satisfies StorageObject
       })
       .filter((item) => Boolean(item.key))
   }
 
   async deleteFile(key: string): Promise<void> {
-    const response = await this.client.fetch(this.buildObjectUrl(key), {
-      method: 'DELETE',
-    })
+    const response = await this.client.deleteObject(key)
 
     if (!response.ok) {
       const text = await response.text().catch(() => '')
@@ -375,13 +361,9 @@ export class S3StorageProvider implements StorageProvider {
   }
 
   async uploadFile(key: string, data: Buffer, options?: StorageUploadOptions): Promise<StorageObject> {
-    const response = await this.client.fetch(this.buildObjectUrl(key), {
-      method: 'PUT',
-      body: data as unknown as BodyInit,
-      headers: {
-        'content-type': options?.contentType ?? 'application/octet-stream',
-        'content-length': data.byteLength.toString(),
-      },
+    const response = await this.client.putObject(key, data as unknown as BodyInit, {
+      'content-type': options?.contentType ?? 'application/octet-stream',
+      'content-length': data.byteLength.toString(),
     })
 
     if (!response.ok) {
@@ -395,7 +377,31 @@ export class S3StorageProvider implements StorageProvider {
       key,
       size: data.byteLength,
       lastModified,
-      etag: response.headers.get('etag') ?? undefined,
+      etag: sanitizeS3Etag(response.headers.get('etag')),
+    }
+  }
+
+  async moveFile(sourceKey: string, targetKey: string, options?: StorageUploadOptions): Promise<StorageObject> {
+    if (sourceKey === targetKey) {
+      const object = await this.getFile(sourceKey)
+      if (!object) {
+        throw new Error(`S3 move failed：源文件不存在 ${sourceKey}`)
+      }
+      return {
+        key: targetKey,
+        size: object.length,
+        lastModified: new Date(),
+      }
+    }
+
+    const { metadata } = await this.client.moveObject(sourceKey, targetKey, {
+      headers: options?.contentType ? { 'content-type': options.contentType } : undefined,
+    })
+    return {
+      key: metadata.key,
+      size: metadata.size,
+      lastModified: metadata.lastModified,
+      etag: sanitizeS3Etag(metadata.etag),
     }
   }
 }

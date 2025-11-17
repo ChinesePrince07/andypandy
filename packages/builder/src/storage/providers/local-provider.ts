@@ -203,6 +203,38 @@ export class LocalStorageProvider implements StorageProvider {
     }
   }
 
+  async moveFile(sourceKey: string, targetKey: string): Promise<StorageObject> {
+    const sourcePath = this.resolveSafePath(sourceKey)
+    const targetPath = this.resolveSafePath(targetKey)
+
+    if (sourceKey === targetKey) {
+      const stats = await fs.stat(sourcePath)
+      return {
+        key: targetKey,
+        size: stats.size,
+        lastModified: stats.mtime,
+      }
+    }
+
+    await fs.mkdir(path.dirname(targetPath), { recursive: true })
+    try {
+      await fs.rename(sourcePath, targetPath)
+    } catch (error) {
+      this.logger.error(`重命名本地文件失败：${sourceKey} -> ${targetKey}`, error)
+      throw error
+    }
+
+    await this.syncDistFile(targetKey, targetPath)
+    await this.removeDistFile(sourceKey)
+
+    const stats = await fs.stat(targetPath)
+    return {
+      key: targetKey,
+      size: stats.size,
+      lastModified: stats.mtime,
+    }
+  }
+
   private async scanDirectory(
     dirPath: string,
     relativePath: string,

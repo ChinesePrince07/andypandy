@@ -1,6 +1,7 @@
 import path from 'node:path'
 
 import type { BuilderConfig, PhotoManifestItem, StorageConfig, StorageObject } from '@afilmory/builder'
+import { createStorageKeyNormalizer } from '@afilmory/builder/photo/index.js'
 import {
   DEFAULT_CONTENT_TYPE,
   DEFAULT_DIRECTORY as DEFAULT_THUMBNAIL_DIRECTORY,
@@ -30,6 +31,7 @@ import { injectable } from 'tsyringe'
 
 import { PhotoBuilderService } from '../builder/photo-builder.service'
 import { PhotoStorageService } from '../storage/photo-storage.service'
+import { inferContentTypeFromKey } from './storage.utils'
 
 type PhotoAssetRecord = typeof photoAssets.$inferSelect
 
@@ -1002,6 +1004,136 @@ export class PhotoAssetService {
     return await Promise.resolve(storageManager.generatePublicUrl(storageKey))
   }
 
+  async updateAssetTags(assetId: string, tagsInput: readonly string[]): Promise<PhotoAssetListItem> {
+    const tenant = requireTenantContext()
+    const db = this.dbAccessor.get()
+
+    if (!assetId) {
+      throw new BizException(ErrorCode.COMMON_BAD_REQUEST, { message: '缺少资源 ID' })
+    }
+
+    const record = await db
+      .select()
+      .from(photoAssets)
+      .where(and(eq(photoAssets.tenantId, tenant.tenant.id), eq(photoAssets.id, assetId)))
+      .limit(1)
+      .then((rows) => rows[0])
+
+    if (!record) {
+      throw new BizException(ErrorCode.COMMON_NOT_FOUND, { message: '未找到指定的图片资源' })
+    }
+
+    if (!record.manifest?.data) {
+      throw new BizException(ErrorCode.PHOTO_MANIFEST_GENERATION_FAILED, { message: '该资源缺少有效的清单数据' })
+    }
+
+    if (record.storageProvider === DATABASE_ONLY_PROVIDER) {
+      throw new BizException(ErrorCode.COMMON_BAD_REQUEST, { message: '数据库占位资源不支持修改标签' })
+    }
+
+    const normalizedTags = this.normalizeTagList(tagsInput)
+    const { builderConfig, storageConfig } = await this.photoStorageService.resolveConfigForTenant(tenant.tenant.id)
+    const storageManager = this.createStorageManager(builderConfig, storageConfig)
+
+    const sanitizeKey = this.normalizeKeyPath(record.storageKey)
+    const normalizeStorageKey = createStorageKeyNormalizer(storageConfig)
+    const relativeKey = normalizeStorageKey(sanitizeKey)
+    const fileName = path.basename(relativeKey || sanitizeKey)
+    if (!fileName) {
+      throw new BizException(ErrorCode.COMMON_BAD_REQUEST, { message: '无法解析当前图片文件名' })
+    }
+
+    const prefixSegment = this.extractStoragePrefix(sanitizeKey, relativeKey)
+    const tagDirectory = normalizedTags.length > 0 ? this.joinStorageSegments(...normalizedTags) : null
+    const newRelativeKey = tagDirectory ? `${tagDirectory}/${fileName}` : fileName
+    const normalizedRelativeKey = this.normalizeKeyPath(newRelativeKey)
+    const newStorageKey = prefixSegment
+      ? this.joinStorageSegments(prefixSegment, normalizedRelativeKey)
+      : normalizedRelativeKey
+
+    const manifest = structuredClone(record.manifest)
+    const photoData = manifest.data
+    let storageSnapshot: ReturnType<typeof this.createStorageSnapshot> | null = null
+
+    if (newStorageKey !== record.storageKey) {
+      const moved = this.normalizeStorageObjectKey(
+        await storageManager.moveFile(record.storageKey, newStorageKey, {
+          contentType: inferContentTypeFromKey(newStorageKey),
+        }),
+        newStorageKey,
+      )
+      storageSnapshot = this.createStorageSnapshot(moved)
+      const livePhotoUpdate = await this.relocateLivePhotoVideo(photoData, storageManager, newStorageKey)
+      if (livePhotoUpdate) {
+        photoData.video = {
+          ...photoData.video,
+          type: 'live-photo',
+          videoUrl: livePhotoUpdate.videoUrl,
+          s3Key: livePhotoUpdate.s3Key,
+        }
+      }
+
+      if (storageSnapshot.size !== null) {
+        photoData.size = storageSnapshot.size
+      }
+      if (storageSnapshot.lastModified) {
+        photoData.lastModified = storageSnapshot.lastModified
+      }
+    }
+
+    const originalUrl = await Promise.resolve(storageManager.generatePublicUrl(newStorageKey))
+    photoData.tags = normalizedTags
+    photoData.originalUrl = originalUrl
+    photoData.s3Key = newStorageKey
+
+    const now = new Date().toISOString()
+    const updatePayload: Partial<typeof photoAssets.$inferInsert> = {
+      storageKey: newStorageKey,
+      manifest,
+      updatedAt: now,
+      syncStatus: 'synced',
+    }
+
+    if (storageSnapshot) {
+      updatePayload.size = storageSnapshot.size
+      updatePayload.etag = storageSnapshot.etag
+      updatePayload.lastModified = storageSnapshot.lastModified
+      updatePayload.metadataHash = storageSnapshot.metadataHash
+      updatePayload.syncedAt = now
+    }
+
+    const [saved] = await db
+      .update(photoAssets)
+      .set(updatePayload)
+      .where(and(eq(photoAssets.id, record.id), eq(photoAssets.tenantId, tenant.tenant.id)))
+      .returning()
+
+    if (!saved) {
+      throw new BizException(ErrorCode.COMMON_INTERNAL_SERVER_ERROR, { message: '更新标签失败，请稍后再试' })
+    }
+
+    const publicUrl =
+      saved.storageProvider === DATABASE_ONLY_PROVIDER
+        ? null
+        : await Promise.resolve(storageManager.generatePublicUrl(saved.storageKey))
+
+    await this.emitManifestChanged(tenant.tenant.id)
+
+    return {
+      id: saved.id,
+      photoId: saved.photoId,
+      storageKey: saved.storageKey,
+      storageProvider: saved.storageProvider,
+      manifest: saved.manifest,
+      syncedAt: saved.syncedAt,
+      updatedAt: saved.updatedAt,
+      createdAt: saved.createdAt,
+      publicUrl,
+      size: saved.size ?? null,
+      syncStatus: saved.syncStatus,
+    }
+  }
+
   private createUploadSummary(pendingCount: number, existingRecords: number): DataSyncResultSummary {
     return {
       storageObjects: pendingCount,
@@ -1372,5 +1504,90 @@ export class PhotoAssetService {
     const ext = path.extname(value)
     const base = path.basename(value, ext)
     return base.trim().toLowerCase()
+  }
+
+  private normalizeTagList(input: readonly string[] | undefined): string[] {
+    if (!Array.isArray(input) || input.length === 0) {
+      return []
+    }
+
+    const seen = new Set<string>()
+    const normalized: string[] = []
+
+    for (const raw of input) {
+      if (typeof raw !== 'string') {
+        continue
+      }
+      const sanitized = raw
+        .replaceAll(/[\\/]+/g, '-')
+        .replaceAll(/\s+/g, ' ')
+        .trim()
+      if (!sanitized || sanitized === '.' || sanitized === '..') {
+        continue
+      }
+      const truncated = sanitized.slice(0, 64)
+      const key = truncated.toLowerCase()
+      if (seen.has(key)) {
+        continue
+      }
+      seen.add(key)
+      normalized.push(truncated)
+      if (normalized.length >= 32) {
+        break
+      }
+    }
+
+    return normalized
+  }
+
+  private extractStoragePrefix(fullKey: string, relativeKey: string): string | null {
+    if (!fullKey || fullKey === relativeKey) {
+      return null
+    }
+
+    const diffLength = fullKey.length - relativeKey.length
+    if (diffLength <= 0) {
+      return null
+    }
+
+    const prefix = fullKey.slice(0, diffLength).replace(/\/+$/, '')
+    return prefix.length > 0 ? prefix : null
+  }
+
+  private async relocateLivePhotoVideo(
+    manifest: PhotoManifestItem,
+    storageManager: StorageManager,
+    newPhotoKey: string,
+  ): Promise<{ s3Key: string; videoUrl: string } | null> {
+    const { video } = manifest
+    if (!video || video.type !== 'live-photo' || !video.s3Key) {
+      return null
+    }
+
+    const normalizedVideoKey = this.normalizeKeyPath(video.s3Key)
+    const { basePath: newPhotoBase } = this.splitStorageKey(newPhotoKey)
+    if (!newPhotoBase) {
+      return null
+    }
+
+    const extension = path.extname(normalizedVideoKey) || '.mov'
+    const nextVideoKey = `${newPhotoBase}${extension}`
+
+    if (nextVideoKey === normalizedVideoKey) {
+      const videoUrl = await Promise.resolve(storageManager.generatePublicUrl(nextVideoKey))
+      return { s3Key: nextVideoKey, videoUrl }
+    }
+
+    const moved = this.normalizeStorageObjectKey(
+      await storageManager.moveFile(normalizedVideoKey, nextVideoKey, {
+        contentType: inferContentTypeFromKey(nextVideoKey),
+      }),
+      nextVideoKey,
+    )
+    const videoUrl = await Promise.resolve(storageManager.generatePublicUrl(moved.key ?? nextVideoKey))
+    return {
+      s3Key: moved.key ?? nextVideoKey,
+      videoUrl,
+    }
   }
 }

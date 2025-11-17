@@ -1,11 +1,13 @@
-import { Body, ContextParam, Controller, Delete, Get, Post, Query } from '@afilmory/framework'
+import { Body, ContextParam, Controller, Delete, Get, Param, Patch, Post, Query } from '@afilmory/framework'
 import { BizException, ErrorCode } from 'core/errors'
 import { Roles } from 'core/guards/roles.decorator'
+import { BypassResponseTransform } from 'core/interceptors/response-transform.decorator'
 import type { DataSyncProgressEvent } from 'core/modules/infrastructure/data-sync/data-sync.types'
 import { createProgressSseResponse } from 'core/modules/shared/http/sse'
 import type { Context } from 'hono'
 import { inject } from 'tsyringe'
 
+import { UpdatePhotoTagsDto } from './photo-asset.dto'
 import type { PhotoAssetListItem, PhotoAssetSummary } from './photo-asset.service'
 import { PhotoAssetService } from './photo-asset.service'
 
@@ -20,6 +22,7 @@ export class PhotoController {
   constructor(@inject(PhotoAssetService) private readonly photoAssetService: PhotoAssetService) {}
 
   @Get('assets')
+  @BypassResponseTransform()
   async listAssets(): Promise<PhotoAssetListItem[]> {
     return await this.photoAssetService.listAssets()
   }
@@ -97,5 +100,10 @@ export class PhotoController {
 
     const url = await this.photoAssetService.generatePublicUrl(key)
     return { url }
+  }
+
+  @Patch('assets/:id/tags')
+  async updateAssetTags(@Param('id') id: string, @Body() body: UpdatePhotoTagsDto): Promise<PhotoAssetListItem> {
+    return await this.photoAssetService.updateAssetTags(id, body.tags ?? [])
   }
 }
