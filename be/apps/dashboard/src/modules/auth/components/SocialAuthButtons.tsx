@@ -63,7 +63,7 @@ export const SocialAuthButtons = memo(function SocialAuthButtons({
     return null
   }
 
-  const containerClass = layout === 'row' ? 'flex flex-wrap justify-center gap-3' : 'grid gap-2 sm:grid-cols-2'
+  const containerClass = layout === 'row' ? 'flex flex-wrap gap-3' : 'grid gap-2 sm:grid-cols-2'
 
   const providerIconColors: Record<string, string> = {
     github: 'text-[#181717] dark:text-white',
