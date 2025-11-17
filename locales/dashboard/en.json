@@ -1,0 +1,13 @@
+{
+  "app.name": "Afilmory Dashboard",
+  "error.boundary.description": "We encountered an unexpected error",
+  "error.boundary.go-back": "Go Back",
+  "error.boundary.help": "If this problem persists, please report it to our team.",
+  "error.boundary.reload": "Reload Application",
+  "error.boundary.report": "Report on GitHub",
+  "error.boundary.title": "Something went wrong",
+  "nav.library": "Library",
+  "nav.overview": "Overview",
+  "nav.settings": "Settings",
+  "nav.users": "Users"
+}

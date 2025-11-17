@@ -1,0 +1,13 @@
+{
+  "app.name": "Afilmory 管理后台",
+  "error.boundary.description": "我们遇到了一个意料之外的错误",
+  "error.boundary.go-back": "返回上一页",
+  "error.boundary.help": "如果问题持续出现，请反馈给我们的团队。",
+  "error.boundary.reload": "重新加载",
+  "error.boundary.report": "在 GitHub 上反馈",
+  "error.boundary.title": "系统出现问题",
+  "nav.library": "图库",
+  "nav.overview": "概览",
+  "nav.settings": "设置",
+  "nav.users": "成员"
+}

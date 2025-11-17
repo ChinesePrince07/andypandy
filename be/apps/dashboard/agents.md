@@ -47,10 +47,19 @@ Providers:
   - LazyMotion + MotionConfig
   - TanStack QueryClientProvider
   - Jotai Provider with a global store
+  - I18nProvider (react-i18next)
   - Event, Context menu, and settings sync providers
   - StableRouterProvider to stabilize routing data and navigation
   - ModalContainer and Toaster
 - Add new cross-cutting providers here, keeping order and side effects in mind.
+
+### i18n usage
+
+- Localization lives under `locales/dashboard/*.json`. Follow the same flat-key rules documented in the repo root AGENTS instructions (no nested parents vs. leaf conflicts). Update English first before translating other languages.
+- Resource metadata/types live in `src/@types/constants.ts`, `src/@types/resources.ts`, and `src/@types/i18next.d.ts`. Keep these files in sync when adding new locales or namespaces.
+- `src/i18n.ts` configures `i18next` with `react-i18next` + `i18next-browser-languagedetector`. The singleton is stored in a jotai atom for hot-refresh support.
+- Use `useTranslation()` from `react-i18next` inside components. Example: `const { t } = useTranslation(); <span>{t('nav.overview')}</span>`.
+- Trigger `EventBus.dispatch('I18N_UPDATE')` in development when you need to reload resources without a full refresh.
 
 Animation rules:
 

@@ -11,6 +11,7 @@ import { queryClient } from '~/lib/query-client'
 
 import { ContextMenuProvider } from './context-menu-provider'
 import { EventProvider } from './event-provider'
+import { I18nProvider } from './i18n-provider'
 import { StableRouterProvider } from './stable-router-provider'
 
 const loadFeatures = () => import('../framer-lazy-feature').then((res) => res.default)
@@ -19,12 +20,14 @@ export const RootProviders: FC<PropsWithChildren> = ({ children }) => (
     <MotionConfig transition={Spring.presets.smooth}>
       <QueryClientProvider client={queryClient}>
         <Provider store={jotaiStore}>
-          <EventProvider />
-          <StableRouterProvider />
+          <I18nProvider>
+            <EventProvider />
+            <StableRouterProvider />
 
-          <ContextMenuProvider />
-          <ModalContainer />
-          {children}
+            <ContextMenuProvider />
+            <ModalContainer />
+            {children}
+          </I18nProvider>
         </Provider>
       </QueryClientProvider>
     </MotionConfig>

@@ -46,6 +46,11 @@ export default defineConfig({
     APP_DEV_CWD: JSON.stringify(process.cwd()),
     APP_NAME: JSON.stringify(PKG.name),
   },
+  resolve: {
+    alias: {
+      '@locales': resolve(ROOT, '../../../locales'),
+    },
+  },
   server: {
     cors: {
       origin: true,

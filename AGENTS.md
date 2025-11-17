@@ -192,6 +192,7 @@ class PhotoLoader {
 2. Keep components focused - use hooks and component composition.
 3. Follow React best practices - proper Context usage, state management.
 4. Use TypeScript strictly - leverage type safety throughout.
+5. Build React features out of small, atomic components. Push data fetching, stores, and providers down to the feature or tab that actually needs them so switching views unmounts unused logic and prevents runaway updates instead of centralizing everything in a mega component.
 
 ### i18n Guidelines
 
