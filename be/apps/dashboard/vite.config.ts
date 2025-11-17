@@ -23,7 +23,11 @@ export default defineConfig({
       bundler: 'vite',
       hotKeys: ['altKey'],
     }),
-    reactRefresh(),
+    reactRefresh({
+      babel: {
+        plugins: [['babel-plugin-react-compiler', {}]],
+      },
+    }),
     tsconfigPaths(),
     checker({
       typescript: true,

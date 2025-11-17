@@ -9,6 +9,7 @@ import { usePhotoLibraryStore } from './PhotoLibraryProvider'
 import { PhotoTagEditorModal } from './PhotoTagEditorModal'
 import { PhotoUploadConfirmModal } from './PhotoUploadConfirmModal'
 
+const emptyArray = []
 export function PhotoLibraryActionBar() {
   const {
     selectionCount,
@@ -34,7 +35,7 @@ export function PhotoLibraryActionBar() {
       clearSelection: state.clearSelection,
       selectAll: state.selectAll,
       selectedIds: state.selectedIds,
-      assets: state.assets ?? [],
+      assets: state.assets ?? emptyArray,
     })),
   )
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -43,7 +44,7 @@ export function PhotoLibraryActionBar() {
   const canSelectAll = hasAssets && selectionCount < totalCount
   const selectedAssets = useMemo(() => {
     if (!assets || assets.length === 0 || selectedIds.length === 0) {
-      return []
+      return emptyArray
     }
     const idSet = new Set(selectedIds)
     return assets.filter((asset) => idSet.has(asset.id))

@@ -241,6 +241,7 @@ export function PhotoLibraryGrid() {
   const columnWidth = viewport.sm ? 320 : 160
   const [sortBy, setSortBy] = useState<PhotoLibrarySortBy>('uploadedAt')
   const [sortOrder, setSortOrder] = useState<PhotoLibrarySortOrder>('desc')
+
   const { assets, isLoading, selectedIds, toggleSelect, openAsset, deleteAsset, availableTags, isDeleting } =
     usePhotoLibraryStore(
       useShallow((state) => ({

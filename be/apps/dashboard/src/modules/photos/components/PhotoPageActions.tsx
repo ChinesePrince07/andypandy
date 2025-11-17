@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import { MainPageLayout } from '~/components/layouts/MainPageLayout'
 
 import { PhotoLibraryActionBar } from './library/PhotoLibraryActionBar'
-import type { PhotoPageTab } from './PhotoPage'
+import type { PhotoPageTab } from './PhotoPageTabs'
 import { PhotoSyncActions } from './sync/PhotoSyncActions'
 
 type PhotoPageActionsProps = {
