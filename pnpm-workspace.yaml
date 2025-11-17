@@ -25,3 +25,6 @@ catalog:
 onlyBuiltDependencies:
   - esbuild
   - puppeteer
+
+patchedDependencies:
+  '@creem_io/better-auth': patches/@creem_io__better-auth.patch
