@@ -1,9 +1,11 @@
-import { Button, Modal } from '@afilmory/ui'
+import { Button, Modal, Prompt } from '@afilmory/ui'
 import { Spring } from '@afilmory/utils'
 import { DynamicIcon } from 'lucide-react/dynamic'
 import { m } from 'motion/react'
-import { startTransition, useEffect, useState } from 'react'
+import { startTransition, useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router'
 
+import { useSetPhotoSyncAutoRun } from '~/atoms/photo-sync'
 import { LinearBorderPanel } from '~/components/common/GlassPanel'
 import { MainPageLayout, useMainPageLayout } from '~/components/layouts/MainPageLayout'
 import { useBlock } from '~/hooks/useBlock'
@@ -18,10 +20,14 @@ export function StorageProvidersManager() {
   const { data, isLoading, isError, error } = useStorageProvidersQuery()
   const updateMutation = useUpdateStorageProvidersMutation()
   const { setHeaderActionState } = useMainPageLayout()
+  const navigate = useNavigate()
+  const setPhotoSyncAutoRun = useSetPhotoSyncAutoRun()
 
   const [providers, setProviders] = useState<StorageProvider[]>([])
   const [activeProviderId, setActiveProviderId] = useState<string | null>(null)
   const [isDirty, setIsDirty] = useState(false)
+  const initialProviderStateRef = useRef<boolean | null>(null)
+  const hasShownSyncPromptRef = useRef(false)
 
   useBlock({
     when: isDirty,
@@ -44,6 +50,15 @@ export function StorageProvidersManager() {
       setActiveProviderId(activeId)
       setIsDirty(false)
     })
+  }, [data])
+
+  useEffect(() => {
+    if (!data) {
+      return
+    }
+    if (initialProviderStateRef.current === null) {
+      initialProviderStateRef.current = data.providers.length > 0
+    }
   }, [data])
 
   const orderedProviders = reorderProvidersByActive(providers, activeProviderId)
@@ -104,6 +119,22 @@ export function StorageProvidersManager() {
       {
         onSuccess: () => {
           setIsDirty(false)
+          const hadProvidersInitially =
+            initialProviderStateRef.current ?? ((data?.providers.length ?? 0) > 0 ? true : false)
+          if (!hadProvidersInitially && providers.length > 0 && !hasShownSyncPromptRef.current) {
+            initialProviderStateRef.current = true
+            hasShownSyncPromptRef.current = true
+            Prompt.prompt({
+              title: '配置完成，立即同步照片？',
+              description: '存储提供商配置已经保存，是否前往「数据同步」页面立即开始扫描存储中的照片并写入数据库？',
+              onConfirmText: '开始同步',
+              onCancelText: '稍后再说',
+              onConfirm: () => {
+                setPhotoSyncAutoRun('apply')
+                navigate('/photos/sync')
+              },
+            })
+          }
         },
       },
     )

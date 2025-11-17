@@ -3,6 +3,7 @@ import { useMutation } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
+import { usePhotoSyncAutoRunValue, useSetPhotoSyncAutoRun } from '~/atoms/photo-sync'
 import { useMainPageLayout } from '~/components/layouts/MainPageLayout'
 import { getRequestErrorMessage } from '~/lib/errors'
 
@@ -15,6 +16,8 @@ export function PhotoSyncActions() {
   const { setHeaderActionState } = useMainPageLayout()
   const [pendingMode, setPendingMode] = useState<'dry-run' | 'apply' | null>(null)
   const abortRef = useRef<AbortController | null>(null)
+  const autoRunMode = usePhotoSyncAutoRunValue()
+  const setAutoRunMode = useSetPhotoSyncAutoRun()
 
   const mutation = useMutation({
     mutationFn: async (variables: RunPhotoSyncPayload) => {
@@ -60,7 +63,7 @@ export function PhotoSyncActions() {
     },
   })
 
-  const { isPending } = mutation
+  const { isPending, mutate } = mutation
 
   useEffect(() => {
     return () => {
@@ -68,6 +71,17 @@ export function PhotoSyncActions() {
       setHeaderActionState({ disabled: false, loading: false })
     }
   }, [setHeaderActionState])
+
+  useEffect(() => {
+    if (!autoRunMode) {
+      return
+    }
+    if (isPending) {
+      return
+    }
+    mutate({ dryRun: autoRunMode === 'dry-run' })
+    setAutoRunMode(null)
+  }, [autoRunMode, isPending, mutate, setAutoRunMode])
 
   const handleSync = (dryRun: boolean) => {
     mutation.mutate({ dryRun })

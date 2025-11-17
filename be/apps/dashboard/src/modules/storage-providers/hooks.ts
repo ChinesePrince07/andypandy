@@ -12,7 +12,7 @@ import {
 
 export const STORAGE_PROVIDERS_QUERY_KEY = ['settings', 'storage-providers'] as const
 
-export function useStorageProvidersQuery() {
+export function useStorageProvidersQuery(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: STORAGE_PROVIDERS_QUERY_KEY,
     queryFn: async () => {
@@ -29,6 +29,7 @@ export function useStorageProvidersQuery() {
         activeProviderId: ensureActiveProviderId(providers, activeProviderId),
       }
     },
+    enabled: options?.enabled ?? true,
   })
 }
 
@@ -44,6 +45,7 @@ export function useUpdateStorageProvidersMutation() {
       }>(STORAGE_PROVIDERS_QUERY_KEY)?.providers
 
       const resolvedProviders = restoreProviderSecrets(currentProviders, previousProviders ?? [])
+      const resolvedActiveId = ensureActiveProviderId(resolvedProviders, payload.activeProviderId ?? null)
 
       await updateStorageSettings([
         {
@@ -52,11 +54,17 @@ export function useUpdateStorageProvidersMutation() {
         },
         {
           key: STORAGE_SETTING_KEYS.activeProvider,
-          value: payload.activeProviderId ?? '',
+          value: resolvedActiveId ?? '',
         },
       ])
+
+      return {
+        providers: resolvedProviders,
+        activeProviderId: resolvedActiveId,
+      }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      queryClient.setQueryData(STORAGE_PROVIDERS_QUERY_KEY, data)
       void queryClient.invalidateQueries({
         queryKey: STORAGE_PROVIDERS_QUERY_KEY,
       })

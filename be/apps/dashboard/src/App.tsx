@@ -1,10 +1,11 @@
-import type {FC} from 'react';
+import type { FC } from 'react'
 import { useEffect } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router'
 
 import { useAccessDeniedValue } from '~/atoms/access-denied'
 import { ROUTE_PATHS } from '~/constants/routes'
 import { usePageRedirect } from '~/hooks/usePageRedirect'
+import { useRequireStorageProvider } from '~/hooks/useRequireStorageProvider'
 import { useRoutePermission } from '~/hooks/useRoutePermission'
 
 import { RootProviders } from './providers/root-providers'
@@ -20,6 +21,10 @@ export const App: FC = () => {
 function AppLayer() {
   const pageRedirect = usePageRedirect()
   useRoutePermission({
+    session: pageRedirect.sessionQuery.data ?? null,
+    isLoading: pageRedirect.sessionQuery.isPending,
+  })
+  useRequireStorageProvider({
     session: pageRedirect.sessionQuery.data ?? null,
     isLoading: pageRedirect.sessionQuery.isPending,
   })
