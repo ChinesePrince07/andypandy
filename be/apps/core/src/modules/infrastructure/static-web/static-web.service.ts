@@ -10,6 +10,7 @@ import { injectable } from 'tsyringe'
 
 import type { StaticAssetDocument } from './static-asset.service'
 import { StaticAssetService } from './static-asset.service'
+import { StaticAssetHostService } from './static-asset-host.service'
 
 const MODULE_DIR = fileURLToPath(new URL('.', import.meta.url))
 
@@ -54,12 +55,14 @@ export class StaticWebService extends StaticAssetService {
   constructor(
     private readonly manifestService: ManifestService,
     private readonly siteSettingService: SiteSettingService,
+    private readonly staticAssetHostService: StaticAssetHostService,
   ) {
     super({
       routeSegment: STATIC_WEB_ROUTE_SEGMENT,
       rootCandidates: STATIC_WEB_ROOT_CANDIDATES,
       assetLinkRels: STATIC_WEB_ASSET_LINK_RELS,
       loggerName: 'StaticWebService',
+      staticAssetHostResolver: (requestHost) => this.staticAssetHostService.getStaticAssetHost(requestHost),
     })
   }
 

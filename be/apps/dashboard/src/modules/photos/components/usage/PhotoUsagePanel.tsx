@@ -1,5 +1,6 @@
 import { Button } from '@afilmory/ui'
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { LinearBorderPanel } from '~/components/common/GlassPanel'
 
@@ -13,14 +14,65 @@ type PhotoUsagePanelProps = {
   onRefresh?: () => void
 }
 
-const NUMBER_FORMATTER = new Intl.NumberFormat('zh-CN')
-const DATE_TIME_FORMATTER = new Intl.DateTimeFormat('zh-CN', {
-  dateStyle: 'medium',
-  timeStyle: 'short',
-})
-const RELATIVE_FORMATTER = new Intl.RelativeTimeFormat('zh-CN', { numeric: 'auto' })
+const photoUsageI18nKeys = {
+  summary: {
+    title: 'photos.usage.summary.title',
+    description: 'photos.usage.summary.description',
+    refresh: 'photos.usage.summary.refresh',
+  },
+  events: {
+    title: 'photos.usage.events.title',
+    description: 'photos.usage.events.description',
+    total: 'photos.usage.events.total',
+    emptyTitle: 'photos.usage.events.empty.title',
+    emptyDescription: 'photos.usage.events.empty.description',
+    unitLabel: 'photos.usage.events.unit.label',
+    unitByte: 'photos.usage.events.unit.byte',
+    unitCount: 'photos.usage.events.unit.count',
+    metadataEmpty: 'photos.usage.events.metadata.empty',
+    metadataMore: 'photos.usage.events.metadata.more',
+    metadataValueUnknown: 'photos.usage.events.metadata.value-unknown',
+  },
+} as const satisfies {
+  summary: {
+    title: I18nKeys
+    description: I18nKeys
+    refresh: I18nKeys
+  }
+  events: {
+    title: I18nKeys
+    description: I18nKeys
+    total: I18nKeys
+    emptyTitle: I18nKeys
+    emptyDescription: I18nKeys
+    unitLabel: I18nKeys
+    unitByte: I18nKeys
+    unitCount: I18nKeys
+    metadataEmpty: I18nKeys
+    metadataMore: I18nKeys
+    metadataValueUnknown: I18nKeys
+  }
+}
 
 export function PhotoUsagePanel({ overview, isLoading, isFetching, onRefresh }: PhotoUsagePanelProps) {
+  const { t, i18n } = useTranslation()
+  const locale = i18n.language ?? i18n.resolvedLanguage ?? 'en'
+  const numberFormatter = useMemo(() => new Intl.NumberFormat(locale), [locale])
+  const dateTimeFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(locale, {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      }),
+    [locale],
+  )
+  const relativeFormatter = useMemo(
+    () =>
+      new Intl.RelativeTimeFormat(locale, {
+        numeric: 'auto',
+      }),
+    [locale],
+  )
   const summaryItems = useMemo(() => {
     const totals = overview?.totals ?? []
     const totalMap = new Map(totals.map((entry) => [entry.eventType, entry.totalQuantity]))
@@ -46,8 +98,8 @@ export function PhotoUsagePanel({ overview, isLoading, isFetching, onRefresh }: 
       <LinearBorderPanel className="bg-background-secondary/60 p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h3 className="text-base font-semibold text-text">用量概览</h3>
-            <p className="text-sm text-text-secondary">按事件类型统计的累计用量。</p>
+            <h3 className="text-base font-semibold text-text">{t(photoUsageI18nKeys.summary.title)}</h3>
+            <p className="text-sm text-text-secondary">{t(photoUsageI18nKeys.summary.description)}</p>
           </div>
           <Button
             type="button"
@@ -58,7 +110,7 @@ export function PhotoUsagePanel({ overview, isLoading, isFetching, onRefresh }: 
             disabled={isFetching || isLoading}
           >
             <i className={`i-lucide-rotate-cw size-4 ${isFetching ? 'animate-spin' : ''}`} aria-hidden />
-            刷新
+            {t(photoUsageI18nKeys.summary.refresh)}
           </Button>
         </div>
         <div className="mt-4 grid gap-3 md:grid-cols-3">
@@ -71,6 +123,7 @@ export function PhotoUsagePanel({ overview, isLoading, isFetching, onRefresh }: 
                   description={item.description}
                   value={item.value}
                   tone={item.tone}
+                  numberFormatter={numberFormatter}
                 />
               ))}
         </div>
@@ -79,10 +132,12 @@ export function PhotoUsagePanel({ overview, isLoading, isFetching, onRefresh }: 
       <LinearBorderPanel className="bg-background-secondary/60">
         <div className="flex flex-col gap-2 border-b border-border/30 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h3 className="text-base font-semibold text-text">最近用量事件</h3>
-            <p className="text-sm text-text-secondary">展示最新的计费用量明细，包含上传、删除和同步操作。</p>
+            <h3 className="text-base font-semibold text-text">{t(photoUsageI18nKeys.events.title)}</h3>
+            <p className="text-sm text-text-secondary">{t(photoUsageI18nKeys.events.description)}</p>
           </div>
-          {events.length > 0 && <p className="text-xs text-text-tertiary">共 {events.length} 条记录</p>}
+          {events.length > 0 && (
+            <p className="text-xs text-text-tertiary">{t(photoUsageI18nKeys.events.total, { count: events.length })}</p>
+          )}
         </div>
 
         {isLoading ? (
@@ -93,13 +148,19 @@ export function PhotoUsagePanel({ overview, isLoading, isFetching, onRefresh }: 
           </div>
         ) : isEmpty ? (
           <div className="px-5 py-12 text-center">
-            <p className="text-lg font-medium text-text">暂无用量记录</p>
-            <p className="mt-2 text-sm text-text-secondary">成功上传照片或运行同步后，将在此展示计费相关事件。</p>
+            <p className="text-lg font-medium text-text">{t(photoUsageI18nKeys.events.emptyTitle)}</p>
+            <p className="mt-2 text-sm text-text-secondary">{t(photoUsageI18nKeys.events.emptyDescription)}</p>
           </div>
         ) : (
           <div className="divide-y divide-border/10">
             {events.map((event) => (
-              <UsageEventRow key={event.id} event={event} />
+              <UsageEventRow
+                key={event.id}
+                event={event}
+                numberFormatter={numberFormatter}
+                dateTimeFormatter={dateTimeFormatter}
+                relativeTimeFormatter={relativeFormatter}
+              />
             ))}
           </div>
         )}
@@ -113,15 +174,16 @@ type SummaryCardProps = {
   description: string
   value: number
   tone: 'accent' | 'warning' | 'muted'
+  numberFormatter: Intl.NumberFormat
 }
 
-function SummaryCard({ label, description, value, tone }: SummaryCardProps) {
+function SummaryCard({ label, description, value, tone, numberFormatter }: SummaryCardProps) {
   const toneClass = tone === 'accent' ? 'text-emerald-400' : tone === 'warning' ? 'text-rose-400' : 'text-text'
 
   return (
     <LinearBorderPanel className="bg-background-tertiary/80 p-4">
       <p className="text-xs font-semibold uppercase tracking-wide text-text-tertiary">{label}</p>
-      <p className={`mt-2 text-2xl font-semibold ${toneClass}`}>{NUMBER_FORMATTER.format(value)}</p>
+      <p className={`mt-2 text-2xl font-semibold ${toneClass}`}>{numberFormatter.format(value)}</p>
       <p className="mt-1 text-xs text-text-secondary">{description}</p>
     </LinearBorderPanel>
   )
@@ -141,12 +203,26 @@ type UsageEventRowProps = {
   event: BillingUsageEvent
 }
 
-function UsageEventRow({ event }: UsageEventRowProps) {
+type UsageEventRowFormatters = {
+  numberFormatter: Intl.NumberFormat
+  dateTimeFormatter: Intl.DateTimeFormat
+  relativeTimeFormatter: Intl.RelativeTimeFormat
+}
+
+function UsageEventRow({
+  event,
+  numberFormatter,
+  dateTimeFormatter,
+  relativeTimeFormatter,
+}: UsageEventRowProps & UsageEventRowFormatters) {
+  const { t } = useTranslation()
   const label = getUsageEventLabel(event.eventType)
   const description = getUsageEventDescription(event.eventType)
   const quantityClass = event.quantity >= 0 ? 'text-emerald-400' : 'text-rose-400'
-  const dateLabel = formatDateLabel(event.occurredAt)
-  const relativeLabel = formatRelativeLabel(event.occurredAt)
+  const dateLabel = formatDateLabel(event.occurredAt, dateTimeFormatter)
+  const relativeLabel = formatRelativeLabel(event.occurredAt, relativeTimeFormatter)
+  const unitLabel =
+    event.unit === 'byte' ? t(photoUsageI18nKeys.events.unitByte) : t(photoUsageI18nKeys.events.unitCount)
 
   return (
     <div className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:gap-6">
@@ -156,8 +232,8 @@ function UsageEventRow({ event }: UsageEventRowProps) {
         <MetadataBadges metadata={event.metadata} />
       </div>
       <div className="flex flex-col items-start gap-1 text-right text-sm sm:min-w-[160px]">
-        <p className={`text-base font-semibold ${quantityClass}`}>{NUMBER_FORMATTER.format(event.quantity)}</p>
-        <p className="text-xs text-text-secondary">单位：{event.unit === 'byte' ? '字节' : '次数'}</p>
+        <p className={`text-base font-semibold ${quantityClass}`}>{numberFormatter.format(event.quantity)}</p>
+        <p className="text-xs text-text-secondary">{t(photoUsageI18nKeys.events.unitLabel, { unit: unitLabel })}</p>
       </div>
       <div className="text-right text-sm text-text-secondary sm:min-w-[180px]">
         <p>{dateLabel}</p>
@@ -168,17 +244,19 @@ function UsageEventRow({ event }: UsageEventRowProps) {
 }
 
 function MetadataBadges({ metadata }: { metadata: Record<string, unknown> | null }) {
+  const { t } = useTranslation()
   if (!metadata) {
-    return <p className="mt-3 text-xs text-text-tertiary">—</p>
+    return <p className="mt-3 text-xs text-text-tertiary">{t(photoUsageI18nKeys.events.metadataEmpty)}</p>
   }
 
   const entries = Object.entries(metadata).filter(([, value]) => value != null)
   if (entries.length === 0) {
-    return <p className="mt-3 text-xs text-text-tertiary">—</p>
+    return <p className="mt-3 text-xs text-text-tertiary">{t(photoUsageI18nKeys.events.metadataEmpty)}</p>
   }
 
   const visibleEntries = entries.slice(0, 4)
   const remaining = entries.length - visibleEntries.length
+  const valueFallback = t(photoUsageI18nKeys.events.metadataValueUnknown)
 
   return (
     <div className="mt-3 flex flex-wrap gap-2">
@@ -187,10 +265,14 @@ function MetadataBadges({ metadata }: { metadata: Record<string, unknown> | null
           key={key}
           className="rounded-full border border-border/50 bg-background/60 px-2 py-0.5 text-xs text-text-secondary"
         >
-          {key}: {formatMetadataValue(value)}
+          {key}: {formatMetadataValue(value, valueFallback)}
         </span>
       ))}
-      {remaining > 0 && <span className="text-xs text-text-tertiary">+{remaining} 更多</span>}
+      {remaining > 0 && (
+        <span className="text-xs text-text-tertiary">
+          {t(photoUsageI18nKeys.events.metadataMore, { count: remaining })}
+        </span>
+      )}
     </div>
   )
 }
@@ -209,9 +291,9 @@ function UsageEventSkeleton() {
   )
 }
 
-function formatMetadataValue(value: unknown): string {
+function formatMetadataValue(value: unknown, fallback: string): string {
   if (value == null) {
-    return '无'
+    return fallback
   }
 
   if (typeof value === 'string') {
@@ -229,15 +311,15 @@ function formatMetadataValue(value: unknown): string {
   }
 }
 
-function formatDateLabel(value: string): string {
+function formatDateLabel(value: string, formatter: Intl.DateTimeFormat): string {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) {
     return value
   }
-  return DATE_TIME_FORMATTER.format(date)
+  return formatter.format(date)
 }
 
-function formatRelativeLabel(value: string): string | null {
+function formatRelativeLabel(value: string, formatter: Intl.RelativeTimeFormat): string | null {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) {
     return null
@@ -245,12 +327,12 @@ function formatRelativeLabel(value: string): string | null {
   const diffMs = date.getTime() - Date.now()
   const diffMinutes = Math.round(diffMs / (1000 * 60))
   if (Math.abs(diffMinutes) < 60) {
-    return RELATIVE_FORMATTER.format(diffMinutes, 'minute')
+    return formatter.format(diffMinutes, 'minute')
   }
   const diffHours = Math.round(diffMinutes / 60)
   if (Math.abs(diffHours) < 24) {
-    return RELATIVE_FORMATTER.format(diffHours, 'hour')
+    return formatter.format(diffHours, 'hour')
   }
   const diffDays = Math.round(diffHours / 24)
-  return RELATIVE_FORMATTER.format(diffDays, 'day')
+  return formatter.format(diffDays, 'day')
 }

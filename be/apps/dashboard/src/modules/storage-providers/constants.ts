@@ -9,11 +9,149 @@ export const STORAGE_PROVIDER_TYPES: readonly StorageProviderType[] = ['s3', 'gi
 
 export const STORAGE_PROVIDER_TYPE_OPTIONS: ReadonlyArray<{
   value: StorageProviderType
-  label: string
+  labelKey: I18nKeys
 }> = [
-  { value: 's3', label: 'S3 / 兼容对象存储' },
-  { value: 'github', label: 'GitHub 仓库' },
+  { value: 's3', labelKey: 'storage.providers.types.s3' },
+  { value: 'github', labelKey: 'storage.providers.types.github' },
 ]
+
+export const storageProvidersI18nKeys = {
+  blocker: {
+    title: 'storage.providers.blocker.title',
+    description: 'storage.providers.blocker.description',
+    confirm: 'storage.providers.blocker.confirm',
+    cancel: 'storage.providers.blocker.cancel',
+  },
+  actions: {
+    add: 'storage.providers.actions.add',
+    save: 'storage.providers.actions.save',
+    saving: 'storage.providers.actions.saving',
+    cancel: 'storage.providers.actions.cancel',
+    create: 'storage.providers.actions.create',
+  },
+  prompt: {
+    title: 'storage.providers.prompt.sync.title',
+    description: 'storage.providers.prompt.sync.description',
+    confirm: 'storage.providers.prompt.sync.confirm',
+    cancel: 'storage.providers.prompt.sync.cancel',
+  },
+  status: {
+    error: 'storage.providers.status.error',
+    saved: 'storage.providers.status.saved',
+    dirty: 'storage.providers.status.dirty',
+    summary: 'storage.providers.status.summary',
+  },
+  empty: {
+    title: 'storage.providers.empty.title',
+    description: 'storage.providers.empty.description',
+    action: 'storage.providers.empty.action',
+  },
+  errors: {
+    load: 'storage.providers.error.load',
+  },
+  security: {
+    title: 'storage.providers.security.title',
+    description: 'storage.providers.security.description',
+    helper: 'storage.providers.security.helper',
+  },
+  modal: {
+    createTitle: 'storage.providers.modal.create.title',
+    editTitle: 'storage.providers.modal.edit.title',
+    createDescription: 'storage.providers.modal.create.description',
+    editDescription: 'storage.providers.modal.edit.description',
+    sections: {
+      basic: 'storage.providers.modal.sections.basic',
+      connection: 'storage.providers.modal.sections.connection',
+    },
+    fields: {
+      nameLabel: 'storage.providers.modal.fields.name.label',
+      namePlaceholder: 'storage.providers.modal.fields.name.placeholder',
+      typeLabel: 'storage.providers.modal.fields.type.label',
+      typePlaceholder: 'storage.providers.modal.fields.type.placeholder',
+    },
+  },
+  card: {
+    active: 'storage.providers.card.active',
+    makeActive: 'storage.providers.card.make-active',
+    makeInactive: 'storage.providers.card.make-inactive',
+    edit: 'storage.providers.card.edit',
+    notConfigured: 'storage.providers.card.preview.not-configured',
+    fallback: 'storage.providers.card.preview.fallback',
+    untitled: 'storage.providers.card.untitled',
+  },
+  types: {
+    s3: 'storage.providers.types.s3',
+    github: 'storage.providers.types.github',
+    local: 'storage.providers.types.local',
+    minio: 'storage.providers.types.minio',
+    eagle: 'storage.providers.types.eagle',
+  },
+} as const satisfies {
+  blocker: {
+    title: I18nKeys
+    description: I18nKeys
+    confirm: I18nKeys
+    cancel: I18nKeys
+  }
+  actions: {
+    add: I18nKeys
+    save: I18nKeys
+    saving: I18nKeys
+    cancel: I18nKeys
+    create: I18nKeys
+  }
+  prompt: {
+    title: I18nKeys
+    description: I18nKeys
+    confirm: I18nKeys
+    cancel: I18nKeys
+  }
+  status: {
+    error: I18nKeys
+    saved: I18nKeys
+    dirty: I18nKeys
+    summary: I18nKeys
+  }
+  empty: {
+    title: I18nKeys
+    description: I18nKeys
+    action: I18nKeys
+  }
+  errors: {
+    load: I18nKeys
+  }
+  security: {
+    title: I18nKeys
+    description: I18nKeys
+    helper: I18nKeys
+  }
+  modal: {
+    createTitle: I18nKeys
+    editTitle: I18nKeys
+    createDescription: I18nKeys
+    editDescription: I18nKeys
+    sections: {
+      basic: I18nKeys
+      connection: I18nKeys
+    }
+    fields: {
+      nameLabel: I18nKeys
+      namePlaceholder: I18nKeys
+      typeLabel: I18nKeys
+      typePlaceholder: I18nKeys
+    }
+  }
+  card: {
+    active: I18nKeys
+    makeActive: I18nKeys
+    makeInactive: I18nKeys
+    edit: I18nKeys
+    notConfigured: I18nKeys
+    fallback: I18nKeys
+    untitled: I18nKeys
+  }
+  types: Record<'s3' | 'github' | 'local' | 'minio' | 'eagle', I18nKeys>
+}
 
 export const STORAGE_PROVIDER_FIELD_DEFINITIONS: Record<
   StorageProviderType,
@@ -22,100 +160,100 @@ export const STORAGE_PROVIDER_FIELD_DEFINITIONS: Record<
   s3: [
     {
       key: 'bucket',
-      label: 'Bucket 名称',
-      placeholder: 'afilmory-photos',
-      description: 'S3 存储桶名称，用于读取图片文件。',
+      labelKey: 'storage.providers.fields.s3.bucket.label',
+      placeholderKey: 'storage.providers.fields.s3.bucket.placeholder',
+      descriptionKey: 'storage.providers.fields.s3.bucket.description',
     },
     {
       key: 'region',
-      label: '区域 (Region)',
-      placeholder: 'ap-southeast-1',
-      description: 'S3 区域代码，例如 ap-southeast-1。',
+      labelKey: 'storage.providers.fields.s3.region.label',
+      placeholderKey: 'storage.providers.fields.s3.region.placeholder',
+      descriptionKey: 'storage.providers.fields.s3.region.description',
     },
     {
       key: 'endpoint',
-      label: '自定义 Endpoint',
-      placeholder: 'https://s3.example.com',
-      description: '可选，S3 兼容服务的自定义 Endpoint 地址。',
-      helper: '对于 AWS 官方 S3 可留空；MinIO 等第三方服务需要填写。',
+      labelKey: 'storage.providers.fields.s3.endpoint.label',
+      placeholderKey: 'storage.providers.fields.s3.endpoint.placeholder',
+      descriptionKey: 'storage.providers.fields.s3.endpoint.description',
+      helperKey: 'storage.providers.fields.s3.endpoint.helper',
     },
     {
       key: 'accessKeyId',
-      label: 'Access Key ID',
-      placeholder: 'AKIAxxxxxxxxxxxx',
+      labelKey: 'storage.providers.fields.s3.access-key.label',
+      placeholderKey: 'storage.providers.fields.s3.access-key.placeholder',
     },
     {
       key: 'secretAccessKey',
-      label: 'Secret Access Key',
-      placeholder: '************',
+      labelKey: 'storage.providers.fields.s3.secret-key.label',
+      placeholderKey: 'storage.providers.fields.s3.secret-key.placeholder',
       sensitive: true,
     },
     {
       key: 'prefix',
-      label: '文件前缀',
-      placeholder: 'photos/',
-      description: '可选，仅访问指定前缀下的文件。',
+      labelKey: 'storage.providers.fields.s3.prefix.label',
+      placeholderKey: 'storage.providers.fields.s3.prefix.placeholder',
+      descriptionKey: 'storage.providers.fields.s3.prefix.description',
     },
     {
       key: 'customDomain',
-      label: '自定义访问域名',
-      placeholder: 'https://cdn.example.com',
-      description: '设置公开访问照片时使用的自定义域名。',
+      labelKey: 'storage.providers.fields.s3.custom-domain.label',
+      placeholderKey: 'storage.providers.fields.s3.custom-domain.placeholder',
+      descriptionKey: 'storage.providers.fields.s3.custom-domain.description',
     },
     {
       key: 'excludeRegex',
-      label: '排除规则 (正则)',
-      placeholder: '\\.(tmp|bak)$',
-      description: '可选，排除不需要的文件。',
+      labelKey: 'storage.providers.fields.s3.exclude-regex.label',
+      placeholderKey: 'storage.providers.fields.s3.exclude-regex.placeholder',
+      descriptionKey: 'storage.providers.fields.s3.exclude-regex.description',
       multiline: true,
-      helper: '正则表达式需符合 JavaScript 语法。',
+      helperKey: 'storage.providers.fields.s3.exclude-regex.helper',
     },
     {
       key: 'maxFileLimit',
-      label: '最大文件数量',
-      placeholder: '1000',
-      description: '可选，为扫描过程设置最大文件数量限制。',
+      labelKey: 'storage.providers.fields.s3.max-files.label',
+      placeholderKey: 'storage.providers.fields.s3.max-files.placeholder',
+      descriptionKey: 'storage.providers.fields.s3.max-files.description',
     },
   ],
   github: [
     {
       key: 'owner',
-      label: '仓库 Owner',
-      placeholder: 'afilmory',
-      description: 'GitHub 仓库的拥有者（用户或组织名称）。',
+      labelKey: 'storage.providers.fields.github.owner.label',
+      placeholderKey: 'storage.providers.fields.github.owner.placeholder',
+      descriptionKey: 'storage.providers.fields.github.owner.description',
     },
     {
       key: 'repo',
-      label: '仓库名称',
-      placeholder: 'photo-assets',
-      description: '存储照片的仓库名称。',
+      labelKey: 'storage.providers.fields.github.repo.label',
+      placeholderKey: 'storage.providers.fields.github.repo.placeholder',
+      descriptionKey: 'storage.providers.fields.github.repo.description',
     },
     {
       key: 'branch',
-      label: '分支',
-      placeholder: 'main',
-      description: '可选，指定需要同步的分支。',
-      helper: '默认 master/main，如需其它分支请填写完整名称。',
+      labelKey: 'storage.providers.fields.github.branch.label',
+      placeholderKey: 'storage.providers.fields.github.branch.placeholder',
+      descriptionKey: 'storage.providers.fields.github.branch.description',
+      helperKey: 'storage.providers.fields.github.branch.helper',
     },
     {
       key: 'token',
-      label: '访问令牌',
-      placeholder: 'ghp_xxxxxxxxxxxxxxxxxxxx',
-      description: '用于访问私有仓库的 GitHub Personal Access Token。',
+      labelKey: 'storage.providers.fields.github.token.label',
+      placeholderKey: 'storage.providers.fields.github.token.placeholder',
+      descriptionKey: 'storage.providers.fields.github.token.description',
       sensitive: true,
     },
     {
       key: 'path',
-      label: '仓库路径',
-      placeholder: 'public/photos',
-      description: '可选，仅同步仓库中的特定路径。',
+      labelKey: 'storage.providers.fields.github.path.label',
+      placeholderKey: 'storage.providers.fields.github.path.placeholder',
+      descriptionKey: 'storage.providers.fields.github.path.description',
     },
     {
       key: 'useRawUrl',
-      label: '使用 Raw URL',
-      placeholder: 'true / false',
-      description: '是否使用 raw.githubusercontent.com 生成公开访问链接。',
-      helper: '使用自定义域名则可填写 false。',
+      labelKey: 'storage.providers.fields.github.use-raw.label',
+      placeholderKey: 'storage.providers.fields.github.use-raw.placeholder',
+      descriptionKey: 'storage.providers.fields.github.use-raw.description',
+      helperKey: 'storage.providers.fields.github.use-raw.helper',
     },
   ],
 }

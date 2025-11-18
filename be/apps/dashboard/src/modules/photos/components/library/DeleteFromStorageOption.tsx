@@ -1,4 +1,5 @@
 import { Checkbox } from '@afilmory/ui'
+import { useTranslation } from 'react-i18next'
 
 type DeleteFromStorageOptionProps = {
   defaultChecked?: boolean
@@ -7,6 +8,7 @@ type DeleteFromStorageOptionProps = {
 }
 
 export function DeleteFromStorageOption({ defaultChecked = false, disabled, onChange }: DeleteFromStorageOptionProps) {
+  const { t } = useTranslation()
   return (
     <label className="flex w-full items-start gap-3 my-2 text-left text-text">
       <Checkbox
@@ -18,8 +20,8 @@ export function DeleteFromStorageOption({ defaultChecked = false, disabled, onCh
         }}
       />
       <div className="text-sm leading-relaxed">
-        <p className="font-medium">同时删除存储文件</p>
-        <p className="text-xs text-text-tertiary">勾选后将一并移除对象存储中的原始文件与缩略图</p>
+        <p className="font-medium">{t('photos.library.delete.option.title')}</p>
+        <p className="text-xs text-text-tertiary">{t('photos.library.delete.option.description')}</p>
       </div>
     </label>
   )

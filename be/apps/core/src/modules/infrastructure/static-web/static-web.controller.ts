@@ -101,7 +101,9 @@ export class StaticWebController {
   private async serve(context: Context, service: StaticAssetService, headOnly: boolean): Promise<Response> {
     const pathname = context.req.path
     const normalizedPath = this.normalizeRequestPath(pathname, service)
-    const response = await service.handleRequest(normalizedPath, headOnly)
+    const response = await service.handleRequest(normalizedPath, headOnly, {
+      requestHost: this.resolveRequestHost(context),
+    })
     if (response) {
       return response
     }
@@ -189,6 +191,25 @@ export class StaticWebController {
       return trimmed.replace(/\/+$/, '')
     }
     return trimmed
+  }
+
+  private resolveRequestHost(context: Context): string | null {
+    const forwardedHost = context.req.header('x-forwarded-host')?.trim()
+    if (forwardedHost) {
+      return forwardedHost
+    }
+
+    const host = context.req.header('host')?.trim()
+    if (host) {
+      return host
+    }
+
+    try {
+      const url = new URL(context.req.url)
+      return url.host
+    } catch {
+      return null
+    }
   }
 
   private isReservedTenant({ root = false }: { root?: boolean } = {}): boolean {

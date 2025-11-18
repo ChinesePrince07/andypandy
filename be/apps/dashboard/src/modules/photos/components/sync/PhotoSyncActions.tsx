@@ -1,6 +1,7 @@
 import { Button } from '@afilmory/ui'
 import { useMutation } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
 import { usePhotoSyncAutoRunValue, useSetPhotoSyncAutoRun } from '~/atoms/photo-sync'
@@ -11,7 +12,27 @@ import { runPhotoSync } from '../../api'
 import type { RunPhotoSyncPayload } from '../../types'
 import { usePhotoSyncController } from './PhotoSyncControllerContext'
 
+const photoSyncActionKeys = {
+  toastSuccessPreview: 'photos.sync.actions.toast.preview-success',
+  toastSuccessApply: 'photos.sync.actions.toast.apply-success',
+  toastSuccessDescription: 'photos.sync.actions.toast.success-description',
+  toastErrorTitle: 'photos.sync.actions.toast.error-title',
+  toastErrorDescription: 'photos.sync.actions.toast.error-description',
+  buttonPreview: 'photos.sync.actions.button.preview',
+  buttonApply: 'photos.sync.actions.button.apply',
+} as const satisfies Record<
+  | 'toastSuccessPreview'
+  | 'toastSuccessApply'
+  | 'toastSuccessDescription'
+  | 'toastErrorTitle'
+  | 'toastErrorDescription'
+  | 'buttonPreview'
+  | 'buttonApply',
+  I18nKeys
+>
+
 export function PhotoSyncActions() {
+  const { t } = useTranslation()
   const { onCompleted, onProgress, onError } = usePhotoSyncController()
   const { setHeaderActionState } = useMainPageLayout()
   const [pendingMode, setPendingMode] = useState<'dry-run' | 'apply' | null>(null)
@@ -45,15 +66,23 @@ export function PhotoSyncActions() {
     onSuccess: (data, variables) => {
       onCompleted(data, { dryRun: variables.dryRun ?? false })
       const { inserted, updated, conflicts, errors } = data.summary
-      toast.success(variables.dryRun ? '同步预览完成' : '照片同步完成', {
-        description: `新增 ${inserted} · 更新 ${updated} · 冲突 ${conflicts} · 错误 ${errors}`,
-      })
+      toast.success(
+        variables.dryRun ? t(photoSyncActionKeys.toastSuccessPreview) : t(photoSyncActionKeys.toastSuccessApply),
+        {
+          description: t(photoSyncActionKeys.toastSuccessDescription, {
+            inserted,
+            updated,
+            conflicts,
+            errors,
+          }),
+        },
+      )
     },
     onError: (error) => {
-      const normalizedError = error instanceof Error ? error : new Error('照片同步失败，请稍后重试。')
+      const normalizedError = error instanceof Error ? error : new Error(t(photoSyncActionKeys.toastErrorDescription))
 
       const message = getRequestErrorMessage(error, normalizedError.message)
-      toast.error('同步失败', { description: message })
+      toast.error(t(photoSyncActionKeys.toastErrorTitle), { description: message })
       onError(normalizedError)
     },
     onSettled: () => {
@@ -97,7 +126,7 @@ export function PhotoSyncActions() {
         isLoading={isPending && pendingMode === 'dry-run'}
         onClick={() => handleSync(true)}
       >
-        预览同步
+        {t(photoSyncActionKeys.buttonPreview)}
       </Button>
       <Button
         type="button"
@@ -107,7 +136,7 @@ export function PhotoSyncActions() {
         isLoading={isPending && pendingMode === 'apply'}
         onClick={() => handleSync(false)}
       >
-        同步照片
+        {t(photoSyncActionKeys.buttonApply)}
       </Button>
     </div>
   )

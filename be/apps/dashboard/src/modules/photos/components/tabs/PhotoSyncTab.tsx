@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { useCallback, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
 import { getRequestErrorMessage } from '~/lib/errors'
@@ -52,6 +53,7 @@ function createInitialStages(totals: PhotoSyncProgressState['totals']): PhotoSyn
 }
 
 export function PhotoSyncTab() {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const [result, setResult] = useState<PhotoSyncResult | null>(null)
   const [lastWasDryRun, setLastWasDryRun] = useState<boolean | null>(null)
@@ -229,17 +231,19 @@ export function PhotoSyncTab() {
           id: conflict.id,
           strategy,
         })
-        toast.success('冲突已处理', {
+        toast.success(t('photos.sync.toasts.conflict-resolved'), {
           description:
             action.reason ??
-            (strategy === 'prefer-storage' ? '已以存储数据覆盖数据库记录。' : '已保留数据库记录并忽略存储差异。'),
+            (strategy === 'prefer-storage'
+              ? t('photos.sync.toasts.conflict-storage')
+              : t('photos.sync.toasts.conflict-database')),
         })
         void conflictsQuery.refetch()
         void summaryQuery.refetch()
         void queryClient.invalidateQueries({ queryKey: PHOTO_ASSET_LIST_QUERY_KEY })
       } catch (error) {
-        const message = getRequestErrorMessage(error, '处理冲突失败，请稍后重试。')
-        toast.error('处理冲突失败', { description: message })
+        const message = getRequestErrorMessage(error, t('photos.sync.toasts.conflict-error-desc'))
+        toast.error(t('photos.sync.toasts.conflict-error'), { description: message })
       } finally {
         setResolvingConflictId(null)
       }
@@ -250,7 +254,7 @@ export function PhotoSyncTab() {
   const handleResolveConflictsBatch = useCallback(
     async (conflicts: PhotoSyncConflict[], strategy: PhotoSyncResolution) => {
       if (!strategy || conflicts.length === 0) {
-        toast.info('请选择至少一个冲突条目')
+        toast.info(t('photos.sync.toasts.conflict-select'))
         return
       }
 
@@ -267,7 +271,7 @@ export function PhotoSyncTab() {
             })
             processed += 1
           } catch (error) {
-            errors.push(getRequestErrorMessage(error, '处理冲突失败，请稍后重试。'))
+            errors.push(getRequestErrorMessage(error, t('photos.sync.toasts.conflict-error-desc')))
           }
         }
       } finally {
@@ -275,11 +279,20 @@ export function PhotoSyncTab() {
       }
 
       if (processed > 0) {
-        toast.success(`${strategy === 'prefer-storage' ? '以存储为准' : '以数据库为准'}处理 ${processed} 个冲突`)
+        const strategyLabel =
+          strategy === 'prefer-storage'
+            ? t('photos.sync.conflicts.strategy.storage')
+            : t('photos.sync.conflicts.strategy.database')
+        toast.success(
+          t('photos.sync.toasts.conflict-batch-success', {
+            strategy: strategyLabel,
+            count: processed,
+          }),
+        )
       }
 
       if (errors.length > 0) {
-        toast.error('部分冲突处理失败', {
+        toast.error(t('photos.sync.toasts.conflict-batch-error'), {
           description: errors[0],
         })
       }

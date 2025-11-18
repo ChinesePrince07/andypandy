@@ -106,7 +106,7 @@ export async function runPhotoSync(
   })
 
   if (!response.ok || !response.body) {
-    const fallback = `同步请求失败：${response.status} ${response.statusText}`
+    const fallback = `Sync request failed: ${response.status} ${response.statusText}`
     const serverMessage = await readResponseErrorMessage(response)
     throw new Error(serverMessage ?? fallback)
   }
@@ -200,7 +200,7 @@ export async function runPhotoSync(
   }
 
   if (!finalResult) {
-    throw new Error('同步过程中未收到最终结果，连接已终止。')
+    throw new Error('Sync completed without a final result. Connection terminated.')
   }
 
   return camelCaseKeys<PhotoSyncResult>(finalResult)
@@ -409,7 +409,7 @@ export async function uploadPhotoAssets(
         const event = camelCaseKeys<PhotoSyncProgressEvent>(parsed)
         options?.onServerEvent?.(event)
         if (event.type === 'error') {
-          settle(() => {}, reject, new Error(event.payload.message || '服务器处理失败'))
+          settle(() => {}, reject, new Error(event.payload.message || 'Server processing failed'))
           xhr.abort()
           return
         }
@@ -432,7 +432,7 @@ export async function uploadPhotoAssets(
     }
 
     xhr.onerror = () => {
-      settle(() => {}, reject, new Error('上传过程中出现网络错误，请稍后再试。'))
+      settle(() => {}, reject, new Error('Network error during upload. Please try again later.'))
     }
 
     xhr.onabort = () => {
@@ -440,7 +440,7 @@ export async function uploadPhotoAssets(
     }
 
     xhr.ontimeout = () => {
-      settle(() => {}, reject, new Error('上传超时，请稍后再试。'))
+      settle(() => {}, reject, new Error('Upload timed out. Please try again later.'))
     }
 
     xhr.onload = () => {
@@ -450,7 +450,8 @@ export async function uploadPhotoAssets(
         return
       }
 
-      const fallbackMessage = xhr.status >= 200 && xhr.status < 300 ? '上传响应未完成' : `上传失败：${xhr.status}`
+      const fallbackMessage =
+        xhr.status >= 200 && xhr.status < 300 ? 'Upload response incomplete' : `Upload failed: ${xhr.status}`
       const serverMessage = extractMessageFromXhr(xhr)
       settle(() => {}, reject, new Error(serverMessage ?? fallbackMessage))
     }

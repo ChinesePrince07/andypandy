@@ -1,7 +1,9 @@
 import { Button } from '@afilmory/ui'
 import { Spring } from '@afilmory/utils'
 import { m } from 'motion/react'
-import { useMemo, useState } from 'react'
+import { useCallback,useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 
 import { getActionTypeMeta, getConflictTypeLabel, PHOTO_ACTION_TYPE_CONFIG } from '../../constants'
 import type {
@@ -48,35 +50,88 @@ function SummaryCard({ label, value, tone }: SummaryCardProps) {
   )
 }
 
-const DATE_FORMATTER = new Intl.DateTimeFormat('zh-CN', {
-  dateStyle: 'medium',
-  timeStyle: 'short',
-})
+const photoSyncResultSummaryLabelKeys = {
+  storageObjects: 'photos.sync.result.summary.labels.storage-objects',
+  databaseRecords: 'photos.sync.result.summary.labels.database-records',
+  inserted: 'photos.sync.result.summary.labels.inserted',
+  updated: 'photos.sync.result.summary.labels.updated',
+  deleted: 'photos.sync.result.summary.labels.deleted',
+  conflicts: 'photos.sync.result.summary.labels.conflicts',
+  errors: 'photos.sync.result.summary.labels.errors',
+  skipped: 'photos.sync.result.summary.labels.skipped',
+  completed: 'photos.sync.result.summary.labels.completed',
+  pending: 'photos.sync.result.summary.labels.pending',
+} as const satisfies Record<string, I18nKeys>
 
-function formatDateTimeLabel(value: string): string {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) {
-    return value
-  }
-  return DATE_FORMATTER.format(date)
-}
-
-function formatDurationLabel(start: string, end: string): string {
-  const startedAt = new Date(start)
-  const completedAt = new Date(end)
-  const duration = completedAt.getTime() - startedAt.getTime()
-  if (!Number.isFinite(duration) || duration <= 0) {
-    return '不足 1 秒'
-  }
-  const totalSeconds = Math.max(Math.round(duration / 1000), 1)
-  const minutes = Math.floor(totalSeconds / 60)
-  const seconds = totalSeconds % 60
-  const parts: string[] = []
-  if (minutes > 0) {
-    parts.push(`${minutes} 分`)
-  }
-  parts.push(`${seconds} 秒`)
-  return parts.join(' ')
+const photoSyncResultKeys = {
+  duration: {
+    lessThanSecond: 'photos.sync.result.duration.less-than-second',
+    minutes: 'photos.sync.result.duration.minutes',
+    seconds: 'photos.sync.result.duration.seconds',
+  },
+  summary: {
+    heading: 'photos.sync.result.summary.heading',
+    descriptionLatest: 'photos.sync.result.summary.description.latest',
+    descriptionPreview: 'photos.sync.result.summary.description.preview',
+    descriptionLive: 'photos.sync.result.summary.description.live',
+  },
+  history: {
+    heading: 'photos.sync.result.history.heading',
+    completedAt: 'photos.sync.result.history.completed-at',
+    duration: 'photos.sync.result.history.duration',
+    modePreview: 'photos.sync.result.history.mode.preview',
+    modeLive: 'photos.sync.result.history.mode.live',
+    operations: 'photos.sync.result.history.operations',
+  },
+  status: {
+    loadingTitle: 'photos.sync.result.status.loading.title',
+    loadingDescription: 'photos.sync.result.status.loading.description',
+    emptyTitle: 'photos.sync.result.status.empty.title',
+    emptyDescription: 'photos.sync.result.status.empty.description',
+  },
+  operations: {
+    count: 'photos.sync.result.operations.count',
+    filterLabel: 'photos.sync.result.operations.filter-label',
+  },
+  table: {
+    title: 'photos.sync.result.table.title',
+    modePreview: 'photos.sync.result.table.mode.preview',
+    modeLive: 'photos.sync.result.table.mode.live',
+    emptyFiltered: 'photos.sync.result.table.empty.filtered',
+    emptyNone: 'photos.sync.result.table.empty.none',
+  },
+  filters: {
+    all: 'photos.sync.result.filters.all',
+  },
+  info: {
+    photoId: 'photos.sync.result.info.photo-id',
+    conflictType: 'photos.sync.result.info.conflict-type',
+    storageKey: 'photos.sync.result.info.storage-key',
+  },
+  actions: {
+    applied: 'photos.sync.result.actions.applied',
+    pending: 'photos.sync.result.actions.pending',
+    expand: 'photos.sync.result.actions.expand',
+    collapse: 'photos.sync.result.actions.collapse',
+  },
+  alerts: {
+    openOriginalFailed: 'photos.sync.result.alerts.open-original-failed',
+  },
+  manifest: {
+    empty: 'photos.sync.result.manifest.empty',
+  },
+} as const satisfies {
+  duration: Record<'lessThanSecond' | 'minutes' | 'seconds', I18nKeys>
+  summary: Record<'heading' | 'descriptionLatest' | 'descriptionPreview' | 'descriptionLive', I18nKeys>
+  history: Record<'heading' | 'completedAt' | 'duration' | 'modePreview' | 'modeLive' | 'operations', I18nKeys>
+  status: Record<'loadingTitle' | 'loadingDescription' | 'emptyTitle' | 'emptyDescription', I18nKeys>
+  operations: Record<'count' | 'filterLabel', I18nKeys>
+  table: Record<'title' | 'modePreview' | 'modeLive' | 'emptyFiltered' | 'emptyNone', I18nKeys>
+  filters: Record<'all', I18nKeys>
+  info: Record<'photoId' | 'conflictType' | 'storageKey', I18nKeys>
+  actions: Record<'applied' | 'pending' | 'expand' | 'collapse', I18nKeys>
+  alerts: Record<'openOriginalFailed', I18nKeys>
+  manifest: Record<'empty', I18nKeys>
 }
 
 type PhotoSyncResultPanelProps = {
@@ -102,31 +157,72 @@ export function PhotoSyncResultPanel({
   isSyncStatusLoading,
   onRequestStorageUrl,
 }: PhotoSyncResultPanelProps) {
+  const { t, i18n } = useTranslation()
+  const locale = i18n.language ?? i18n.resolvedLanguage ?? 'en'
+  const dateTimeFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(locale, {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      }),
+    [locale],
+  )
+  const formatDateTimeLabel = useCallback(
+    (value: string): string => {
+      const date = new Date(value)
+      if (Number.isNaN(date.getTime())) {
+        return value
+      }
+      return dateTimeFormatter.format(date)
+    },
+    [dateTimeFormatter],
+  )
+  const formatDurationLabel = useCallback(
+    (start: string, end: string): string => {
+      const startedAt = new Date(start)
+      const completedAt = new Date(end)
+      const duration = completedAt.getTime() - startedAt.getTime()
+      if (!Number.isFinite(duration) || duration <= 0) {
+        return t(photoSyncResultKeys.duration.lessThanSecond)
+      }
+      const totalSeconds = Math.max(Math.round(duration / 1000), 1)
+      const minutes = Math.floor(totalSeconds / 60)
+      const seconds = totalSeconds % 60
+      const parts: string[] = []
+      if (minutes > 0) {
+        parts.push(t(photoSyncResultKeys.duration.minutes, { count: minutes }))
+      }
+      parts.push(t(photoSyncResultKeys.duration.seconds, { count: seconds }))
+      return parts.join(' ')
+    },
+    [t],
+  )
   const isAwaitingStatus = isSyncStatusLoading && !lastSyncRun
   const summaryItems = useMemo(() => {
+    const label = (key: keyof typeof photoSyncResultSummaryLabelKeys) => t(photoSyncResultSummaryLabelKeys[key])
     if (result) {
       return [
-        { label: '存储对象', value: result.summary.storageObjects },
-        { label: '数据库记录', value: result.summary.databaseRecords },
+        { label: label('storageObjects'), value: result.summary.storageObjects },
+        { label: label('databaseRecords'), value: result.summary.databaseRecords },
         {
-          label: '新增照片',
+          label: label('inserted'),
           value: result.summary.inserted,
           tone: 'accent' as const,
         },
-        { label: '更新记录', value: result.summary.updated },
-        { label: '删除记录', value: result.summary.deleted },
+        { label: label('updated'), value: result.summary.updated },
+        { label: label('deleted'), value: result.summary.deleted },
         {
-          label: '冲突条目',
+          label: label('conflicts'),
           value: result.summary.conflicts,
           tone: result.summary.conflicts > 0 ? ('warning' as const) : ('muted' as const),
         },
         {
-          label: '错误条目',
+          label: label('errors'),
           value: result.summary.errors,
           tone: result.summary.errors > 0 ? ('warning' as const) : ('muted' as const),
         },
         {
-          label: '跳过条目',
+          label: label('skipped'),
           value: result.summary.skipped,
           tone: 'muted' as const,
         },
@@ -135,27 +231,27 @@ export function PhotoSyncResultPanel({
 
     if (lastSyncRun) {
       return [
-        { label: '存储对象', value: lastSyncRun.summary.storageObjects },
-        { label: '数据库记录', value: lastSyncRun.summary.databaseRecords },
+        { label: label('storageObjects'), value: lastSyncRun.summary.storageObjects },
+        { label: label('databaseRecords'), value: lastSyncRun.summary.databaseRecords },
         {
-          label: '新增照片',
+          label: label('inserted'),
           value: lastSyncRun.summary.inserted,
           tone: lastSyncRun.summary.inserted > 0 ? ('accent' as const) : undefined,
         },
-        { label: '更新记录', value: lastSyncRun.summary.updated },
-        { label: '删除记录', value: lastSyncRun.summary.deleted },
+        { label: label('updated'), value: lastSyncRun.summary.updated },
+        { label: label('deleted'), value: lastSyncRun.summary.deleted },
         {
-          label: '冲突条目',
+          label: label('conflicts'),
           value: lastSyncRun.summary.conflicts,
           tone: lastSyncRun.summary.conflicts > 0 ? ('warning' as const) : ('muted' as const),
         },
         {
-          label: '错误条目',
+          label: label('errors'),
           value: lastSyncRun.summary.errors,
           tone: lastSyncRun.summary.errors > 0 ? ('warning' as const) : ('muted' as const),
         },
         {
-          label: '跳过条目',
+          label: label('skipped'),
           value: lastSyncRun.summary.skipped,
           tone: 'muted' as const,
         },
@@ -164,15 +260,15 @@ export function PhotoSyncResultPanel({
 
     if (baselineSummary) {
       return [
-        { label: '数据库记录', value: baselineSummary.total },
-        { label: '同步完成', value: baselineSummary.synced },
+        { label: label('databaseRecords'), value: baselineSummary.total },
+        { label: label('completed'), value: baselineSummary.synced },
         {
-          label: '冲突条目',
+          label: label('conflicts'),
           value: baselineSummary.conflicts,
           tone: baselineSummary.conflicts > 0 ? ('warning' as const) : ('muted' as const),
         },
         {
-          label: '待处理',
+          label: label('pending'),
           value: baselineSummary.pending,
           tone: baselineSummary.pending > 0 ? ('accent' as const) : ('muted' as const),
         },
@@ -180,7 +276,7 @@ export function PhotoSyncResultPanel({
     }
 
     return []
-  }, [result, lastSyncRun, baselineSummary])
+  }, [baselineSummary, lastSyncRun, result, t])
 
   const lastSyncRunMeta = useMemo(() => {
     if (!lastSyncRun) {
@@ -215,7 +311,7 @@ export function PhotoSyncResultPanel({
     return [
       {
         type: 'all' as const,
-        label: '全部',
+        label: t(photoSyncResultKeys.filters.all),
         count: result ? result.actions.length : 0,
       },
       ...Object.entries(actionTypeConfig).map(([type]) => {
@@ -227,7 +323,7 @@ export function PhotoSyncResultPanel({
         }
       }),
     ]
-  }, [result])
+  }, [result, t])
 
   const filteredActions = useMemo(() => {
     if (!result) {
@@ -268,8 +364,9 @@ export function PhotoSyncResultPanel({
       const url = await onRequestStorageUrl(action.storageKey)
       window.open(url, '_blank', 'noopener,noreferrer')
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error)
-      window.alert(`无法打开原图：${message}`)
+      const fallback = t(photoSyncResultKeys.alerts.openOriginalFailed)
+      const description = error instanceof Error ? error.message : String(error)
+      toast.error(fallback, { description })
     }
   }
 
@@ -285,7 +382,11 @@ export function PhotoSyncResultPanel({
       applied,
     } = action
     const resolutionLabel =
-      resolution === 'prefer-storage' ? '以存储为准' : resolution === 'prefer-database' ? '以数据库为准' : null
+      resolution === 'prefer-storage'
+        ? t('photos.sync.conflicts.strategy.storage')
+        : resolution === 'prefer-database'
+          ? t('photos.sync.conflicts.strategy.database')
+          : null
     const conflictTypeLabel = action.type === 'conflict' ? getConflictTypeLabel(conflictPayload?.type) : null
 
     return (
@@ -297,10 +398,14 @@ export function PhotoSyncResultPanel({
               {label}
             </span>
             <code className="text-text-secondary text-xs">{storageKey}</code>
-            {photoId ? <span className="text-text-tertiary text-xs">Photo ID：{photoId}</span> : null}
+            {photoId ? (
+              <span className="text-text-tertiary text-xs">
+                {t(photoSyncResultKeys.info.photoId)} {photoId}
+              </span>
+            ) : null}
           </div>
           <span className="text-text-tertiary inline-flex items-center gap-1 text-xs">
-            <span>{applied ? '已应用' : '未应用'}</span>
+            <span>{applied ? t(photoSyncResultKeys.actions.applied) : t(photoSyncResultKeys.actions.pending)}</span>
             {resolutionLabel ? <span>· {resolutionLabel}</span> : null}
           </span>
         </div>
@@ -309,10 +414,14 @@ export function PhotoSyncResultPanel({
 
         {conflictTypeLabel || conflictPayload?.incomingStorageKey ? (
           <div className="text-text-tertiary text-xs">
-            {conflictTypeLabel ? <span>冲突类型：{conflictTypeLabel}</span> : null}
+            {conflictTypeLabel ? (
+              <span>
+                {t(photoSyncResultKeys.info.conflictType)} {conflictTypeLabel}
+              </span>
+            ) : null}
             {conflictPayload?.incomingStorageKey ? (
               <span className="ml-2">
-                存储 Key：
+                {t(photoSyncResultKeys.info.storageKey)}
                 <code className="text-text ml-1 font-mono text-[11px]">{conflictPayload.incomingStorageKey}</code>
               </span>
             ) : null}
@@ -321,9 +430,9 @@ export function PhotoSyncResultPanel({
 
         {(beforeManifest || afterManifest) && (
           <div className="grid gap-3 md:grid-cols-2">
-            <ManifestPreview title="数据库记录" manifest={beforeManifest} />
+            <ManifestPreview variant="database" manifest={beforeManifest} />
             <ManifestPreview
-              title="存储对象"
+              variant="storage"
               manifest={afterManifest}
               onOpenOriginal={() => handleOpenOriginal(action)}
             />
@@ -334,13 +443,13 @@ export function PhotoSyncResultPanel({
           <div className="text-text-tertiary grid gap-4 text-xs md:grid-cols-2">
             {action.snapshots.before ? (
               <div className="mt-4">
-                <p className="text-text font-semibold">元数据（数据库）</p>
+                <p className="text-text font-semibold">{t('photos.sync.metadata.database')}</p>
                 <MetadataSnapshot snapshot={action.snapshots.before} />
               </div>
             ) : null}
             {action.snapshots.after ? (
               <div className="mt-4">
-                <p className="text-text font-semibold">元数据（存储）</p>
+                <p className="text-text font-semibold">{t('photos.sync.metadata.storage')}</p>
                 <MetadataSnapshot snapshot={action.snapshots.after} />
               </div>
             ) : null}
@@ -357,16 +466,20 @@ export function PhotoSyncResultPanel({
           <BorderOverlay />
           <div className="space-y-4">
             <div className="space-y-1">
-              <h2 className="text-text text-base font-semibold">最近一次同步完成</h2>
+              <h2 className="text-text text-base font-semibold">{t(photoSyncResultKeys.history.heading)}</h2>
               <p className="text-text-tertiary text-sm">
-                <span>完成于 {lastSyncRunMeta.completedLabel}</span>
+                <span>{t(photoSyncResultKeys.history.completedAt, { time: lastSyncRunMeta.completedLabel })}</span>
                 <span className="mx-1">·</span>
-                <span>耗时 {lastSyncRunMeta.durationLabel}</span>
+                <span>{t(photoSyncResultKeys.history.duration, { duration: lastSyncRunMeta.durationLabel })}</span>
                 <span className="mx-1">·</span>
-                <span>{lastSyncRun.dryRun ? '预览模式 · 未写入数据库' : '实时模式 · 已写入数据库'}</span>
+                <span>
+                  {lastSyncRun.dryRun
+                    ? t(photoSyncResultKeys.history.modePreview)
+                    : t(photoSyncResultKeys.history.modeLive)}
+                </span>
               </p>
               <p className="text-text-tertiary text-xs">
-                <span>共 {lastSyncRun.actionsCount} 个操作</span>
+                <span>{t(photoSyncResultKeys.history.operations, { count: lastSyncRun.actionsCount })}</span>
               </p>
             </div>
             {summaryItems.length > 0 ? (
@@ -389,12 +502,12 @@ export function PhotoSyncResultPanel({
         <div className="space-y-4">
           <div className="space-y-2">
             <h2 className="text-text text-base font-semibold">
-              {isAwaitingStatus ? '正在加载同步状态' : '尚未执行同步'}
+              {isAwaitingStatus ? t(photoSyncResultKeys.status.loadingTitle) : t(photoSyncResultKeys.status.emptyTitle)}
             </h2>
             <p className="text-text-tertiary text-sm">
               {isAwaitingStatus
-                ? '正在查询最近一次同步记录，请稍候…'
-                : '请在系统设置中配置并激活存储提供商，然后使用右上角的按钮执行同步操作。预览模式不会写入数据，可用于安全检查。'}
+                ? t(photoSyncResultKeys.status.loadingDescription)
+                : t(photoSyncResultKeys.status.emptyDescription)}
             </p>
           </div>
           {showSkeleton ? (
@@ -419,20 +532,20 @@ export function PhotoSyncResultPanel({
     <div className="space-y-6">
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-text text-lg font-semibold">同步摘要</h2>
+          <h2 className="text-text text-lg font-semibold">{t(photoSyncResultKeys.summary.heading)}</h2>
           <p className="text-text-tertiary text-sm">
             {lastWasDryRun === null
-              ? '以下为最新同步结果。'
+              ? t(photoSyncResultKeys.summary.descriptionLatest)
               : lastWasDryRun
-                ? '最近执行了预览模式，数据库未发生变更。'
-                : '最近一次同步结果已写入数据库。'}
+                ? t(photoSyncResultKeys.summary.descriptionPreview)
+                : t(photoSyncResultKeys.summary.descriptionLive)}
           </p>
         </div>
         <p className="text-text-tertiary text-xs">
-          <span>操作数：{filteredActions.length}</span>
+          <span>{t(photoSyncResultKeys.operations.count, { count: filteredActions.length })}</span>
           {result && selectedActionType !== 'all' ? (
             <span className="ml-1 inline-flex items-center gap-1">
-              <span>· 筛选：</span>
+              <span>{t(photoSyncResultKeys.operations.filterLabel)}</span>
               <span>{activeFilter?.label ?? ''}</span>
             </span>
           ) : null}
@@ -456,9 +569,9 @@ export function PhotoSyncResultPanel({
         <BorderOverlay />
         <div className="p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h3 className="text-text text-base font-semibold">同步操作明细</h3>
+            <h3 className="text-text text-base font-semibold">{t(photoSyncResultKeys.table.title)}</h3>
             <span className="text-text-tertiary text-xs">
-              {lastWasDryRun ? '预览模式 · 未应用变更' : '实时模式 · 结果已写入'}
+              {lastWasDryRun ? t(photoSyncResultKeys.table.modePreview) : t(photoSyncResultKeys.table.modeLive)}
             </span>
           </div>
 
@@ -483,7 +596,7 @@ export function PhotoSyncResultPanel({
 
           {filteredActions.length === 0 ? (
             <p className="text-text-tertiary text-sm mt-4">
-              {result ? '当前筛选下没有需要查看的操作。' : '同步完成，未检测到需要处理的对象。'}
+              {result ? t(photoSyncResultKeys.table.emptyFiltered) : t(photoSyncResultKeys.table.emptyNone)}
             </p>
           ) : (
             <div className="space-y-3">
@@ -492,9 +605,9 @@ export function PhotoSyncResultPanel({
                 const { label, badgeClass } = getActionTypeMeta(action.type)
                 const resolutionLabel =
                   action.resolution === 'prefer-storage'
-                    ? '以存储为准'
+                    ? t('photos.sync.conflicts.strategy.storage')
                     : action.resolution === 'prefer-database'
-                      ? '以数据库为准'
+                      ? t('photos.sync.conflicts.strategy.database')
                       : null
                 const { conflictPayload } = action
                 const conflictTypeLabel =
@@ -524,11 +637,17 @@ export function PhotoSyncResultPanel({
                             </span>
                             <code className="text-text-secondary text-xs">{action.storageKey}</code>
                             {action.photoId ? (
-                              <span className="text-text-tertiary text-xs">Photo ID：{action.photoId}</span>
+                              <span className="text-text-tertiary text-xs">
+                                {t(photoSyncResultKeys.info.photoId)} {action.photoId}
+                              </span>
                             ) : null}
                           </div>
                           <div className="text-text-tertiary flex flex-wrap items-center gap-2 text-xs">
-                            <span>{action.applied ? '已应用' : '未应用'}</span>
+                            <span>
+                              {action.applied
+                                ? t(photoSyncResultKeys.actions.applied)
+                                : t(photoSyncResultKeys.actions.pending)}
+                            </span>
                             {resolutionLabel ? <span>· {resolutionLabel}</span> : null}
                             <Button
                               type="button"
@@ -536,7 +655,9 @@ export function PhotoSyncResultPanel({
                               variant="ghost"
                               onClick={() => handleToggleAction(actionKey)}
                             >
-                              {isExpanded ? '收起详情' : '查看详情'}
+                              {isExpanded
+                                ? t(photoSyncResultKeys.actions.collapse)
+                                : t(photoSyncResultKeys.actions.expand)}
                             </Button>
                           </div>
                         </div>
@@ -545,10 +666,14 @@ export function PhotoSyncResultPanel({
 
                         {conflictTypeLabel || incomingKey ? (
                           <div className="text-text-tertiary text-xs">
-                            {conflictTypeLabel ? <span>冲突类型：{conflictTypeLabel}</span> : null}
+                            {conflictTypeLabel ? (
+                              <span>
+                                {t(photoSyncResultKeys.info.conflictType)} {conflictTypeLabel}
+                              </span>
+                            ) : null}
                             {incomingKey ? (
                               <span className="ml-2">
-                                存储 Key：
+                                {t(photoSyncResultKeys.info.storageKey)}
                                 <code className="text-text ml-1 font-mono text-[11px]">{incomingKey}</code>
                               </span>
                             ) : null}
@@ -572,27 +697,42 @@ export function PhotoSyncResultPanel({
 }
 
 function ManifestPreview({
-  title,
+  variant,
   manifest,
   onOpenOriginal,
 }: {
-  title: string
+  variant: 'database' | 'storage'
   manifest: PhotoSyncAction['manifestAfter'] | PhotoSyncAction['manifestBefore']
   onOpenOriginal?: () => void
 }) {
+  const { t, i18n } = useTranslation()
+  const locale = i18n.language ?? i18n.resolvedLanguage ?? 'en'
+  const titleKey =
+    variant === 'database'
+      ? 'photos.sync.conflicts.preview.database.title'
+      : 'photos.sync.conflicts.preview.storage.title'
+  const emptyLabel =
+    variant === 'database' ? 'photos.sync.conflicts.preview.database.empty' : photoSyncResultKeys.manifest.empty
   if (!manifest) {
     return (
       <div className="border-border/20 bg-background-secondary/60 text-text-tertiary rounded-md border p-3 text-xs">
-        <p className="text-text text-sm font-semibold">{title}</p>
-        <p className="mt-1">暂无数据</p>
+        <p className="text-text text-sm font-semibold">{t(titleKey)}</p>
+        <p className="mt-1">{t(emptyLabel)}</p>
       </div>
     )
   }
 
-  const dimensions = manifest.width && manifest.height ? `${manifest.width} × ${manifest.height}` : '未知'
+  const dimensions =
+    manifest.width && manifest.height ? `${manifest.width} × ${manifest.height}` : t('photos.sync.metadata.unknown')
   const sizeMB =
-    typeof manifest.size === 'number' && manifest.size > 0 ? `${(manifest.size / (1024 * 1024)).toFixed(2)} MB` : '未知'
-  const updatedAt = manifest.lastModified ? new Date(manifest.lastModified).toLocaleString() : '未知'
+    typeof manifest.size === 'number' && manifest.size > 0
+      ? `${(manifest.size / (1024 * 1024)).toLocaleString(locale, { maximumFractionDigits: 2 })} MB`
+      : t('photos.sync.metadata.unknown')
+  const updatedAt = manifest.lastModified
+    ? new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(
+        new Date(manifest.lastModified),
+      )
+    : t('photos.sync.metadata.unknown')
 
   return (
     <div className="border-border/20 bg-background-secondary/60 rounded-md border p-3">
@@ -601,28 +741,28 @@ function ManifestPreview({
           <img src={manifest.thumbnailUrl} alt={manifest.id} className="h-16 w-20 rounded-md object-cover" />
         ) : null}
         <div className="text-text-tertiary space-y-1 text-xs">
-          <p className="text-text text-sm font-semibold">{title}</p>
+          <p className="text-text text-sm font-semibold">{t(titleKey)}</p>
           <div className="flex items-center gap-2">
-            <span className="text-text">ID：</span>
+            <span className="text-text">{t('photos.sync.conflicts.preview.common.id')}</span>
             <span className="truncate">{manifest.id}</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-text">尺寸：</span>
+            <span className="text-text">{t('photos.sync.conflicts.preview.common.dimensions')}</span>
             <span>{dimensions}</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-text">大小：</span>
+            <span className="text-text">{t('photos.sync.conflicts.preview.common.size')}</span>
             <span>{sizeMB}</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-text">更新时间：</span>
+            <span className="text-text">{t('photos.sync.conflicts.preview.common.updated-at')}</span>
             <span>{updatedAt}</span>
           </div>
         </div>
       </div>
       {onOpenOriginal ? (
         <Button type="button" variant="ghost" size="xs" className="mt-3" onClick={onOpenOriginal}>
-          查看原图
+          {t('photos.sync.conflicts.actions.view-original')}
         </Button>
       ) : null}
     </div>
@@ -634,26 +774,33 @@ type MetadataSnapshotProps = {
 }
 
 export function MetadataSnapshot({ snapshot }: MetadataSnapshotProps) {
+  const { t, i18n } = useTranslation()
+  const locale = i18n.language ?? i18n.resolvedLanguage ?? 'en'
   if (!snapshot) return null
+  const sizeLabel =
+    snapshot.size !== null
+      ? `${(snapshot.size / 1024 / 1024).toLocaleString(locale, { maximumFractionDigits: 2 })} MB`
+      : t('photos.sync.metadata.unknown')
+  const etagLabel = snapshot.etag ?? t('photos.sync.metadata.unknown')
+  const updatedAtLabel = snapshot.lastModified ?? t('photos.sync.metadata.unknown')
+  const hashLabel = snapshot.metadataHash ?? t('photos.sync.metadata.none')
   return (
     <dl className="mt-2 space-y-1">
       <div className="flex items-center justify-between gap-4">
-        <dt>大小</dt>
-        <dd className="text-text text-right">
-          {snapshot.size !== null ? `${(snapshot.size / 1024 / 1024).toFixed(2)} MB` : '未知'}
-        </dd>
+        <dt>{t('photos.sync.metadata.size')}</dt>
+        <dd className="text-text text-right">{sizeLabel}</dd>
       </div>
       <div className="flex items-center justify-between gap-4">
-        <dt>ETag</dt>
-        <dd className="text-text text-right font-mono text-[10px]">{snapshot.etag ?? '未知'}</dd>
+        <dt>{t('photos.sync.metadata.etag')}</dt>
+        <dd className="text-text text-right font-mono text-[10px]">{etagLabel}</dd>
       </div>
       <div className="flex items-center justify-between gap-4">
-        <dt>更新时间</dt>
-        <dd className="text-text text-right">{snapshot.lastModified ?? '未知'}</dd>
+        <dt>{t('photos.sync.metadata.updated-at')}</dt>
+        <dd className="text-text text-right">{updatedAtLabel}</dd>
       </div>
       <div className="flex items-center justify-between gap-4">
-        <dt>元数据摘要</dt>
-        <dd className="text-text text-right font-mono text-[10px]">{snapshot.metadataHash ?? '无'}</dd>
+        <dt>{t('photos.sync.metadata.hash')}</dt>
+        <dd className="text-text text-right font-mono text-[10px]">{hashLabel}</dd>
       </div>
     </dl>
   )

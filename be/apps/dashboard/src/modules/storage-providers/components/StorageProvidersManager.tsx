@@ -3,6 +3,7 @@ import { Spring } from '@afilmory/utils'
 import { DynamicIcon } from 'lucide-react/dynamic'
 import { m } from 'motion/react'
 import { startTransition, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 
 import { useSetPhotoSyncAutoRun } from '~/atoms/photo-sync'
@@ -10,6 +11,7 @@ import { LinearBorderPanel } from '~/components/common/GlassPanel'
 import { MainPageLayout, useMainPageLayout } from '~/components/layouts/MainPageLayout'
 import { useBlock } from '~/hooks/useBlock'
 
+import { storageProvidersI18nKeys } from '../constants'
 import { useStorageProvidersQuery, useUpdateStorageProvidersMutation } from '../hooks'
 import type { StorageProvider } from '../types'
 import { createEmptyProvider, reorderProvidersByActive } from '../utils'
@@ -22,6 +24,7 @@ export function StorageProvidersManager() {
   const { setHeaderActionState } = useMainPageLayout()
   const navigate = useNavigate()
   const setPhotoSyncAutoRun = useSetPhotoSyncAutoRun()
+  const { t } = useTranslation()
 
   const [providers, setProviders] = useState<StorageProvider[]>([])
   const [activeProviderId, setActiveProviderId] = useState<string | null>(null)
@@ -31,10 +34,10 @@ export function StorageProvidersManager() {
 
   useBlock({
     when: isDirty,
-    title: '离开前请保存设置',
-    description: '当前存储提供商设置尚未保存，离开页面会丢失这些更改，确定要继续吗？',
-    confirmText: '继续离开',
-    cancelText: '留在此页',
+    title: t(storageProvidersI18nKeys.blocker.title),
+    description: t(storageProvidersI18nKeys.blocker.description),
+    confirmText: t(storageProvidersI18nKeys.blocker.confirm),
+    cancelText: t(storageProvidersI18nKeys.blocker.cancel),
   })
 
   useEffect(() => {
@@ -125,10 +128,10 @@ export function StorageProvidersManager() {
             initialProviderStateRef.current = true
             hasShownSyncPromptRef.current = true
             Prompt.prompt({
-              title: '配置完成，立即同步照片？',
-              description: '存储提供商配置已经保存，是否前往「数据同步」页面立即开始扫描存储中的照片并写入数据库？',
-              onConfirmText: '开始同步',
-              onCancelText: '稍后再说',
+              title: t(storageProvidersI18nKeys.prompt.title),
+              description: t(storageProvidersI18nKeys.prompt.description),
+              onConfirmText: t(storageProvidersI18nKeys.prompt.confirm),
+              onCancelText: t(storageProvidersI18nKeys.prompt.cancel),
               onConfirm: () => {
                 setPhotoSyncAutoRun('apply')
                 navigate('/photos/sync')
@@ -158,18 +161,18 @@ export function StorageProvidersManager() {
   const headerActionPortal = (
     <MainPageLayout.Actions>
       <Button type="button" onClick={handleAddProvider} size="sm" variant="secondary">
-        新增提供商
+        {t(storageProvidersI18nKeys.actions.add)}
       </Button>
       <Button
         type="button"
         onClick={handleSave}
         disabled={disableSave}
         isLoading={updateMutation.isPending}
-        loadingText="保存中…"
+        loadingText={t(storageProvidersI18nKeys.actions.saving)}
         variant="primary"
         size="sm"
       >
-        保存修改
+        {t(storageProvidersI18nKeys.actions.save)}
       </Button>
     </MainPageLayout.Actions>
   )
@@ -198,8 +201,8 @@ export function StorageProvidersManager() {
         {headerActionPortal}
         <div className="bg-background-tertiary text-red flex items-center justify-center gap-3 rounded p-8 text-sm">
           <span>
-            无法加载存储配置：
-            <span>{error instanceof Error ? error.message : '未知错误'}</span>
+            {t(storageProvidersI18nKeys.errors.load)}：
+            <span>{error instanceof Error ? error.message : t('common.unknown-error')}</span>
           </span>
         </div>
       </>
@@ -246,13 +249,11 @@ export function StorageProvidersManager() {
           >
             <div className="bg-background-tertiary border-fill-tertiary flex flex-col items-center justify-center gap-3 rounded-lg border p-8 text-center">
               <div className="space-y-1">
-                <p className="text-text-secondary text-sm">还没有配置任何存储提供商</p>
-                <p className="text-text-tertiary text-xs">
-                  添加一个存储提供商后，系统才能从远程存储同步和管理照片资源。
-                </p>
+                <p className="text-text-secondary text-sm">{t(storageProvidersI18nKeys.empty.title)}</p>
+                <p className="text-text-tertiary text-xs">{t(storageProvidersI18nKeys.empty.description)}</p>
               </div>
               <Button type="button" size="sm" variant="primary" onClick={handleAddProvider}>
-                新增提供商
+                {t(storageProvidersI18nKeys.empty.action)}
               </Button>
             </div>
           </m.div>
@@ -268,15 +269,7 @@ export function StorageProvidersManager() {
           className="mt-4 text-center"
         >
           <p className="text-text-tertiary text-xs">
-            <span>
-              {updateMutation.isError && updateMutation.error
-                ? `保存失败：${updateMutation.error instanceof Error ? updateMutation.error.message : '未知错误'}`
-                : updateMutation.isSuccess && !isDirty
-                  ? '✓ 配置已保存并同步'
-                  : isDirty
-                    ? `有未保存的更改 • ${providers.length} 个提供商`
-                    : `${providers.length} 个存储提供商 • ${orderedProviders.find((p) => p.id === activeProviderId)?.name || 'N/A'} 当前激活`}
-            </span>
+            <span>{getStatusMessage()}</span>
           </p>
         </m.div>
       )}
@@ -297,15 +290,15 @@ export function StorageProvidersManager() {
             </div>
             <div className="flex-1 space-y-1.5 sm:space-y-2">
               <div className="flex items-center gap-1.5 sm:gap-2">
-                <span className="text-text text-sm font-semibold sm:text-base">存储安全性</span>
+                <span className="text-text text-sm font-semibold sm:text-base">
+                  {t(storageProvidersI18nKeys.security.title)}
+                </span>
               </div>
               <p className="text-text-secondary text-xs sm:text-sm leading-relaxed">
-                所有存储提供商的敏感配置信息（如访问密钥、令牌等）均使用{' '}
-                <span className="font-mono font-semibold text-accent">AES-256-GCM</span>{' '}
-                加密算法进行加密存储，确保数据安全。
+                {t(storageProvidersI18nKeys.security.description, { algorithm: 'AES-256-GCM' })}
               </p>
               <p className="text-text-tertiary text-[11px] sm:text-xs">
-                AES-256-GCM 是一种经过验证的加密标准，提供认证加密功能，可同时保护数据的机密性和完整性。
+                {t(storageProvidersI18nKeys.security.helper, { algorithm: 'AES-256-GCM' })}
               </p>
             </div>
           </div>
@@ -313,4 +306,23 @@ export function StorageProvidersManager() {
       </m.div>
     </>
   )
+
+  function getStatusMessage() {
+    if (updateMutation.isError && updateMutation.error) {
+      const reason = updateMutation.error instanceof Error ? updateMutation.error.message : t('common.unknown-error')
+      return t(storageProvidersI18nKeys.status.error, { reason })
+    }
+    if (updateMutation.isSuccess && !isDirty) {
+      return t(storageProvidersI18nKeys.status.saved)
+    }
+    if (isDirty) {
+      return t(storageProvidersI18nKeys.status.dirty, { total: providers.length })
+    }
+    const activeName =
+      orderedProviders.find((p) => p.id === activeProviderId)?.name || t(storageProvidersI18nKeys.card.untitled)
+    return t(storageProvidersI18nKeys.status.summary, {
+      total: providers.length,
+      active: activeName,
+    })
+  }
 }

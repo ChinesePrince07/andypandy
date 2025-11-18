@@ -5,6 +5,7 @@ import { injectable } from 'tsyringe'
 
 import type { StaticAssetDocument } from './static-asset.service'
 import { StaticAssetService } from './static-asset.service'
+import { StaticAssetHostService } from './static-asset-host.service'
 
 const MODULE_DIR = fileURLToPath(new URL('.', import.meta.url))
 
@@ -36,11 +37,12 @@ const STATIC_DASHBOARD_ROOT_CANDIDATES = Array.from(
 
 @injectable()
 export class StaticDashboardService extends StaticAssetService {
-  constructor() {
+  constructor(private readonly staticAssetHostService: StaticAssetHostService) {
     super({
       routeSegment: STATIC_DASHBOARD_ROUTE_SEGMENT,
       rootCandidates: STATIC_DASHBOARD_ROOT_CANDIDATES,
       loggerName: 'StaticDashboardService',
+      staticAssetHostResolver: (requestHost) => staticAssetHostService.getStaticAssetHost(requestHost),
     })
   }
 

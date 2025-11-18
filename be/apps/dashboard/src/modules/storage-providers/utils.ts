@@ -1,4 +1,6 @@
-import { STORAGE_PROVIDER_FIELD_DEFINITIONS, STORAGE_PROVIDER_TYPES } from './constants'
+import { getI18n } from '~/i18n'
+
+import { STORAGE_PROVIDER_FIELD_DEFINITIONS, STORAGE_PROVIDER_TYPES, storageProvidersI18nKeys } from './constants'
 import type { StorageProvider, StorageProviderType } from './types'
 
 function generateId() {
@@ -25,6 +27,8 @@ function coerceProvider(input: unknown): StorageProvider | null {
     return null
   }
 
+  const i18n = getI18n()
+
   const record = input as Record<string, unknown>
   const type = isStorageProviderType(record.type) ? record.type : 's3'
   const configInput =
@@ -34,7 +38,10 @@ function coerceProvider(input: unknown): StorageProvider | null {
 
   const provider: StorageProvider = {
     id: typeof record.id === 'string' && record.id.trim().length > 0 ? record.id.trim() : generateId(),
-    name: typeof record.name === 'string' && record.name.trim().length > 0 ? record.name.trim() : '未命名存储',
+    name:
+      typeof record.name === 'string' && record.name.trim().length > 0
+        ? record.name.trim()
+        : i18n.t(storageProvidersI18nKeys.card.untitled),
     type,
     config: normaliseConfigForType(type, configInput),
   }
@@ -92,9 +99,10 @@ export function getDefaultConfigForType(type: StorageProviderType): Record<strin
 
 export function createEmptyProvider(type: StorageProviderType): StorageProvider {
   const timestamp = new Date().toISOString()
+  const i18n = getI18n()
   return {
     id: '',
-    name: '未命名存储',
+    name: i18n.t(storageProvidersI18nKeys.card.untitled),
     type,
     config: getDefaultConfigForType(type),
     createdAt: timestamp,
@@ -118,9 +126,15 @@ export function reorderProvidersByActive(
     return [...providers]
   }
 
+  const i18n = getI18n()
+  const locale = i18n.language ?? i18n.resolvedLanguage ?? 'en'
+  const collator = new Intl.Collator(locale)
+
   return [...providers].sort((a, b) => {
     if (a.id === activeId) return -1
     if (b.id === activeId) return 1
-    return a.name.localeCompare(b.name, 'zh-cn')
+    const nameA = a.name || i18n.t(storageProvidersI18nKeys.card.untitled)
+    const nameB = b.name || i18n.t(storageProvidersI18nKeys.card.untitled)
+    return collator.compare(nameA, nameB)
   })
 }

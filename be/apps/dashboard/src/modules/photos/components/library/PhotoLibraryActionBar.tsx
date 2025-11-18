@@ -3,14 +3,27 @@ import { clsxm } from '@afilmory/utils'
 import { DynamicIcon } from 'lucide-react/dynamic'
 import type { ChangeEventHandler } from 'react'
 import { useMemo, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useShallow } from 'zustand/shallow'
 
 import { usePhotoLibraryStore } from './PhotoLibraryProvider'
 import { PhotoTagEditorModal } from './PhotoTagEditorModal'
 import { PhotoUploadConfirmModal } from './PhotoUploadConfirmModal'
 
+const photoLibraryActionKeys = {
+  upload: 'photos.library.actions.upload',
+  uploadShort: 'photos.library.actions.upload-short',
+  selectedCount: 'photos.library.actions.selected-count',
+  editTags: 'photos.library.actions.edit-tags',
+  delete: 'photos.library.actions.delete',
+  clear: 'photos.library.actions.clear-selection',
+  selectAll: 'photos.library.actions.select-all',
+  allSelected: 'photos.library.actions.all-selected',
+} as const satisfies Record<string, I18nKeys>
+
 const emptyArray = []
 export function PhotoLibraryActionBar() {
+  const { t } = useTranslation()
   const {
     selectionCount,
     totalCount,
@@ -42,6 +55,11 @@ export function PhotoLibraryActionBar() {
   const hasSelection = selectionCount > 0
   const hasAssets = totalCount > 0
   const canSelectAll = hasAssets && selectionCount < totalCount
+  const selectAllLabel = hasAssets
+    ? canSelectAll
+      ? t(photoLibraryActionKeys.selectAll)
+      : t(photoLibraryActionKeys.allSelected)
+    : t(photoLibraryActionKeys.selectAll)
   const selectedAssets = useMemo(() => {
     if (!assets || assets.length === 0 || selectedIds.length === 0) {
       return emptyArray
@@ -107,8 +125,8 @@ export function PhotoLibraryActionBar() {
           className="flex items-center gap-1 text-xs sm:text-sm"
         >
           <DynamicIcon name="upload" className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">上传文件</span>
-          <span className="sm:hidden">上传</span>
+          <span className="hidden sm:inline">{t(photoLibraryActionKeys.upload)}</span>
+          <span className="sm:hidden">{t(photoLibraryActionKeys.uploadShort)}</span>
         </Button>
       </div>
 
@@ -125,7 +143,7 @@ export function PhotoLibraryActionBar() {
               'bg-accent/10 text-accent',
             )}
           >
-            已选 {selectionCount} 项
+            {t(photoLibraryActionKeys.selectedCount, { count: selectionCount })}
           </span>
           <Button
             type="button"
@@ -136,7 +154,7 @@ export function PhotoLibraryActionBar() {
             className="flex items-center gap-1 text-text-secondary hover:text-text"
           >
             <DynamicIcon name="tags" className="h-3.5 w-3.5" />
-            修改标签
+            {t(photoLibraryActionKeys.editTags)}
           </Button>
           <Button
             type="button"
@@ -147,11 +165,11 @@ export function PhotoLibraryActionBar() {
             className="flex items-center gap-1 text-rose-400 hover:text-rose-300"
           >
             <DynamicIcon name="trash-2" className="h-3.5 w-3.5" />
-            删除
+            {t(photoLibraryActionKeys.delete)}
           </Button>
           <Button type="button" className="gap-1" variant="ghost" size="sm" onClick={clearSelection}>
             <DynamicIcon name="x" className="h-3.5 w-3.5" />
-            清除选择
+            {t(photoLibraryActionKeys.clear)}
           </Button>
         </div>
         <Button
@@ -163,7 +181,7 @@ export function PhotoLibraryActionBar() {
           className="flex items-center gap-1 text-text-secondary hover:text-text"
         >
           <DynamicIcon name={canSelectAll ? 'square' : 'check-square'} className="size-4" />
-          {hasAssets ? (canSelectAll ? '全选' : '已全选') : '全选'}
+          {selectAllLabel}
         </Button>
       </div>
     </div>

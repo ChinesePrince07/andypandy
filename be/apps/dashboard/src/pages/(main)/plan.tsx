@@ -7,7 +7,6 @@ import { toast } from 'sonner'
 
 import { LinearBorderPanel } from '~/components/common/GlassPanel'
 import { MainPageLayout } from '~/components/layouts/MainPageLayout'
-import { getI18n } from '~/i18n'
 import type { SessionResponse } from '~/modules/auth/api/session'
 import { AUTH_SESSION_QUERY_KEY } from '~/modules/auth/api/session'
 import { authClient } from '~/modules/auth/auth-client'
@@ -168,14 +167,23 @@ function PlanCard({
   tenantSlug: string | null
   creemCustomerId: string | null
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [checkoutLoading, setCheckoutLoading] = useState(false)
   const [portalLoading, setPortalLoading] = useState(false)
   const productId = plan.payment?.creemProductId ?? null
+  const locale = i18n.language ?? i18n.resolvedLanguage ?? 'en'
+  const quotaNumberFormatter = useMemo(() => new Intl.NumberFormat(locale), [locale])
 
   const canCheckout = Boolean(!isCurrent && tenantId && productId)
 
   const showPortalButton = isCurrent && plan.planId !== 'free' && Boolean(productId && creemCustomerId)
+  const formatQuotaValue = (value: number | null, unitKey: I18nKeys | null) => {
+    if (value === null || value === undefined) {
+      return t(planI18nKeys.quotaUnlimited)
+    }
+    const numeral = quotaNumberFormatter.format(value)
+    return unitKey ? t(unitKey, { value: numeral }) : numeral
+  }
 
   const handleCheckout = async () => {
     if (!canCheckout || !tenantId || !productId) {
@@ -249,7 +257,7 @@ function PlanCard({
                 isCurrent && 'translate-y-6',
               )}
             >
-              {formatPrice(plan.pricing.monthlyPrice, plan.pricing.currency)}
+              {formatPrice(plan.pricing.monthlyPrice, plan.pricing.currency, locale)}
             </p>
           )}
         </div>
@@ -260,7 +268,7 @@ function PlanCard({
         {Object.entries(plan.quotas).map(([key, value]) => (
           <li key={key} className="flex items-center justify-between text-sm">
             <span className="text-text-tertiary">{t(QUOTA_LABEL_KEYS[key] ?? key)}</span>
-            <span className="text-text font-medium">{renderQuotaValue(value, QUOTA_UNIT_KEYS[key] ?? null)}</span>
+            <span className="text-text font-medium">{formatQuotaValue(value, QUOTA_UNIT_KEYS[key] ?? null)}</span>
           </li>
         ))}
       </ul>
@@ -321,22 +329,9 @@ function CurrentBadge({ planId }: { planId: string }) {
   return <span className="bg-accent/10 text-accent rounded-full px-2 py-0.5 text-xs font-semibold">{t(labelKey)}</span>
 }
 
-function renderQuotaValue(value: number | null, unitKey: I18nKeys | null): string {
-  const i18n = getI18n()
-  if (value === null || value === undefined) {
-    return i18n.t(planI18nKeys.quotaUnlimited)
-  }
-  const locale = i18n.language ?? 'en'
-  const numeral = value.toLocaleString(locale)
-  if (!unitKey) {
-    return numeral
-  }
-  return i18n.t(unitKey, { value: numeral })
-}
-
-function formatPrice(value: number, currency: string | null | undefined): string {
+function formatPrice(value: number, currency: string | null | undefined, locale: string): string {
   const normalizedCurrency = currency?.toUpperCase() ?? ''
-  const formatted = value.toLocaleString('zh-CN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+  const formatted = value.toLocaleString(locale, { minimumFractionDigits: 0, maximumFractionDigits: 2 })
   return normalizedCurrency ? `${normalizedCurrency} ${formatted}` : formatted
 }
 

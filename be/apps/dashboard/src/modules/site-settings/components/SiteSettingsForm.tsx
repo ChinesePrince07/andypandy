@@ -2,6 +2,7 @@ import { Button } from '@afilmory/ui'
 import { Spring } from '@afilmory/utils'
 import { m } from 'motion/react'
 import { startTransition, useCallback, useEffect, useId, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { LinearBorderPanel } from '~/components/common/GlassPanel'
 import { MainPageLayout, useMainPageLayout } from '~/components/layouts/MainPageLayout'
@@ -11,6 +12,27 @@ import type { SchemaFormValue, UiFieldNode } from '../../schema-form/types'
 import { collectFieldNodes } from '../../schema-form/utils'
 import { useSiteSettingUiSchemaQuery, useUpdateSiteSettingsMutation } from '../hooks'
 import type { SiteSettingEntryInput, SiteSettingUiSchemaResponse, SiteSettingValueState } from '../types'
+
+const siteSettingsKeys = {
+  button: {
+    saving: 'site.settings.button.saving',
+    save: 'site.settings.button.save',
+  },
+  errors: {
+    unknown: 'site.settings.error.unknown',
+    loadPrefix: 'site.settings.error.load-prefix',
+  },
+  banner: {
+    fail: 'site.settings.banner.fail',
+    success: 'site.settings.banner.success',
+    dirty: 'site.settings.banner.dirty',
+    synced: 'site.settings.banner.synced',
+  },
+} as const satisfies {
+  button: { saving: I18nKeys; save: I18nKeys }
+  errors: { unknown: I18nKeys; loadPrefix: I18nKeys }
+  banner: { fail: I18nKeys; success: I18nKeys; dirty: I18nKeys; synced: I18nKeys }
+}
 
 function coerceInitialValue(field: UiFieldNode<string>, rawValue: string | null): SchemaFormValue {
   const { component } = field
@@ -67,6 +89,7 @@ function serializeValue(field: UiFieldNode<string>, value: SchemaFormValue | und
 }
 
 export function SiteSettingsForm() {
+  const { t } = useTranslation()
   const { data, isLoading, isError, error } = useSiteSettingUiSchemaQuery()
   const updateSettingsMutation = useUpdateSiteSettingsMutation()
   const { setHeaderActionState } = useMainPageLayout()
@@ -151,7 +174,7 @@ export function SiteSettingsForm() {
     updateSettingsMutation.isError && updateSettingsMutation.error
       ? updateSettingsMutation.error instanceof Error
         ? updateSettingsMutation.error.message
-        : '未知错误'
+        : t(siteSettingsKeys.errors.unknown)
       : null
 
   useEffect(() => {
@@ -175,11 +198,11 @@ export function SiteSettingsForm() {
         form={formId}
         disabled={changedEntries.length === 0}
         isLoading={updateSettingsMutation.isPending}
-        loadingText="保存中…"
+        loadingText={t(siteSettingsKeys.button.saving)}
         variant="primary"
         size="sm"
       >
-        保存修改
+        {t(siteSettingsKeys.button.save)}
       </Button>
     </MainPageLayout.Actions>
   )
@@ -209,7 +232,10 @@ export function SiteSettingsForm() {
         <LinearBorderPanel className="p-6">
           <div className="text-red flex items-center gap-3 text-sm">
             <i className="i-mingcute-close-circle-fill text-lg" />
-            <span>{`无法加载站点设置：${error instanceof Error ? error.message : '未知错误'}`}</span>
+            <span>
+              {t(siteSettingsKeys.errors.loadPrefix)}{' '}
+              {error instanceof Error ? error.message : t(siteSettingsKeys.errors.unknown)}
+            </span>
           </div>
         </LinearBorderPanel>
       </>
@@ -238,12 +264,12 @@ export function SiteSettingsForm() {
         <div className="flex justify-end">
           <div className="text-text-tertiary text-xs">
             {mutationErrorMessage
-              ? `保存失败：${mutationErrorMessage}`
+              ? `${t(siteSettingsKeys.banner.fail)} ${mutationErrorMessage}`
               : updateSettingsMutation.isSuccess && changedEntries.length === 0
-                ? '保存成功，站点设置已同步'
+                ? t(siteSettingsKeys.banner.success)
                 : changedEntries.length > 0
-                  ? `有 ${changedEntries.length} 项设置待保存`
-                  : '所有设置已同步'}
+                  ? t(siteSettingsKeys.banner.dirty, { count: changedEntries.length })
+                  : t(siteSettingsKeys.banner.synced)}
           </div>
         </div>
       </m.form>

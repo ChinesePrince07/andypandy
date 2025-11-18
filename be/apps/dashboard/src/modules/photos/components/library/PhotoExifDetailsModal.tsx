@@ -2,6 +2,7 @@ import type { PhotoManifestItem, PickedExif } from '@afilmory/builder'
 import type { ModalComponent } from '@afilmory/ui'
 import { DialogDescription, DialogHeader, DialogTitle, LinearDivider, ScrollArea } from '@afilmory/ui'
 import { clsxm } from '@afilmory/utils'
+import { useTranslation } from 'react-i18next'
 
 type Section = {
   title: string
@@ -10,6 +11,106 @@ type Section = {
 
 type PhotoExifDetailsModalProps = {
   manifest: PhotoManifestItem
+}
+
+const exifKeys = {
+  headerFile: 'photos.library.exif.file',
+  empty: 'photos.library.exif.empty',
+  sections: {
+    basic: 'photos.library.exif.sections.basic',
+    capture: 'photos.library.exif.sections.capture',
+    metadata: 'photos.library.exif.sections.metadata',
+    location: 'photos.library.exif.sections.location',
+    fuji: 'photos.library.exif.sections.fuji',
+  },
+  rows: {
+    title: 'photos.library.exif.rows.title',
+    photoId: 'photos.library.exif.rows.photo-id',
+    capturedAt: 'photos.library.exif.rows.captured-at',
+    resolution: 'photos.library.exif.rows.resolution',
+    megapixels: 'photos.library.exif.rows.megapixels',
+    fileSize: 'photos.library.exif.rows.file-size',
+    fileFormat: 'photos.library.exif.rows.file-format',
+    aspectRatio: 'photos.library.exif.rows.aspect-ratio',
+    device: 'photos.library.exif.rows.device',
+    lens: 'photos.library.exif.rows.lens',
+    aperture: 'photos.library.exif.rows.aperture',
+    shutter: 'photos.library.exif.rows.shutter',
+    iso: 'photos.library.exif.rows.iso',
+    exposureCompensation: 'photos.library.exif.rows.exposure-compensation',
+    eqFocalLength: 'photos.library.exif.rows.eq-focal-length',
+    focalLength: 'photos.library.exif.rows.focal-length',
+    exposureProgram: 'photos.library.exif.rows.exposure-program',
+    meteringMode: 'photos.library.exif.rows.metering-mode',
+    whiteBalance: 'photos.library.exif.rows.white-balance',
+    sceneType: 'photos.library.exif.rows.scene-type',
+    flash: 'photos.library.exif.rows.flash',
+    lightSource: 'photos.library.exif.rows.light-source',
+    exposureMode: 'photos.library.exif.rows.exposure-mode',
+    brightness: 'photos.library.exif.rows.brightness',
+    scaleFactor: 'photos.library.exif.rows.scale-factor',
+    sensor: 'photos.library.exif.rows.sensor',
+    author: 'photos.library.exif.rows.author',
+    copyright: 'photos.library.exif.rows.copyright',
+    software: 'photos.library.exif.rows.software',
+    rating: 'photos.library.exif.rows.rating',
+    colorSpace: 'photos.library.exif.rows.color-space',
+    timezone: 'photos.library.exif.rows.timezone',
+    timezoneSource: 'photos.library.exif.rows.timezone-source',
+    timeOffset: 'photos.library.exif.rows.time-offset',
+    latitude: 'photos.library.exif.rows.latitude',
+    longitude: 'photos.library.exif.rows.longitude',
+    altitude: 'photos.library.exif.rows.altitude',
+  },
+  altitude: {
+    above: 'photos.library.exif.rows.altitude-value',
+    below: 'photos.library.exif.rows.altitude-below',
+  },
+} as const satisfies {
+  headerFile: I18nKeys
+  empty: I18nKeys
+  sections: Record<'basic' | 'capture' | 'metadata' | 'location' | 'fuji', I18nKeys>
+  rows: Record<
+    | 'title'
+    | 'photoId'
+    | 'capturedAt'
+    | 'resolution'
+    | 'megapixels'
+    | 'fileSize'
+    | 'fileFormat'
+    | 'aspectRatio'
+    | 'device'
+    | 'lens'
+    | 'aperture'
+    | 'shutter'
+    | 'iso'
+    | 'exposureCompensation'
+    | 'eqFocalLength'
+    | 'focalLength'
+    | 'exposureProgram'
+    | 'meteringMode'
+    | 'whiteBalance'
+    | 'sceneType'
+    | 'flash'
+    | 'lightSource'
+    | 'exposureMode'
+    | 'brightness'
+    | 'scaleFactor'
+    | 'sensor'
+    | 'author'
+    | 'copyright'
+    | 'software'
+    | 'rating'
+    | 'colorSpace'
+    | 'timezone'
+    | 'timezoneSource'
+    | 'timeOffset'
+    | 'latitude'
+    | 'longitude'
+    | 'altitude',
+    I18nKeys
+  >
+  altitude: Record<'above' | 'below', I18nKeys>
 }
 
 const candidateKeys = (key: string): string[] => {
@@ -97,11 +198,15 @@ const formatFocalLength = (source?: string | number | null): string | null => {
   return numeric !== null ? `${numeric}mm` : value
 }
 
-const formatDateLabel = (value?: string | null): string | null => {
+const formatDateLabel = (value: string | null | undefined, locale: string): string | null => {
   if (!value) return null
   const parsed = new Date(value)
   if (Number.isNaN(parsed.getTime())) return null
-  return parsed.toLocaleString()
+  try {
+    return new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(parsed)
+  } catch {
+    return parsed.toLocaleString()
+  }
 }
 
 const toReadableValue = (maybeValue: unknown): string | null => {
@@ -112,6 +217,7 @@ const toReadableValue = (maybeValue: unknown): string | null => {
 
 const convertGPSToDecimal = (
   exif: PickedExif | null,
+  t: (key: I18nKeys, options?: Record<string, unknown>) => string,
 ): { latitude: string; longitude: string; altitude?: string } | null => {
   const latitudeValue = getExifValue<number | string>(exif, 'GPSLatitude')
   const longitudeValue = getExifValue<number | string>(exif, 'GPSLongitude')
@@ -125,7 +231,11 @@ const convertGPSToDecimal = (
   const altitudeRef = getExifValue<string>(exif, 'GPSAltitudeRef')
   const altitudeNumber = parseNumber(altitudeRaw)
   const altitudeValue =
-    altitudeNumber !== null ? `${altitudeNumber}${altitudeRef === 'Below Sea Level' ? 'm (海平面下)' : 'm'}` : null
+    altitudeNumber !== null
+      ? altitudeRef === 'Below Sea Level'
+        ? t(exifKeys.altitude.below, { value: altitudeNumber })
+        : t(exifKeys.altitude.above, { value: altitudeNumber })
+      : null
 
   return {
     latitude: `${latitude.toFixed(5)}° ${latitudeRef === 'S' || latitudeRef === 'South' ? 'S' : 'N'}`,
@@ -143,28 +253,35 @@ const getFormatLabel = (manifest: PhotoManifestItem): string | null => {
   return parts.pop()?.toUpperCase() ?? null
 }
 
-const buildSections = (manifest: PhotoManifestItem): Section[] => {
+const buildSections = (
+  manifest: PhotoManifestItem,
+  t: (key: I18nKeys, options?: Record<string, unknown>) => string,
+  locale: string,
+): Section[] => {
   const { exif } = manifest
   const sections: Section[] = []
 
   const basicRows = [
-    { label: '标题', value: manifest.title || manifest.id },
-    { label: '照片 ID', value: manifest.id },
-    { label: '拍摄时间', value: formatDateLabel(getExifValue<string>(exif, 'DateTimeOriginal') ?? manifest.dateTaken) },
-    { label: '分辨率', value: `${manifest.width} × ${manifest.height}` },
-    { label: '像素数量', value: `${Math.round((manifest.width * manifest.height) / 1_000_000)} MP` },
-    { label: '文件大小', value: formatFileSize(manifest.size) },
-    { label: '文件格式', value: getFormatLabel(manifest) },
-    { label: '宽高比', value: manifest.aspectRatio ? manifest.aspectRatio.toFixed(2) : null },
+    { label: t(exifKeys.rows.title), value: manifest.title || manifest.id },
+    { label: t(exifKeys.rows.photoId), value: manifest.id },
+    {
+      label: t(exifKeys.rows.capturedAt),
+      value: formatDateLabel(getExifValue<string>(exif, 'DateTimeOriginal') ?? manifest.dateTaken, locale),
+    },
+    { label: t(exifKeys.rows.resolution), value: `${manifest.width} × ${manifest.height}` },
+    { label: t(exifKeys.rows.megapixels), value: `${Math.round((manifest.width * manifest.height) / 1_000_000)} MP` },
+    { label: t(exifKeys.rows.fileSize), value: formatFileSize(manifest.size) },
+    { label: t(exifKeys.rows.fileFormat), value: getFormatLabel(manifest) },
+    { label: t(exifKeys.rows.aspectRatio), value: manifest.aspectRatio ? manifest.aspectRatio.toFixed(2) : null },
   ].filter((row) => row.value)
 
   if (basicRows.length > 0) {
-    sections.push({ title: '基本信息', rows: basicRows as Section['rows'] })
+    sections.push({ title: t(exifKeys.sections.basic), rows: basicRows as Section['rows'] })
   }
 
   const captureRows = [
     {
-      label: '拍摄设备',
+      label: t(exifKeys.rows.device),
       value: (() => {
         const make = getExifValue<string>(exif, 'Make')
         const model = getExifValue<string>(exif, 'Model')
@@ -172,77 +289,83 @@ const buildSections = (manifest: PhotoManifestItem): Section[] => {
       })(),
     },
     {
-      label: '镜头',
+      label: t(exifKeys.rows.lens),
       value: (() => {
         const lensMake = getExifValue<string>(exif, 'LensMake')
         const lensModel = getExifValue<string>(exif, 'LensModel')
         return lensMake || lensModel ? [lensMake, lensModel].filter(Boolean).join(' ') : null
       })(),
     },
-    { label: '光圈', value: formatAperture(exif) },
-    { label: '快门', value: formatShutterSpeed(exif) },
+    { label: t(exifKeys.rows.aperture), value: formatAperture(exif) },
+    { label: t(exifKeys.rows.shutter), value: formatShutterSpeed(exif) },
     {
-      label: '感光度',
+      label: t(exifKeys.rows.iso),
       value: (() => {
         const iso = getExifValue<number | string>(exif, 'ISO')
         return iso ? `ISO ${iso}` : null
       })(),
     },
-    { label: '曝光补偿', value: formatExposureCompensation(getExifValue(exif, 'ExposureCompensation')) },
-    { label: '等效焦距', value: formatFocalLength(getExifValue(exif, 'FocalLengthIn35mmFormat')) },
-    { label: '实际焦距', value: formatFocalLength(getExifValue(exif, 'FocalLength')) },
-    { label: '曝光程序', value: toReadableValue(getExifValue(exif, 'ExposureProgram')) },
-    { label: '测光模式', value: toReadableValue(getExifValue(exif, 'MeteringMode')) },
-    { label: '白平衡', value: toReadableValue(getExifValue(exif, 'WhiteBalance')) },
-    { label: '场景类型', value: toReadableValue(getExifValue(exif, 'SceneCaptureType')) },
-    { label: '闪光灯', value: toReadableValue(getExifValue(exif, 'Flash')) },
-    { label: '光源', value: toReadableValue(getExifValue(exif, 'LightSource')) },
-    { label: '曝光模式', value: toReadableValue(getExifValue(exif, 'ExposureMode')) },
     {
-      label: '亮度值',
+      label: t(exifKeys.rows.exposureCompensation),
+      value: formatExposureCompensation(getExifValue(exif, 'ExposureCompensation')),
+    },
+    { label: t(exifKeys.rows.eqFocalLength), value: formatFocalLength(getExifValue(exif, 'FocalLengthIn35mmFormat')) },
+    { label: t(exifKeys.rows.focalLength), value: formatFocalLength(getExifValue(exif, 'FocalLength')) },
+    { label: t(exifKeys.rows.exposureProgram), value: toReadableValue(getExifValue(exif, 'ExposureProgram')) },
+    { label: t(exifKeys.rows.meteringMode), value: toReadableValue(getExifValue(exif, 'MeteringMode')) },
+    { label: t(exifKeys.rows.whiteBalance), value: toReadableValue(getExifValue(exif, 'WhiteBalance')) },
+    { label: t(exifKeys.rows.sceneType), value: toReadableValue(getExifValue(exif, 'SceneCaptureType')) },
+    { label: t(exifKeys.rows.flash), value: toReadableValue(getExifValue(exif, 'Flash')) },
+    { label: t(exifKeys.rows.lightSource), value: toReadableValue(getExifValue(exif, 'LightSource')) },
+    { label: t(exifKeys.rows.exposureMode), value: toReadableValue(getExifValue(exif, 'ExposureMode')) },
+    {
+      label: t(exifKeys.rows.brightness),
       value: (() => {
         const brightness = getExifValue<number | string>(exif, 'BrightnessValue', 'LightValue')
         return brightness ? String(brightness) : null
       })(),
     },
-    { label: 'ScaleFactor35efl', value: toReadableValue(getExifValue(exif, 'ScaleFactor35efl')) },
-    { label: '感光元件', value: toReadableValue(getExifValue(exif, 'SensingMethod')) },
+    { label: t(exifKeys.rows.scaleFactor), value: toReadableValue(getExifValue(exif, 'ScaleFactor35efl')) },
+    { label: t(exifKeys.rows.sensor), value: toReadableValue(getExifValue(exif, 'SensingMethod')) },
   ].filter((row) => row.value)
 
   if (captureRows.length > 0) {
-    sections.push({ title: '拍摄参数', rows: captureRows as Section['rows'] })
+    sections.push({ title: t(exifKeys.sections.capture), rows: captureRows as Section['rows'] })
   }
 
   const metaRows = [
-    { label: '作者', value: toReadableValue(getExifValue(exif, 'Artist')) },
-    { label: '版权', value: toReadableValue(getExifValue(exif, 'Copyright')) },
-    { label: '软件', value: toReadableValue(getExifValue(exif, 'Software')) },
+    { label: t(exifKeys.rows.author), value: toReadableValue(getExifValue(exif, 'Artist')) },
+    { label: t(exifKeys.rows.copyright), value: toReadableValue(getExifValue(exif, 'Copyright')) },
+    { label: t(exifKeys.rows.software), value: toReadableValue(getExifValue(exif, 'Software')) },
     {
-      label: '评分',
+      label: t(exifKeys.rows.rating),
       value: (() => {
         const rating = getExifValue<number>(exif, 'Rating')
         return rating && rating > 0 ? `${'★'.repeat(rating)}` : null
       })(),
     },
-    { label: '色彩空间', value: toReadableValue(getExifValue(exif, 'ColorSpace')) },
-    { label: '时区', value: getExifValue<string>(exif, 'zone', 'tz') },
-    { label: '时区来源', value: toReadableValue(getExifValue(exif, 'tzSource')) },
-    { label: '时间偏移', value: toReadableValue(getExifValue(exif, 'OffsetTime', 'OffsetTimeOriginal')) },
+    { label: t(exifKeys.rows.colorSpace), value: toReadableValue(getExifValue(exif, 'ColorSpace')) },
+    { label: t(exifKeys.rows.timezone), value: getExifValue<string>(exif, 'zone', 'tz') },
+    { label: t(exifKeys.rows.timezoneSource), value: toReadableValue(getExifValue(exif, 'tzSource')) },
+    {
+      label: t(exifKeys.rows.timeOffset),
+      value: toReadableValue(getExifValue(exif, 'OffsetTime', 'OffsetTimeOriginal')),
+    },
   ].filter((row) => row.value)
 
   if (metaRows.length > 0) {
-    sections.push({ title: '元数据', rows: metaRows as Section['rows'] })
+    sections.push({ title: t(exifKeys.sections.metadata), rows: metaRows as Section['rows'] })
   }
 
-  const gps = convertGPSToDecimal(exif)
+  const gps = convertGPSToDecimal(exif, t)
   const locationRows = [
-    { label: '纬度', value: gps?.latitude ?? null },
-    { label: '经度', value: gps?.longitude ?? null },
-    { label: '海拔', value: gps?.altitude ?? null },
+    { label: t(exifKeys.rows.latitude), value: gps?.latitude ?? null },
+    { label: t(exifKeys.rows.longitude), value: gps?.longitude ?? null },
+    { label: t(exifKeys.rows.altitude), value: gps?.altitude ?? null },
   ].filter((row) => row.value)
 
   if (locationRows.length > 0) {
-    sections.push({ title: '位置信息', rows: locationRows as Section['rows'] })
+    sections.push({ title: t(exifKeys.sections.location), rows: locationRows as Section['rows'] })
   }
 
   const fujiRecipe = getExifValue<Record<string, unknown>>(exif, 'FujiRecipe')
@@ -258,7 +381,7 @@ const buildSections = (manifest: PhotoManifestItem): Section[] => {
       .filter((row) => row.value)
 
     if (recipeRows.length > 0) {
-      sections.push({ title: '富士胶片配方', rows: recipeRows as Section['rows'] })
+      sections.push({ title: t(exifKeys.sections.fuji), rows: recipeRows as Section['rows'] })
     }
   }
 
@@ -266,7 +389,9 @@ const buildSections = (manifest: PhotoManifestItem): Section[] => {
 }
 
 export const PhotoExifDetailsModal: ModalComponent<PhotoExifDetailsModalProps> = ({ manifest }) => {
-  const sections = buildSections(manifest)
+  const { t, i18n } = useTranslation()
+  const locale = i18n.language ?? i18n.resolvedLanguage ?? 'en'
+  const sections = buildSections(manifest, t, locale)
   const hasExif = manifest.exif !== null
 
   return (
@@ -274,7 +399,7 @@ export const PhotoExifDetailsModal: ModalComponent<PhotoExifDetailsModalProps> =
       <DialogHeader>
         <DialogTitle>{manifest.title || manifest.id}</DialogTitle>
         <DialogDescription>
-          <p className="text-text-tertiary text-xs">文件：{manifest.s3Key}</p>
+          <p className="text-text-tertiary text-xs">{t(exifKeys.headerFile, { value: manifest.s3Key })}</p>
         </DialogDescription>
       </DialogHeader>
 
@@ -301,7 +426,7 @@ export const PhotoExifDetailsModal: ModalComponent<PhotoExifDetailsModalProps> =
           </ScrollArea>
         ) : (
           <div className="border-fill-tertiary/50 bg-background/70 rounded-xl border px-4 py-8 text-center text-sm text-text-tertiary">
-            当前资源缺少 EXIF 数据。
+            {t(exifKeys.empty)}
           </div>
         )}
       </div>

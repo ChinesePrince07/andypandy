@@ -2,37 +2,39 @@ import { Button } from '@afilmory/ui'
 import { clsxm } from '@afilmory/utils'
 import { DynamicIcon } from 'lucide-react/dynamic'
 import type { FC } from 'react'
+import { useTranslation } from 'react-i18next'
 
+import { storageProvidersI18nKeys } from '../constants'
 import type { StorageProvider } from '../types'
 
 const providerTypeConfig = {
   s3: {
     icon: 'database',
-    label: 'AWS S3',
+    labelKey: storageProvidersI18nKeys.types.s3,
     color: 'text-orange-500',
     bgColor: 'bg-orange-500/10',
   },
   github: {
     icon: 'github',
-    label: 'GitHub',
+    labelKey: storageProvidersI18nKeys.types.github,
     color: 'text-purple-500',
     bgColor: 'bg-purple-500/10',
   },
   local: {
     icon: 'folder',
-    label: 'Local Storage',
+    labelKey: storageProvidersI18nKeys.types.local,
     color: 'text-blue-500',
     bgColor: 'bg-blue-500/10',
   },
   minio: {
     icon: 'server',
-    label: 'MinIO',
+    labelKey: storageProvidersI18nKeys.types.minio,
     color: 'text-red-500',
     bgColor: 'bg-red-500/10',
   },
   eagle: {
     icon: 'image',
-    label: 'Eagle',
+    labelKey: storageProvidersI18nKeys.types.eagle,
     color: 'text-amber-500',
     bgColor: 'bg-amber-500/10',
   },
@@ -46,6 +48,7 @@ type ProviderCardProps = {
 }
 
 export const ProviderCard: FC<ProviderCardProps> = ({ provider, isActive, onEdit, onToggleActive }) => {
+  const { t } = useTranslation()
   const config = providerTypeConfig[provider.type as keyof typeof providerTypeConfig] || providerTypeConfig.s3
 
   // Extract preview info based on provider type
@@ -53,14 +56,14 @@ export const ProviderCard: FC<ProviderCardProps> = ({ provider, isActive, onEdit
     const cfg = provider.config
     switch (provider.type) {
       case 's3': {
-        return cfg.region || cfg.bucket || 'Not configured'
+        return cfg.region || cfg.bucket || t(storageProvidersI18nKeys.card.notConfigured)
       }
       case 'github': {
-        return cfg.repo || 'Not configured'
+        return cfg.repo || t(storageProvidersI18nKeys.card.notConfigured)
       }
 
       default: {
-        return 'Storage provider'
+        return t(storageProvidersI18nKeys.card.fallback)
       }
     }
   }
@@ -83,7 +86,7 @@ export const ProviderCard: FC<ProviderCardProps> = ({ provider, isActive, onEdit
         <div className="absolute top-3 right-3">
           <span className="bg-accent inline-flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-semibold tracking-wide text-white uppercase">
             <DynamicIcon name="check-circle" className="h-3 w-3" />
-            Active
+            {t(storageProvidersI18nKeys.card.active)}
           </span>
         </div>
       )}
@@ -97,8 +100,10 @@ export const ProviderCard: FC<ProviderCardProps> = ({ provider, isActive, onEdit
 
       {/* Provider Info */}
       <div className="relative flex-1 space-y-1">
-        <h3 className="text-text text-sm font-semibold">{provider.name || '未命名存储'}</h3>
-        <p className="text-text-tertiary text-xs font-medium">{config.label}</p>
+        <h3 className="text-text text-sm font-semibold">
+          {provider.name || t(storageProvidersI18nKeys.card.untitled)}
+        </h3>
+        <p className="text-text-tertiary text-xs font-medium">{t(config.labelKey)}</p>
         <p className="text-text-tertiary/70 truncate text-xs">{getPreviewInfo()}</p>
       </div>
 
@@ -113,7 +118,7 @@ export const ProviderCard: FC<ProviderCardProps> = ({ provider, isActive, onEdit
             onClick={onToggleActive}
           >
             <DynamicIcon name="x-circle" className="mr-1 h-3.5 w-3.5" />
-            <span>Make Inactive</span>
+            <span>{t(storageProvidersI18nKeys.card.makeInactive)}</span>
           </Button>
         ) : (
           <Button
@@ -124,12 +129,12 @@ export const ProviderCard: FC<ProviderCardProps> = ({ provider, isActive, onEdit
             onClick={onToggleActive}
           >
             <DynamicIcon name="check" className="h-3.5 w-3.5" />
-            <span>Make Active</span>
+            <span>{t(storageProvidersI18nKeys.card.makeActive)}</span>
           </Button>
         )}
         <Button type="button" variant="ghost" size="sm" onClick={onEdit}>
           <DynamicIcon name="pencil" className="mr-1 h-3.5 w-3.5" />
-          <span>Edit</span>
+          <span>{t(storageProvidersI18nKeys.card.edit)}</span>
         </Button>
       </div>
     </div>

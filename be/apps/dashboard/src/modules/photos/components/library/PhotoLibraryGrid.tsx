@@ -13,6 +13,7 @@ import { useAtomValue } from 'jotai'
 import { DynamicIcon } from 'lucide-react/dynamic'
 import type { ReactNode } from 'react'
 import { useCallback, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useShallow } from 'zustand/shallow'
 
 import { viewportAtom } from '~/atoms/viewport'
@@ -30,15 +31,34 @@ import type { DeleteAssetOptions } from './types'
 type PhotoLibrarySortBy = 'uploadedAt' | 'capturedAt'
 type PhotoLibrarySortOrder = 'desc' | 'asc'
 
-const SORT_BY_OPTIONS: { value: PhotoLibrarySortBy; label: string; icon: string }[] = [
-  { value: 'uploadedAt', label: '按上传时间', icon: 'upload' },
-  { value: 'capturedAt', label: '按拍摄时间', icon: 'camera' },
+const SORT_BY_OPTIONS: { value: PhotoLibrarySortBy; labelKey: I18nKeys; icon: string }[] = [
+  { value: 'uploadedAt', labelKey: 'photos.library.sort.by-uploaded', icon: 'upload' },
+  { value: 'capturedAt', labelKey: 'photos.library.sort.by-captured', icon: 'camera' },
 ]
 
-const SORT_ORDER_OPTIONS: { value: PhotoLibrarySortOrder; label: string; icon: string }[] = [
-  { value: 'desc', label: '最新优先', icon: 'arrow-down' },
-  { value: 'asc', label: '最早优先', icon: 'arrow-up' },
+const SORT_ORDER_OPTIONS: { value: PhotoLibrarySortOrder; labelKey: I18nKeys; icon: string }[] = [
+  { value: 'desc', labelKey: 'photos.library.sort.order-desc', icon: 'arrow-down' },
+  { value: 'asc', labelKey: 'photos.library.sort.order-asc', icon: 'arrow-up' },
 ]
+
+const photoLibraryGridKeys = {
+  card: {
+    deviceUnknown: 'photos.library.card.device-unknown',
+    sizeUnknown: 'photos.library.card.size-unknown',
+    noPreview: 'photos.library.card.no-preview',
+    selected: 'photos.library.card.selected',
+    select: 'photos.library.card.select',
+  },
+  deletePrompt: {
+    title: 'photos.library.delete.title',
+    description: 'photos.library.delete.description',
+    confirm: 'photos.library.delete.confirm',
+    cancel: 'photos.library.delete.cancel',
+  },
+} as const satisfies {
+  card: Record<'deviceUnknown' | 'sizeUnknown' | 'noPreview' | 'selected' | 'select', I18nKeys>
+  deletePrompt: Record<'title' | 'description' | 'confirm' | 'cancel', I18nKeys>
+}
 
 function parseDate(value?: string | number | null) {
   if (!value) return 0
@@ -73,27 +93,29 @@ function PhotoGridItem({
   onEditTags: (asset: PhotoAssetListItem) => void
   isDeleting?: boolean
 }) {
+  const { t, i18n } = useTranslation()
+  const locale = i18n.language ?? i18n.resolvedLanguage ?? 'en'
   const manifest = asset.manifest?.data
   const previewUrl = manifest?.thumbnailUrl ?? manifest?.originalUrl ?? asset.publicUrl
-  const deviceLabel = manifest?.exif?.Model || manifest?.exif?.Make || '未知设备'
-  const updatedAtLabel = new Date(asset.updatedAt).toLocaleString()
+  const deviceLabel = manifest?.exif?.Model || manifest?.exif?.Make || t(photoLibraryGridKeys.card.deviceUnknown)
+  const updatedAtLabel = new Date(asset.updatedAt).toLocaleString(locale)
   const fileSizeLabel =
     asset.size !== null && asset.size !== undefined
-      ? `${(asset.size / (1024 * 1024)).toFixed(2)} MB`
+      ? `${(asset.size / (1024 * 1024)).toLocaleString(locale, { maximumFractionDigits: 2 })} MB`
       : manifest?.size
-        ? `${(manifest.size / (1024 * 1024)).toFixed(2)} MB`
-        : '未知大小'
+        ? `${(manifest.size / (1024 * 1024)).toLocaleString(locale, { maximumFractionDigits: 2 })} MB`
+        : t(photoLibraryGridKeys.card.sizeUnknown)
   const assetLabel = manifest?.title ?? manifest?.id ?? asset.photoId
 
   const handleDelete = () => {
     let deleteFromStorage = false
 
     Prompt.prompt({
-      title: '确认删除该资源？',
-      description: `删除后将无法恢复，是否继续删除「${assetLabel}」？如需同时删除远程存储文件，可勾选下方选项。`,
+      title: t(photoLibraryGridKeys.deletePrompt.title),
+      description: t(photoLibraryGridKeys.deletePrompt.description, { name: assetLabel }),
       variant: 'danger',
-      onConfirmText: '删除',
-      onCancelText: '取消',
+      onConfirmText: t(photoLibraryGridKeys.deletePrompt.confirm),
+      onCancelText: t(photoLibraryGridKeys.deletePrompt.cancel),
       content: (
         <DeleteFromStorageOption
           onChange={(checked) => {
@@ -144,7 +166,7 @@ function PhotoGridItem({
             <Thumbhash thumbHash={manifest.thumbHash} className="absolute inset-0" />
           ) : (
             <div className="bg-background-secondary/80 text-text-tertiary flex h-48 w-full items-center justify-center">
-              无法预览
+              {t(photoLibraryGridKeys.card.noPreview)}
             </div>
           )}
         </div>
@@ -164,7 +186,7 @@ function PhotoGridItem({
             )}
           >
             <DynamicIcon name={isSelected ? 'check' : 'square'} className="mr-1 h-3 w-3" />
-            <span>{isSelected ? '已选择' : '选择'}</span>
+            <span>{isSelected ? t(photoLibraryGridKeys.card.selected) : t(photoLibraryGridKeys.card.select)}</span>
           </div>
         </div>
 
@@ -209,14 +231,14 @@ function PhotoGridItem({
                   icon={<DynamicIcon name="tags" className="size-4" />}
                   onSelect={() => onEditTags(asset)}
                 >
-                  编辑标签
+                  {t('photos.library.card.edit-tags')}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   icon={<DynamicIcon name="info" className="size-4" />}
                   disabled={!manifest}
                   onSelect={handleViewExif}
                 >
-                  查看 EXIF
+                  {t('photos.library.card.view-exif')}
                 </DropdownMenuItem>
                 <div className="h-[0.5px] bg-border my-1" />
                 <DropdownMenuItem
@@ -225,7 +247,7 @@ function PhotoGridItem({
                   onSelect={handleDelete}
                   className="text-red focus:text-red focus:bg-red/10"
                 >
-                  删除资源
+                  {t('photos.library.card.delete')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -237,6 +259,7 @@ function PhotoGridItem({
 }
 
 export function PhotoLibraryGrid() {
+  const { t } = useTranslation()
   const viewport = useAtomValue(viewportAtom)
   const columnWidth = viewport.sm ? 320 : 160
   const [sortBy, setSortBy] = useState<PhotoLibrarySortBy>('uploadedAt')
@@ -289,8 +312,8 @@ export function PhotoLibraryGrid() {
   } else if (!sortedAssets || sortedAssets.length === 0) {
     content = (
       <LinearBorderPanel className="bg-background-tertiary relative overflow-hidden p-4 sm:p-8 text-center">
-        <p className="text-text text-sm sm:text-base font-semibold">当前没有图片资源</p>
-        <p className="text-text-tertiary mt-2 text-xs sm:text-sm">使用右上角的"上传图片"按钮可以为图库添加新的照片。</p>
+        <p className="text-text text-sm sm:text-base font-semibold">{t('photos.library.empty.title')}</p>
+        <p className="text-text-tertiary mt-2 text-xs sm:text-sm">{t('photos.library.empty.description')}</p>
       </LinearBorderPanel>
     )
   } else {
@@ -322,7 +345,7 @@ export function PhotoLibraryGrid() {
 
   return (
     <div className="space-y-3 relative">
-      <div className="flex flex-wrap items-center justify-end gap-2 text-xs absolute lg:translate-y-[-50px] -translate-y-10 -translate-x-2 lg:translate-x-0 lg:right-20">
+      <div className="flex flex-wrap items-center justify-end gap-2 text-xs absolute lg:translate-y-[-50px] -translate-y-10 -translate-x-2 lg:translate-x-0 lg:right-30">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -332,7 +355,7 @@ export function PhotoLibraryGrid() {
               className="hover:bg-background-secondary/70 flex items-center gap-1.5 rounded-full border px-3 h-8 text-text"
             >
               <DynamicIcon name={currentSortBy.icon as any} className="size-4" />
-              <span className="font-medium">{currentSortBy.label}</span>
+              <span className="font-medium">{t(currentSortBy.labelKey)}</span>
               <DynamicIcon name="chevron-down" className="h-3 w-3 text-text-tertiary" />
             </Button>
           </DropdownMenuTrigger>
@@ -344,7 +367,7 @@ export function PhotoLibraryGrid() {
                 icon={<DynamicIcon name={option.icon as any} className="size-4" />}
                 onSelect={() => setSortBy(option.value)}
               >
-                {option.label}
+                {t(option.labelKey)}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
@@ -359,7 +382,7 @@ export function PhotoLibraryGrid() {
               className="hover:bg-background-secondary/70 flex items-center gap-1.5 rounded-full border px-3 h-8 text-text"
             >
               <DynamicIcon name={currentSortOrder.icon as any} className="size-4" />
-              <span className="font-medium">{currentSortOrder.label}</span>
+              <span className="font-medium">{t(currentSortOrder.labelKey)}</span>
               <DynamicIcon name="chevron-down" className="h-3 w-3 text-text-tertiary" />
             </Button>
           </DropdownMenuTrigger>
@@ -371,7 +394,7 @@ export function PhotoLibraryGrid() {
                 icon={<DynamicIcon name={option.icon as any} className="size-4" />}
                 onSelect={() => setSortOrder(option.value)}
               >
-                {option.label}
+                {t(option.labelKey)}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>

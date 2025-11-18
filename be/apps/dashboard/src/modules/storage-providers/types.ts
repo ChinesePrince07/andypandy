@@ -21,10 +21,10 @@ export interface StorageSettingEntry {
 
 export interface StorageProviderFieldDefinition {
   key: string
-  label: string
-  placeholder?: string
-  description?: string
-  helper?: string
+  labelKey: I18nKeys
+  placeholderKey?: I18nKeys
+  descriptionKey?: I18nKeys
+  helperKey?: I18nKeys
   multiline?: boolean
   sensitive?: boolean
 }

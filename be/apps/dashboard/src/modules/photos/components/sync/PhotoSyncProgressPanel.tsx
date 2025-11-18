@@ -1,28 +1,105 @@
 import { Spring } from '@afilmory/utils'
 import { m } from 'motion/react'
-
-import { getI18n } from '~/i18n'
+import { useTranslation } from 'react-i18next'
 
 import { getActionTypeMeta, getConflictTypeLabel, PHOTO_ACTION_TYPE_CONFIG } from '../../constants'
 import type { PhotoSyncAction, PhotoSyncLogLevel, PhotoSyncProgressStage, PhotoSyncProgressState } from '../../types'
 import { BorderOverlay } from './PhotoSyncResultPanel'
 
-const STAGE_CONFIG: Record<PhotoSyncProgressStage, { label: string; description: string }> = {
+const photoSyncProgressKeys = {
+  heading: {
+    error: 'photos.sync.progress.heading.error',
+    preview: 'photos.sync.progress.heading.preview',
+    running: 'photos.sync.progress.heading.running',
+  },
+  subtitle: {
+    error: 'photos.sync.progress.subtitle.error',
+    preview: 'photos.sync.progress.subtitle.preview',
+    running: 'photos.sync.progress.subtitle.running',
+  },
+  status: {
+    error: 'photos.sync.progress.status.error',
+    running: 'photos.sync.progress.status.running',
+  },
+  stages: {
+    missing: {
+      label: 'photos.sync.progress.stages.missing.label',
+      description: 'photos.sync.progress.stages.missing.description',
+    },
+    orphan: {
+      label: 'photos.sync.progress.stages.orphan.label',
+      description: 'photos.sync.progress.stages.orphan.description',
+    },
+    conflicts: {
+      label: 'photos.sync.progress.stages.conflicts.label',
+      description: 'photos.sync.progress.stages.conflicts.description',
+    },
+    reconciliation: {
+      label: 'photos.sync.progress.stages.reconciliation.label',
+      description: 'photos.sync.progress.stages.reconciliation.description',
+    },
+  },
+  stageStatus: {
+    pending: 'photos.sync.progress.stage-status.pending',
+    running: 'photos.sync.progress.stage-status.running',
+    completed: 'photos.sync.progress.stage-status.completed',
+  },
+  logs: {
+    title: 'photos.sync.progress.logs.title',
+    recent: 'photos.sync.progress.logs.recent',
+  },
+  logLevels: {
+    info: 'photos.sync.progress.logs.level.info',
+    success: 'photos.sync.progress.logs.level.success',
+    warn: 'photos.sync.progress.logs.level.warn',
+    error: 'photos.sync.progress.logs.level.error',
+  },
+  logDetails: {
+    result: 'photos.sync.progress.logs.detail.result',
+    manifest: 'photos.sync.progress.logs.detail.manifest',
+    manifestAbsent: 'photos.sync.progress.logs.detail.manifest-absent',
+    livePhoto: 'photos.sync.progress.logs.detail.live-photo',
+    livePhotoAbsent: 'photos.sync.progress.logs.detail.live-photo-absent',
+    error: 'photos.sync.progress.logs.detail.error',
+  },
+  recent: {
+    title: 'photos.sync.progress.recent.title',
+    progress: 'photos.sync.progress.recent.progress',
+    noFurther: 'photos.sync.progress.recent.no-further',
+  },
+} as const satisfies {
+  heading: Record<'error' | 'preview' | 'running', I18nKeys>
+  subtitle: Record<'error' | 'preview' | 'running', I18nKeys>
+  status: Record<'error' | 'running', I18nKeys>
+  stages: {
+    missing: { label: I18nKeys; description: I18nKeys }
+    orphan: { label: I18nKeys; description: I18nKeys }
+    conflicts: { label: I18nKeys; description: I18nKeys }
+    reconciliation: { label: I18nKeys; description: I18nKeys }
+  }
+  stageStatus: Record<'pending' | 'running' | 'completed', I18nKeys>
+  logs: { title: I18nKeys; recent: I18nKeys }
+  logLevels: Record<'info' | 'success' | 'warn' | 'error', I18nKeys>
+  logDetails: Record<'result' | 'manifest' | 'manifestAbsent' | 'livePhoto' | 'livePhotoAbsent' | 'error', I18nKeys>
+  recent: Record<'title' | 'progress' | 'noFurther', I18nKeys>
+}
+
+const STAGE_CONFIG: Record<PhotoSyncProgressStage, { labelKey: I18nKeys; descriptionKey: I18nKeys }> = {
   'missing-in-db': {
-    label: '导入新照片',
-    description: '将存储中新对象同步至数据库',
+    labelKey: photoSyncProgressKeys.stages.missing.label,
+    descriptionKey: photoSyncProgressKeys.stages.missing.description,
   },
   'orphan-in-db': {
-    label: '识别孤立记录',
-    description: '标记数据库中缺失存储对象的条目',
+    labelKey: photoSyncProgressKeys.stages.orphan.label,
+    descriptionKey: photoSyncProgressKeys.stages.orphan.description,
   },
   'metadata-conflicts': {
-    label: '校验元数据',
-    description: '检测存储与数据库之间的元数据差异',
+    labelKey: photoSyncProgressKeys.stages.conflicts.label,
+    descriptionKey: photoSyncProgressKeys.stages.conflicts.description,
   },
   'status-reconciliation': {
-    label: '状态对齐',
-    description: '更新记录状态以匹配最新元数据',
+    labelKey: photoSyncProgressKeys.stages.reconciliation.label,
+    descriptionKey: photoSyncProgressKeys.stages.reconciliation.description,
   },
 }
 
@@ -33,17 +110,29 @@ const STAGE_ORDER: PhotoSyncProgressStage[] = [
   'status-reconciliation',
 ]
 
-const STATUS_LABEL: Record<PhotoSyncProgressState['stages'][PhotoSyncProgressStage]['status'], string> = {
-  pending: '等待中',
-  running: '进行中',
-  completed: '已完成',
+const STATUS_LABEL: Record<PhotoSyncProgressState['stages'][PhotoSyncProgressStage]['status'], I18nKeys> = {
+  pending: photoSyncProgressKeys.stageStatus.pending,
+  running: photoSyncProgressKeys.stageStatus.running,
+  completed: photoSyncProgressKeys.stageStatus.completed,
 }
 
-const LOG_LEVEL_CONFIG: Record<PhotoSyncLogLevel, { label: string; className: string }> = {
-  info: { label: '信息', className: 'border border-sky-500/30 bg-sky-500/10 text-sky-200' },
-  success: { label: '成功', className: 'border border-emerald-500/30 bg-emerald-500/10 text-emerald-200' },
-  warn: { label: '警告', className: 'border border-amber-500/30 bg-amber-500/10 text-amber-200' },
-  error: { label: '错误', className: 'border border-rose-500/30 bg-rose-500/10 text-rose-200' },
+const LOG_LEVEL_CONFIG: Record<PhotoSyncLogLevel, { labelKey: I18nKeys; className: string }> = {
+  info: {
+    labelKey: photoSyncProgressKeys.logLevels.info,
+    className: 'border border-sky-500/30 bg-sky-500/10 text-sky-200',
+  },
+  success: {
+    labelKey: photoSyncProgressKeys.logLevels.success,
+    className: 'border border-emerald-500/30 bg-emerald-500/10 text-emerald-200',
+  },
+  warn: {
+    labelKey: photoSyncProgressKeys.logLevels.warn,
+    className: 'border border-amber-500/30 bg-amber-500/10 text-amber-200',
+  },
+  error: {
+    labelKey: photoSyncProgressKeys.logLevels.error,
+    className: 'border border-rose-500/30 bg-rose-500/10 text-rose-200',
+  },
 }
 
 const SUMMARY_FIELDS: Array<{
@@ -84,14 +173,19 @@ function formatActionLabel(action: PhotoSyncAction) {
 }
 
 export function PhotoSyncProgressPanel({ progress }: PhotoSyncProgressPanelProps) {
+  const { t } = useTranslation()
   const isErrored = Boolean(progress.error)
-  const heading = isErrored ? '同步失败' : progress.dryRun ? '同步预览进行中' : '同步进行中'
-  const subtitle = isErrored
-    ? '同步过程中发生错误，请查看错误信息后重试。'
+  const heading = isErrored
+    ? t(photoSyncProgressKeys.heading.error)
     : progress.dryRun
-      ? '当前正在模拟同步操作，结果仅用于预览，数据库不会发生变更。'
-      : '正在对齐存储与数据库数据，请保持页面打开，稍后将展示同步结果。'
-  const statusText = isErrored ? '已终止' : '进行中'
+      ? t(photoSyncProgressKeys.heading.preview)
+      : t(photoSyncProgressKeys.heading.running)
+  const subtitle = isErrored
+    ? t(photoSyncProgressKeys.subtitle.error)
+    : progress.dryRun
+      ? t(photoSyncProgressKeys.subtitle.preview)
+      : t(photoSyncProgressKeys.subtitle.running)
+  const statusText = isErrored ? t(photoSyncProgressKeys.status.error) : t(photoSyncProgressKeys.status.running)
 
   const stageItems = STAGE_ORDER.map((stage) => {
     const stageState = progress.stages[stage]
@@ -111,9 +205,8 @@ export function PhotoSyncProgressPanel({ progress }: PhotoSyncProgressPanelProps
     }
   })
 
-  const i18n = getI18n()
   const summaryItems = SUMMARY_FIELDS.map((field) => ({
-    label: i18n.t(field.labelKey),
+    label: t(field.labelKey),
     value: progress.summary[field.key],
   }))
 
@@ -143,10 +236,10 @@ export function PhotoSyncProgressPanel({ progress }: PhotoSyncProgressPanelProps
             <BorderOverlay />
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-text text-sm font-semibold">{item.config.label}</p>
-                <p className="text-text-tertiary mt-1 text-xs">{item.config.description}</p>
+                <p className="text-text text-sm font-semibold">{t(item.config.labelKey)}</p>
+                <p className="text-text-tertiary mt-1 text-xs">{t(item.config.descriptionKey)}</p>
               </div>
-              <span className="text-text-tertiary text-xs font-medium">{STATUS_LABEL[item.status]}</span>
+              <span className="text-text-tertiary text-xs font-medium">{t(STATUS_LABEL[item.status])}</span>
             </div>
             <div className="bg-fill/30 mt-3 h-1.5 rounded-full">
               <m.div
@@ -157,7 +250,9 @@ export function PhotoSyncProgressPanel({ progress }: PhotoSyncProgressPanelProps
               />
             </div>
             <div className="text-text-tertiary mt-2 text-xs">
-              {item.total > 0 ? `${item.processed} / ${item.total}` : '无需处理'}
+              {item.total > 0
+                ? t('photos.sync.progress.stages.progress', { processed: item.processed, total: item.total })
+                : t(photoSyncProgressKeys.recent.noFurther)}
             </div>
           </div>
         ))}
@@ -176,8 +271,10 @@ export function PhotoSyncProgressPanel({ progress }: PhotoSyncProgressPanelProps
         <div className="border-border/20 bg-fill/10 mt-6 overflow-hidden rounded-lg border p-4">
           <BorderOverlay />
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-text text-sm font-semibold">构建日志</p>
-            <span className="text-text-tertiary text-xs">最新 {recentLogs.length} 条</span>
+            <p className="text-text text-sm font-semibold">{t(photoSyncProgressKeys.logs.title)}</p>
+            <span className="text-text-tertiary text-xs">
+              {t(photoSyncProgressKeys.logs.recent, { count: recentLogs.length })}
+            </span>
           </div>
           <div className="mt-3 max-h-48 space-y-2 overflow-y-auto pr-1">
             {recentLogs.map((log) => {
@@ -198,14 +295,22 @@ export function PhotoSyncProgressPanel({ progress }: PhotoSyncProgressPanelProps
 
               const detailSegments: string[] = []
               if (photoId) detailSegments.push(`ID ${photoId}`)
-              if (resultType) detailSegments.push(`结果 ${resultType}`)
+              if (resultType) detailSegments.push(t(photoSyncProgressKeys.logDetails.result, { value: resultType }))
               if (typeof hasExisting === 'boolean') {
-                detailSegments.push(hasExisting ? '包含历史 manifest' : '无历史 manifest')
+                detailSegments.push(
+                  hasExisting
+                    ? t(photoSyncProgressKeys.logDetails.manifest)
+                    : t(photoSyncProgressKeys.logDetails.manifestAbsent),
+                )
               }
               if (typeof hasLivePhotoMap === 'boolean') {
-                detailSegments.push(hasLivePhotoMap ? '包含 Live Photo' : '无 Live Photo')
+                detailSegments.push(
+                  hasLivePhotoMap
+                    ? t(photoSyncProgressKeys.logDetails.livePhoto)
+                    : t(photoSyncProgressKeys.logDetails.livePhotoAbsent),
+                )
               }
-              if (error) detailSegments.push(`错误 ${error}`)
+              if (error) detailSegments.push(t(photoSyncProgressKeys.logDetails.error, { value: error }))
 
               return (
                 <div
@@ -214,11 +319,11 @@ export function PhotoSyncProgressPanel({ progress }: PhotoSyncProgressPanelProps
                 >
                   <span className="text-text-tertiary tabular-nums">{formatLogTimestamp(log.timestamp)}</span>
                   <span className={`${levelConfig.className} rounded-full px-2 py-0.5 text-[11px] font-medium`}>
-                    {levelConfig.label}
+                    {t(levelConfig.labelKey)}
                   </span>
                   <span className="text-text">{log.message}</span>
                   {log.storageKey ? <code className="text-text-secondary">{log.storageKey}</code> : null}
-                  {log.stage ? <span className="text-text-tertiary">{STAGE_CONFIG[log.stage].label}</span> : null}
+                  {log.stage ? <span className="text-text-tertiary">{t(STAGE_CONFIG[log.stage].labelKey)}</span> : null}
                   {detailSegments.length > 0 ? (
                     <span className="text-text-tertiary">{detailSegments.join(' · ')}</span>
                   ) : null}
@@ -232,16 +337,18 @@ export function PhotoSyncProgressPanel({ progress }: PhotoSyncProgressPanelProps
       {lastAction ? (
         <div className="border-border/20 bg-fill/10 mt-6 overflow-hidden rounded-lg border p-4">
           <BorderOverlay />
-          <p className="text-text-tertiary text-xs tracking-wide uppercase">最近处理</p>
+          <p className="text-text-tertiary text-xs tracking-wide uppercase">{t(photoSyncProgressKeys.recent.title)}</p>
           <div className="mt-2 flex flex-wrap items-center gap-3 text-sm">
             <span className="bg-accent/10 text-accent rounded-full px-2 py-0.5">
               {formatActionLabel(lastAction.action)}
             </span>
             <code className="text-text-secondary text-xs">{lastAction.action.storageKey}</code>
-            <span className="text-text-tertiary text-xs">{STAGE_CONFIG[lastAction.stage].label}</span>
+            <span className="text-text-tertiary text-xs">{t(STAGE_CONFIG[lastAction.stage].labelKey)}</span>
           </div>
           <p className="text-text-tertiary mt-2 text-xs">
-            {lastAction.total > 0 ? `进度：${lastAction.index} / ${lastAction.total}` : '无需进一步处理'}
+            {lastAction.total > 0
+              ? t(photoSyncProgressKeys.recent.progress, { processed: lastAction.index, total: lastAction.total })
+              : t(photoSyncProgressKeys.recent.noFurther)}
           </p>
         </div>
       ) : null}

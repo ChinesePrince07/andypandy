@@ -11,6 +11,137 @@ import { getConflictTypeLabel, PHOTO_CONFLICT_TYPE_CONFIG } from '../../constant
 import type { PhotoSyncConflict, PhotoSyncResolution, PhotoSyncSnapshot } from '../../types'
 import { BorderOverlay, MetadataSnapshot } from './PhotoSyncResultPanel'
 
+const photoSyncConflictsKeys = {
+  title: 'photos.sync.conflicts.title',
+  description: 'photos.sync.conflicts.description',
+  total: 'photos.sync.conflicts.total',
+  selection: {
+    selected: 'photos.sync.conflicts.selection.selected',
+    none: 'photos.sync.conflicts.selection.none',
+    clear: 'photos.sync.conflicts.selection.clear',
+  },
+  strategy: {
+    storage: 'photos.sync.conflicts.strategy.storage',
+    database: 'photos.sync.conflicts.strategy.database',
+  },
+  actions: {
+    selectedStorage: 'photos.sync.conflicts.actions.selected-storage',
+    selectedDatabase: 'photos.sync.conflicts.actions.selected-database',
+    allStorage: 'photos.sync.conflicts.actions.all-storage',
+    allDatabase: 'photos.sync.conflicts.actions.all-database',
+    preferStorage: 'photos.sync.conflicts.actions.prefer-storage',
+    preferDatabase: 'photos.sync.conflicts.actions.prefer-database',
+    viewDetails: 'photos.sync.conflicts.actions.view-details',
+    hideDetails: 'photos.sync.conflicts.actions.hide-details',
+    clearSelection: 'photos.sync.conflicts.actions.clear-selection',
+    openStorage: 'photos.sync.conflicts.actions.open-storage',
+    viewOriginal: 'photos.sync.conflicts.actions.view-original',
+  },
+  prompts: {
+    title: 'photos.sync.conflicts.prompts.title',
+    confirm: 'photos.sync.conflicts.prompts.confirm',
+    cancel: 'photos.sync.conflicts.prompts.cancel',
+    scopeAll: 'photos.sync.conflicts.prompts.scope-all',
+    scopeSelected: 'photos.sync.conflicts.prompts.scope-selected',
+    bulk: 'photos.sync.conflicts.prompts.bulk',
+    single: 'photos.sync.conflicts.prompts.single',
+  },
+  toast: {
+    selectRequired: 'photos.sync.conflicts.toast.select-required',
+    none: 'photos.sync.conflicts.toast.none',
+    noOriginal: 'photos.sync.conflicts.toast.no-original',
+    openStorageFailed: 'photos.sync.conflicts.toast.open-storage-failed',
+  },
+  info: {
+    lastUpdated: 'photos.sync.conflicts.info.last-updated',
+    firstDetected: 'photos.sync.conflicts.info.first-detected',
+    storageKey: 'photos.sync.conflicts.info.storage-key',
+    conflictKey: 'photos.sync.conflicts.info.conflict-key',
+    photoIdFallback: 'photos.sync.conflicts.info.photo-id-fallback',
+  },
+  preview: {
+    databaseTitle: 'photos.sync.conflicts.preview.database.title',
+    databaseEmpty: 'photos.sync.conflicts.preview.database.empty',
+    storageTitle: 'photos.sync.conflicts.preview.storage.title',
+    storageKey: 'photos.sync.conflicts.preview.storage.key',
+    idLabel: 'photos.sync.conflicts.preview.common.id',
+    dimensions: 'photos.sync.conflicts.preview.common.dimensions',
+    size: 'photos.sync.conflicts.preview.common.size',
+    updatedAt: 'photos.sync.conflicts.preview.common.updated-at',
+  },
+  metadata: {
+    database: 'photos.sync.metadata.database',
+    storage: 'photos.sync.metadata.storage',
+    size: 'photos.sync.metadata.size',
+    etag: 'photos.sync.metadata.etag',
+    updatedAt: 'photos.sync.metadata.updated-at',
+    hash: 'photos.sync.metadata.hash',
+    unknown: 'photos.sync.metadata.unknown',
+    none: 'photos.sync.metadata.none',
+  },
+} as const satisfies {
+  title: I18nKeys
+  description: I18nKeys
+  total: I18nKeys
+  selection: { selected: I18nKeys; none: I18nKeys; clear: I18nKeys }
+  strategy: { storage: I18nKeys; database: I18nKeys }
+  actions: {
+    selectedStorage: I18nKeys
+    selectedDatabase: I18nKeys
+    allStorage: I18nKeys
+    allDatabase: I18nKeys
+    preferStorage: I18nKeys
+    preferDatabase: I18nKeys
+    viewDetails: I18nKeys
+    hideDetails: I18nKeys
+    clearSelection: I18nKeys
+    openStorage: I18nKeys
+    viewOriginal: I18nKeys
+  }
+  prompts: {
+    title: I18nKeys
+    confirm: I18nKeys
+    cancel: I18nKeys
+    scopeAll: I18nKeys
+    scopeSelected: I18nKeys
+    bulk: I18nKeys
+    single: I18nKeys
+  }
+  toast: {
+    selectRequired: I18nKeys
+    none: I18nKeys
+    noOriginal: I18nKeys
+    openStorageFailed: I18nKeys
+  }
+  info: {
+    lastUpdated: I18nKeys
+    firstDetected: I18nKeys
+    storageKey: I18nKeys
+    conflictKey: I18nKeys
+    photoIdFallback: I18nKeys
+  }
+  preview: {
+    databaseTitle: I18nKeys
+    databaseEmpty: I18nKeys
+    storageTitle: I18nKeys
+    storageKey: I18nKeys
+    idLabel: I18nKeys
+    dimensions: I18nKeys
+    size: I18nKeys
+    updatedAt: I18nKeys
+  }
+  metadata: {
+    database: I18nKeys
+    storage: I18nKeys
+    size: I18nKeys
+    etag: I18nKeys
+    updatedAt: I18nKeys
+    hash: I18nKeys
+    unknown: I18nKeys
+    none: I18nKeys
+  }
+}
+
 type PhotoSyncConflictsPanelProps = {
   conflicts?: PhotoSyncConflict[]
   isLoading?: boolean
@@ -19,14 +150,6 @@ type PhotoSyncConflictsPanelProps = {
   onResolve?: (conflict: PhotoSyncConflict, strategy: PhotoSyncResolution) => Promise<void>
   onResolveBatch?: (conflicts: PhotoSyncConflict[], strategy: PhotoSyncResolution) => Promise<void>
   onRequestStorageUrl?: (storageKey: string) => Promise<string>
-}
-
-function formatDate(value: string) {
-  try {
-    return new Date(value).toLocaleString()
-  } catch {
-    return value
-  }
 }
 
 export function PhotoSyncConflictsPanel({
@@ -38,7 +161,26 @@ export function PhotoSyncConflictsPanel({
   onResolveBatch,
   onRequestStorageUrl,
 }: PhotoSyncConflictsPanelProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const locale = i18n.language ?? i18n.resolvedLanguage ?? 'en'
+  const dateTimeFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(locale, {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      }),
+    [locale],
+  )
+  const formatDate = (value: string | null | undefined) => {
+    if (!value) {
+      return t('common.unknown')
+    }
+    try {
+      return dateTimeFormatter.format(new Date(value))
+    } catch {
+      return value
+    }
+  }
   const sortedConflicts = useMemo(() => {
     if (!conflicts) return []
     return conflicts.toSorted((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
@@ -121,19 +263,20 @@ export function PhotoSyncConflictsPanel({
       const url = await onRequestStorageUrl(storageKey)
       window.open(url, '_blank', 'noopener,noreferrer')
     } catch (error) {
-      const message = getRequestErrorMessage(error, '无法打开存储对象')
-      toast.error('无法打开存储对象', { description: message })
+      const fallback = t(photoSyncConflictsKeys.toast.openStorageFailed)
+      const message = getRequestErrorMessage(error, fallback)
+      toast.error(fallback, { description: message })
     }
   }
 
   const handleOpenManifest = (manifest?: PhotoSyncConflict['manifest']['data']) => {
     if (!manifest) {
-      toast.info('当前记录没有原图链接')
+      toast.info(t(photoSyncConflictsKeys.toast.noOriginal))
       return
     }
     const candidate = manifest.originalUrl ?? manifest.thumbnailUrl
     if (!candidate) {
-      toast.info('当前记录没有原图链接')
+      toast.info(t(photoSyncConflictsKeys.toast.noOriginal))
       return
     }
     window.open(candidate, '_blank', 'noopener,noreferrer')
@@ -145,7 +288,7 @@ export function PhotoSyncConflictsPanel({
     shouldClearSelection: boolean,
   ) => {
     if (targets.length === 0) {
-      toast.info('请先选择需要处理的冲突条目')
+      toast.info(t(photoSyncConflictsKeys.toast.selectRequired))
       return
     }
 
@@ -156,7 +299,7 @@ export function PhotoSyncConflictsPanel({
           setSelectedIds(new Set())
         }
       } catch {
-        // 错误提示交由上层处理
+        // Error handling handled by caller
       }
       return
     }
@@ -176,10 +319,10 @@ export function PhotoSyncConflictsPanel({
 
   const confirmAction = (message: string, onConfirm: () => void | Promise<void>) => {
     Prompt.prompt({
-      title: '确认操作',
+      title: t(photoSyncConflictsKeys.prompts.title),
       description: message,
-      onConfirmText: '确认',
-      onCancelText: '取消',
+      onConfirmText: t(photoSyncConflictsKeys.prompts.confirm),
+      onCancelText: t(photoSyncConflictsKeys.prompts.cancel),
       onConfirm: async () => {
         await onConfirm()
       },
@@ -187,21 +330,32 @@ export function PhotoSyncConflictsPanel({
   }
 
   const getStrategyLabel = (strategy: PhotoSyncResolution) =>
-    strategy === 'prefer-storage' ? '以存储为准' : '以数据库为准'
+    strategy === 'prefer-storage'
+      ? t(photoSyncConflictsKeys.strategy.storage)
+      : t(photoSyncConflictsKeys.strategy.database)
 
   const buildBulkConfirmMessage = (strategy: PhotoSyncResolution, scope: 'all' | 'selected', count: number) => {
-    const scopeLabel = scope === 'all' ? '全部待处理冲突' : `选中的 ${count} 个冲突`
-    return `确认要将${scopeLabel}${getStrategyLabel(strategy)}处理吗？`
+    const scopeLabel =
+      scope === 'all'
+        ? t(photoSyncConflictsKeys.prompts.scopeAll)
+        : t(photoSyncConflictsKeys.prompts.scopeSelected, { count })
+    return t(photoSyncConflictsKeys.prompts.bulk, {
+      scope: scopeLabel,
+      strategy: getStrategyLabel(strategy),
+    })
   }
 
   const buildSingleConfirmMessage = (strategy: PhotoSyncResolution, conflict: PhotoSyncConflict) => {
     const identifier = conflict.photoId ?? conflict.id
-    return `确认要将冲突 ${identifier}${getStrategyLabel(strategy)}处理吗？`
+    return t(photoSyncConflictsKeys.prompts.single, {
+      identifier,
+      strategy: getStrategyLabel(strategy),
+    })
   }
 
   const handleAcceptSelected = async (strategy: PhotoSyncResolution) => {
     if (selectedConflicts.length === 0) {
-      toast.info('请先选择需要处理的冲突条目')
+      toast.info(t(photoSyncConflictsKeys.toast.selectRequired))
       return
     }
 
@@ -212,7 +366,7 @@ export function PhotoSyncConflictsPanel({
 
   const handleAcceptAll = async (strategy: PhotoSyncResolution) => {
     if (sortedConflicts.length === 0) {
-      toast.info('当前没有待处理的冲突条目')
+      toast.info(t(photoSyncConflictsKeys.toast.none))
       return
     }
 
@@ -247,12 +401,12 @@ export function PhotoSyncConflictsPanel({
       <div className="p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 className="text-text text-base font-semibold">待处理冲突</h3>
-            <p className="text-text-tertiary mt-1 text-sm">
-              这些冲突需要手动确认处理方式，可以批量选择以提升处理效率。
-            </p>
+            <h3 className="text-text text-base font-semibold">{t(photoSyncConflictsKeys.title)}</h3>
+            <p className="text-text-tertiary mt-1 text-sm">{t(photoSyncConflictsKeys.description)}</p>
           </div>
-          <span className="text-text-tertiary text-xs">总计：{sortedConflicts.length}</span>
+          <span className="text-text-tertiary text-xs">
+            {t(photoSyncConflictsKeys.total, { count: sortedConflicts.length })}
+          </span>
         </div>
 
         {isLoading ? (
@@ -271,11 +425,13 @@ export function PhotoSyncConflictsPanel({
                   onCheckedChange={(checked) => toggleAllSelection(Boolean(checked))}
                 />
                 <span className="text-text-tertiary text-xs">
-                  {hasSelection ? `已选 ${selectedIds.size} 项` : '未选择条目'}
+                  {hasSelection
+                    ? t(photoSyncConflictsKeys.selection.selected, { count: selectedIds.size })
+                    : t(photoSyncConflictsKeys.selection.none)}
                 </span>
                 {hasSelection ? (
                   <Button type="button" variant="ghost" size="xs" disabled={isProcessing} onClick={clearSelection}>
-                    清除选择
+                    {t(photoSyncConflictsKeys.actions.clearSelection)}
                   </Button>
                 ) : null}
               </div>
@@ -289,7 +445,7 @@ export function PhotoSyncConflictsPanel({
                       disabled={isProcessing}
                       onClick={() => void handleAcceptSelected('prefer-storage')}
                     >
-                      选中存储为准
+                      {t(photoSyncConflictsKeys.actions.selectedStorage)}
                     </Button>
                     <Button
                       type="button"
@@ -298,7 +454,7 @@ export function PhotoSyncConflictsPanel({
                       disabled={isProcessing}
                       onClick={() => void handleAcceptSelected('prefer-database')}
                     >
-                      选中数据库为准
+                      {t(photoSyncConflictsKeys.actions.selectedDatabase)}
                     </Button>
                   </>
                 ) : (
@@ -310,7 +466,7 @@ export function PhotoSyncConflictsPanel({
                       disabled={isProcessing || sortedConflicts.length === 0}
                       onClick={() => void handleAcceptAll('prefer-storage')}
                     >
-                      全部以存储为准
+                      {t(photoSyncConflictsKeys.actions.allStorage)}
                     </Button>
                     <Button
                       type="button"
@@ -319,7 +475,7 @@ export function PhotoSyncConflictsPanel({
                       disabled={isProcessing || sortedConflicts.length === 0}
                       onClick={() => void handleAcceptAll('prefer-database')}
                     >
-                      全部以数据库为准
+                      {t(photoSyncConflictsKeys.actions.allDatabase)}
                     </Button>
                   </>
                 )}
@@ -359,25 +515,31 @@ export function PhotoSyncConflictsPanel({
                             <span className="rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-400">
                               {typeLabel}
                             </span>
-                            <code className="text-text-secondary text-xs">{conflict.photoId ?? '未绑定 Photo ID'}</code>
+                            <code className="text-text-secondary text-xs">
+                              {conflict.photoId ?? t(photoSyncConflictsKeys.info.photoIdFallback)}
+                            </code>
                             {typeConfig ? (
                               <span className="text-text-tertiary text-xs">{t(typeConfig.descriptionKey)}</span>
                             ) : null}
                           </div>
                           <div className="text-text-tertiary flex flex-wrap justify-end gap-2 text-xs">
-                            <span>上次更新：{formatDate(conflict.updatedAt)}</span>
-                            <span>首次检测：{formatDate(conflict.syncedAt)}</span>
+                            <span>
+                              {t(photoSyncConflictsKeys.info.lastUpdated, { time: formatDate(conflict.updatedAt) })}
+                            </span>
+                            <span>
+                              {t(photoSyncConflictsKeys.info.firstDetected, { time: formatDate(conflict.syncedAt) })}
+                            </span>
                           </div>
                         </div>
 
                         <div className="text-text-tertiary flex flex-wrap gap-3 text-xs">
                           <span>
-                            存储 Key：
+                            {t(photoSyncConflictsKeys.info.storageKey)}
                             <code className="text-text ml-1 font-mono text-[11px]">{conflict.storageKey}</code>
                           </span>
                           {payload?.incomingStorageKey ? (
                             <span>
-                              冲突 Key：
+                              {t(photoSyncConflictsKeys.info.conflictKey)}
                               <code className="text-text ml-1 font-mono text-[11px]">{payload.incomingStorageKey}</code>
                             </span>
                           ) : null}
@@ -400,11 +562,11 @@ export function PhotoSyncConflictsPanel({
                             </div>
                             <div className="text-text-tertiary grid gap-3 text-xs md:grid-cols-2">
                               <div>
-                                <p className="text-text font-semibold">元数据（数据库）</p>
+                                <p className="text-text font-semibold">{t(photoSyncConflictsKeys.metadata.database)}</p>
                                 <MetadataSnapshot snapshot={payload?.recordSnapshot ?? null} />
                               </div>
                               <div>
-                                <p className="text-text font-semibold">元数据（存储）</p>
+                                <p className="text-text font-semibold">{t(photoSyncConflictsKeys.metadata.storage)}</p>
                                 <MetadataSnapshot snapshot={payload?.storageSnapshot ?? null} />
                               </div>
                             </div>
@@ -419,7 +581,7 @@ export function PhotoSyncConflictsPanel({
                             disabled={isResolving || isProcessing}
                             onClick={() => void handleResolve(conflict, 'prefer-storage')}
                           >
-                            以存储为准
+                            {t(photoSyncConflictsKeys.actions.preferStorage)}
                           </Button>
                           <Button
                             type="button"
@@ -428,7 +590,7 @@ export function PhotoSyncConflictsPanel({
                             disabled={isResolving || isProcessing}
                             onClick={() => void handleResolve(conflict, 'prefer-database')}
                           >
-                            以数据库为准
+                            {t(photoSyncConflictsKeys.actions.preferDatabase)}
                           </Button>
                           <Button
                             type="button"
@@ -437,7 +599,9 @@ export function PhotoSyncConflictsPanel({
                             disabled={isProcessing}
                             onClick={() => toggleExpand(conflict.id)}
                           >
-                            {expandedId === conflict.id ? '收起详情' : '查看详情'}
+                            {expandedId === conflict.id
+                              ? t(photoSyncConflictsKeys.actions.hideDetails)
+                              : t(photoSyncConflictsKeys.actions.viewDetails)}
                           </Button>
                         </div>
                       </div>
@@ -462,19 +626,33 @@ function ConflictManifestPreview({
   disabled?: boolean
   onOpenOriginal?: () => void
 }) {
+  const { t, i18n } = useTranslation()
+  const locale = i18n.language ?? i18n.resolvedLanguage ?? 'en'
+  const dateTimeFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(locale, {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      }),
+    [locale],
+  )
   if (!manifest) {
     return (
       <div className="border-border/20 bg-background-secondary/60 text-text-tertiary rounded-md border p-3 text-xs">
-        <p className="text-text text-sm font-semibold">数据库记录</p>
-        <p className="mt-1">暂无数据库记录</p>
+        <p className="text-text text-sm font-semibold">{t(photoSyncConflictsKeys.preview.databaseTitle)}</p>
+        <p className="mt-1">{t(photoSyncConflictsKeys.preview.databaseEmpty)}</p>
       </div>
     )
   }
 
-  const dimensions = manifest.width && manifest.height ? `${manifest.width} × ${manifest.height}` : '未知'
+  const dimensions = manifest.width && manifest.height ? `${manifest.width} × ${manifest.height}` : t('common.unknown')
   const sizeMB =
-    typeof manifest.size === 'number' && manifest.size > 0 ? `${(manifest.size / (1024 * 1024)).toFixed(2)} MB` : '未知'
-  const updatedAt = manifest.lastModified ? new Date(manifest.lastModified).toLocaleString() : '未知'
+    typeof manifest.size === 'number' && manifest.size > 0
+      ? `${(manifest.size / (1024 * 1024)).toLocaleString(locale, { maximumFractionDigits: 2 })} MB`
+      : t('common.unknown')
+  const updatedAt = manifest.lastModified
+    ? dateTimeFormatter.format(new Date(manifest.lastModified))
+    : t('common.unknown')
 
   return (
     <div className="border-border/20 bg-background-secondary/60 text-text-tertiary rounded-md border p-3 text-xs">
@@ -483,28 +661,28 @@ function ConflictManifestPreview({
           <img src={manifest.thumbnailUrl} alt={manifest.id} className="h-16 w-20 rounded-md object-cover" />
         ) : null}
         <div className="space-y-1">
-          <p className="text-text text-sm font-semibold">数据库记录</p>
+          <p className="text-text text-sm font-semibold">{t(photoSyncConflictsKeys.preview.databaseTitle)}</p>
           <div className="flex items-center gap-2">
-            <span className="text-text">ID：</span>
+            <span className="text-text">{t(photoSyncConflictsKeys.preview.idLabel)}</span>
             <span className="truncate">{manifest.id}</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-text">尺寸：</span>
+            <span className="text-text">{t(photoSyncConflictsKeys.preview.dimensions)}</span>
             <span>{dimensions}</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-text">大小：</span>
+            <span className="text-text">{t(photoSyncConflictsKeys.preview.size)}</span>
             <span>{sizeMB}</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-text">更新时间：</span>
+            <span className="text-text">{t(photoSyncConflictsKeys.preview.updatedAt)}</span>
             <span>{updatedAt}</span>
           </div>
         </div>
       </div>
       {onOpenOriginal ? (
         <Button type="button" variant="ghost" size="xs" className="mt-3" disabled={disabled} onClick={onOpenOriginal}>
-          查看原图
+          {t(photoSyncConflictsKeys.actions.viewOriginal)}
         </Button>
       ) : null}
     </div>
@@ -522,18 +700,19 @@ function ConflictStoragePreview({
   disabled?: boolean
   onOpenStorage?: () => void
 }) {
+  const { t } = useTranslation()
   return (
     <div className="border-border/20 bg-background-secondary/60 text-text-tertiary rounded-md border p-3 text-xs">
       <div className="flex items-center justify-between">
-        <p className="text-text text-sm font-semibold">存储对象</p>
+        <p className="text-text text-sm font-semibold">{t(photoSyncConflictsKeys.preview.storageTitle)}</p>
         {onOpenStorage ? (
           <Button type="button" variant="ghost" size="xs" disabled={disabled} onClick={onOpenStorage}>
-            打开
+            {t(photoSyncConflictsKeys.actions.openStorage)}
           </Button>
         ) : null}
       </div>
       <p className="mt-1 break-all">
-        Key：
+        {t(photoSyncConflictsKeys.preview.storageKey)}
         <span className="text-text font-mono text-[11px]">{storageKey}</span>
       </p>
       <MetadataSnapshot snapshot={snapshot ?? null} />

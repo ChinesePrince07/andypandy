@@ -18,8 +18,13 @@ import { DynamicIcon } from 'lucide-react/dynamic'
 import { m } from 'motion/react'
 import { nanoid } from 'nanoid'
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
-import { STORAGE_PROVIDER_FIELD_DEFINITIONS, STORAGE_PROVIDER_TYPE_OPTIONS } from '../constants'
+import {
+  STORAGE_PROVIDER_FIELD_DEFINITIONS,
+  STORAGE_PROVIDER_TYPE_OPTIONS,
+  storageProvidersI18nKeys,
+} from '../constants'
 import type { StorageProvider, StorageProviderType } from '../types'
 
 type ProviderEditModalProps = ModalComponentProps & {
@@ -36,6 +41,7 @@ export function ProviderEditModal({
 
   dismiss,
 }: ProviderEditModalProps) {
+  const { t } = useTranslation()
   const [formData, setFormData] = useState<StorageProvider | null>(provider)
   const [isDirty, setIsDirty] = useState(false)
 
@@ -106,12 +112,14 @@ export function ProviderEditModal({
           </div>
           <div className="flex-1 space-y-1">
             <h2 className="text-text text-xl font-semibold">
-              {isNewProvider ? 'Add Storage Provider' : 'Edit Provider'}
+              {t(isNewProvider ? storageProvidersI18nKeys.modal.createTitle : storageProvidersI18nKeys.modal.editTitle)}
             </h2>
             <p className="text-text-tertiary text-sm">
-              {isNewProvider
-                ? 'Configure a new storage provider for your photos'
-                : 'Update provider configuration and credentials'}
+              {t(
+                isNewProvider
+                  ? storageProvidersI18nKeys.modal.createDescription
+                  : storageProvidersI18nKeys.modal.editDescription,
+              )}
             </p>
           </div>
         </div>
@@ -129,32 +137,32 @@ export function ProviderEditModal({
           >
             {/* Basic Information */}
             <div className="space-y-4">
-              <h3 className="text-text text-sm font-semibold">Basic Information</h3>
+              <h3 className="text-text text-sm font-semibold">{t(storageProvidersI18nKeys.modal.sections.basic)}</h3>
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="provider-name">Display Name</Label>
+                  <Label htmlFor="provider-name">{t(storageProvidersI18nKeys.modal.fields.nameLabel)}</Label>
                   <Input
                     id="provider-name"
                     value={formData.name}
                     onInput={(e) => handleNameChange(e.currentTarget.value)}
-                    placeholder="e.g., Production S3"
+                    placeholder={t(storageProvidersI18nKeys.modal.fields.namePlaceholder)}
                     className="bg-background/60"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="provider-type">Provider Type</Label>
+                  <Label htmlFor="provider-type">{t(storageProvidersI18nKeys.modal.fields.typeLabel)}</Label>
                   <Select
                     value={formData.type}
                     onValueChange={(value) => handleTypeChange(value as StorageProviderType)}
                   >
                     <SelectTrigger id="provider-type">
-                      <SelectValue placeholder="Select provider type" />
+                      <SelectValue placeholder={t(storageProvidersI18nKeys.modal.fields.typePlaceholder)} />
                     </SelectTrigger>
                     <SelectContent>
                       {STORAGE_PROVIDER_TYPE_OPTIONS.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
-                          {option.label}
+                          {t(option.labelKey)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -166,10 +174,13 @@ export function ProviderEditModal({
             {/* Configuration Fields */}
             {selectedFields.length > 0 && (
               <div className="space-y-4">
-                <h3 className="text-text text-sm font-semibold">Connection Configuration</h3>
+                <h3 className="text-text text-sm font-semibold">
+                  {t(storageProvidersI18nKeys.modal.sections.connection)}
+                </h3>
                 <div className="space-y-4">
                   {selectedFields.map((field) => {
                     const value = formData.config[field.key] || ''
+                    const placeholder = field.placeholderKey ? t(field.placeholderKey) : undefined
                     return (
                       <div
                         key={field.key}
@@ -177,9 +188,11 @@ export function ProviderEditModal({
                       >
                         <div className="space-y-1">
                           <Label htmlFor={`field-${field.key}`} className="font-semibold">
-                            {field.label}
+                            {t(field.labelKey)}
                           </Label>
-                          {field.description && <p className="text-text-tertiary text-xs">{field.description}</p>}
+                          {field.descriptionKey ? (
+                            <p className="text-text-tertiary text-xs">{t(field.descriptionKey)}</p>
+                          ) : null}
                         </div>
 
                         {field.multiline ? (
@@ -187,7 +200,7 @@ export function ProviderEditModal({
                             id={`field-${field.key}`}
                             value={value}
                             onInput={(e) => handleConfigChange(field.key, e.currentTarget.value)}
-                            placeholder={field.placeholder}
+                            placeholder={placeholder}
                             rows={3}
                             className="bg-background/60"
                           />
@@ -197,13 +210,13 @@ export function ProviderEditModal({
                             type={field.sensitive ? 'password' : 'text'}
                             value={value}
                             onInput={(e) => handleConfigChange(field.key, e.currentTarget.value)}
-                            placeholder={field.placeholder}
+                            placeholder={placeholder}
                             className="bg-background/60"
                             autoComplete="off"
                           />
                         )}
 
-                        {field.helper && <FormHelperText>{field.helper}</FormHelperText>}
+                        {field.helperKey ? <FormHelperText>{t(field.helperKey)}</FormHelperText> : null}
                       </div>
                     )
                   })}
@@ -227,11 +240,11 @@ export function ProviderEditModal({
               size="sm"
               className="text-text-secondary hover:text-text"
             >
-              Cancel
+              {t(storageProvidersI18nKeys.actions.cancel)}
             </Button>
             <Button type="button" onClick={handleSave} variant="primary" size="sm">
               <DynamicIcon name="plus" className="mr-2 h-3.5 w-3.5" />
-              <span>Create Provider</span>
+              <span>{t(storageProvidersI18nKeys.actions.create)}</span>
             </Button>
           </div>
         ) : (
@@ -239,7 +252,7 @@ export function ProviderEditModal({
           <div className="flex items-center justify-end gap-3">
             <Button type="button" onClick={handleSave} disabled={!isDirty} variant="primary" size="sm">
               <DynamicIcon name="save" className="mr-2 h-3.5 w-3.5" />
-              <span>Save Changes</span>
+              <span>{t(storageProvidersI18nKeys.actions.save)}</span>
             </Button>
           </div>
         )}

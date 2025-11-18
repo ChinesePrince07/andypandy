@@ -198,7 +198,7 @@ export function SuperAdminSettingsForm({ visibleSectionIds }: SuperAdminSettings
   const { registrationsRemaining, totalUsers } = stats
   const remainingLabel = (() => {
     if (registrationsRemaining === null || registrationsRemaining === undefined) {
-      return '无限制'
+      return t('superadmin.settings.stats.unlimited')
     }
 
     if (typeof registrationsRemaining === 'number' && Number.isFinite(registrationsRemaining)) {

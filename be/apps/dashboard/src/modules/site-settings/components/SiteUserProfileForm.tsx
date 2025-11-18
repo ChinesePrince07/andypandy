@@ -1,7 +1,8 @@
 import { Button, FormHelperText, Input, Label } from '@afilmory/ui'
 import { Spring } from '@afilmory/utils'
 import { m } from 'motion/react'
-import { startTransition, useEffect, useId, useMemo, useState } from 'react'
+import { startTransition, useCallback, useEffect, useId, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
 import { LinearBorderPanel } from '~/components/common/GlassPanel'
@@ -11,6 +12,56 @@ import { getRequestErrorMessage } from '~/lib/errors'
 
 import { useSiteAuthorProfileQuery, useUpdateSiteAuthorProfileMutation } from '../hooks'
 import type { SiteAuthorProfile, UpdateSiteAuthorPayload } from '../types'
+
+const siteUserKeys = {
+  toastSuccess: 'site.user.toast.success',
+  toastError: 'site.user.toast.error',
+  toastErrorDescription: 'site.user.toast.error-description',
+  loadingError: 'site.user.error.loading',
+  blocker: {
+    title: 'site.user.blocker.title',
+    description: 'site.user.blocker.description',
+    confirm: 'site.user.blocker.confirm',
+    cancel: 'site.user.blocker.cancel',
+  },
+  button: {
+    saving: 'site.user.button.saving',
+    save: 'site.user.button.save',
+  },
+  header: {
+    badge: 'site.user.header.badge',
+    title: 'site.user.header.title',
+    description: 'site.user.header.description',
+  },
+  preview: {
+    fallbackName: 'site.user.preview.fallback',
+    avatarAlt: 'site.user.preview.avatar-alt',
+    lastUpdated: 'site.user.preview.last-updated',
+    neverUpdated: 'site.user.preview.never-updated',
+  },
+  form: {
+    name: {
+      label: 'site.user.form.name.label',
+      placeholder: 'site.user.form.name.placeholder',
+      helper: 'site.user.form.name.helper',
+    },
+    display: {
+      label: 'site.user.form.display.label',
+      placeholder: 'site.user.form.display.placeholder',
+      helper: 'site.user.form.display.helper',
+    },
+    username: {
+      label: 'site.user.form.username.label',
+      placeholder: 'site.user.form.username.placeholder',
+      helper: 'site.user.form.username.helper',
+    },
+    avatar: {
+      label: 'site.user.form.avatar.label',
+      placeholder: 'site.user.form.avatar.placeholder',
+      helper: 'site.user.form.avatar.helper',
+    },
+  },
+} as const
 
 type UserFormState = {
   name: string
@@ -49,14 +100,9 @@ function buildPayload(state: UserFormState): UpdateSiteAuthorPayload {
   }
 }
 
-function formatTimestamp(iso: string | undefined) {
-  if (!iso) return ''
-  const date = new Date(iso)
-  if (Number.isNaN(date.getTime())) return ''
-  return date.toLocaleString()
-}
-
 export function SiteUserProfileForm() {
+  const { t, i18n } = useTranslation()
+  const locale = i18n.language ?? i18n.resolvedLanguage ?? 'en'
   const { data, isLoading, isError, error } = useSiteAuthorProfileQuery()
   const updateMutation = useUpdateSiteAuthorProfileMutation()
   const { setHeaderActionState } = useMainPageLayout()
@@ -85,6 +131,20 @@ export function SiteUserProfileForm() {
   }, [formState, initialState])
 
   const canSubmit = Boolean(data) && !isLoading && isDirty
+
+  const formatTimestamp = useCallback(
+    (iso: string | undefined | null) => {
+      if (!iso) return ''
+      const date = new Date(iso)
+      if (Number.isNaN(date.getTime())) return ''
+      try {
+        return new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(date)
+      } catch {
+        return date.toLocaleString()
+      }
+    },
+    [locale],
+  )
 
   useEffect(() => {
     setHeaderActionState({
@@ -115,10 +175,10 @@ export function SiteUserProfileForm() {
       const payload = buildPayload(formState)
       await updateMutation.mutateAsync(payload)
       setInitialState(formState)
-      toast.success('用户信息已更新')
+      toast.success(t(siteUserKeys.toastSuccess))
     } catch (mutationError) {
-      toast.error('保存用户信息失败', {
-        description: getRequestErrorMessage(mutationError, '请检查输入内容后重试。'),
+      toast.error(t(siteUserKeys.toastError), {
+        description: getRequestErrorMessage(mutationError, t(siteUserKeys.toastErrorDescription)),
       })
     }
   }
@@ -132,19 +192,19 @@ export function SiteUserProfileForm() {
         size="sm"
         disabled={!canSubmit}
         isLoading={updateMutation.isPending}
-        loadingText="保存中…"
+        loadingText={t(siteUserKeys.button.saving)}
       >
-        保存修改
+        {t(siteUserKeys.button.save)}
       </Button>
     </MainPageLayout.Actions>
   )
 
   useBlock({
     when: isDirty,
-    title: '离开前请保存设置',
-    description: '当前用户信息尚未保存，离开页面会丢失这些更改，确定要继续吗？',
-    confirmText: '继续离开',
-    cancelText: '留在此页',
+    title: t(siteUserKeys.blocker.title),
+    description: t(siteUserKeys.blocker.description),
+    confirmText: t(siteUserKeys.blocker.confirm),
+    cancelText: t(siteUserKeys.blocker.cancel),
   })
   if (isLoading && !data) {
     return (
@@ -174,7 +234,7 @@ export function SiteUserProfileForm() {
         <LinearBorderPanel className="p-6">
           <div className="text-red flex items-center gap-3 text-sm">
             <i className="i-mingcute-close-circle-fill text-lg" />
-            <span>{getRequestErrorMessage(error, '无法加载用户信息')}</span>
+            <span>{getRequestErrorMessage(error, t(siteUserKeys.loadingError))}</span>
           </div>
         </LinearBorderPanel>
       </>
@@ -192,16 +252,21 @@ export function SiteUserProfileForm() {
       <LinearBorderPanel className="bg-background-secondary">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between p-6">
           <div>
-            <p className="text-text-tertiary text-xs font-semibold uppercase tracking-wider">用户资料</p>
-            <h2 className="text-text mt-1 text-xl font-semibold">展示在前台的作者身份</h2>
-            <p className="text-text-tertiary mt-1 text-sm">
-              这些信息将用于站点头部、RSS Feed 与社交分享卡片，推荐保持与作者个人品牌一致。
+            <p className="text-text-tertiary text-xs font-semibold uppercase tracking-wider">
+              {t(siteUserKeys.header.badge)}
             </p>
+            <h2 className="text-text mt-1 text-xl font-semibold">{t(siteUserKeys.header.title)}</h2>
+            <p className="text-text-tertiary mt-1 text-sm">{t(siteUserKeys.header.description)}</p>
           </div>
           <div className="flex items-center gap-4">
             <div className="relative size-16 sm:size-20 overflow-hidden rounded-full border border-white/5 shadow-inner">
               {avatarPreview ? (
-                <img src={avatarPreview} alt="用户头像预览" className="h-full w-full object-cover" loading="lazy" />
+                <img
+                  src={avatarPreview}
+                  alt={t(siteUserKeys.preview.avatarAlt)}
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                />
               ) : (
                 <div className="bg-accent/15 text-accent flex h-full w-full items-center justify-center text-2xl font-semibold">
                   {previewInitial}
@@ -209,10 +274,14 @@ export function SiteUserProfileForm() {
               )}
             </div>
             <div className="space-y-1 text-sm">
-              <p className="text-text font-semibold">{formState.displayUsername || formState.name || '作者'}</p>
+              <p className="text-text font-semibold">
+                {formState.displayUsername || formState.name || t(siteUserKeys.preview.fallbackName)}
+              </p>
               <p className="text-text-tertiary text-xs">{profile?.email}</p>
               <p className="text-text-tertiary text-xs">
-                最近更新：{formatTimestamp(profile?.updatedAt) || '尚未更新'}
+                {t(siteUserKeys.preview.lastUpdated, {
+                  time: formatTimestamp(profile?.updatedAt) || t(siteUserKeys.preview.neverUpdated),
+                })}
               </p>
             </div>
           </div>
@@ -228,49 +297,49 @@ export function SiteUserProfileForm() {
         >
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="user-name">用户名称</Label>
+              <Label htmlFor="user-name">{t(siteUserKeys.form.name.label)}</Label>
               <Input
                 id="user-name"
                 value={formState.name}
                 onInput={(event) => handleChange('name')(event.currentTarget.value)}
-                placeholder="例如：Innei"
+                placeholder={t(siteUserKeys.form.name.placeholder)}
                 required
               />
-              <FormHelperText>用于前台显示与 RSS 作者/编辑字段。</FormHelperText>
+              <FormHelperText>{t(siteUserKeys.form.name.helper)}</FormHelperText>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="user-display">展示昵称</Label>
+              <Label htmlFor="user-display">{t(siteUserKeys.form.display.label)}</Label>
               <Input
                 id="user-display"
                 value={formState.displayUsername}
                 onInput={(event) => handleChange('displayUsername')(event.currentTarget.value)}
-                placeholder="可选，例如：innei.photo"
+                placeholder={t(siteUserKeys.form.display.placeholder)}
               />
-              <FormHelperText>留空则使用作者名称，可用于展示更个性化的昵称。</FormHelperText>
+              <FormHelperText>{t(siteUserKeys.form.display.helper)}</FormHelperText>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="user-username">用户名（可选）</Label>
+              <Label htmlFor="user-username">{t(siteUserKeys.form.username.label)}</Label>
               <Input
                 id="user-username"
                 value={formState.username}
                 onInput={(event) => handleChange('username')(event.currentTarget.value)}
-                placeholder="例如：innei"
+                placeholder={t(siteUserKeys.form.username.placeholder)}
               />
-              <FormHelperText>用于后台识别作者账号，不会直接展示在前台。</FormHelperText>
+              <FormHelperText>{t(siteUserKeys.form.username.helper)}</FormHelperText>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="user-avatar">头像链接</Label>
+              <Label htmlFor="user-avatar">{t(siteUserKeys.form.avatar.label)}</Label>
               <Input
                 id="user-avatar"
                 type="url"
                 value={formState.avatar}
                 onInput={(event) => handleChange('avatar')(event.currentTarget.value)}
-                placeholder="https://cdn.example.com/avatar.png"
+                placeholder={t(siteUserKeys.form.avatar.placeholder)}
               />
-              <FormHelperText>支持 http(s) 或以 // 开头的链接，留空则使用首字母。</FormHelperText>
+              <FormHelperText>{t(siteUserKeys.form.avatar.helper)}</FormHelperText>
             </div>
           </div>
         </m.form>

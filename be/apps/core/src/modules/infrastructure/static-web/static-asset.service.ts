@@ -31,6 +31,11 @@ export interface StaticAssetServiceOptions {
   loggerName?: string
   rewriteAssetReferences?: boolean
   assetLinkRels?: Iterable<string>
+  staticAssetHostResolver?: (requestHost?: string | null) => Promise<string | null>
+}
+
+export interface StaticAssetRequestOptions {
+  requestHost?: string | null
 }
 
 export interface ResolvedStaticAsset {
@@ -42,8 +47,10 @@ export interface ResolvedStaticAsset {
 export abstract class StaticAssetService {
   protected readonly logger: PrettyLogger
   private readonly assetLinkRels: ReadonlySet<string>
+  private readonly staticAssetHostResolver?: (requestHost?: string | null) => Promise<string | null>
 
   private staticRoot: string | null | undefined
+  private staticAssetHosts = new Map<string, string | null>()
   private warnedMissingRoot = false
 
   protected constructor(private readonly options: StaticAssetServiceOptions) {
@@ -51,9 +58,14 @@ export abstract class StaticAssetService {
     this.assetLinkRels = new Set(
       options.assetLinkRels ? Array.from(options.assetLinkRels, (rel) => rel.toLowerCase()) : DEFAULT_ASSET_LINK_RELS,
     )
+    this.staticAssetHostResolver = options.staticAssetHostResolver
   }
 
-  async handleRequest(fullPath: string, headOnly: boolean): Promise<Response | null> {
+  async handleRequest(
+    fullPath: string,
+    headOnly: boolean,
+    options?: StaticAssetRequestOptions,
+  ): Promise<Response | null> {
     const staticRoot = await this.resolveStaticRoot()
     if (!staticRoot) {
       return null
@@ -65,7 +77,7 @@ export abstract class StaticAssetService {
       return null
     }
 
-    return await this.createResponse(target, headOnly)
+    return await this.createResponse(target, headOnly, options)
   }
 
   protected get routeSegment(): string {
@@ -78,10 +90,10 @@ export abstract class StaticAssetService {
 
   protected async decorateDocument(_document: StaticAssetDocument, _file: ResolvedStaticAsset): Promise<void> {}
 
-  protected rewriteStaticAssetReferences(document: StaticAssetDocument): void {
+  protected rewriteStaticAssetReferences(document: StaticAssetDocument, staticAssetHost: string | null): void {
     const prefixAttr = (element: Element, attr: string) => {
       const current = element.getAttribute(attr)
-      const next = this.prefixStaticAssetPath(current)
+      const next = this.applyStaticAssetPrefixes(current, staticAssetHost)
       if (next !== null && next !== current) {
         element.setAttribute(attr, next)
       }
@@ -106,7 +118,7 @@ export abstract class StaticAssetService {
 
     document.querySelectorAll('img[srcset], source[srcset]').forEach((element) => {
       const current = element.getAttribute('srcset')
-      const next = this.prefixSrcset(current)
+      const next = this.prefixSrcset(current, staticAssetHost)
       if (next !== null && next !== current) {
         element.setAttribute('srcset', next)
       }
@@ -148,7 +160,12 @@ export abstract class StaticAssetService {
     return value === trimmed ? prefixed : value.replace(trimmed, prefixed)
   }
 
-  private prefixSrcset(value: string | null): string | null {
+  private applyStaticAssetPrefixes(value: string | null, staticAssetHost: string | null): string | null {
+    const prefixed = this.prefixStaticAssetPath(value)
+    return this.prefixStaticAssetHost(prefixed, staticAssetHost)
+  }
+
+  private prefixSrcset(value: string | null, staticAssetHost: string | null): string | null {
     if (!value) {
       return value
     }
@@ -160,11 +177,25 @@ export abstract class StaticAssetService {
       }
 
       const [url, ...rest] = trimmed.split(/\s+/)
-      const prefixed = this.prefixStaticAssetPath(url) ?? url
+      const prefixed = this.applyStaticAssetPrefixes(url, staticAssetHost) ?? url
       return [prefixed, ...rest].join(' ').trim()
     })
 
     return parts.join(', ')
+  }
+
+  private prefixStaticAssetHost(value: string | null, staticAssetHost: string | null): string | null {
+    if (!value || !staticAssetHost) {
+      return value
+    }
+
+    const trimmed = value.trim()
+    if (!trimmed.startsWith(this.routeSegment)) {
+      return value
+    }
+
+    const rewrote = `${staticAssetHost}${trimmed}`
+    return value === trimmed ? rewrote : value.replace(trimmed, rewrote)
   }
 
   private async resolveStaticRoot(): Promise<string | null> {
@@ -307,9 +338,13 @@ export abstract class StaticAssetService {
     return relativePath !== '' && !relativePath.startsWith('..') && !isAbsolute(relativePath)
   }
 
-  private async createResponse(file: ResolvedStaticAsset, headOnly: boolean): Promise<Response> {
+  private async createResponse(
+    file: ResolvedStaticAsset,
+    headOnly: boolean,
+    options?: StaticAssetRequestOptions,
+  ): Promise<Response> {
     if (this.isHtml(file.relativePath)) {
-      return await this.createHtmlResponse(file, headOnly)
+      return await this.createHtmlResponse(file, headOnly, options)
     }
 
     const mimeType = lookupMimeType(file.absolutePath) || 'application/octet-stream'
@@ -319,6 +354,7 @@ export abstract class StaticAssetService {
     headers.set('last-modified', file.stats.mtime.toUTCString())
 
     this.applyCacheHeaders(headers, file.relativePath)
+    this.applyCorsHeaders(headers)
 
     if (headOnly) {
       return new Response(null, { headers, status: 200 })
@@ -329,14 +365,19 @@ export abstract class StaticAssetService {
     return new Response(body, { headers, status: 200 })
   }
 
-  private async createHtmlResponse(file: ResolvedStaticAsset, headOnly: boolean): Promise<Response> {
+  private async createHtmlResponse(
+    file: ResolvedStaticAsset,
+    headOnly: boolean,
+    options?: StaticAssetRequestOptions,
+  ): Promise<Response> {
     const html = await readFile(file.absolutePath, 'utf-8')
-    const transformed = await this.transformIndexHtml(html, file)
+    const transformed = await this.transformIndexHtml(html, file, options)
     const headers = new Headers()
     headers.set('content-type', 'text/html; charset=utf-8')
     headers.set('content-length', `${Buffer.byteLength(transformed, 'utf-8')}`)
     headers.set('last-modified', file.stats.mtime.toUTCString())
     this.applyCacheHeaders(headers, file.relativePath)
+    this.applyCorsHeaders(headers)
 
     if (headOnly) {
       return new Response(null, { headers, status: 200 })
@@ -345,18 +386,52 @@ export abstract class StaticAssetService {
     return new Response(transformed, { headers, status: 200 })
   }
 
-  private async transformIndexHtml(html: string, file: ResolvedStaticAsset): Promise<string> {
+  private async transformIndexHtml(
+    html: string,
+    file: ResolvedStaticAsset,
+    options?: StaticAssetRequestOptions,
+  ): Promise<string> {
     try {
       const document = DOM_PARSER.parseFromString(html, 'text/html') as unknown as StaticAssetDocument
       await this.decorateDocument(document, file)
       if (this.shouldRewriteAssetReferences(file)) {
-        this.rewriteStaticAssetReferences(document)
+        const staticAssetHost = await this.getStaticAssetHost(options?.requestHost)
+        this.rewriteStaticAssetReferences(document, staticAssetHost)
       }
       return document.documentElement.outerHTML
     } catch (error) {
       this.logger.warn('Failed to transform index.html for static asset response', error)
       return html
     }
+  }
+
+  private async getStaticAssetHost(requestHost?: string | null): Promise<string | null> {
+    if (!this.staticAssetHostResolver) {
+      return null
+    }
+
+    const cacheKey = this.buildStaticAssetHostCacheKey(requestHost)
+    if (this.staticAssetHosts.has(cacheKey)) {
+      return this.staticAssetHosts.get(cacheKey) ?? null
+    }
+
+    try {
+      const resolved = await this.staticAssetHostResolver(requestHost)
+      this.staticAssetHosts.set(cacheKey, resolved ?? null)
+      return resolved ?? null
+    } catch (error) {
+      this.logger.warn('Failed to resolve static asset host', error)
+      this.staticAssetHosts.set(cacheKey, null)
+    }
+
+    return null
+  }
+
+  private buildStaticAssetHostCacheKey(requestHost?: string | null): string {
+    if (!requestHost) {
+      return '__default__'
+    }
+    return requestHost.trim().toLowerCase()
   }
 
   private shouldTreatAsImmutable(relativePath: string): boolean {
@@ -372,6 +447,12 @@ export abstract class StaticAssetService {
     headers.set('cache-control', policy.browser)
     headers.set('cdn-cache-control', policy.cdn)
     headers.set('surrogate-control', policy.cdn)
+  }
+
+  private applyCorsHeaders(headers: Headers): void {
+    headers.set('access-control-allow-origin', '*')
+    headers.set('access-control-allow-methods', 'GET, HEAD, OPTIONS')
+    headers.set('access-control-allow-headers', 'content-type')
   }
 
   private resolveCachePolicy(relativePath: string): { browser: string; cdn: string } {

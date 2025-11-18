@@ -1,6 +1,7 @@
 import type { ModalComponent } from '@afilmory/ui'
 import { Button, DialogDescription, DialogFooter, DialogHeader, DialogTitle, LinearDivider } from '@afilmory/ui'
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
 import { getRequestErrorMessage } from '~/lib/errors'
@@ -8,6 +9,45 @@ import { getRequestErrorMessage } from '~/lib/errors'
 import { useUpdatePhotoTagsMutation } from '../../hooks'
 import type { PhotoAssetListItem } from '../../types'
 import { AutoSelect } from './photo-upload/AutoSelect'
+
+const photoTagsKeys = {
+  modalTitle: 'photos.library.tags.modal.title',
+  modalDescriptionMultiple: 'photos.library.tags.modal.description.multiple',
+  modalDescriptionSingle: 'photos.library.tags.modal.description.single',
+  pathSample: 'photos.library.tags.modal.path.sample',
+  pathPreview: 'photos.library.tags.modal.path.preview',
+  pathHint: 'photos.library.tags.modal.path.hint',
+  inputPlaceholder: 'photos.library.tags.modal.input',
+  toastSuccessMulti: 'photos.library.tags.toast.multi-success',
+  toastSuccessSingle: 'photos.library.tags.toast.single-success',
+  toastSuccessDescription: 'photos.library.tags.toast.success-description',
+  toastErrorTitle: 'photos.library.tags.toast.error',
+  toastErrorDescription: 'photos.library.tags.toast.error-description',
+  cancel: 'photos.library.tags.modal.cancel',
+  save: 'photos.library.tags.modal.save',
+  saving: 'photos.library.tags.modal.saving',
+  noSelection: 'photos.library.tags.modal.no-selection',
+  assetCount: 'photos.library.tags.modal.asset-count',
+} as const satisfies Record<
+  | 'modalTitle'
+  | 'modalDescriptionMultiple'
+  | 'modalDescriptionSingle'
+  | 'pathSample'
+  | 'pathPreview'
+  | 'pathHint'
+  | 'inputPlaceholder'
+  | 'toastSuccessMulti'
+  | 'toastSuccessSingle'
+  | 'toastSuccessDescription'
+  | 'toastErrorTitle'
+  | 'toastErrorDescription'
+  | 'cancel'
+  | 'save'
+  | 'saving'
+  | 'noSelection'
+  | 'assetCount',
+  I18nKeys
+>
 
 type PhotoTagEditorModalProps = {
   assets: PhotoAssetListItem[]
@@ -18,6 +58,7 @@ const arraysEqual = (a: string[], b: string[]): boolean =>
   a.length === b.length && a.every((value, index) => value === b[index])
 
 export const PhotoTagEditorModal: ModalComponent<PhotoTagEditorModalProps> = ({ assets, availableTags, dismiss }) => {
+  const { t } = useTranslation()
   const updateTagsMutation = useUpdatePhotoTagsMutation()
   const [isSaving, setIsSaving] = useState(false)
   const initialTags = useMemo(() => {
@@ -60,12 +101,12 @@ export const PhotoTagEditorModal: ModalComponent<PhotoTagEditorModalProps> = ({ 
   const isBusy = isSaving || updateTagsMutation.isPending
 
   const assetTitle = useMemo(() => {
-    if (assets.length === 0) return '未选择资源'
+    if (assets.length === 0) return t(photoTagsKeys.noSelection)
     if (!isMultiEdit) {
       const single = assets[0]
       return single.manifest?.data?.title ?? single.photoId
     }
-    return `${assets.length} 个资源`
+    return t(photoTagsKeys.assetCount, { count: assets.length })
   }, [assets, isMultiEdit])
 
   const handleSave = async () => {
@@ -78,13 +119,18 @@ export const PhotoTagEditorModal: ModalComponent<PhotoTagEditorModalProps> = ({ 
       for (const asset of assets) {
         await updateTagsMutation.mutateAsync({ id: asset.id, tags })
       }
-      toast.success(isMultiEdit ? `已更新 ${assets.length} 个资源的标签` : '标签已更新', {
-        description: '远程存储路径已同步到新的标签目录。',
-      })
+      toast.success(
+        isMultiEdit
+          ? t(photoTagsKeys.toastSuccessMulti, { count: assets.length })
+          : t(photoTagsKeys.toastSuccessSingle),
+        {
+          description: t(photoTagsKeys.toastSuccessDescription),
+        },
+      )
       dismiss?.()
     } catch (error) {
-      toast.error('更新标签失败', {
-        description: getRequestErrorMessage(error, '请稍后重试。'),
+      toast.error(t(photoTagsKeys.toastErrorTitle), {
+        description: getRequestErrorMessage(error, t(photoTagsKeys.toastErrorDescription)),
       })
     } finally {
       setIsSaving(false)
@@ -94,20 +140,17 @@ export const PhotoTagEditorModal: ModalComponent<PhotoTagEditorModalProps> = ({ 
   return (
     <div className="space-y-4">
       <DialogHeader>
-        <DialogTitle>修改「{assetTitle}」的标签</DialogTitle>
+        <DialogTitle>{t(photoTagsKeys.modalTitle, { name: assetTitle })}</DialogTitle>
         <DialogDescription>
-          标签同时决定远程存储的目录结构，
-          {isMultiEdit
-            ? '所有选中资源都会应用同样的标签。'
-            : '调整后将自动移动原图文件（及其 Live Photo 视频）到新的路径。'}
+          {isMultiEdit ? t(photoTagsKeys.modalDescriptionMultiple) : t(photoTagsKeys.modalDescriptionSingle)}
         </DialogDescription>
       </DialogHeader>
 
       {nextPathPreview ? (
         <div className="space-y-2 rounded-md border border-border/60 bg-background/60 p-3 text-xs text-text-tertiary">
           <div className="flex items-center justify-between text-[11px] font-medium text-text">
-            <span>{isMultiEdit ? '示例存储路径（第一项）' : '新存储路径预览'}</span>
-            <span className="text-text-secondary">（基于标签顺序）</span>
+            <span>{isMultiEdit ? t(photoTagsKeys.pathSample) : t(photoTagsKeys.pathPreview)}</span>
+            <span className="text-text-secondary">{t(photoTagsKeys.pathHint)}</span>
           </div>
           <p className="text-text rounded bg-background-secondary/60 px-2 py-1 font-mono text-xs">{nextPathPreview}</p>
         </div>
@@ -117,7 +160,7 @@ export const PhotoTagEditorModal: ModalComponent<PhotoTagEditorModalProps> = ({ 
         options={tagOptions}
         value={tags}
         onChange={setTags}
-        placeholder="输入后按 Enter 添加，或从常用标签中选择"
+        placeholder={t(photoTagsKeys.inputPlaceholder)}
         disabled={isBusy}
       />
 
@@ -131,7 +174,7 @@ export const PhotoTagEditorModal: ModalComponent<PhotoTagEditorModalProps> = ({ 
           onClick={dismiss}
           className="text-text-secondary hover:text-text"
         >
-          取消
+          {t(photoTagsKeys.cancel)}
         </Button>
         <Button
           type="button"
@@ -140,7 +183,7 @@ export const PhotoTagEditorModal: ModalComponent<PhotoTagEditorModalProps> = ({ 
           disabled={!hasChanges || isBusy}
           onClick={() => void handleSave()}
         >
-          {isBusy ? '保存中…' : '保存'}
+          {isBusy ? t(photoTagsKeys.saving) : t(photoTagsKeys.save)}
         </Button>
       </DialogFooter>
     </div>

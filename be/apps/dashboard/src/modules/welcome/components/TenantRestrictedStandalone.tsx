@@ -1,9 +1,11 @@
 import { Button, LinearBorderContainer } from '@afilmory/ui'
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { buildHomeUrl, buildRegistrationUrl, getCurrentHostname } from './tenant-utils'
 
 export const TenantRestrictedStandalone = () => {
+  const { t } = useTranslation()
   const hostname = useMemo(() => getCurrentHostname(), [])
   const registrationUrl = useMemo(() => buildRegistrationUrl(), [])
   const homeUrl = useMemo(() => buildHomeUrl(), [])
@@ -20,17 +22,21 @@ export const TenantRestrictedStandalone = () => {
 
             <div className="relative p-10 sm:p-12">
               <div>
-                <p className="text-text-tertiary mb-3 text-xs font-semibold uppercase tracking-[0.55em]">403</p>
-                <h1 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">该空间已被保留</h1>
+                <p className="text-text-tertiary mb-3 text-xs font-semibold uppercase tracking-[0.55em]">
+                  {t('welcome.tenant-restricted.code')}
+                </p>
+                <h1 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">
+                  {t('welcome.tenant-restricted.title')}
+                </h1>
                 <p className="text-text-secondary mb-6 text-base leading-relaxed">
-                  当前访问的空间属于系统保留地址，无法直接访问仪表盘或公开站点。若要继续体验
-                  Afilmory，请使用其他地址，或者注册属于你的专属空间。
+                  {t('welcome.tenant-restricted.description')}
                 </p>
 
                 {hostname && (
                   <div className="bg-material-medium/40 border-fill-tertiary mb-6 rounded-2xl border px-5 py-4 text-sm">
                     <p className="text-text-secondary">
-                      请求的地址：<span className="text-text font-medium">{hostname}</span>
+                      {t('welcome.tenant-restricted.request')}
+                      <span className="text-text font-medium">{hostname}</span>
                     </p>
                   </div>
                 )}
@@ -41,10 +47,10 @@ export const TenantRestrictedStandalone = () => {
                     className="glassmorphic-btn flex-1"
                     onClick={() => (window.location.href = registrationUrl)}
                   >
-                    去注册新空间
+                    {t('welcome.tenant-restricted.register')}
                   </Button>
                   <Button variant="ghost" className="flex-1" onClick={() => (window.location.href = homeUrl)}>
-                    返回首页
+                    {t('welcome.tenant-restricted.home')}
                   </Button>
                 </div>
               </div>
