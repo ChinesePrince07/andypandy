@@ -1,5 +1,8 @@
 'use client'
 
+import { useState } from 'react'
+
+import { CreateSpaceModal } from './CreateSpaceModal'
 import { NocturneButton } from './NocturneButton'
 
 const pillars = [
@@ -66,7 +69,7 @@ export const NocturneHero = () => {
   return (
     <section className="relative overflow-hidden rounded-[40px] border border-white/5 bg-linear-to-b from-[#050505] via-[#030303] to-black px-6 py-12 shadow-[0_30px_120px_rgba(0,0,0,0.6)] sm:px-10 sm:py-16">
       <div className="pointer-events-none absolute inset-0 opacity-60">
-        <div className="absolute inset-x-12 inset-y-10 rounded-[32px] bg-[radial-gradient(circle_at_top,#1a1a1a,transparent_60%)] blur-3xl" />
+        <div className="absolute inset-x-12 inset-y-10 rounded-4xl bg-[radial-gradient(circle_at_top,#1a1a1a,transparent_60%)] blur-3xl" />
         <div className="absolute top-6 left-1/2 h-48 w-48 -translate-x-1/2 rounded-full bg-linear-to-br from-white/10 via-white/5 to-transparent blur-[90px]" />
       </div>
       <div className="relative flex flex-col gap-12">
@@ -75,7 +78,7 @@ export const NocturneHero = () => {
           <span>暗夜影像档案</span>
         </nav>
         <div className="space-y-8 text-center">
-          <p className="text-sm tracking-[0.4em] text-white/50">
+          <p className="text-sm tracking-[0.4em] text-white/50 uppercase">
             Auto Focus · Aperture · Film · Memory
           </p>
           <h1 className="font-serif text-4xl leading-tight text-white sm:text-5xl lg:text-[4.25rem]">
@@ -83,32 +86,27 @@ export const NocturneHero = () => {
             <br />
             在黑暗中把焦点与记忆熔铸为一
           </h1>
-          <p className="mx-auto max-w-3xl text-base leading-relaxed text-white/70 sm:text-lg">
-            Auto Focus 的敏锐、Aperture 对光的雕刻、Film 的质感与 Memory
-            的余温，
-            在这里形成一座纯黑的摄影剧场。我们邀请你暂时离开喧闹的时代，沉浸在
-            光的呼吸里。
-          </p>
-          <div className="flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-6">
-            <NocturneButton>走进影像档案馆</NocturneButton>
-            <NocturneButton variant="secondary">阅读创作宣言</NocturneButton>
+          <div className="flex justify-center pt-4">
+            <NocturneButton
+              onClick={() => {
+                document
+                  .querySelector('#create-space')
+                  ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+              }}
+            >
+              走进影像档案馆
+            </NocturneButton>
           </div>
         </div>
         <div className="grid gap-6 lg:grid-cols-[1.35fr,1fr]">
-          <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-linear-to-br from-white/10 via-white/0 to-transparent p-6">
-            <div className="text-xs tracking-[0.4em] text-white/40 uppercase">
-              Hero Still
-            </div>
-            <div className="mt-4 aspect-[4/3] w-full rounded-2xl border border-white/10 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.15),rgba(10,10,10,0.8))]">
-              <div className="flex h-full flex-col items-center justify-center text-center text-white/40">
-                <span className="text-sm">作品展示占位</span>
-                <span className="text-xs tracking-[0.3em]">PHOTOGRAPHY</span>
-              </div>
-            </div>
-            <p className="mt-4 text-sm text-white/60">
-              终稿将使用真实作品预览，这里以占位图形象征摄影场景。
-            </p>
+          <div className="mt-4 aspect-4/3 w-full overflow-hidden rounded-2xl border border-white/10">
+            <img
+              src="https://github.com/Afilmory/assets/blob/main/afilmory-readme.webp?raw=true"
+              alt="Afilmory Preview"
+              className="h-full w-full object-cover"
+            />
           </div>
+
           <div className="flex flex-col justify-between rounded-[28px] border border-white/10 bg-white/5 p-6">
             <div>
               <p className="text-xs tracking-[0.4em] text-white/40 uppercase">
@@ -129,6 +127,75 @@ export const NocturneHero = () => {
   )
 }
 
+export const CreateSpaceCTA = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false)
+
+  return (
+    <>
+      <section
+        id="create-space"
+        className="relative overflow-hidden rounded-[40px] border border-white/5 bg-linear-to-b from-[#0a0a0a] via-[#050505] to-black px-6 py-16 shadow-[0_30px_120px_rgba(0,0,0,0.6)] sm:px-10 sm:py-20"
+      >
+        <div className="pointer-events-none absolute inset-0 opacity-40">
+          <div className="absolute inset-x-12 inset-y-10 rounded-4xl bg-[radial-gradient(circle_at_center,#2a2a2a,transparent_70%)] blur-3xl" />
+        </div>
+        <div className="relative mx-auto max-w-3xl text-center">
+          <p className="text-xs tracking-[0.6em] text-white/40 uppercase">
+            Start Your Journey
+          </p>
+          <h2 className="mt-6 font-serif text-3xl leading-tight text-white sm:text-4xl lg:text-5xl">
+            创建你的影像空间
+          </h2>
+          <p className="mt-6 text-base leading-relaxed text-white/70 sm:text-lg">
+            在 Afilmory 中，每个人都可以拥有属于自己的摄影档案馆。
+            <br className="hidden sm:inline" />
+            记录光影、整理回忆、分享故事——用你的方式呈现独特的视觉叙事。
+          </p>
+          <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-6">
+            <NocturneButton onClick={() => setIsModalOpen(true)}>
+              创建我的空间
+            </NocturneButton>
+          </div>
+          <div className="mt-12 grid gap-4 text-left sm:grid-cols-3">
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+              <div className="mb-3 text-2xl">📸</div>
+              <h3 className="mb-2 text-sm font-medium tracking-wider text-white">
+                专属存储
+              </h3>
+              <p className="text-xs leading-relaxed text-white/60">
+                安全存储你的照片作品，构建专属的影像档案
+              </p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+              <div className="mb-3 text-2xl">🎨</div>
+              <h3 className="mb-2 text-sm font-medium tracking-wider text-white">
+                自由策展
+              </h3>
+              <p className="text-xs leading-relaxed text-white/60">
+                像策展人一样组织作品，打造独特的视觉体验
+              </p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+              <div className="mb-3 text-2xl">🌐</div>
+              <h3 className="mb-2 text-sm font-medium tracking-wider text-white">
+                轻松分享
+              </h3>
+              <p className="text-xs leading-relaxed text-white/60">
+                一键生成精美展示页，与世界分享你的故事
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <CreateSpaceModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
+    </>
+  )
+}
+
 export const PillarsSection = () => {
   return (
     <section id="chapters" className="space-y-10">
@@ -140,7 +207,7 @@ export const PillarsSection = () => {
           Afilmory 的四个核心感官
         </h2>
         <p className="mt-3 text-base text-white/70">
-          Auto Focus、Aperture、Film、Memory ——
+          Auto Focus, Aperture, Film, Memory ——
           四个词汇构成名字，也构成观看者进入影像档案的仪式。
         </p>
       </div>

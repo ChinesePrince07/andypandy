@@ -8,7 +8,6 @@ import {
 } from '@afilmory/builder/plugins/thumbnail-storage/shared.js'
 import { StorageManager } from '@afilmory/builder/storage/index.js'
 import type { GitHubConfig, S3Config } from '@afilmory/builder/storage/interfaces.js'
-import type { PhotoAssetManifest } from '@afilmory/db'
 import { CURRENT_PHOTO_MANIFEST_VERSION, DATABASE_ONLY_PROVIDER, photoAssets } from '@afilmory/db'
 import { EventEmitterService } from '@afilmory/framework'
 import { DbAccessor } from 'core/database/database.provider'
@@ -31,40 +30,18 @@ import { injectable } from 'tsyringe'
 
 import { PhotoBuilderService } from '../builder/photo-builder.service'
 import { PhotoStorageService } from '../storage/photo-storage.service'
+import type {
+  PhotoAssetListItem,
+  PhotoAssetManifest,
+  PhotoAssetRecord,
+  PhotoAssetSummary,
+  UploadAssetInput,
+} from './photo-asset.types'
 import { inferContentTypeFromKey } from './storage.utils'
-
-type PhotoAssetRecord = typeof photoAssets.$inferSelect
 
 const DEFAULT_THUMBNAIL_EXTENSION = {
   'image/jpeg': '.jpg',
 }[DEFAULT_CONTENT_TYPE]
-export interface PhotoAssetListItem {
-  id: string
-  photoId: string
-  storageKey: string
-  storageProvider: string
-  manifest: PhotoAssetManifest
-  syncedAt: string
-  updatedAt: string
-  createdAt: string
-  publicUrl: string | null
-  size: number | null
-  syncStatus: PhotoAssetRecord['syncStatus']
-}
-
-export interface PhotoAssetSummary {
-  total: number
-  synced: number
-  conflicts: number
-  pending: number
-}
-
-export interface UploadAssetInput {
-  filename: string
-  buffer: Buffer
-  contentType?: string
-  directory?: string | null
-}
 
 const VIDEO_EXTENSIONS = new Set(['mov', 'mp4'])
 
@@ -171,6 +148,25 @@ export class PhotoAssetService {
     }
 
     return summary
+  }
+
+  async findPhotosByIds(photoIds: string[]): Promise<PhotoManifestItem[]> {
+    if (photoIds.length === 0) {
+      return []
+    }
+
+    const tenant = requireTenantContext()
+    const db = this.dbAccessor.get()
+
+    const records = await db
+      .select({
+        photoId: photoAssets.photoId,
+        manifest: photoAssets.manifest,
+      })
+      .from(photoAssets)
+      .where(and(eq(photoAssets.tenantId, tenant.tenant.id), inArray(photoAssets.photoId, photoIds)))
+
+    return records.map((record) => record.manifest.data)
   }
 
   async deleteAssets(ids: readonly string[], options?: { deleteFromStorage?: boolean }): Promise<void> {

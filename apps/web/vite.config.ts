@@ -164,6 +164,15 @@ const BUILD_FOR_SERVER_SERVE = process.env.BUILD_FOR_SERVER_SERVE === '1'
 export default defineConfig(() => {
   return {
     base: BUILD_FOR_SERVER_SERVE ? '/static/web/' : '/',
+    // Vite MPA configuration
+    build: {
+      rollupOptions: {
+        input: {
+          main: path.resolve(__dirname, 'index.html'),
+          share: path.resolve(__dirname, 'share.html'),
+        },
+      },
+    },
     plugins: [
       codeInspectorPlugin({
         bundler: 'vite',

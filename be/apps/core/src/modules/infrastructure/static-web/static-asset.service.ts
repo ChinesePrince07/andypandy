@@ -73,6 +73,7 @@ export abstract class StaticAssetService {
 
     const relativeRequestPath = this.extractRelativePath(fullPath)
     const target = await this.resolveFile(relativeRequestPath, staticRoot)
+    this.logger.debug('Resolved static asset request', { fullPath, relativeRequestPath, target })
     if (!target) {
       return null
     }
@@ -226,14 +227,37 @@ export abstract class StaticAssetService {
   }
 
   private extractRelativePath(fullPath: string): string {
-    const index = fullPath.indexOf(this.routeSegment)
+    const trimmed = fullPath.trim()
+    if (trimmed.length === 0) {
+      return ''
+    }
+
+    const index = trimmed.indexOf(this.routeSegment)
     if (index === -1) {
       return ''
     }
 
+    if (!this.shouldStripRouteSegment(trimmed, index)) {
+      return this.stripLeadingSlashes(trimmed)
+    }
+
     const sliceStart = index + this.routeSegment.length
-    const remainder = sliceStart < fullPath.length ? fullPath.slice(sliceStart) : ''
+    const remainder = sliceStart < trimmed.length ? trimmed.slice(sliceStart) : ''
     return this.stripLeadingSlashes(remainder)
+  }
+
+  private shouldStripRouteSegment(pathname: string, index: number): boolean {
+    if (!this.routeSegment) {
+      return false
+    }
+
+    const matchEnd = index + this.routeSegment.length
+    const hasValidPrefixBoundary = index === 0 || pathname.charAt(index - 1) === '/'
+    const nextChar = pathname.charAt(matchEnd)
+    const hasValidSuffixBoundary =
+      matchEnd >= pathname.length || nextChar === '/' || nextChar === '?' || nextChar === '#'
+
+    return hasValidPrefixBoundary && hasValidSuffixBoundary
   }
 
   private stripLeadingSlashes(pathname: string): string {
@@ -248,6 +272,8 @@ export abstract class StaticAssetService {
     const decoded = this.decodePath(requestPath)
     const normalized = this.normalizePath(decoded)
     const candidates = this.buildCandidatePaths(normalized)
+
+    this.logger.debug('Static asset resolution candidates', { decoded, normalized, candidates })
 
     for (const candidate of candidates) {
       const resolved = await this.tryResolveFile(root, candidate)

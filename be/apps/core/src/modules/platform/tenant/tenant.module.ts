@@ -2,7 +2,7 @@ import './tenant.context'
 
 import { Module } from '@afilmory/framework'
 import { DatabaseModule } from 'core/database/database.module'
-import { AppStateModule } from 'core/modules/infrastructure/app-state/app-state.module'
+import { AppStateModule } from 'core/modules/app/app-state/app-state.module'
 
 import { TenantRepository } from './tenant.repository'
 import { TenantService } from './tenant.service'

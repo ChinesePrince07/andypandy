@@ -1,7 +1,7 @@
 import type { HttpMiddleware, OnModuleDestroy, OnModuleInit } from '@afilmory/framework'
 import { EventEmitterService, Middleware } from '@afilmory/framework'
 import { logger } from 'core/helpers/logger.helper'
-import { AppStateService } from 'core/modules/infrastructure/app-state/app-state.service'
+import { AppStateService } from 'core/modules/app/app-state/app-state.service'
 import { getTenantContext } from 'core/modules/platform/tenant/tenant.context'
 import { TenantContextResolver } from 'core/modules/platform/tenant/tenant-context-resolver.service'
 import type { Context } from 'hono'

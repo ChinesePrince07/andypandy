@@ -1,8 +1,8 @@
 import { Module } from '@afilmory/framework'
 import { DatabaseModule } from 'core/database/database.module'
+import { AppStateModule } from 'core/modules/app/app-state/app-state.module'
 import { SettingModule } from 'core/modules/configuration/setting/setting.module'
 import { SystemSettingModule } from 'core/modules/configuration/system-setting/system-setting.module'
-import { AppStateModule } from 'core/modules/infrastructure/app-state/app-state.module'
 
 import { TenantModule } from '../tenant/tenant.module'
 import { AuthConfig } from './auth.config'
