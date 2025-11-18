@@ -223,14 +223,9 @@ export class PhotoStorageService {
     return normalized
   }
 
-  private ensureUserSettings(config: BuilderConfig) {
+  private ensureUserSettings(config: BuilderConfig): NonNullable<BuilderConfig['user']> {
     if (!config.user) {
       config.user = {
-        repo: {
-          enable: false,
-          url: '',
-          token: '',
-        },
         storage: null,
       }
     }

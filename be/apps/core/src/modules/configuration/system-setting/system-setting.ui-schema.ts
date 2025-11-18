@@ -1,4 +1,6 @@
-import { BILLING_PLAN_DEFINITIONS, BILLING_PLAN_IDS } from 'core/modules/platform/billing/billing-plan.constants'
+import { BILLING_PLAN_IDS } from 'core/modules/platform/billing/billing-plan.constants'
+import type {UiSchemaTFunction} from 'core/modules/ui/ui-schema/ui-schema.i18n';
+import { identityUiSchemaT  } from 'core/modules/ui/ui-schema/ui-schema.i18n'
 import type { UiNode, UiSchema } from 'core/modules/ui/ui-schema/ui-schema.type'
 
 import type { SystemSettingField } from './system-setting.constants'
@@ -8,123 +10,129 @@ export const SYSTEM_SETTING_UI_SCHEMA_VERSION = '1.4.0'
 const PLAN_QUOTA_FIELDS = [
   {
     suffix: 'monthlyAssetProcessLimit',
-    title: '每月可新增照片 (张)',
-    description: '达到上限后将阻止新增照片。留空表示回退到默认值或不限。',
-    placeholder: '例如 300',
+    titleKey: 'system.sections.billing.fields.quota.monthly-asset.title',
+    descriptionKey: 'system.sections.billing.fields.quota.monthly-asset.description',
+    placeholderKey: 'system.sections.billing.fields.quota.monthly-asset.placeholder',
   },
   {
     suffix: 'libraryItemLimit',
-    title: '图库容量限制 (张)',
-    description: '限制单个租户可管理的照片数量，0 表示完全禁止新增。',
-    placeholder: '例如 500',
+    titleKey: 'system.sections.billing.fields.quota.library-limit.title',
+    descriptionKey: 'system.sections.billing.fields.quota.library-limit.description',
+    placeholderKey: 'system.sections.billing.fields.quota.library-limit.placeholder',
   },
   {
     suffix: 'maxUploadSizeMb',
-    title: '后台上传大小上限 (MB)',
-    description: '单次上传的最大文件体积，留空表示默认值或无限制。',
-    placeholder: '例如 20',
+    titleKey: 'system.sections.billing.fields.quota.upload-limit.title',
+    descriptionKey: 'system.sections.billing.fields.quota.upload-limit.description',
+    placeholderKey: 'system.sections.billing.fields.quota.upload-limit.placeholder',
   },
   {
     suffix: 'maxSyncObjectSizeMb',
-    title: '同步素材大小上限 (MB)',
-    description: 'Data Sync 导入时允许的最大文件尺寸。',
-    placeholder: '例如 50',
+    titleKey: 'system.sections.billing.fields.quota.sync-limit.title',
+    descriptionKey: 'system.sections.billing.fields.quota.sync-limit.description',
+    placeholderKey: 'system.sections.billing.fields.quota.sync-limit.placeholder',
   },
 ] as const
 
 const PLAN_PRICING_FIELDS = [
   {
     suffix: 'monthlyPrice',
-    title: '月度定价',
-    description: '用于展示的价格或 Creem 产品价格，留空保留默认值。',
-    placeholder: '例如 49',
+    titleKey: 'system.sections.billing.fields.pricing.monthly-price.title',
+    descriptionKey: 'system.sections.billing.fields.pricing.monthly-price.description',
+    placeholderKey: 'system.sections.billing.fields.pricing.monthly-price.placeholder',
+    helperKey: 'system.sections.billing.fields.pricing.monthly-price.helper',
+    inputType: 'number' as const,
   },
   {
     suffix: 'currency',
-    title: '币种',
-    description: 'ISO 货币代码，如 CNY、USD 等。',
-    placeholder: 'CNY',
+    titleKey: 'system.sections.billing.fields.pricing.currency.title',
+    descriptionKey: 'system.sections.billing.fields.pricing.currency.description',
+    placeholderKey: 'system.sections.billing.fields.pricing.currency.placeholder',
+    helperKey: 'system.sections.billing.fields.pricing.currency.helper',
+    inputType: 'text' as const,
   },
 ] as const
 
 const PLAN_PAYMENT_FIELDS = [
   {
     suffix: 'creemProductId',
-    title: 'Creem Product ID',
-    description: '用于创建结算会话的 Creem 商品 ID。留空表示该计划不会显示升级入口。',
-    placeholder: 'prod_xxx',
+    titleKey: 'system.sections.billing.fields.payment.creem-product.title',
+    descriptionKey: 'system.sections.billing.fields.payment.creem-product.description',
+    placeholderKey: 'system.sections.billing.fields.payment.creem-product.placeholder',
   },
 ] as const
 
-const BILLING_PLAN_GROUPS: ReadonlyArray<UiNode<SystemSettingField>> = BILLING_PLAN_IDS.map((planId) => {
-  const metadata = BILLING_PLAN_DEFINITIONS[planId]
-  const quotaFields = PLAN_QUOTA_FIELDS.map((field) => ({
-    type: 'field' as const,
-    id: `${planId}-${field.suffix}`,
-    title: field.title,
-    description: field.description,
-    helperText: '留空表示遵循默认或不限，填写数字后将覆盖对应计划。',
-    key: `billingPlan.${planId}.quota.${field.suffix}` as SystemSettingField,
-    component: {
-      type: 'text' as const,
-      inputType: 'number' as const,
-      placeholder: field.placeholder,
-    },
-  }))
+function buildBillingPlanGroups (t: UiSchemaTFunction): ReadonlyArray<UiNode<SystemSettingField>> {
+  return BILLING_PLAN_IDS.map((planId) => {
+    const quotaFields = PLAN_QUOTA_FIELDS.map((field) => ({
+      type: 'field' as const,
+      id: `${planId}-${field.suffix}`,
+      title: t(field.titleKey),
+      description: t(field.descriptionKey),
+      helperText: t('system.sections.billing.fields.quota.helper'),
+      key: `billingPlan.${planId}.quota.${field.suffix}` as SystemSettingField,
+      component: {
+        type: 'text' as const,
+        inputType: 'number' as const,
+        placeholder: t(field.placeholderKey),
+      },
+    }))
 
-  const pricingFields = PLAN_PRICING_FIELDS.map((field) => ({
-    type: 'field' as const,
-    id: `${planId}-pricing-${field.suffix}`,
-    title: field.title,
-    description: field.description,
-    helperText: field.suffix === 'monthlyPrice' ? '留空表示暂不展示定价信息。' : '留空表示使用默认币种或不展示。',
-    key: `billingPlan.${planId}.pricing.${field.suffix}` as SystemSettingField,
-    component: {
-      type: 'text' as const,
-      inputType: field.suffix === 'monthlyPrice' ? ('number' as const) : ('text' as const),
-      placeholder: field.placeholder,
-    },
-  }))
+    const pricingFields = PLAN_PRICING_FIELDS.map((field) => ({
+      type: 'field' as const,
+      id: `${planId}-pricing-${field.suffix}`,
+      title: t(field.titleKey),
+      description: t(field.descriptionKey),
+      helperText: t(field.helperKey),
+      key: `billingPlan.${planId}.pricing.${field.suffix}` as SystemSettingField,
+      component: {
+        type: 'text' as const,
+        inputType: field.inputType,
+        placeholder: t(field.placeholderKey),
+      },
+    }))
 
-  const paymentFields = PLAN_PAYMENT_FIELDS.map((field) => ({
-    type: 'field' as const,
-    id: `${planId}-payment-${field.suffix}`,
-    title: field.title,
-    description: field.description,
-    helperText: '为空将隐藏升级入口。',
-    key: `billingPlan.${planId}.payment.${field.suffix}` as SystemSettingField,
-    component: {
-      type: 'text' as const,
-      placeholder: field.placeholder,
-    },
-  }))
+    const paymentFields = PLAN_PAYMENT_FIELDS.map((field) => ({
+      type: 'field' as const,
+      id: `${planId}-payment-${field.suffix}`,
+      title: t(field.titleKey),
+      description: t(field.descriptionKey),
+      helperText: t('system.sections.billing.fields.payment.helper'),
+      key: `billingPlan.${planId}.payment.${field.suffix}` as SystemSettingField,
+      component: {
+        type: 'text' as const,
+        placeholder: t(field.placeholderKey),
+      },
+    }))
 
+    return {
+      type: 'group' as const,
+      id: `billing-plan-${planId}`,
+      title: t(`system.sections.billing.plans.${planId}.title`),
+      description: t(`system.sections.billing.plans.${planId}.description`),
+      children: [...quotaFields, ...pricingFields, ...paymentFields],
+    } satisfies UiNode<SystemSettingField>
+  })
+}
+
+export function createSystemSettingUiSchema (t: UiSchemaTFunction): UiSchema<SystemSettingField> {
   return {
-    type: 'group' as const,
-    id: `billing-plan-${planId}`,
-    title: `${metadata.name} (${planId})`,
-    description: metadata.description,
-    children: [...quotaFields, ...pricingFields, ...paymentFields],
-  } satisfies UiNode<SystemSettingField>
-})
-
-export const SYSTEM_SETTING_UI_SCHEMA: UiSchema<SystemSettingField> = {
   version: SYSTEM_SETTING_UI_SCHEMA_VERSION,
-  title: '系统设置',
-  description: '管理整个平台的注册入口、登录策略与第三方 OAuth 配置。',
+  title: t('system.title'),
+  description: t('system.description'),
   sections: [
     {
       type: 'section',
       id: 'registration-control',
-      title: '全局注册策略',
-      description: '控制新用户注册配额以及本地账号登录能力。',
+      title: t('system.sections.registration.title'),
+      description: t('system.sections.registration.description'),
       icon: 'user-cog',
       children: [
         {
           type: 'field',
           id: 'registration-allow',
-          title: '允许新用户注册',
-          description: '关闭后仅超级管理员可以手动添加新账号。',
+          title: t('system.sections.registration.fields.allow-registration.title'),
+          description: t('system.sections.registration.fields.allow-registration.description'),
           key: 'allowRegistration',
           component: {
             type: 'switch',
@@ -133,8 +141,8 @@ export const SYSTEM_SETTING_UI_SCHEMA: UiSchema<SystemSettingField> = {
         {
           type: 'field',
           id: 'local-provider-enabled',
-          title: '启用本地登录（邮箱 / 密码）',
-          description: '关闭后普通用户只能使用第三方登录渠道。',
+          title: t('system.sections.registration.fields.local-provider.title'),
+          description: t('system.sections.registration.fields.local-provider.description'),
           key: 'localProviderEnabled',
           component: {
             type: 'switch',
@@ -143,26 +151,26 @@ export const SYSTEM_SETTING_UI_SCHEMA: UiSchema<SystemSettingField> = {
         {
           type: 'field',
           id: 'platform-base-domain',
-          title: '平台基础域名',
-          description: '用于解析子域名租户，如 example.{{value}}。更新后请确保证书和 DNS 已正确配置。',
-          helperText: '留空使用默认域名 afilmory.art。',
+          title: t('system.sections.registration.fields.base-domain.title'),
+          description: t('system.sections.registration.fields.base-domain.description'),
+          helperText: t('system.sections.registration.fields.base-domain.helper'),
           key: 'baseDomain',
           component: {
             type: 'text',
-            placeholder: 'afilmory.art',
+            placeholder: t('system.sections.registration.fields.base-domain.placeholder'),
           },
         },
         {
           type: 'field',
           id: 'registration-max-users',
-          title: '全局可注册用户上限',
-          description: '达到上限后将阻止新的注册，留空表示不限制用户数量。',
-          helperText: '设置为 0 时将立即阻止新的用户注册。',
+          title: t('system.sections.registration.fields.max-users.title'),
+          description: t('system.sections.registration.fields.max-users.description'),
+          helperText: t('system.sections.registration.fields.max-users.helper'),
           key: 'maxRegistrableUsers',
           component: {
             type: 'text' as const,
             inputType: 'number',
-            placeholder: '无限制',
+            placeholder: t('system.sections.registration.fields.max-users.placeholder'),
           },
         },
       ],
@@ -170,57 +178,57 @@ export const SYSTEM_SETTING_UI_SCHEMA: UiSchema<SystemSettingField> = {
     {
       type: 'section',
       id: 'billing-plan-settings',
-      title: '订阅计划配置',
-      description: '为每个订阅计划定义资源限制、展示价格以及 Creem 商品映射。',
+      title: t('system.sections.billing.title'),
+      description: t('system.sections.billing.description'),
       icon: 'badge-dollar-sign',
-      children: BILLING_PLAN_GROUPS,
+      children: buildBillingPlanGroups(t),
     },
     {
       type: 'section',
       id: 'oauth-providers',
-      title: 'OAuth 登录渠道',
-      description: '统一配置所有租户可用的第三方登录渠道。',
+      title: t('system.sections.oauth.title'),
+      description: t('system.sections.oauth.description'),
       icon: 'shield-check',
       children: [
         {
           type: 'field',
           id: 'oauth-gateway-url',
-          title: 'OAuth 网关地址',
-          description: '所有第三方登录统一走该回调入口（例如 https://auth.afilmory.art）。留空则回退到租户域名。',
-          helperText: '必须包含 http/https 协议，结尾无需斜杠。',
+          title: t('system.sections.oauth.fields.gateway.title'),
+          description: t('system.sections.oauth.fields.gateway.description'),
+          helperText: t('system.sections.oauth.fields.gateway.helper'),
           key: 'oauthGatewayUrl',
           component: {
             type: 'text',
-            placeholder: 'https://auth.afilmory.art',
+            placeholder: t('system.sections.oauth.fields.gateway.placeholder'),
           },
         },
         {
           type: 'group',
           id: 'oauth-google',
-          title: 'Google OAuth',
-          description: '在 Google Cloud Console 中创建 OAuth 应用后填入以下信息。',
+          title: t('system.sections.oauth.groups.google.title'),
+          description: t('system.sections.oauth.groups.google.description'),
           icon: 'badge-check',
           children: [
             {
               type: 'field',
               id: 'oauth-google-client-id',
-              title: 'Client ID',
-              description: 'Google OAuth 的客户端 ID。',
+              title: t('system.sections.oauth.groups.google.fields.client-id.title'),
+              description: t('system.sections.oauth.groups.google.fields.client-id.description'),
               key: 'oauthGoogleClientId',
               component: {
                 type: 'text',
-                placeholder: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com',
+                placeholder: t('system.sections.oauth.groups.google.fields.client-id.placeholder'),
               },
             },
             {
               type: 'field',
               id: 'oauth-google-client-secret',
-              title: 'Client Secret',
-              description: 'Google OAuth 的客户端密钥。',
+              title: t('system.sections.oauth.groups.google.fields.client-secret.title'),
+              description: t('system.sections.oauth.groups.google.fields.client-secret.description'),
               key: 'oauthGoogleClientSecret',
               component: {
                 type: 'secret',
-                placeholder: '************',
+                placeholder: t('system.sections.oauth.groups.google.fields.client-secret.placeholder'),
                 revealable: true,
                 autoComplete: 'off',
               },
@@ -230,30 +238,30 @@ export const SYSTEM_SETTING_UI_SCHEMA: UiSchema<SystemSettingField> = {
         {
           type: 'group',
           id: 'oauth-github',
-          title: 'GitHub OAuth',
-          description: 'GitHub Developer settings 中创建 OAuth App 后填入以下信息。',
+          title: t('system.sections.oauth.groups.github.title'),
+          description: t('system.sections.oauth.groups.github.description'),
           icon: 'github',
           children: [
             {
               type: 'field',
               id: 'oauth-github-client-id',
-              title: 'Client ID',
-              description: 'GitHub OAuth 的客户端 ID。',
+              title: t('system.sections.oauth.groups.github.fields.client-id.title'),
+              description: t('system.sections.oauth.groups.github.fields.client-id.description'),
               key: 'oauthGithubClientId',
               component: {
                 type: 'text',
-                placeholder: 'Iv1.xxxxxxxxxxxxxxxx',
+                placeholder: t('system.sections.oauth.groups.github.fields.client-id.placeholder'),
               },
             },
             {
               type: 'field',
               id: 'oauth-github-client-secret',
-              title: 'Client Secret',
-              description: 'GitHub OAuth 的客户端密钥。',
+              title: t('system.sections.oauth.groups.github.fields.client-secret.title'),
+              description: t('system.sections.oauth.groups.github.fields.client-secret.description'),
               key: 'oauthGithubClientSecret',
               component: {
                 type: 'secret',
-                placeholder: '****************',
+                placeholder: t('system.sections.oauth.groups.github.fields.client-secret.placeholder'),
                 revealable: true,
                 autoComplete: 'off',
               },
@@ -264,6 +272,9 @@ export const SYSTEM_SETTING_UI_SCHEMA: UiSchema<SystemSettingField> = {
     },
   ],
 }
+}
+
+const SYSTEM_SETTING_SCHEMA_FOR_KEYS = createSystemSettingUiSchema(identityUiSchemaT)
 
 function collectKeys(nodes: ReadonlyArray<UiNode<SystemSettingField>>): SystemSettingField[] {
   const keys: SystemSettingField[] = []
@@ -281,5 +292,5 @@ function collectKeys(nodes: ReadonlyArray<UiNode<SystemSettingField>>): SystemSe
 }
 
 export const SYSTEM_SETTING_UI_SCHEMA_KEYS = Array.from(
-  new Set(collectKeys(SYSTEM_SETTING_UI_SCHEMA.sections)),
+  new Set(collectKeys(SYSTEM_SETTING_SCHEMA_FOR_KEYS.sections)),
 ) as SystemSettingField[]

@@ -1,56 +1,59 @@
+import type { UiSchemaTFunction } from '../../ui/ui-schema/ui-schema.i18n'
+import { identityUiSchemaT } from '../../ui/ui-schema/ui-schema.i18n'
 import type { UiNode, UiSchema } from '../../ui/ui-schema/ui-schema.type'
 import type { SiteSettingKey } from './site-setting.type'
 
 export const SITE_SETTING_UI_SCHEMA_VERSION = '1.0.0'
 
-export const SITE_SETTING_UI_SCHEMA: UiSchema<SiteSettingKey> = {
+export function createSiteSettingUiSchema (t: UiSchemaTFunction): UiSchema<SiteSettingKey> {
+  return {
   version: SITE_SETTING_UI_SCHEMA_VERSION,
-  title: '站点设置',
-  description: '配置前台站点的基础信息、品牌样式与地图展示能力。',
+  title: t('site.title'),
+  description: t('site.description'),
   sections: [
     {
       type: 'section',
       id: 'site-basic',
-      title: '基础信息',
-      description: '这些信息将直接展示在站点的导航栏、标题和 SEO 中。',
+      title: t('site.sections.basic.title'),
+      description: t('site.sections.basic.description'),
       icon: 'layout-dashboard',
       children: [
         {
           type: 'field',
           id: 'site-name',
-          title: '站点名称',
-          description: '显示在站点导航栏和页面标题中。',
+          title: t('site.sections.basic.fields.site-name.title'),
+          description: t('site.sections.basic.fields.site-name.description'),
           key: 'site.name',
           required: true,
           component: {
             type: 'text',
-            placeholder: '请输入站点名称',
+            placeholder: t('site.sections.basic.fields.site-name.placeholder'),
           },
           icon: 'type',
         },
         {
           type: 'field',
           id: 'site-title',
-          title: '首页标题',
-          description: '用于浏览器标签页及 SEO 标题。',
+          title: t('site.sections.basic.fields.site-title.title'),
+          description: t('site.sections.basic.fields.site-title.description'),
           key: 'site.title',
           required: true,
           component: {
             type: 'text',
-            placeholder: '请输入首页标题',
+            placeholder: t('site.sections.basic.fields.site-title.placeholder'),
           },
           icon: 'heading-1',
         },
         {
           type: 'field',
           id: 'site-description',
-          title: '站点描述',
-          description: '展示在站点简介及搜索引擎摘要中。',
+          title: t('site.sections.basic.fields.site-description.title'),
+          description: t('site.sections.basic.fields.site-description.description'),
           key: 'site.description',
           required: true,
           component: {
             type: 'textarea',
-            placeholder: '请输入站点描述…',
+            placeholder: t('site.sections.basic.fields.site-description.placeholder'),
             minRows: 3,
             maxRows: 6,
           },
@@ -59,14 +62,14 @@ export const SITE_SETTING_UI_SCHEMA: UiSchema<SiteSettingKey> = {
         {
           type: 'field',
           id: 'site-url',
-          title: '站点 URL',
-          description: '站点对外访问的主域名，必须为绝对地址。',
+          title: t('site.sections.basic.fields.site-url.title'),
+          description: t('site.sections.basic.fields.site-url.description'),
           key: 'site.url',
           required: true,
           component: {
             type: 'text',
             inputType: 'url',
-            placeholder: 'https://afilmory.innei.in',
+            placeholder: t('site.sections.basic.fields.site-url.placeholder'),
             autoComplete: 'url',
           },
           icon: 'globe',
@@ -74,9 +77,9 @@ export const SITE_SETTING_UI_SCHEMA: UiSchema<SiteSettingKey> = {
         {
           type: 'field',
           id: 'site-accent-color',
-          title: '品牌主题色',
-          description: '用于按钮、强调文本等高亮元素，支持 HEX 格式。',
-          helperText: '示例：#007bff',
+          title: t('site.sections.basic.fields.site-accent-color.title'),
+          description: t('site.sections.basic.fields.site-accent-color.description'),
+          helperText: t('site.sections.basic.fields.site-accent-color.helper'),
           key: 'site.accentColor',
           required: true,
           component: {
@@ -90,22 +93,22 @@ export const SITE_SETTING_UI_SCHEMA: UiSchema<SiteSettingKey> = {
     {
       type: 'section',
       id: 'site-social',
-      title: '社交与订阅',
-      description: '配置展示在站点页脚与关于区域的社交账号与订阅入口。',
+      title: t('site.sections.social.title'),
+      description: t('site.sections.social.description'),
       icon: 'share-2',
       children: [
         {
           type: 'group',
           id: 'site-social-group',
-          title: '社交渠道',
-          description: '填写完整的链接或用户名，展示在站点社交区块。',
+          title: t('site.sections.social.groups.channels.title'),
+          description: t('site.sections.social.groups.channels.description'),
           icon: 'share-2',
           children: [
             {
               type: 'field',
               id: 'site-social-twitter',
-              title: 'Twitter',
-              helperText: '支持完整链接或 @用户名。',
+              title: t('site.sections.social.groups.channels.fields.twitter.title'),
+              helperText: t('site.sections.social.groups.channels.fields.twitter.helper'),
               key: 'site.social.twitter',
               component: {
                 type: 'text',
@@ -116,8 +119,8 @@ export const SITE_SETTING_UI_SCHEMA: UiSchema<SiteSettingKey> = {
             {
               type: 'field',
               id: 'site-social-github',
-              title: 'GitHub',
-              helperText: '支持完整链接或用户名。',
+              title: t('site.sections.social.groups.channels.fields.github.title'),
+              helperText: t('site.sections.social.groups.channels.fields.github.helper'),
               key: 'site.social.github',
               component: {
                 type: 'text',
@@ -128,9 +131,9 @@ export const SITE_SETTING_UI_SCHEMA: UiSchema<SiteSettingKey> = {
             {
               type: 'field',
               id: 'site-social-rss',
-              title: '生成 RSS 订阅源',
-              description: '启用后将在前台站点暴露 RSS 订阅入口。',
-              helperText: '开启后，访客可通过 RSS 订阅最新照片更新。',
+              title: t('site.sections.social.groups.channels.fields.rss.title'),
+              description: t('site.sections.social.groups.channels.fields.rss.description'),
+              helperText: t('site.sections.social.groups.channels.fields.rss.helper'),
               key: 'site.social.rss',
               component: {
                 type: 'switch',
@@ -144,36 +147,36 @@ export const SITE_SETTING_UI_SCHEMA: UiSchema<SiteSettingKey> = {
     {
       type: 'section',
       id: 'site-feed',
-      title: 'Feed 设置',
-      description: '配置第三方 Feed 数据源，用于聚合内容',
+      title: t('site.sections.feed.title'),
+      description: t('site.sections.feed.description'),
       icon: 'radio',
       children: [
         {
           type: 'group',
           id: 'site-feed-folo',
-          title: 'Folo Challenge',
-          description: '同步 Folo Challenge 数据所需的 Feed ID 与用户 ID。',
+          title: t('site.sections.feed.groups.folo.title'),
+          description: t('site.sections.feed.groups.folo.description'),
           icon: 'goal',
           children: [
             {
               type: 'field',
               id: 'site-feed-folo-feed-id',
-              title: 'Feed ID',
+              title: t('site.sections.feed.groups.folo.fields.feed-id.title'),
               key: 'site.feed.folo.challenge.feedId',
               component: {
                 type: 'text',
-                placeholder: '请输入 Feed ID',
+                placeholder: t('site.sections.feed.groups.folo.fields.feed-id.placeholder'),
               },
               icon: 'hash',
             },
             {
               type: 'field',
               id: 'site-feed-folo-user-id',
-              title: 'User ID',
+              title: t('site.sections.feed.groups.folo.fields.user-id.title'),
               key: 'site.feed.folo.challenge.userId',
               component: {
                 type: 'text',
-                placeholder: '请输入 User ID',
+                placeholder: t('site.sections.feed.groups.folo.fields.user-id.placeholder'),
               },
               icon: 'user',
             },
@@ -184,16 +187,16 @@ export const SITE_SETTING_UI_SCHEMA: UiSchema<SiteSettingKey> = {
     {
       type: 'section',
       id: 'site-map',
-      title: '地图展示',
-      description: '配置地图组件的可用提供商、样式与投影。',
+      title: t('site.sections.map.title'),
+      description: t('site.sections.map.description'),
       icon: 'map',
       children: [
         {
           type: 'field',
           id: 'site-map-providers',
-          title: '地图提供商列表',
-          description: '使用 JSON 数组表示优先级列表，例如 ["maplibre" ]。',
-          helperText: '留空则禁用地图功能。',
+          title: t('site.sections.map.fields.providers.title'),
+          description: t('site.sections.map.fields.providers.description'),
+          helperText: t('site.sections.map.fields.providers.helper'),
           key: 'site.map.providers',
           component: {
             type: 'textarea',
@@ -206,9 +209,9 @@ export const SITE_SETTING_UI_SCHEMA: UiSchema<SiteSettingKey> = {
         {
           type: 'field',
           id: 'site-map-style',
-          title: '地图样式',
-          description: '填写 MapLibre Style URL，或使用 builtin 选择内置样式。',
-          helperText: '示例：builtin 或 https://tiles.example.com/style.json',
+          title: t('site.sections.map.fields.style.title'),
+          description: t('site.sections.map.fields.style.description'),
+          helperText: t('site.sections.map.fields.style.helper'),
           key: 'site.mapStyle',
           component: {
             type: 'text',
@@ -219,13 +222,13 @@ export const SITE_SETTING_UI_SCHEMA: UiSchema<SiteSettingKey> = {
         {
           type: 'field',
           id: 'site-map-projection',
-          title: '地图投影',
-          description: '选择地图渲染的投影方式。',
-          helperText: '默认为 mercator，可根据需求切换为 globe。',
+          title: t('site.sections.map.fields.projection.title'),
+          description: t('site.sections.map.fields.projection.description'),
+          helperText: t('site.sections.map.fields.projection.helper'),
           key: 'site.mapProjection',
           component: {
             type: 'select',
-            placeholder: '选择投影方式',
+            placeholder: t('site.sections.map.fields.projection.placeholder'),
             options: ['mercator', 'globe'],
           },
           icon: 'compass',
@@ -234,6 +237,9 @@ export const SITE_SETTING_UI_SCHEMA: UiSchema<SiteSettingKey> = {
     },
   ],
 }
+}
+
+const SITE_SETTING_SCHEMA_FOR_KEYS = createSiteSettingUiSchema(identityUiSchemaT)
 
 function collectKeys(nodes: ReadonlyArray<UiNode<SiteSettingKey>>): SiteSettingKey[] {
   const keys: SiteSettingKey[] = []
@@ -251,5 +257,5 @@ function collectKeys(nodes: ReadonlyArray<UiNode<SiteSettingKey>>): SiteSettingK
 }
 
 export const SITE_SETTING_UI_SCHEMA_KEYS = Array.from(
-  new Set(collectKeys(SITE_SETTING_UI_SCHEMA.sections)),
+  new Set(collectKeys(SITE_SETTING_SCHEMA_FOR_KEYS.sections)),
 ) as SiteSettingKey[]

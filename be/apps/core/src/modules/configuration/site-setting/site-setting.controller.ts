@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@afilmory/framework'
+import { Body, Controller, Get, Headers, Post } from '@afilmory/framework'
 import { Roles } from 'core/guards/roles.decorator'
 import { BypassResponseTransform } from 'core/interceptors/response-transform.decorator'
 
@@ -12,8 +12,8 @@ export class SiteSettingController {
 
   @Get('/ui-schema')
   @BypassResponseTransform()
-  async getUiSchema() {
-    return await this.siteSettingService.getUiSchema()
+  async getUiSchema(@Headers('accept-language') acceptLanguage?: string) {
+    return await this.siteSettingService.getUiSchema(acceptLanguage)
   }
 
   @Post('/')

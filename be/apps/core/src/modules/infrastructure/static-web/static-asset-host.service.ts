@@ -86,6 +86,6 @@ export class StaticAssetHostService {
       return null
     }
 
-    return segments.at(-1)
+    return segments.at(-1) ?? null
   }
 }

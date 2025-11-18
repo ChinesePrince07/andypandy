@@ -10,9 +10,10 @@ import { TenantService } from 'core/modules/platform/tenant/tenant.service'
 import { and, eq, inArray } from 'drizzle-orm'
 import { injectable } from 'tsyringe'
 
+import { getUiSchemaTranslator } from '../../ui/ui-schema/ui-schema.i18n'
 import { AES_ALGORITHM, AUTH_TAG_LENGTH, DEFAULT_SETTING_METADATA, IV_LENGTH } from './setting.constant'
 import type { SettingKeyType, SettingRecord, SettingUiSchemaResponse, SettingValueMap } from './setting.type'
-import { SETTING_UI_SCHEMA, SETTING_UI_SCHEMA_KEYS } from './setting.ui-schema'
+import { createSettingUiSchema, SETTING_UI_SCHEMA_KEYS } from './setting.ui-schema'
 import { STORAGE_PROVIDERS_SETTING_KEY } from './storage-provider.constants'
 import type { BuilderStorageProvider } from './storage-provider.utils'
 import {
@@ -218,7 +219,7 @@ export class SettingService {
     }
   }
 
-  async getUiSchema(): Promise<SettingUiSchemaResponse> {
+  async getUiSchema(acceptLanguage?: string): Promise<SettingUiSchemaResponse> {
     const rawValues = await this.getMany(SETTING_UI_SCHEMA_KEYS, {})
     const typedValues: SettingUiSchemaResponse['values'] = {}
 
@@ -234,8 +235,10 @@ export class SettingService {
       typedValues[key] = rawValue as SettingValueMap[typeof key] | null
     }
 
+    const { t } = getUiSchemaTranslator(acceptLanguage)
+
     return {
-      schema: SETTING_UI_SCHEMA,
+      schema: createSettingUiSchema(t),
       values: typedValues,
     }
   }

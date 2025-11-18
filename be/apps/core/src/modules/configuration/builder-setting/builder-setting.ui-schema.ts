@@ -1,32 +1,34 @@
+import type { UiSchemaTFunction } from '../../ui/ui-schema/ui-schema.i18n'
 import type { UiSchema } from '../../ui/ui-schema/ui-schema.type'
 import type { BuilderSettingField } from './builder-setting.types'
 
 export const BUILDER_SETTING_UI_SCHEMA_VERSION = '1.0.0'
 
-export const BUILDER_SETTING_UI_SCHEMA: UiSchema<BuilderSettingField> = {
+export function createBuilderSettingUiSchema (t: UiSchemaTFunction): UiSchema<BuilderSettingField> {
+  return {
   version: BUILDER_SETTING_UI_SCHEMA_VERSION,
-  title: '构建器设置',
-  description: '配置照片构建任务的并发、日志与仓库同步策略。',
+  title: t('builder.title'),
+  description: t('builder.description'),
   sections: [
     {
       type: 'section',
       id: 'builder-processing',
-      title: '处理与性能',
-      description: '控制照片处理的并发数量、Live Photo 行为以及文件 ID 规则。',
+      title: t('builder.sections.processing.title'),
+      description: t('builder.sections.processing.description'),
       icon: 'cpu',
       children: [
         {
           type: 'group',
           id: 'builder-processing-concurrency',
-          title: '并发控制',
+          title: t('builder.sections.processing.groups.concurrency.title'),
           icon: 'gauge-circle',
           children: [
             {
               type: 'field',
               id: 'default-concurrency',
-              title: '默认并发数',
-              description: '控制单次构建任务的最大并发处理数。',
-              helperText: '建议设置为 CPU 核心数的 1-2 倍。',
+              title: t('builder.sections.processing.groups.concurrency.fields.default-concurrency.title'),
+              description: t('builder.sections.processing.groups.concurrency.fields.default-concurrency.description'),
+              helperText: t('builder.sections.processing.groups.concurrency.fields.default-concurrency.helper'),
               key: 'system.processing.defaultConcurrency',
               component: {
                 type: 'text',
@@ -37,8 +39,8 @@ export const BUILDER_SETTING_UI_SCHEMA: UiSchema<BuilderSettingField> = {
             {
               type: 'field',
               id: 'worker-concurrency',
-              title: 'Worker 内部并发',
-              description: '使用集群模式时，每个 Worker 进程内部允许的并发任务数。',
+              title: t('builder.sections.processing.groups.concurrency.fields.worker-concurrency.title'),
+              description: t('builder.sections.processing.groups.concurrency.fields.worker-concurrency.description'),
               key: 'system.observability.performance.worker.workerConcurrency',
               component: {
                 type: 'text',
@@ -49,8 +51,8 @@ export const BUILDER_SETTING_UI_SCHEMA: UiSchema<BuilderSettingField> = {
             {
               type: 'field',
               id: 'worker-count',
-              title: '最大 Worker 数',
-              description: '集群模式下最多可启动的 Worker 进程数量。',
+              title: t('builder.sections.processing.groups.concurrency.fields.worker-count.title'),
+              description: t('builder.sections.processing.groups.concurrency.fields.worker-count.description'),
               key: 'system.observability.performance.worker.workerCount',
               component: {
                 type: 'text',
@@ -61,8 +63,8 @@ export const BUILDER_SETTING_UI_SCHEMA: UiSchema<BuilderSettingField> = {
             {
               type: 'field',
               id: 'worker-timeout',
-              title: 'Worker 超时时间 (ms)',
-              description: '单个 Worker 在无响应情况下的退出时间，单位为毫秒。',
+              title: t('builder.sections.processing.groups.concurrency.fields.worker-timeout.title'),
+              description: t('builder.sections.processing.groups.concurrency.fields.worker-timeout.description'),
               key: 'system.observability.performance.worker.timeout',
               component: {
                 type: 'text',
@@ -75,26 +77,26 @@ export const BUILDER_SETTING_UI_SCHEMA: UiSchema<BuilderSettingField> = {
         {
           type: 'group',
           id: 'builder-processing-options',
-          title: '处理行为',
+          title: t('builder.sections.processing.groups.behavior.title'),
           icon: 'settings-2',
           children: [
             {
               type: 'field',
               id: 'enable-live-photo',
-              title: '启用 Live Photo 检测',
-              description: '检测 HEIC 与 MP4 的配对关系，并为 Live Photo 生成合集。',
+              title: t('builder.sections.processing.groups.behavior.fields.enable-live-photo.title'),
+              description: t('builder.sections.processing.groups.behavior.fields.enable-live-photo.description'),
               key: 'system.processing.enableLivePhotoDetection',
               component: {
                 type: 'switch',
-                trueLabel: '已启用',
-                falseLabel: '已关闭',
+                trueLabel: t('builder.sections.processing.groups.behavior.fields.enable-live-photo.true'),
+                falseLabel: t('builder.sections.processing.groups.behavior.fields.enable-live-photo.false'),
               },
             },
             {
               type: 'field',
               id: 'digest-suffix-length',
-              title: '摘要后缀长度',
-              description: '在照片 ID 末尾追加的 SHA-256 长度，用于避免命名冲突。0 表示禁用。',
+              title: t('builder.sections.processing.groups.behavior.fields.digest-suffix-length.title'),
+              description: t('builder.sections.processing.groups.behavior.fields.digest-suffix-length.description'),
               key: 'system.processing.digestSuffixLength',
               component: {
                 type: 'text',
@@ -105,8 +107,8 @@ export const BUILDER_SETTING_UI_SCHEMA: UiSchema<BuilderSettingField> = {
             {
               type: 'field',
               id: 'supported-formats',
-              title: '允许的图片格式',
-              description: '可选，使用逗号分隔的扩展示例：jpg,png,heic。留空表示不限制。',
+              title: t('builder.sections.processing.groups.behavior.fields.supported-formats.title'),
+              description: t('builder.sections.processing.groups.behavior.fields.supported-formats.description'),
               key: 'system.processing.supportedFormats',
               component: {
                 type: 'text',
@@ -120,21 +122,21 @@ export const BUILDER_SETTING_UI_SCHEMA: UiSchema<BuilderSettingField> = {
     {
       type: 'section',
       id: 'builder-observability',
-      title: '日志与可观测性',
-      description: '控制构建任务的日志级别、进度输出与集群策略。',
+      title: t('builder.sections.observability.title'),
+      description: t('builder.sections.observability.description'),
       icon: 'activity',
       children: [
         {
           type: 'group',
           id: 'builder-progress',
-          title: '进度反馈',
+          title: t('builder.sections.observability.groups.progress.title'),
           icon: 'progress',
           children: [
             {
               type: 'field',
               id: 'show-progress',
-              title: '显示终端进度条',
-              description: '在 CLI 中实时输出处理进度。',
+              title: t('builder.sections.observability.groups.progress.fields.show-progress.title'),
+              description: t('builder.sections.observability.groups.progress.fields.show-progress.description'),
               key: 'system.observability.showProgress',
               component: {
                 type: 'switch',
@@ -143,8 +145,8 @@ export const BUILDER_SETTING_UI_SCHEMA: UiSchema<BuilderSettingField> = {
             {
               type: 'field',
               id: 'show-detailed-stats',
-              title: '输出详细统计',
-              description: '构建完成后打印耗时、增量统计等信息。',
+              title: t('builder.sections.observability.groups.progress.fields.show-detailed-stats.title'),
+              description: t('builder.sections.observability.groups.progress.fields.show-detailed-stats.description'),
               key: 'system.observability.showDetailedStats',
               component: {
                 type: 'switch',
@@ -153,8 +155,8 @@ export const BUILDER_SETTING_UI_SCHEMA: UiSchema<BuilderSettingField> = {
             {
               type: 'field',
               id: 'use-cluster-mode',
-              title: '启用集群模式',
-              description: '在多核环境下使用 Node.js Cluster 分裂多个 Worker 进程。',
+              title: t('builder.sections.observability.groups.progress.fields.use-cluster-mode.title'),
+              description: t('builder.sections.observability.groups.progress.fields.use-cluster-mode.description'),
               key: 'system.observability.performance.worker.useClusterMode',
               component: {
                 type: 'switch',
@@ -165,26 +167,26 @@ export const BUILDER_SETTING_UI_SCHEMA: UiSchema<BuilderSettingField> = {
         {
           type: 'group',
           id: 'builder-logging',
-          title: '日志级别',
+          title: t('builder.sections.observability.groups.logging.title'),
           icon: 'audio-lines',
           children: [
             {
               type: 'field',
               id: 'logging-level',
-              title: '日志等级',
-              description: '控制 CLI 输出的详细程度。',
+              title: t('builder.sections.observability.groups.logging.fields.logging-level.title'),
+              description: t('builder.sections.observability.groups.logging.fields.logging-level.description'),
               key: 'system.observability.logging.level',
               component: {
                 type: 'select',
                 options: ['info', 'warn', 'error', 'debug'],
-                placeholder: '选择日志等级',
+                placeholder: t('builder.sections.observability.groups.logging.fields.logging-level.placeholder'),
               },
             },
             {
               type: 'field',
               id: 'logging-verbose',
-              title: '启用 Verbose 模式',
-              description: '输出更详细的调试日志。',
+              title: t('builder.sections.observability.groups.logging.fields.logging-verbose.title'),
+              description: t('builder.sections.observability.groups.logging.fields.logging-verbose.description'),
               key: 'system.observability.logging.verbose',
               component: {
                 type: 'switch',
@@ -193,8 +195,8 @@ export const BUILDER_SETTING_UI_SCHEMA: UiSchema<BuilderSettingField> = {
             {
               type: 'field',
               id: 'logging-output',
-              title: '写入日志文件',
-              description: '在 CLI 运行目录下输出构建日志文件，便于排查问题。',
+              title: t('builder.sections.observability.groups.logging.fields.logging-output.title'),
+              description: t('builder.sections.observability.groups.logging.fields.logging-output.description'),
               key: 'system.observability.logging.outputToFile',
               component: {
                 type: 'switch',
@@ -205,4 +207,5 @@ export const BUILDER_SETTING_UI_SCHEMA: UiSchema<BuilderSettingField> = {
       ],
     },
   ],
+}
 }

@@ -21,6 +21,7 @@ import { injectable } from 'tsyringe'
 import type { ZodType } from 'zod'
 import { z } from 'zod'
 
+import { getUiSchemaTranslator } from '../../ui/ui-schema/ui-schema.i18n'
 import type { SystemSettingDbField } from './system-setting.constants'
 import {
   BILLING_PLAN_FIELD_DESCRIPTORS,
@@ -35,7 +36,7 @@ import type {
   SystemSettingValueMap,
   UpdateSystemSettingsInput,
 } from './system-setting.types'
-import { SYSTEM_SETTING_UI_SCHEMA } from './system-setting.ui-schema'
+import { createSystemSettingUiSchema } from './system-setting.ui-schema'
 
 @injectable()
 export class SystemSettingService {
@@ -57,6 +58,24 @@ export class SystemSettingService {
       rawValues[SYSTEM_SETTING_DEFINITIONS.maxRegistrableUsers.key],
       SYSTEM_SETTING_DEFINITIONS.maxRegistrableUsers.schema,
       SYSTEM_SETTING_DEFINITIONS.maxRegistrableUsers.defaultValue,
+    )
+
+    const maxPhotoUploadSizeMb = this.parseSetting(
+      rawValues[SYSTEM_SETTING_DEFINITIONS.maxPhotoUploadSizeMb.key],
+      SYSTEM_SETTING_DEFINITIONS.maxPhotoUploadSizeMb.schema,
+      SYSTEM_SETTING_DEFINITIONS.maxPhotoUploadSizeMb.defaultValue,
+    )
+
+    const maxDataSyncObjectSizeMb = this.parseSetting(
+      rawValues[SYSTEM_SETTING_DEFINITIONS.maxDataSyncObjectSizeMb.key],
+      SYSTEM_SETTING_DEFINITIONS.maxDataSyncObjectSizeMb.schema,
+      SYSTEM_SETTING_DEFINITIONS.maxDataSyncObjectSizeMb.defaultValue,
+    )
+
+    const maxPhotoLibraryItems = this.parseSetting(
+      rawValues[SYSTEM_SETTING_DEFINITIONS.maxPhotoLibraryItems.key],
+      SYSTEM_SETTING_DEFINITIONS.maxPhotoLibraryItems.schema,
+      SYSTEM_SETTING_DEFINITIONS.maxPhotoLibraryItems.defaultValue,
     )
 
     const localProviderEnabled = this.parseSetting(
@@ -119,6 +138,9 @@ export class SystemSettingService {
     return {
       allowRegistration,
       maxRegistrableUsers,
+      maxPhotoUploadSizeMb,
+      maxDataSyncObjectSizeMb,
+      maxPhotoLibraryItems,
       localProviderEnabled,
       baseDomain,
       oauthGatewayUrl,
@@ -147,12 +169,13 @@ export class SystemSettingService {
     return settings.billingPlanPricing ?? {}
   }
 
-  async getOverview(): Promise<SystemSettingOverview> {
+  async getOverview(acceptLanguage?: string): Promise<SystemSettingOverview> {
     const settings = await this.getSettings()
     const totalUsers = await this.getTotalUserCount()
     const stats = this.buildStats(settings, totalUsers)
+    const { t } = getUiSchemaTranslator(acceptLanguage)
     return {
-      schema: SYSTEM_SETTING_UI_SCHEMA,
+      schema: createSystemSettingUiSchema(t),
       values: this.buildValueMap(settings),
       stats,
     }
@@ -198,6 +221,27 @@ export class SystemSettingService {
 
         enqueueUpdate('maxRegistrableUsers', normalized)
       }
+    }
+
+    if (patch.maxPhotoUploadSizeMb !== undefined && patch.maxPhotoUploadSizeMb !== current.maxPhotoUploadSizeMb) {
+      const normalized =
+        patch.maxPhotoUploadSizeMb === null ? null : Math.max(1, Math.trunc(patch.maxPhotoUploadSizeMb))
+      enqueueUpdate('maxPhotoUploadSizeMb', normalized)
+    }
+
+    if (
+      patch.maxDataSyncObjectSizeMb !== undefined &&
+      patch.maxDataSyncObjectSizeMb !== current.maxDataSyncObjectSizeMb
+    ) {
+      const normalized =
+        patch.maxDataSyncObjectSizeMb === null ? null : Math.max(1, Math.trunc(patch.maxDataSyncObjectSizeMb))
+      enqueueUpdate('maxDataSyncObjectSizeMb', normalized)
+    }
+
+    if (patch.maxPhotoLibraryItems !== undefined && patch.maxPhotoLibraryItems !== current.maxPhotoLibraryItems) {
+      const normalized =
+        patch.maxPhotoLibraryItems === null ? null : Math.max(0, Math.trunc(patch.maxPhotoLibraryItems))
+      enqueueUpdate('maxPhotoLibraryItems', normalized)
     }
 
     if (patch.baseDomain !== undefined) {
@@ -372,10 +416,9 @@ export class SystemSettingService {
 
     if (Object.keys(updates.quotas).length > 0) {
       const nextOverrides: BillingPlanOverrides = structuredClone(current.billingPlanOverrides ?? {})
-      for (const [planId, quotaPatch] of Object.entries(updates.quotas) as Array<[
-        BillingPlanId,
-        Partial<BillingPlanQuota>,
-      ]>) {
+      for (const [planId, quotaPatch] of Object.entries(updates.quotas) as Array<
+        [BillingPlanId, Partial<BillingPlanQuota>]
+      >) {
         const existing = { ...nextOverrides[planId] }
         for (const [quotaKey, value] of Object.entries(quotaPatch) as Array<[keyof BillingPlanQuota, number | null]>) {
           if (value === null || value === undefined || Number.isNaN(value)) {
@@ -396,10 +439,9 @@ export class SystemSettingService {
 
     if (Object.keys(updates.pricing).length > 0) {
       const nextPricing: BillingPlanPricingConfigs = structuredClone(current.billingPlanPricing ?? {})
-      for (const [planId, pricingPatch] of Object.entries(updates.pricing) as Array<[
-        BillingPlanId,
-        Partial<BillingPlanPricing>,
-      ]>) {
+      for (const [planId, pricingPatch] of Object.entries(updates.pricing) as Array<
+        [BillingPlanId, Partial<BillingPlanPricing>]
+      >) {
         const entry: BillingPlanPricing = {
           monthlyPrice: pricingPatch.monthlyPrice ?? null,
           currency: pricingPatch.currency ?? null,
@@ -416,7 +458,9 @@ export class SystemSettingService {
 
     if (Object.keys(updates.products).length > 0) {
       const nextProducts: BillingPlanProductConfigs = structuredClone(current.billingPlanProducts ?? {})
-      for (const [planId, product] of Object.entries(updates.products) as Array<[BillingPlanId, BillingPlanPaymentInfo]>) {
+      for (const [planId, product] of Object.entries(updates.products) as Array<
+        [BillingPlanId, BillingPlanPaymentInfo]
+      >) {
         const normalized = this.normalizeNullableString(product.creemProductId)
         if (!normalized) {
           delete nextProducts[planId]

@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post } from '@afilmory/framework'
+import { Body, Controller, Delete, Get, Headers, Param, Post } from '@afilmory/framework'
 import { BizException, ErrorCode } from 'core/errors'
 import { Roles } from 'core/guards/roles.decorator'
 import { BypassResponseTransform } from 'core/interceptors/response-transform.decorator'
@@ -15,8 +15,8 @@ export class SettingController {
 
   @Get('/ui-schema')
   @BypassResponseTransform()
-  async getUiSchema() {
-    return await this.settingService.getUiSchema()
+  async getUiSchema(@Headers('accept-language') acceptLanguage?: string) {
+    return await this.settingService.getUiSchema(acceptLanguage)
   }
 
   @Get('/:key')

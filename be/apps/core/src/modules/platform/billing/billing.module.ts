@@ -10,6 +10,5 @@ import { BillingUsageService } from './billing-usage.service'
   imports: [DatabaseModule, SystemSettingModule],
   controllers: [BillingController],
   providers: [BillingUsageService, BillingPlanService],
-  exports: [BillingUsageService, BillingPlanService],
 })
 export class BillingModule {}

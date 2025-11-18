@@ -7,6 +7,7 @@ import { green } from 'picocolors'
 import { createConfiguredApp } from './app.factory'
 import { runCliPipeline } from './cli'
 import { logger } from './helpers/logger.helper'
+import { initUiSchemaI18n } from './modules/ui/ui-schema/ui-schema.i18n'
 
 process.title = 'afilmory core'
 
@@ -33,6 +34,7 @@ async function bootstrap() {
 }
 
 async function main() {
+  await initUiSchemaI18n()
   const handledByCli = await runCliPipeline(process.argv.slice(2))
   if (handledByCli) {
     return

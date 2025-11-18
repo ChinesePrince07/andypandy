@@ -1,15 +1,21 @@
+import type {UiSchemaTFunction} from 'core/modules/ui/ui-schema/ui-schema.i18n';
+import { identityUiSchemaT  } from 'core/modules/ui/ui-schema/ui-schema.i18n'
 import type { UiNode } from 'core/modules/ui/ui-schema/ui-schema.type'
 
 import type { SettingKeyType, SettingUiSchema } from './setting.type'
 
 export const SETTING_UI_SCHEMA_VERSION = '1.3.0'
 
-export const SETTING_UI_SCHEMA = {
+export function createSettingUiSchema (t: UiSchemaTFunction): SettingUiSchema {
+  return {
   version: SETTING_UI_SCHEMA_VERSION,
-  title: '系统设置',
-  description: '管理 AFilmory 系统的全局行为与服务接入。',
+  title: t('settings.title'),
+  description: t('settings.description'),
   sections: [],
-} satisfies SettingUiSchema
+}
+}
+
+const SETTING_SCHEMA_FOR_KEYS = createSettingUiSchema(identityUiSchemaT)
 
 function collectKeys(nodes: ReadonlyArray<UiNode<SettingKeyType>>): SettingKeyType[] {
   const keys: SettingKeyType[] = []
@@ -26,4 +32,6 @@ function collectKeys(nodes: ReadonlyArray<UiNode<SettingKeyType>>): SettingKeyTy
   return keys
 }
 
-export const SETTING_UI_SCHEMA_KEYS = Array.from(new Set(collectKeys(SETTING_UI_SCHEMA.sections))) as SettingKeyType[]
+export const SETTING_UI_SCHEMA_KEYS = Array.from(
+  new Set(collectKeys(SETTING_SCHEMA_FOR_KEYS.sections)),
+) as SettingKeyType[]

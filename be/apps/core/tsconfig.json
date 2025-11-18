@@ -6,7 +6,7 @@
     "experimentalDecorators": true,
     "baseUrl": ".",
     "module": "ESNext",
-    "moduleResolution": "Bundler",
+    "moduleResolution": "bundler",
     "verbatimModuleSyntax": true,
     "types": ["node"],
     "paths": {

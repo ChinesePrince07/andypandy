@@ -3,11 +3,13 @@ import { randomUUID } from 'node:crypto'
 import type {
   BuilderConfig,
   PhotoManifestItem,
+  ProgressCallback,
   StorageConfig,
   StorageManager,
   StorageObject,
   StorageProvider,
 } from '@afilmory/builder'
+import type { StorageUploadOptions } from '@afilmory/builder/storage/interfaces.js'
 import type { PhotoBuilderService } from 'core/modules/content/photo/builder/photo-builder.service'
 import type { DataSyncLogPayload } from 'core/modules/infrastructure/data-sync/data-sync.types'
 
@@ -71,15 +73,23 @@ export class InMemoryDebugStorageProvider implements StorageProvider {
     return Array.from(this.files.values()).map((entry) => entry.metadata)
   }
 
-  async listAllFiles(): Promise<StorageObject[]> {
-    return this.listImages()
+  async listAllFiles(progressCallback?: ProgressCallback): Promise<StorageObject[]> {
+    const files = await this.listImages()
+    if (progressCallback) {
+      progressCallback({
+        currentPath: '',
+        filesScanned: files.length,
+        totalFiles: files.length,
+      })
+    }
+    return files
   }
 
   generatePublicUrl(key: string): string {
     return `debug://${encodeURIComponent(key)}`
   }
 
-  detectLivePhotos(): Map<string, StorageObject> {
+  detectLivePhotos(_allObjects: StorageObject[]): Map<string, StorageObject> {
     return new Map()
   }
 
@@ -87,7 +97,7 @@ export class InMemoryDebugStorageProvider implements StorageProvider {
     this.files.delete(key)
   }
 
-  async uploadFile(key: string, data: Buffer): Promise<StorageObject> {
+  async uploadFile(key: string, data: Buffer, _options?: StorageUploadOptions): Promise<StorageObject> {
     const normalizedKey = this.normalizeKey(key)
     const metadata: StorageObject = {
       key: normalizedKey,
@@ -98,6 +108,30 @@ export class InMemoryDebugStorageProvider implements StorageProvider {
 
     this.files.set(normalizedKey, {
       buffer: data,
+      metadata,
+    })
+
+    return metadata
+  }
+
+  async moveFile(sourceKey: string, targetKey: string, _options?: StorageUploadOptions): Promise<StorageObject> {
+    const normalizedSource = this.normalizeKey(sourceKey)
+    const entry = this.files.get(normalizedSource)
+    if (!entry) {
+      throw new Error(`Debug storage file not found: ${sourceKey}`)
+    }
+
+    const normalizedTarget = this.normalizeKey(targetKey)
+    const metadata: StorageObject = {
+      ...entry.metadata,
+      key: normalizedTarget,
+      lastModified: new Date(),
+      etag: randomUUID(),
+    }
+
+    this.files.delete(normalizedSource)
+    this.files.set(normalizedTarget, {
+      buffer: entry.buffer,
       metadata,
     })
 

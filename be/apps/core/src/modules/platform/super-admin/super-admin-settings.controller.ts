@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Patch } from '@afilmory/framework'
+import { Body, Controller, Get, Headers, Patch } from '@afilmory/framework'
 import { Roles } from 'core/guards/roles.decorator'
 import { BypassResponseTransform } from 'core/interceptors/response-transform.decorator'
 import { SystemSettingService } from 'core/modules/configuration/system-setting/system-setting.service'
@@ -12,14 +12,14 @@ export class SuperAdminSettingController {
 
   @Get('/')
   @BypassResponseTransform()
-  async getOverview() {
-    return await this.systemSettings.getOverview()
+  async getOverview(@Headers('accept-language') acceptLanguage?: string) {
+    return await this.systemSettings.getOverview(acceptLanguage)
   }
 
   @Patch('/')
   @BypassResponseTransform()
-  async update(@Body() dto: UpdateSuperAdminSettingsDto) {
+  async update(@Body() dto: UpdateSuperAdminSettingsDto, @Headers('accept-language') acceptLanguage?: string) {
     await this.systemSettings.updateSettings(dto)
-    return await this.systemSettings.getOverview()
+    return await this.systemSettings.getOverview(acceptLanguage)
   }
 }

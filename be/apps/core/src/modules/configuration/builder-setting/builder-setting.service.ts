@@ -2,6 +2,7 @@ import type { BuilderConfig } from '@afilmory/builder'
 import { requireTenantContext } from 'core/modules/platform/tenant/tenant.context'
 import { injectable } from 'tsyringe'
 
+import { getUiSchemaTranslator } from '../../ui/ui-schema/ui-schema.i18n'
 import { BUILDER_SYSTEM_CONFIG_SETTING_KEY } from '../builder-config/builder-config.constants'
 import { BuilderConfigService } from '../builder-config/builder-config.service'
 import { SettingService } from '../setting/setting.service'
@@ -11,7 +12,7 @@ import type {
   BuilderSystemSettingsDto,
   UpdateBuilderSettingsPayload,
 } from './builder-setting.types'
-import { BUILDER_SETTING_UI_SCHEMA } from './builder-setting.ui-schema'
+import { createBuilderSettingUiSchema } from './builder-setting.ui-schema'
 
 function serializeSupportedFormats(formats?: Set<string> | string[] | null): string {
   if (!formats) {
@@ -28,13 +29,14 @@ export class BuilderSettingService {
     private readonly settingService: SettingService,
   ) {}
 
-  async getUiSchema(): Promise<BuilderSettingUiSchemaResponse> {
+  async getUiSchema(acceptLanguage?: string): Promise<BuilderSettingUiSchemaResponse> {
     const tenant = requireTenantContext()
     const config = await this.builderConfigService.getConfigForTenant(tenant.tenant.id)
     const values = this.buildFieldValues(config)
+    const { t } = getUiSchemaTranslator(acceptLanguage)
 
     return {
-      schema: BUILDER_SETTING_UI_SCHEMA,
+      schema: createBuilderSettingUiSchema(t),
       values,
     }
   }

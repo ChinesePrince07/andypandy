@@ -5,12 +5,13 @@ import { requireTenantContext } from 'core/modules/platform/tenant/tenant.contex
 import { asc, eq, sql } from 'drizzle-orm'
 import { injectable } from 'tsyringe'
 
+import { getUiSchemaTranslator } from '../../ui/ui-schema/ui-schema.i18n'
 import type { UiNode } from '../../ui/ui-schema/ui-schema.type'
 import type { SettingEntryInput } from '../setting/setting.service'
 import { SettingService } from '../setting/setting.service'
 import type { SiteSettingEntryInput, SiteSettingKey, SiteSettingUiSchemaResponse } from './site-setting.type'
 import { ONBOARDING_SITE_SETTING_KEYS, SITE_SETTING_KEYS } from './site-setting.type'
-import { SITE_SETTING_UI_SCHEMA, SITE_SETTING_UI_SCHEMA_KEYS } from './site-setting.ui-schema'
+import { createSiteSettingUiSchema, SITE_SETTING_UI_SCHEMA_KEYS } from './site-setting.ui-schema'
 
 @injectable()
 export class SiteSettingService {
@@ -19,7 +20,7 @@ export class SiteSettingService {
     private readonly dbAccessor: DbAccessor,
   ) {}
 
-  async getUiSchema(): Promise<SiteSettingUiSchemaResponse> {
+  async getUiSchema(acceptLanguage?: string): Promise<SiteSettingUiSchemaResponse> {
     const values = await this.settingService.getMany(SITE_SETTING_UI_SCHEMA_KEYS, {})
     const typedValues: SiteSettingUiSchemaResponse['values'] = {}
 
@@ -27,15 +28,19 @@ export class SiteSettingService {
       typedValues[key] = values[key] ?? null
     }
 
+    const { t } = getUiSchemaTranslator(acceptLanguage)
+
     return {
-      schema: SITE_SETTING_UI_SCHEMA,
+      schema: createSiteSettingUiSchema(t),
       values: typedValues,
     }
   }
 
-  async getOnboardingUiSchema(): Promise<SiteSettingUiSchemaResponse> {
+  async getOnboardingUiSchema(acceptLanguage?: string): Promise<SiteSettingUiSchemaResponse> {
     const allowedKeys = new Set<SiteSettingKey>(ONBOARDING_SITE_SETTING_KEYS)
-    const schema = this.filterSchema(SITE_SETTING_UI_SCHEMA, allowedKeys)
+
+    const { t } = getUiSchemaTranslator(acceptLanguage)
+    const schema = this.filterSchema(createSiteSettingUiSchema(t), allowedKeys)
 
     return {
       schema,

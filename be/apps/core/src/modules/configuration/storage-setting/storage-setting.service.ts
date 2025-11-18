@@ -9,8 +9,8 @@ type StorageSettingKey = 'builder.storage.providers' | 'builder.storage.activePr
 export class StorageSettingService {
   constructor(private readonly settingService: SettingService) {}
 
-  async getUiSchema() {
-    const schema = await this.settingService.getUiSchema()
+  async getUiSchema(acceptLanguage?: string) {
+    const schema = await this.settingService.getUiSchema(acceptLanguage)
     return {
       ...schema,
       schema: {
