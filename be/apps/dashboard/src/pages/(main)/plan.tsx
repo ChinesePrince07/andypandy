@@ -2,31 +2,80 @@ import { Button } from '@afilmory/ui'
 import { clsxm } from '@afilmory/utils'
 import { useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
 import { LinearBorderPanel } from '~/components/common/GlassPanel'
 import { MainPageLayout } from '~/components/layouts/MainPageLayout'
+import { getI18n } from '~/i18n'
 import type { SessionResponse } from '~/modules/auth/api/session'
 import { AUTH_SESSION_QUERY_KEY } from '~/modules/auth/api/session'
 import { authClient } from '~/modules/auth/auth-client'
 import type { BillingPlanSummary } from '~/modules/billing'
 import { useTenantPlanQuery } from '~/modules/billing'
 
-const QUOTA_LABELS: Record<string, string> = {
-  monthlyAssetProcessLimit: '每月可新增照片',
-  libraryItemLimit: '图库容量',
-  maxUploadSizeMb: '单次上传大小',
-  maxSyncObjectSizeMb: '同步素材大小',
+const planI18nKeys = {
+  pageTitle: 'plan.page.title',
+  pageDescription: 'plan.page.description',
+  errorLoadPrefix: 'plan.error.load-prefix',
+  errorUnknown: 'plan.error.unknown',
+  toastCheckoutUnavailable: 'plan.toast.checkout-unavailable',
+  toastMissingCheckoutUrl: 'plan.toast.missing-checkout-url',
+  toastCheckoutFailure: 'plan.toast.checkout-failure',
+  toastMissingPortalAccount: 'plan.toast.missing-portal-account',
+  toastMissingPortalUrl: 'plan.toast.missing-portal-url',
+  toastPortalFailure: 'plan.toast.portal-failure',
+  badgeInternal: 'plan.badge.internal',
+  badgeCurrent: 'plan.badge.current',
+  quotaUnlimited: 'plan.quotas.unlimited',
+  checkoutLoading: 'plan.checkout.loading',
+  checkoutUpgrade: 'plan.checkout.upgrade',
+  checkoutComingSoon: 'plan.checkout.coming-soon',
+  portalLoading: 'plan.portal.loading',
+  portalManage: 'plan.portal.manage',
+} as const satisfies Record<
+  | 'pageTitle'
+  | 'pageDescription'
+  | 'errorLoadPrefix'
+  | 'errorUnknown'
+  | 'toastCheckoutUnavailable'
+  | 'toastMissingCheckoutUrl'
+  | 'toastCheckoutFailure'
+  | 'toastMissingPortalAccount'
+  | 'toastMissingPortalUrl'
+  | 'toastPortalFailure'
+  | 'badgeInternal'
+  | 'badgeCurrent'
+  | 'quotaUnlimited'
+  | 'checkoutLoading'
+  | 'checkoutUpgrade'
+  | 'checkoutComingSoon'
+  | 'portalLoading'
+  | 'portalManage',
+  I18nKeys
+>
+
+const planI18nPrefixes = {
+  quotaLabelPrefix: 'plan.quotas.label.',
+  quotaUnitPrefix: 'plan.quotas.unit.',
+} as const
+
+const QUOTA_LABEL_KEYS: Record<string, I18nKeys> = {
+  monthlyAssetProcessLimit: `${planI18nPrefixes.quotaLabelPrefix}monthlyAssetProcessLimit`,
+  libraryItemLimit: `${planI18nPrefixes.quotaLabelPrefix}libraryItemLimit`,
+  maxUploadSizeMb: `${planI18nPrefixes.quotaLabelPrefix}maxUploadSizeMb`,
+  maxSyncObjectSizeMb: `${planI18nPrefixes.quotaLabelPrefix}maxSyncObjectSizeMb`,
 }
 
-const QUOTA_UNITS: Record<string, string> = {
-  monthlyAssetProcessLimit: '张',
-  libraryItemLimit: '张',
-  maxUploadSizeMb: ' MB',
-  maxSyncObjectSizeMb: ' MB',
+const QUOTA_UNIT_KEYS: Record<string, I18nKeys | null> = {
+  monthlyAssetProcessLimit: `${planI18nPrefixes.quotaUnitPrefix}photos`,
+  libraryItemLimit: `${planI18nPrefixes.quotaUnitPrefix}photos`,
+  maxUploadSizeMb: `${planI18nPrefixes.quotaUnitPrefix}megabytes`,
+  maxSyncObjectSizeMb: `${planI18nPrefixes.quotaUnitPrefix}megabytes`,
 }
 
 export function Component() {
+  const { t } = useTranslation()
   const planQuery = useTenantPlanQuery()
   const queryClient = useQueryClient()
   const session = (queryClient.getQueryData<SessionResponse | null>(AUTH_SESSION_QUERY_KEY) ??
@@ -52,11 +101,12 @@ export function Component() {
   }, [availablePlans, plan])
 
   return (
-    <MainPageLayout title="订阅计划" description="查看当前订阅状态与资源限制，并在此处发起升级或管理订阅。">
+    <MainPageLayout title={t(planI18nKeys.pageTitle)} description={t(planI18nKeys.pageDescription)}>
       <div className="space-y-6">
         {planQuery.isError && (
           <div className="text-red text-sm">
-            无法加载订阅信息：{planQuery.error instanceof Error ? planQuery.error.message : '未知错误'}
+            {t(planI18nKeys.errorLoadPrefix)}{' '}
+            {planQuery.error instanceof Error ? planQuery.error.message : t(planI18nKeys.errorUnknown)}
           </div>
         )}
 
@@ -118,6 +168,7 @@ function PlanCard({
   tenantSlug: string | null
   creemCustomerId: string | null
 }) {
+  const { t } = useTranslation()
   const [checkoutLoading, setCheckoutLoading] = useState(false)
   const [portalLoading, setPortalLoading] = useState(false)
   const productId = plan.payment?.creemProductId ?? null
@@ -128,7 +179,7 @@ function PlanCard({
 
   const handleCheckout = async () => {
     if (!canCheckout || !tenantId || !productId) {
-      toast.error('该方案暂未开放，请稍后再试。')
+      toast.error(t(planI18nKeys.toastCheckoutUnavailable))
       return
     }
     setCheckoutLoading(true)
@@ -147,15 +198,15 @@ function PlanCard({
         metadata,
       })
       if (error) {
-        throw new Error(error.message ?? 'Creem 返回了未知错误')
+        throw new Error(error.message ?? t(planI18nKeys.toastCheckoutFailure))
       }
       if (data?.url) {
         window.location.href = data.url
         return
       }
-      toast.error('Creem 未返回有效的结算链接，请稍后再试。')
+      toast.error(t(planI18nKeys.toastMissingCheckoutUrl))
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : '无法创建订阅结算会话')
+      toast.error(error instanceof Error ? error.message : t(planI18nKeys.toastCheckoutFailure))
     } finally {
       setCheckoutLoading(false)
     }
@@ -163,7 +214,7 @@ function PlanCard({
 
   const handlePortal = async () => {
     if (!showPortalButton || !creemCustomerId) {
-      toast.error('找不到订阅账户，请稍后再试。')
+      toast.error(t(planI18nKeys.toastMissingPortalAccount))
       return
     }
     setPortalLoading(true)
@@ -171,15 +222,15 @@ function PlanCard({
       const portalPayload = creemCustomerId ? { customerId: creemCustomerId } : undefined
       const { data, error } = await authClient.creem.createPortal(portalPayload)
       if (error) {
-        throw new Error(error.message ?? '无法打开订阅管理')
+        throw new Error(error.message ?? t(planI18nKeys.toastPortalFailure))
       }
       if (data?.url) {
         window.location.href = data.url
         return
       }
-      toast.error('Creem 未返回订阅管理地址，请稍后再试。')
+      toast.error(t(planI18nKeys.toastMissingPortalUrl))
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : '无法打开订阅管理')
+      toast.error(error instanceof Error ? error.message : t(planI18nKeys.toastPortalFailure))
     } finally {
       setPortalLoading(false)
     }
@@ -208,8 +259,8 @@ function PlanCard({
       <ul className="mt-6 space-y-2">
         {Object.entries(plan.quotas).map(([key, value]) => (
           <li key={key} className="flex items-center justify-between text-sm">
-            <span className="text-text-tertiary">{QUOTA_LABELS[key] ?? key}</span>
-            <span className="text-text font-medium">{renderQuotaValue(value, QUOTA_UNITS[key])}</span>
+            <span className="text-text-tertiary">{t(QUOTA_LABEL_KEYS[key] ?? key)}</span>
+            <span className="text-text font-medium">{renderQuotaValue(value, QUOTA_UNIT_KEYS[key] ?? null)}</span>
           </li>
         ))}
       </ul>
@@ -222,7 +273,11 @@ function PlanCard({
           disabled={!canCheckout || checkoutLoading}
           onClick={handleCheckout}
         >
-          {checkoutLoading ? '请稍候…' : canCheckout ? '升级此方案' : '敬请期待'}
+          {checkoutLoading
+            ? t(planI18nKeys.checkoutLoading)
+            : canCheckout
+              ? t(planI18nKeys.checkoutUpgrade)
+              : t(planI18nKeys.checkoutComingSoon)}
         </Button>
       )}
 
@@ -235,7 +290,7 @@ function PlanCard({
           disabled={portalLoading}
           onClick={handlePortal}
         >
-          {portalLoading ? '打开中…' : '管理订阅'}
+          {portalLoading ? t(planI18nKeys.portalLoading) : t(planI18nKeys.portalManage)}
         </Button>
       )}
     </LinearBorderPanel>
@@ -261,16 +316,22 @@ function buildCheckoutSuccessUrl(tenantSlug: string | null): string {
 }
 
 function CurrentBadge({ planId }: { planId: string }) {
-  const label = planId === 'friend' ? '内部方案' : '当前方案'
-  return <span className="bg-accent/10 text-accent rounded-full px-2 py-0.5 text-xs font-semibold">{label}</span>
+  const { t } = useTranslation()
+  const labelKey = planId === 'friend' ? planI18nKeys.badgeInternal : planI18nKeys.badgeCurrent
+  return <span className="bg-accent/10 text-accent rounded-full px-2 py-0.5 text-xs font-semibold">{t(labelKey)}</span>
 }
 
-function renderQuotaValue(value: number | null, unit?: string): string {
+function renderQuotaValue(value: number | null, unitKey: I18nKeys | null): string {
+  const i18n = getI18n()
   if (value === null || value === undefined) {
-    return '无限制'
+    return i18n.t(planI18nKeys.quotaUnlimited)
   }
-  const numeral = value.toLocaleString('zh-CN')
-  return unit ? `${numeral}${unit}` : numeral
+  const locale = i18n.language ?? 'en'
+  const numeral = value.toLocaleString(locale)
+  if (!unitKey) {
+    return numeral
+  }
+  return i18n.t(unitKey, { value: numeral })
 }
 
 function formatPrice(value: number, currency: string | null | undefined): string {

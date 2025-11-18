@@ -1,10 +1,13 @@
+import { useTranslation } from 'react-i18next'
+
 import { MainPageLayout } from '~/components/layouts/MainPageLayout'
 import { DataManagementPanel } from '~/modules/data-management'
 import { SettingsNavigation } from '~/modules/settings'
 
 export function Component() {
+  const { t } = useTranslation()
   return (
-    <MainPageLayout title="数据管理" description="执行数据库级别的维护操作，以保持照片数据与对象存储一致。">
+    <MainPageLayout title={t('settings.data.title')} description={t('settings.data.description')}>
       <div className="space-y-6">
         <SettingsNavigation active="data" />
         <DataManagementPanel />

@@ -1,9 +1,11 @@
 import { Spring } from '@afilmory/utils'
 import { m } from 'motion/react'
+import { useTranslation } from 'react-i18next'
 
 import { SuperAdminSettingsForm } from '~/modules/super-admin'
 
 export function Component() {
+  const { t } = useTranslation()
   return (
     <m.div
       initial={{ opacity: 0, y: 8 }}
@@ -12,8 +14,8 @@ export function Component() {
       className="space-y-6"
     >
       <header className="space-y-2">
-        <h1 className="text-text text-2xl font-semibold">系统设置</h1>
-        <p className="text-text-secondary text-sm">管理整个平台的注册策略与本地登录渠道，由超级管理员统一维护。</p>
+        <h1 className="text-text text-2xl font-semibold">{t('superadmin.settings.title')}</h1>
+        <p className="text-text-secondary text-sm">{t('superadmin.settings.description')}</p>
       </header>
 
       <SuperAdminSettingsForm visibleSectionIds={['registration-control', 'oauth-providers']} />

@@ -1,6 +1,7 @@
 import { Button, Prompt } from '@afilmory/ui'
 import { clsxm } from '@afilmory/utils'
 import { DynamicIcon } from 'lucide-react/dynamic'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
 import { LinearBorderPanel } from '~/components/common/GlassPanel'
@@ -16,15 +17,133 @@ const SUMMARY_PLACEHOLDER = {
 }
 
 const SUMMARY_STATS = [
-  { id: 'total', label: '总记录', accent: 'text-text', chip: '全部' },
-  { id: 'synced', label: '已同步', accent: 'text-emerald-300', chip: '正常' },
-  { id: 'pending', label: '待同步', accent: 'text-amber-300', chip: '排队中' },
-  { id: 'conflicts', label: '冲突', accent: 'text-rose-300', chip: '需处理' },
-] as const
+  {
+    id: 'total',
+    labelKey: 'data-management.summary.stats.total.label',
+    chipKey: 'data-management.summary.stats.total.chip',
+    accent: 'text-text',
+  },
+  {
+    id: 'synced',
+    labelKey: 'data-management.summary.stats.synced.label',
+    chipKey: 'data-management.summary.stats.synced.chip',
+    accent: 'text-emerald-300',
+  },
+  {
+    id: 'pending',
+    labelKey: 'data-management.summary.stats.pending.label',
+    chipKey: 'data-management.summary.stats.pending.chip',
+    accent: 'text-amber-300',
+  },
+  {
+    id: 'conflicts',
+    labelKey: 'data-management.summary.stats.conflicts.label',
+    chipKey: 'data-management.summary.stats.conflicts.chip',
+    accent: 'text-rose-300',
+  },
+] as const satisfies readonly {
+  id: keyof typeof SUMMARY_PLACEHOLDER
+  labelKey: I18nKeys
+  chipKey: I18nKeys
+  accent: string
+}[]
+
+const dataManagementKeys = {
+  summary: {
+    badge: 'data-management.summary.badge',
+    title: 'data-management.summary.title',
+    description: 'data-management.summary.description',
+    error: 'data-management.summary.error',
+  },
+  truncate: {
+    badge: 'data-management.truncate.badge',
+    title: 'data-management.truncate.title',
+    description: 'data-management.truncate.description',
+    note: 'data-management.truncate.note',
+    button: 'data-management.truncate.button',
+    loading: 'data-management.truncate.loading',
+    prompt: {
+      title: 'data-management.truncate.prompt.title',
+      description: 'data-management.truncate.prompt.description',
+      confirm: 'data-management.truncate.prompt.confirm',
+      cancel: 'data-management.truncate.prompt.cancel',
+    },
+  },
+  delete: {
+    badge: 'data-management.delete.badge',
+    title: 'data-management.delete.title',
+    description: 'data-management.delete.description',
+    note: 'data-management.delete.note',
+    button: 'data-management.delete.button',
+    loading: 'data-management.delete.loading',
+    promptInitial: {
+      title: 'data-management.delete.step1.title',
+      description: 'data-management.delete.step1.description',
+      confirm: 'data-management.delete.step1.confirm',
+      cancel: 'data-management.delete.step1.cancel',
+    },
+    promptConfirm: {
+      title: 'data-management.delete.step2.title',
+      description: 'data-management.delete.step2.description',
+      confirm: 'data-management.delete.step2.confirm',
+      cancel: 'data-management.delete.step2.cancel',
+    },
+    promptFinal: {
+      title: 'data-management.delete.step3.title',
+      description: 'data-management.delete.step3.description',
+      placeholder: 'data-management.delete.step3.placeholder',
+      confirm: 'data-management.delete.step3.confirm',
+      cancel: 'data-management.delete.step3.cancel',
+      errorTitle: 'data-management.delete.step3.error.title',
+      errorDescription: 'data-management.delete.step3.error.description',
+    },
+  },
+} as const satisfies {
+  summary: {
+    badge: I18nKeys
+    title: I18nKeys
+    description: I18nKeys
+    error: I18nKeys
+  }
+  truncate: {
+    badge: I18nKeys
+    title: I18nKeys
+    description: I18nKeys
+    note: I18nKeys
+    button: I18nKeys
+    loading: I18nKeys
+    prompt: {
+      title: I18nKeys
+      description: I18nKeys
+      confirm: I18nKeys
+      cancel: I18nKeys
+    }
+  }
+  delete: {
+    badge: I18nKeys
+    title: I18nKeys
+    description: I18nKeys
+    note: I18nKeys
+    button: I18nKeys
+    loading: I18nKeys
+    promptInitial: { title: I18nKeys; description: I18nKeys; confirm: I18nKeys; cancel: I18nKeys }
+    promptConfirm: { title: I18nKeys; description: I18nKeys; confirm: I18nKeys; cancel: I18nKeys }
+    promptFinal: {
+      title: I18nKeys
+      description: I18nKeys
+      placeholder: I18nKeys
+      confirm: I18nKeys
+      cancel: I18nKeys
+      errorTitle: I18nKeys
+      errorDescription: I18nKeys
+    }
+  }
+}
 
 const numberFormatter = new Intl.NumberFormat('zh-CN')
 
 export function DataManagementPanel() {
+  const { t } = useTranslation()
   const summaryQuery = usePhotoAssetSummaryQuery()
   const summary = summaryQuery.data ?? SUMMARY_PLACEHOLDER
   const truncateMutation = useTruncatePhotoAssetsMutation()
@@ -36,11 +155,11 @@ export function DataManagementPanel() {
     }
 
     Prompt.prompt({
-      title: '确认清空照片数据表？',
-      description: '该操作会删除数据库中的所有照片记录，但会保留对象存储中的原始文件。清空后需要重新执行一次照片同步。',
+      title: t(dataManagementKeys.truncate.prompt.title),
+      description: t(dataManagementKeys.truncate.prompt.description),
       variant: 'danger',
-      onConfirmText: '立即清空',
-      onCancelText: '取消',
+      onConfirmText: t(dataManagementKeys.truncate.prompt.confirm),
+      onCancelText: t(dataManagementKeys.truncate.prompt.cancel),
       onConfirm: () => truncateMutation.mutateAsync().then(() => {}),
     })
   }
@@ -52,16 +171,18 @@ export function DataManagementPanel() {
 
     const launchFinalConfirm = () => {
       Prompt.input({
-        title: '最终确认：永久删除账户',
-        description: '请输入 DELETE 以确认。本操作会立即注销所有成员并删除不可恢复的数据。',
-        placeholder: 'DELETE',
+        title: t(dataManagementKeys.delete.promptFinal.title),
+        description: t(dataManagementKeys.delete.promptFinal.description),
+        placeholder: t(dataManagementKeys.delete.promptFinal.placeholder),
         variant: 'danger',
-        onConfirmText: '永久删除',
-        onCancelText: '返回',
+        onConfirmText: t(dataManagementKeys.delete.promptFinal.confirm),
+        onCancelText: t(dataManagementKeys.delete.promptFinal.cancel),
         onConfirm: async (value) => {
           const normalized = value.trim().toUpperCase()
           if (normalized !== 'DELETE') {
-            toast.error('确认失败', { description: '请输入 DELETE 以继续。' })
+            toast.error(t(dataManagementKeys.delete.promptFinal.errorTitle), {
+              description: t(dataManagementKeys.delete.promptFinal.errorDescription),
+            })
             launchFinalConfirm()
             return
           }
@@ -75,21 +196,21 @@ export function DataManagementPanel() {
 
     const confirmIrreversibleStep = () => {
       Prompt.prompt({
-        title: '二次确认：删除整个账户',
-        description: '将彻底清除当前租户的照片、设置、同步记录以及所有成员权限，且无法撤销。',
+        title: t(dataManagementKeys.delete.promptConfirm.title),
+        description: t(dataManagementKeys.delete.promptConfirm.description),
         variant: 'danger',
-        onConfirmText: '我已知晓风险',
-        onCancelText: '取消',
+        onConfirmText: t(dataManagementKeys.delete.promptConfirm.confirm),
+        onCancelText: t(dataManagementKeys.delete.promptConfirm.cancel),
         onConfirm: launchFinalConfirm,
       })
     }
 
     Prompt.prompt({
-      title: '删除账户（步骤 1/3）',
-      description: '删除后会立即清空当前租户下的所有数据并登出所有成员。此过程包含 3 次确认以确保安全。',
+      title: t(dataManagementKeys.delete.promptInitial.title),
+      description: t(dataManagementKeys.delete.promptInitial.description),
       variant: 'danger',
-      onConfirmText: '继续下一步',
-      onCancelText: '取消',
+      onConfirmText: t(dataManagementKeys.delete.promptInitial.confirm),
+      onCancelText: t(dataManagementKeys.delete.promptInitial.cancel),
       onConfirm: confirmIrreversibleStep,
     })
   }
@@ -101,16 +222,14 @@ export function DataManagementPanel() {
           <div className="space-y-3 sm:space-y-4">
             <span className="shape-squircle inline-flex items-center gap-2 bg-accent/10 px-2.5 sm:px-3 py-1 text-[11px] sm:text-xs font-medium text-accent">
               <DynamicIcon name="database" className="h-3.5 sm:h-4 w-3.5 sm:w-4" />
-              当前数据概况
+              {t(dataManagementKeys.summary.badge)}
             </span>
             <div className="space-y-1.5 sm:space-y-2">
-              <h3 className="text-text text-lg sm:text-xl font-semibold">照片数据表状态</h3>
-              <p className="text-text-secondary text-xs sm:text-sm">
-                以下统计来自数据库记录，不含对象存储中的原始文件。
-              </p>
+              <h3 className="text-text text-lg sm:text-xl font-semibold">{t(dataManagementKeys.summary.title)}</h3>
+              <p className="text-text-secondary text-xs sm:text-sm">{t(dataManagementKeys.summary.description)}</p>
             </div>
             {summaryQuery.isError ? (
-              <p className="text-red text-xs sm:text-sm">无法加载数据统计，请稍后再试。</p>
+              <p className="text-red text-xs sm:text-sm">{t(dataManagementKeys.summary.error)}</p>
             ) : null}
           </div>
           <div className="grid w-full gap-3 sm:gap-4 grid-cols-2 sm:grid-cols-2 lg:grid-cols-4">
@@ -123,9 +242,9 @@ export function DataManagementPanel() {
                 )}
               >
                 <div className="flex items-center justify-between text-[10px] sm:text-[11px] text-text-tertiary">
-                  <span>{stat.label}</span>
+                  <span>{t(stat.labelKey)}</span>
                   <span className="shape-squircle bg-white/5 px-1.5 sm:px-2 py-0.5 font-medium text-white/80 text-[9px] sm:text-[10px]">
-                    {stat.chip}
+                    {t(stat.chipKey)}
                   </span>
                 </div>
                 <div className={clsxm('mt-1.5 sm:mt-2 text-xl sm:text-2xl font-semibold', stat.accent)}>
@@ -142,13 +261,11 @@ export function DataManagementPanel() {
           <div className="space-y-1.5 sm:space-y-2">
             <div className="flex items-center gap-1.5 sm:gap-2 text-red">
               <DynamicIcon name="triangle-alert" className="h-3.5 sm:h-4 w-3.5 sm:w-4" />
-              <span className="text-xs sm:text-sm font-semibold">危险操作</span>
+              <span className="text-xs sm:text-sm font-semibold">{t(dataManagementKeys.truncate.badge)}</span>
             </div>
             <div>
-              <h4 className="text-text text-base sm:text-lg font-semibold">清空照片数据表</h4>
-              <p className="text-text-secondary text-xs sm:text-sm">
-                删除数据库中的所有照片记录，仅保留对象存储文件。通常用于处理数据不一致、重新同步或迁移场景。
-              </p>
+              <h4 className="text-text text-base sm:text-lg font-semibold">{t(dataManagementKeys.truncate.title)}</h4>
+              <p className="text-text-secondary text-xs sm:text-sm">{t(dataManagementKeys.truncate.description)}</p>
             </div>
           </div>
           <Button
@@ -156,16 +273,14 @@ export function DataManagementPanel() {
             variant="destructive"
             size="sm"
             isLoading={truncateMutation.isPending}
-            loadingText="清理中…"
+            loadingText={t(dataManagementKeys.truncate.loading)}
             onClick={handleTruncate}
             className="w-full sm:w-auto"
           >
-            清空数据库记录
+            {t(dataManagementKeys.truncate.button)}
           </Button>
         </div>
-        <p className="text-text-tertiary mt-3 sm:mt-4 text-[11px] sm:text-xs">
-          操作完成后请立即重新执行「照片同步」，以便使用存储中的原始文件重建数据库与 manifest。
-        </p>
+        <p className="text-text-tertiary mt-3 sm:mt-4 text-[11px] sm:text-xs">{t(dataManagementKeys.truncate.note)}</p>
       </LinearBorderPanel>
 
       <LinearBorderPanel className="bg-red-500/5 p-4 sm:p-6">
@@ -173,14 +288,11 @@ export function DataManagementPanel() {
           <div className="space-y-1.5 sm:space-y-2">
             <div className="flex items-center gap-1.5 sm:gap-2 text-red">
               <DynamicIcon name="radiation" className="h-3.5 sm:h-4 w-3.5 sm:w-4" />
-              <span className="text-xs sm:text-sm font-semibold">账户清除（不可逆）</span>
+              <span className="text-xs sm:text-sm font-semibold">{t(dataManagementKeys.delete.badge)}</span>
             </div>
             <div className="space-y-1">
-              <h4 className="text-text text-base sm:text-lg font-semibold">删除当前租户与所有数据</h4>
-              <p className="text-text-secondary text-xs sm:text-sm">
-                此操作会在数据库中彻底删除当前租户、照片记录、同步日志、权限成员等所有信息。执行后将登出所有成员并无法恢复，
-                系统会强制进行三次确认以避免误操作。
-              </p>
+              <h4 className="text-text text-base sm:text-lg font-semibold">{t(dataManagementKeys.delete.title)}</h4>
+              <p className="text-text-secondary text-xs sm:text-sm">{t(dataManagementKeys.delete.description)}</p>
             </div>
           </div>
           <Button
@@ -188,16 +300,14 @@ export function DataManagementPanel() {
             variant="destructive"
             size="sm"
             onClick={handleDeleteAccount}
-            loadingText="正在销毁…"
+            loadingText={t(dataManagementKeys.delete.loading)}
             isLoading={deleteTenantMutation.isPending}
             className="w-full sm:w-auto"
           >
-            永久删除账户
+            {t(dataManagementKeys.delete.button)}
           </Button>
         </div>
-        <p className="text-text-tertiary mt-3 sm:mt-4 text-[11px] sm:text-xs">
-          如需在未来重新使用本服务，需要重新注册新的租户并重新上传所有资产。该操作不会删除对象存储中的原始文件，但会移除与之关联的所有数据库记录。
-        </p>
+        <p className="text-text-tertiary mt-3 sm:mt-4 text-[11px] sm:text-xs">{t(dataManagementKeys.delete.note)}</p>
       </LinearBorderPanel>
     </div>
   )

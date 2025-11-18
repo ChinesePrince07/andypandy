@@ -3,27 +3,27 @@ import { PageTabs } from '~/components/navigation/PageTabs'
 const SETTINGS_TABS = [
   {
     id: 'site',
-    label: '站点设置',
+    labelKey: 'settings.nav.site',
     path: '/settings/site',
     end: true,
   },
   {
     id: 'user',
-    label: '用户信息',
+    labelKey: 'settings.nav.user',
     path: '/settings/user',
     end: true,
   },
 
   {
     id: 'account',
-    label: '账号与登录',
+    labelKey: 'settings.nav.account',
     path: '/settings/account',
     end: true,
   },
 
   {
     id: 'data',
-    label: '数据管理',
+    labelKey: 'settings.nav.data',
     path: '/settings/data',
     end: true,
   },
@@ -39,7 +39,7 @@ export function SettingsNavigation({ active }: SettingsNavigationProps) {
       activeId={active}
       items={SETTINGS_TABS.map((tab) => ({
         id: tab.id,
-        label: tab.label,
+        labelKey: tab.labelKey,
         to: tab.path,
         end: tab.end,
       }))}

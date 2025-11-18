@@ -1,5 +1,7 @@
 import type { FC, PropsWithChildren } from 'react'
-
+import type { useTranslation } from 'react-i18next'
+// eslint-disable-next-line react-hooks/rules-of-hooks
+const { t } = useTranslation('dashboard')
 declare global {
   export type Nullable<T> = T | null | undefined
 
@@ -14,7 +16,7 @@ declare global {
   } & {}
 
   const APP_NAME: string
-
+  export type I18nKeys = OmitStringType<Parameters<typeof t>[0]>
   /**
    * This function is a macro, will replace in the build stage.
    */

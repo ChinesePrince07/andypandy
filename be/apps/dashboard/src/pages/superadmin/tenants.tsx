@@ -1,9 +1,11 @@
 import { Spring } from '@afilmory/utils'
 import { m } from 'motion/react'
+import { useTranslation } from 'react-i18next'
 
 import { SuperAdminTenantManager } from '~/modules/super-admin'
 
 export function Component() {
+  const { t } = useTranslation()
   return (
     <m.div
       initial={{ opacity: 0, y: 8 }}
@@ -12,8 +14,8 @@ export function Component() {
       className="space-y-6"
     >
       <header className="space-y-2">
-        <h1 className="text-text text-2xl font-semibold">租户订阅管理</h1>
-        <p className="text-text-secondary text-sm">为特定租户切换订阅计划或封禁违规租户。</p>
+        <h1 className="text-text text-2xl font-semibold">{t('superadmin.tenants.title')}</h1>
+        <p className="text-text-secondary text-sm">{t('superadmin.tenants.description')}</p>
       </header>
 
       <SuperAdminTenantManager />

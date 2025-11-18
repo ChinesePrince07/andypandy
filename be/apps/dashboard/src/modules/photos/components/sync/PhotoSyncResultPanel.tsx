@@ -3,7 +3,7 @@ import { Spring } from '@afilmory/utils'
 import { m } from 'motion/react'
 import { useMemo, useState } from 'react'
 
-import { getConflictTypeLabel, PHOTO_ACTION_TYPE_CONFIG } from '../../constants'
+import { getActionTypeMeta, getConflictTypeLabel, PHOTO_ACTION_TYPE_CONFIG } from '../../constants'
 import type {
   PhotoAssetSummary,
   PhotoSyncAction,
@@ -218,11 +218,14 @@ export function PhotoSyncResultPanel({
         label: '全部',
         count: result ? result.actions.length : 0,
       },
-      ...Object.entries(actionTypeConfig).map(([type, config]) => ({
-        type: type as PhotoSyncAction['type'],
-        label: config.label,
-        count: counts[type as PhotoSyncAction['type']] ?? 0,
-      })),
+      ...Object.entries(actionTypeConfig).map(([type]) => {
+        const typed = type as PhotoSyncAction['type']
+        return {
+          type: typed,
+          label: getActionTypeMeta(typed).label,
+          count: counts[typed] ?? 0,
+        }
+      }),
     ]
   }, [result])
 
@@ -271,7 +274,7 @@ export function PhotoSyncResultPanel({
   }
 
   const renderActionDetails = (action: PhotoSyncAction) => {
-    const { label, badgeClass } = actionTypeConfig[action.type]
+    const { label, badgeClass } = getActionTypeMeta(action.type)
     const {
       manifestBefore: beforeManifest,
       manifestAfter: afterManifest,
@@ -486,7 +489,7 @@ export function PhotoSyncResultPanel({
             <div className="space-y-3">
               {filteredActions.map((action, index) => {
                 const actionKey = `${action.storageKey}-${action.type}-${action.photoId ?? 'none'}-${action.manifestAfter?.id ?? action.manifestBefore?.id ?? 'unknown'}`
-                const { label, badgeClass } = actionTypeConfig[action.type]
+                const { label, badgeClass } = getActionTypeMeta(action.type)
                 const resolutionLabel =
                   action.resolution === 'prefer-storage'
                     ? '以存储为准'

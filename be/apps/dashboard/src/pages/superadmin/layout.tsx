@@ -1,22 +1,24 @@
 import { ScrollArea } from '@afilmory/ui'
+import { useTranslation } from 'react-i18next'
 import { Navigate, NavLink, Outlet } from 'react-router'
 
 import { useAuthUserValue, useIsSuperAdmin } from '~/atoms/auth'
 import { SuperAdminUserMenu } from '~/components/common/SuperAdminUserMenu'
 
 export function Component() {
+  const { t } = useTranslation()
   const user = useAuthUserValue()
   const isSuperAdmin = useIsSuperAdmin()
   const navItems = [
-    { to: '/superadmin/settings', label: '系统设置', end: true },
-    { to: '/superadmin/plans', label: '订阅计划', end: true },
-    { to: '/superadmin/tenants', label: '租户管理', end: true },
+    { to: '/superadmin/settings', labelKey: 'superadmin.nav.settings', end: true },
+    { to: '/superadmin/plans', labelKey: 'superadmin.nav.plans', end: true },
+    { to: '/superadmin/tenants', labelKey: 'superadmin.nav.tenants', end: true },
     {
-      label: '构建器',
+      labelKey: 'superadmin.nav.builder',
       to: '/superadmin/builder',
       end: true,
     },
-    { to: '/superadmin/debug', label: 'Builder 调试', end: false },
+    { to: '/superadmin/debug', labelKey: 'superadmin.nav.builder-debug', end: false },
   ] as const
 
   if (user && !isSuperAdmin) {
@@ -31,7 +33,7 @@ export function Component() {
 
         <div className="flex items-center justify-between gap-6">
           {/* Logo/Brand */}
-          <div className="text-text text-base font-semibold">Afilmory · System Settings</div>
+          <div className="text-text text-base font-semibold">{t('superadmin.brand')}</div>
 
           <div className="flex flex-1 items-center gap-1">
             {navItems.map((tab) => (
@@ -41,7 +43,7 @@ export function Component() {
                     className="relative overflow-hidden rounded-md shape-squircle px-3 py-1.5 group data-[state=active]:bg-accent/80 data-[state=active]:text-white"
                     data-state={isActive ? 'active' : 'inactive'}
                   >
-                    <span className="relative z-10 text-[13px] font-medium">{tab.label}</span>
+                    <span className="relative z-10 text-[13px] font-medium">{t(tab.labelKey)}</span>
                   </div>
                 )}
               </NavLink>

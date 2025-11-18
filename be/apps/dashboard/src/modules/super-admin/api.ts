@@ -1,3 +1,4 @@
+import { getI18n } from '~/i18n'
 import { coreApi, coreApiBaseURL } from '~/lib/api-client'
 import { camelCaseKeys } from '~/lib/case'
 
@@ -72,7 +73,12 @@ export async function runBuilderDebugTest(file: File, options?: RunBuilderDebugO
   })
 
   if (!response.ok || !response.body) {
-    throw new Error(`调试请求失败：${response.status} ${response.statusText}`)
+    throw new Error(
+      getI18n().t('superadmin.builder-debug.api.request-failed', {
+        status: response.status,
+        statusText: response.statusText,
+      }),
+    )
   }
 
   const reader = response.body.getReader()
@@ -162,7 +168,7 @@ export async function runBuilderDebugTest(file: File, options?: RunBuilderDebugO
   }
 
   if (!finalResult) {
-    throw new Error('调试过程中未收到最终结果，连接已终止。')
+    throw new Error(getI18n().t('superadmin.builder-debug.api.missing-result'))
   }
 
   return camelCaseKeys<BuilderDebugResult>(finalResult)

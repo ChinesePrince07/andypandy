@@ -2,6 +2,7 @@ import { Button } from '@afilmory/ui'
 import { Spring } from '@afilmory/utils'
 import { m } from 'motion/react'
 import { startTransition, useCallback, useEffect, useId, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { LinearBorderPanel } from '~/components/common/GlassPanel'
 import { MainPageLayout, useMainPageLayout } from '~/components/layouts/MainPageLayout'
@@ -198,6 +199,7 @@ export function BuilderSettingsForm() {
   const { data, isLoading, isError, error } = useBuilderSettingsUiSchemaQuery()
   const updateMutation = useUpdateBuilderSettingsMutation()
   const { setHeaderActionState } = useMainPageLayout()
+  const { t } = useTranslation()
   const formId = useId()
 
   const [formState, setFormState] = useState<BuilderSettingsFormState>({} as BuilderSettingsFormState)
@@ -240,19 +242,22 @@ export function BuilderSettingsForm() {
 
   const mutationMessage = useMemo(() => {
     if (updateMutation.isError) {
-      const reason = updateMutation.error instanceof Error ? updateMutation.error.message : '保存失败'
-      return `保存失败：${reason}`
+      const reason =
+        updateMutation.error instanceof Error
+          ? updateMutation.error.message
+          : t('builder-settings.message.unknown-error')
+      return t('builder-settings.message.error', { reason })
     }
     if (updateMutation.isPending) {
-      return '正在保存构建器设置…'
+      return t('builder-settings.message.saving')
     }
     if (!dirty && updateMutation.isSuccess) {
-      return '保存成功，配置已更新'
+      return t('builder-settings.message.saved')
     }
     if (dirty) {
-      return '您有尚未保存的更改'
+      return t('builder-settings.message.dirty')
     }
-    return '所有设置已同步'
+    return t('builder-settings.message.idle')
   }, [dirty, updateMutation.error, updateMutation.isError, updateMutation.isPending, updateMutation.isSuccess])
 
   useEffect(() => {
@@ -277,11 +282,11 @@ export function BuilderSettingsForm() {
         form={formId}
         disabled={!dirty}
         isLoading={updateMutation.isPending}
-        loadingText="保存中…"
+        loadingText={t('builder-settings.button.loading')}
         variant="primary"
         size="sm"
       >
-        保存修改
+        {t('builder-settings.button.save')}
       </Button>
     </MainPageLayout.Actions>
   )
@@ -311,7 +316,11 @@ export function BuilderSettingsForm() {
         <LinearBorderPanel className="p-6">
           <div className="text-red flex items-center gap-2 text-sm">
             <i className="i-mingcute-close-circle-fill text-lg" />
-            <span>{`无法加载构建器设置：${error instanceof Error ? error.message : '未知错误'}`}</span>
+            <span>
+              {t('builder-settings.error.loading', {
+                reason: error instanceof Error ? error.message : t('builder-settings.message.unknown-error'),
+              })}
+            </span>
           </div>
         </LinearBorderPanel>
       </>

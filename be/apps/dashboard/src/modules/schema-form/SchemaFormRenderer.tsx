@@ -15,6 +15,7 @@ import { clsxm } from '@afilmory/utils'
 import { DynamicIcon } from 'lucide-react/dynamic'
 import type { ReactNode } from 'react'
 import { Fragment, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { LinearBorderPanel } from '../../components/common/GlassPanel'
 import type {
@@ -56,6 +57,7 @@ function SecretFieldInput<Key extends string>({
   onChange: (key: Key, value: SchemaFormValue) => void
 }) {
   const [revealed, setRevealed] = useState(false)
+  const { t } = useTranslation()
 
   return (
     <div className="flex w-full items-center gap-2">
@@ -75,7 +77,7 @@ function SecretFieldInput<Key extends string>({
           size="sm"
           className="border-fill-tertiary/50 text-text-secondary hover:bg-fill/30 hover:text-text border"
         >
-          {revealed ? '隐藏' : '显示'}
+          {revealed ? t('schema-form.secret.hide') : t('schema-form.secret.show')}
         </Button>
       ) : null}
     </div>
@@ -98,6 +100,7 @@ type FieldRendererProps<Key extends string> = {
 
 function FieldRenderer<Key extends string>({ field, value, onChange, renderSlot, context }: FieldRendererProps<Key>) {
   const { component } = field
+  const { t } = useTranslation()
 
   if (component.type === 'slot') {
     return renderSlot
@@ -123,7 +126,7 @@ function FieldRenderer<Key extends string>({ field, value, onChange, renderSlot,
     return (
       <Select value={stringValue} onValueChange={(nextValue) => onChange(field.key, nextValue)}>
         <SelectTrigger className="border-fill-tertiary/50 bg-background focus:border-accent/40">
-          <SelectValue placeholder={component.placeholder ?? '请选择'} />
+          <SelectValue placeholder={component.placeholder ?? t('schema-form.select.placeholder')} />
         </SelectTrigger>
         <SelectContent className="border-fill-tertiary bg-background">
           {component.options?.map((option) => (
@@ -202,13 +205,20 @@ function renderGroup<Key extends string>(
   )
 }
 
-function renderField<Key extends string>(
-  field: UiFieldNode<Key>,
-  formState: SchemaFormState<Key>,
-  handleChange: (key: Key, value: SchemaFormValue) => void,
-  renderSlot: SlotRenderer<Key> | undefined,
-  context: SchemaRendererContext<Key>,
-) {
+function FieldNode<Key extends string>({
+  field,
+  formState,
+  handleChange,
+  renderSlot,
+  context,
+}: {
+  field: UiFieldNode<Key>
+  formState: SchemaFormState<Key>
+  handleChange: (key: Key, value: SchemaFormValue) => void
+  renderSlot: SlotRenderer<Key> | undefined
+  context: SchemaRendererContext<Key>
+}) {
+  const { t } = useTranslation()
   if (field.hidden) {
     return null
   }
@@ -253,7 +263,7 @@ function renderField<Key extends string>(
 
       <FieldRenderer field={field} value={value} onChange={handleChange} renderSlot={renderSlot} context={context} />
 
-      {showSensitiveHint ? <FormHelperText>出于安全考虑，仅在更新时填写新的值。</FormHelperText> : null}
+      {showSensitiveHint ? <FormHelperText>{t('schema-form.secret.helper')}</FormHelperText> : null}
 
       {helperText ? <FormHelperText>{helperText}</FormHelperText> : null}
     </div>
@@ -277,7 +287,15 @@ function renderNode<Key extends string>(
   }
 
   if (node.type === 'field') {
-    return renderField(node, formState, handleChange, renderSlot, context)
+    return (
+      <FieldNode
+        field={node}
+        formState={formState}
+        handleChange={handleChange}
+        renderSlot={renderSlot}
+        context={context}
+      />
+    )
   }
 
   const renderedChildren = node.children

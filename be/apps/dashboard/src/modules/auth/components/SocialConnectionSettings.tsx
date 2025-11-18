@@ -1,6 +1,7 @@
 import { Button } from '@afilmory/ui'
 import { cx } from '@afilmory/utils'
 import { useCallback, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
 import { LinearBorderPanel } from '~/components/common/GlassPanel'
@@ -19,6 +20,7 @@ export function SocialConnectionSettings() {
   const accountsQuery = useSocialAccounts()
   const linkMutation = useLinkSocialAccountMutation()
   const unlinkMutation = useUnlinkSocialAccountMutation()
+  const { t, i18n } = useTranslation()
 
   const providers = providersQuery.data?.providers ?? []
   const accountsByProvider = useMemo(() => {
@@ -33,10 +35,10 @@ export function SocialConnectionSettings() {
   const hasError = providersQuery.isError || accountsQuery.isError
   const errorMessage = useMemo(() => {
     if (providersQuery.isError && providersQuery.error) {
-      return getRequestErrorMessage(providersQuery.error, '无法加载可用的 OAuth Provider')
+      return getRequestErrorMessage(providersQuery.error, t('auth.social.error.providers'))
     }
     if (accountsQuery.isError && accountsQuery.error) {
-      return getRequestErrorMessage(accountsQuery.error, '无法查询绑定状态')
+      return getRequestErrorMessage(accountsQuery.error, t('auth.social.error.accounts'))
     }
     return null
   }, [accountsQuery.error, accountsQuery.isError, providersQuery.error, providersQuery.isError])
@@ -64,8 +66,8 @@ export function SocialConnectionSettings() {
           window.open(result.url, '_blank', 'noopener,noreferrer')
         }
       } catch (error) {
-        toast.error(`无法开启 ${providerName} 绑定`, {
-          description: getRequestErrorMessage(error, '请稍后再试'),
+        toast.error(t('auth.social.toast.connect-failure', { provider: providerName }), {
+          description: getRequestErrorMessage(error, t('common.retry-later')),
         })
       }
     },
@@ -76,10 +78,10 @@ export function SocialConnectionSettings() {
     async (providerId: string, providerName: string, accountId?: string) => {
       try {
         await unlinkMutation.mutateAsync({ providerId, accountId })
-        toast.success(`已解除与 ${providerName} 的绑定`)
+        toast.success(t('auth.social.toast.disconnect-success', { provider: providerName }))
       } catch (error) {
-        toast.error('解绑失败', {
-          description: getRequestErrorMessage(error, '请稍后再试'),
+        toast.error(t('auth.social.toast.disconnect-failure'), {
+          description: getRequestErrorMessage(error, t('common.retry-later')),
         })
       }
     },
@@ -116,10 +118,8 @@ export function SocialConnectionSettings() {
     return (
       <LinearBorderPanel className="p-4 sm:p-6">
         <div className="flex flex-col gap-2 sm:gap-3">
-          <p className="text-sm sm:text-base font-semibold">未配置可用的 OAuth Provider</p>
-          <p className="text-text-tertiary text-xs sm:text-sm">
-            超级管理员尚未在系统设置中启用任何第三方登录方式，当前租户无法执行 OAuth 绑定。
-          </p>
+          <p className="text-sm sm:text-base font-semibold">{t('auth.social.empty.title')}</p>
+          <p className="text-text-tertiary text-xs sm:text-sm">{t('auth.social.empty.description')}</p>
         </div>
       </LinearBorderPanel>
     )
@@ -129,11 +129,11 @@ export function SocialConnectionSettings() {
     <LinearBorderPanel className="p-4 sm:p-6">
       <div className="space-y-4 sm:space-y-6">
         <div>
-          <p className="text-text-tertiary text-xs sm:text-sm font-semibold tracking-wide uppercase">登录方式</p>
-          <h2 className="mt-1 text-xl sm:text-2xl font-semibold">OAuth 账号绑定</h2>
-          <p className="text-text-tertiary mt-1.5 sm:mt-2 text-xs sm:text-sm">
-            绑定后即可使用对应平台的账号快速登录后台，并同步基础资料。解除绑定不会删除原有后台账号。
+          <p className="text-text-tertiary text-xs sm:text-sm font-semibold tracking-wide uppercase">
+            {t('auth.social.section.label')}
           </p>
+          <h2 className="mt-1 text-xl sm:text-2xl font-semibold">{t('auth.social.section.title')}</h2>
+          <p className="text-text-tertiary mt-1.5 sm:mt-2 text-xs sm:text-sm">{t('auth.social.section.description')}</p>
         </div>
 
         <div className="space-y-3 sm:space-y-4">
@@ -156,11 +156,13 @@ export function SocialConnectionSettings() {
                     <p className="text-sm sm:text-base leading-tight font-semibold">{provider.name}</p>
                     {linkedAccount ? (
                       <p className="text-text-tertiary mt-0.5 sm:mt-1 text-[11px] sm:text-xs">
-                        已绑定 · {formatTimestamp(linkedAccount.createdAt)}
+                        {t('auth.social.provider.connected', {
+                          time: formatTimestamp(linkedAccount.createdAt, i18n.language),
+                        })}
                       </p>
                     ) : (
                       <p className="text-text-tertiary mt-0.5 sm:mt-1 text-[11px] sm:text-xs">
-                        尚未绑定，点击下方按钮完成授权。
+                        {t('auth.social.provider.unconnected')}
                       </p>
                     )}
                   </div>
@@ -174,14 +176,16 @@ export function SocialConnectionSettings() {
                         size="sm"
                         disabled={isUnlinking || isLastLinkedProvider}
                         isLoading={isUnlinking}
-                        loadingText="解绑中…"
+                        loadingText={t('auth.social.provider.disconnecting')}
                         onClick={() => handleDisconnect(provider.id, provider.name, linkedAccount.accountId)}
                         className="w-full sm:w-auto"
                       >
-                        解除绑定
+                        {t('auth.social.provider.disconnect')}
                       </Button>
                       {isLastLinkedProvider ? (
-                        <p className="text-text-tertiary text-[11px] sm:text-xs">需要至少保留一个已绑定的登录方式。</p>
+                        <p className="text-text-tertiary text-[11px] sm:text-xs">
+                          {t('auth.social.provider.last-warning')}
+                        </p>
                       ) : null}
                     </>
                   ) : (
@@ -191,11 +195,11 @@ export function SocialConnectionSettings() {
                       size="sm"
                       disabled={isLinking}
                       isLoading={isLinking}
-                      loadingText="跳转中…"
+                      loadingText={t('auth.social.provider.connecting')}
                       onClick={() => handleConnect(provider.id, provider.name)}
                       className="w-full sm:w-auto"
                     >
-                      绑定 {provider.name}
+                      {t('auth.social.provider.connect', { provider: provider.name })}
                     </Button>
                   )}
                 </div>
@@ -208,13 +212,13 @@ export function SocialConnectionSettings() {
   )
 }
 
-function formatTimestamp(value: string): string {
+function formatTimestamp(value: string, locale: string | undefined): string {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) {
     return value
   }
 
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(locale ?? undefined, {
     year: 'numeric',
     month: 'short',
     day: '2-digit',

@@ -1,4 +1,5 @@
 import { clsxm } from '@afilmory/utils'
+import { useTranslation } from 'react-i18next'
 import { NavLink, useNavigate } from 'react-router'
 
 import { useAuthUserValue } from '~/atoms/auth'
@@ -7,17 +8,18 @@ import { useTenantPlanQuery } from '~/modules/billing'
 import { UserMenu } from './UserMenu'
 
 const navigationTabs = [
-  { label: 'Dashboard', path: '/' },
-  { label: 'Photos', path: '/photos' },
-  { label: 'Analytics', path: '/analytics' },
-  { label: 'Settings', path: '/settings' },
-] as const
+  { labelKey: 'nav.overview', path: '/' },
+  { labelKey: 'nav.photos', path: '/photos' },
+  { labelKey: 'nav.analytics', path: '/analytics' },
+  { labelKey: 'nav.settings', path: '/settings' },
+] as const satisfies readonly { labelKey: I18nKeys; path: string }[]
 
 export function Header() {
   const user = useAuthUserValue()
   const planQuery = useTenantPlanQuery({ enabled: Boolean(user) })
   const planLabel = planQuery.data?.plan?.name ?? planQuery.data?.plan?.planId ?? null
   const navigate = useNavigate()
+  const { t } = useTranslation()
 
   return (
     <header className="bg-background relative shrink-0 border-b border-fill-tertiary/50">
@@ -39,7 +41,7 @@ export function Header() {
                     isActive ? 'bg-accent/10 text-accent' : 'text-text-secondary hover:text-text',
                   )}
                 >
-                  {tab.label}
+                  {t(tab.labelKey)}
                 </div>
               )}
             </NavLink>
@@ -49,7 +51,12 @@ export function Header() {
         {/* Right side - User Menu */}
         {user && (
           <div className="border-fill-tertiary/50 ml-2 sm:ml-auto flex items-center gap-3 border-l pl-2 sm:pl-4">
-            <PlanBadge label={planLabel} isLoading={planQuery.isLoading} onClick={() => navigate('/plan')} />
+            <PlanBadge
+              label={planLabel}
+              isLoading={planQuery.isLoading}
+              onClick={() => navigate('/plan')}
+              labelKey="header.plan.badge"
+            />
             <UserMenu user={user} />
           </div>
         )}
@@ -58,7 +65,18 @@ export function Header() {
   )
 }
 
-function PlanBadge({ label, isLoading, onClick }: { label: string | null; isLoading: boolean; onClick: () => void }) {
+function PlanBadge({
+  label,
+  isLoading,
+  onClick,
+  labelKey,
+}: {
+  label: string | null
+  isLoading: boolean
+  onClick: () => void
+  labelKey: I18nKeys
+}) {
+  const { t } = useTranslation()
   if (isLoading && !label) {
     return <div className="bg-fill/30 h-6 w-24 animate-pulse rounded-lg border border-fill-tertiary/30" />
   }
@@ -73,7 +91,9 @@ function PlanBadge({ label, isLoading, onClick }: { label: string | null; isLoad
       onClick={onClick}
       className="bg-fill/30 text-text-secondary hover:bg-fill/50 flex items-center gap-1.5 rounded border border-fill-tertiary/30 px-2.5 py-1 text-xs font-medium transition sm:text-[13px]"
     >
-      <span className="text-text-tertiary text-[11px] sm:text-xs font-medium uppercase tracking-wide">Plan</span>
+      <span className="text-text-tertiary text-[11px] sm:text-xs font-medium uppercase tracking-wide">
+        {t(labelKey)}
+      </span>
       <span className="h-1 w-1 rounded-full bg-text-tertiary/40" aria-hidden="true" />
       <span className="text-text font-semibold capitalize">{label}</span>
     </button>

@@ -2,6 +2,7 @@ import { clsxm, Spring } from '@afilmory/utils'
 import { m } from 'motion/react'
 import type { ReactNode } from 'react'
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { LinearBorderPanel } from '~/components/common/GlassPanel'
 import { MainPageLayout } from '~/components/layouts/MainPageLayout'
@@ -20,6 +21,54 @@ const percentFormatter = new Intl.NumberFormat('zh-CN', {
 })
 const monthLabelFormatter = new Intl.DateTimeFormat('zh-CN', { month: 'short' })
 const fullMonthFormatter = new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: 'long' })
+
+const analyticsKeys = {
+  pageTitle: 'analytics.page.title',
+  pageDescription: 'analytics.page.description',
+  sections: {
+    upload: {
+      title: 'analytics.sections.upload.title',
+      description: 'analytics.sections.upload.description',
+      error: 'analytics.sections.upload.error',
+      empty: 'analytics.sections.upload.empty',
+      total: 'analytics.sections.upload.total',
+      best: 'analytics.sections.upload.best',
+      current: 'analytics.sections.upload.current',
+      growthEqual: 'analytics.sections.upload.growth-equal',
+      firstRecord: 'analytics.sections.upload.first-record',
+      compareEqual: 'analytics.sections.upload.compare-equal',
+      tooltip: 'analytics.sections.upload.tooltip',
+    },
+    storage: {
+      title: 'analytics.sections.storage.title',
+      description: 'analytics.sections.storage.description',
+      error: 'analytics.sections.storage.error',
+      empty: 'analytics.sections.storage.empty',
+      total: 'analytics.sections.storage.total',
+      photos: 'analytics.sections.storage.photos',
+      current: 'analytics.sections.storage.current',
+      deltaEqual: 'analytics.sections.storage.delta.equal',
+      deltaCompare: 'analytics.sections.storage.delta.compare',
+      deltaFirst: 'analytics.sections.storage.delta.first',
+      providerMeta: 'analytics.sections.storage.provider-meta',
+    },
+    tags: {
+      title: 'analytics.sections.tags.title',
+      description: 'analytics.sections.tags.description',
+      error: 'analytics.sections.tags.error',
+      empty: 'analytics.sections.tags.empty',
+    },
+    devices: {
+      title: 'analytics.sections.devices.title',
+      description: 'analytics.sections.devices.description',
+      error: 'analytics.sections.devices.error',
+      empty: 'analytics.sections.devices.empty',
+    },
+  },
+  units: {
+    photos: 'analytics.units.photos',
+  },
+} as const
 
 function formatBytes(bytes: number) {
   if (!Number.isFinite(bytes) || bytes <= 0) {
@@ -104,6 +153,7 @@ function RankedListSkeleton() {
 }
 
 function UploadTrendsChart({ data }: { data: UploadTrendPoint[] }) {
+  const { t } = useTranslation()
   const maxUploads = data.reduce((max, point) => Math.max(max, point.uploads), 0)
 
   return (
@@ -122,7 +172,10 @@ function UploadTrendsChart({ data }: { data: UploadTrendPoint[] }) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ ...Spring.presets.snappy, delay: index * 0.04 }}
               className="group flex min-w-[24px] sm:min-w-[32px] flex-1 flex-col items-center gap-0.5 sm:gap-1"
-              title={`${fullLabel} · ${plainNumberFormatter.format(point.uploads)} 张`}
+              title={t(analyticsKeys.sections.upload.tooltip, {
+                month: fullLabel,
+                value: plainNumberFormatter.format(point.uploads),
+              })}
             >
               <div className="relative flex h-32 sm:h-40 w-full items-end">
                 <div
@@ -143,8 +196,13 @@ function UploadTrendsChart({ data }: { data: UploadTrendPoint[] }) {
 }
 
 function ProvidersList({ providers, totalBytes }: { providers: StorageProviderUsage[]; totalBytes: number }) {
+  const { t } = useTranslation()
   if (providers.length === 0) {
-    return <div className="text-text-tertiary mt-4 sm:mt-5 text-xs sm:text-sm">暂无存储使用数据。</div>
+    return (
+      <div className="text-text-tertiary mt-4 sm:mt-5 text-xs sm:text-sm">
+        {t(analyticsKeys.sections.storage.empty)}
+      </div>
+    )
   }
 
   return (
@@ -165,7 +223,10 @@ function ProvidersList({ providers, totalBytes }: { providers: StorageProviderUs
               <span className="text-text-secondary text-right">
                 {formatBytes(provider.bytes)}
                 <span className="text-text-tertiary ml-1 sm:ml-2 text-[11px] sm:text-xs">
-                  {percent}% · {provider.photoCount} 张
+                  {t(analyticsKeys.sections.storage.providerMeta, {
+                    percent,
+                    photoCount: plainNumberFormatter.format(provider.photoCount),
+                  })}
                 </span>
               </span>
             </div>
@@ -182,9 +243,16 @@ function ProvidersList({ providers, totalBytes }: { providers: StorageProviderUs
   )
 }
 
-function RankedList({ items, emptyText }: { items: Array<{ label: string; value: number }>; emptyText: string }) {
+function RankedList({
+  items,
+  emptyTextKey,
+}: {
+  items: Array<{ label: string; value: number }>
+  emptyTextKey: I18nKeys
+}) {
+  const { t } = useTranslation()
   if (items.length === 0) {
-    return <div className="text-text-tertiary mt-3 sm:mt-4 text-xs sm:text-sm">{emptyText}</div>
+    return <div className="text-text-tertiary mt-3 sm:mt-4 text-xs sm:text-sm">{t(emptyTextKey)}</div>
   }
 
   const maxValue = items.reduce((max, item) => Math.max(max, item.value), 0)
@@ -246,6 +314,7 @@ function SectionPanel({
 }
 
 export function DashboardAnalytics() {
+  const { t } = useTranslation()
   const { data, isLoading, isError } = useDashboardAnalyticsQuery()
 
   const uploadTrendStats = useMemo(() => {
@@ -287,36 +356,43 @@ export function DashboardAnalytics() {
   }))
 
   return (
-    <MainPageLayout title="Analytics" description="Track your photo collection statistics and trends">
+    <MainPageLayout title={t(analyticsKeys.pageTitle)} description={t(analyticsKeys.pageDescription)}>
       <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
-        <SectionPanel title="Upload Trends" description="近 12 个月的上传趋势">
+        <SectionPanel
+          title={t(analyticsKeys.sections.upload.title)}
+          description={t(analyticsKeys.sections.upload.description)}
+        >
           {isLoading ? (
             <TrendSkeleton />
           ) : isError ? (
-            <div className="text-red mt-6 text-sm">无法加载上传趋势，请稍后再试。</div>
+            <div className="text-red mt-6 text-sm">{t(analyticsKeys.sections.upload.error)}</div>
           ) : data?.uploadTrends?.length ? (
             <>
               {uploadTrendStats ? (
                 <div className="mt-4 sm:mt-5 grid gap-2 sm:gap-3 text-xs sm:text-sm">
                   <div className="flex items-center justify-between">
-                    <span className="text-text-secondary">累计上传</span>
+                    <span className="text-text-secondary">{t(analyticsKeys.sections.upload.total)}</span>
                     <span className="text-text font-semibold">
                       {compactNumberFormatter.format(uploadTrendStats.totalUploads)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-text-secondary">表现最佳</span>
+                    <span className="text-text-secondary">{t(analyticsKeys.sections.upload.best)}</span>
                     <span className="text-text font-semibold text-right">
                       <span className="block sm:inline">{formatFullMonth(uploadTrendStats.bestMonth.month)}</span>
                       <span className="text-text-tertiary ml-0 sm:ml-2 text-[11px] sm:text-[13px]">
-                        {plainNumberFormatter.format(uploadTrendStats.bestMonth.uploads)} 张
+                        {t(analyticsKeys.units.photos, {
+                          value: plainNumberFormatter.format(uploadTrendStats.bestMonth.uploads),
+                        })}
                       </span>
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-text-secondary">本月上传</span>
+                    <span className="text-text-secondary">{t(analyticsKeys.sections.upload.current)}</span>
                     <span className="text-text font-semibold">
-                      {plainNumberFormatter.format(uploadTrendStats.currentMonth.uploads)} 张
+                      {t(analyticsKeys.units.photos, {
+                        value: plainNumberFormatter.format(uploadTrendStats.currentMonth.uploads),
+                      })}
                       {uploadTrendStats.growth !== null ? (
                         <span
                           className={clsxm(
@@ -325,12 +401,14 @@ export function DashboardAnalytics() {
                           )}
                         >
                           {uploadTrendStats.growth === 0
-                            ? '与上月持平'
+                            ? t(analyticsKeys.sections.upload.growthEqual)
                             : `${uploadTrendStats.growth >= 0 ? '+' : ''}${percentFormatter.format(uploadTrendStats.growth)}`}
                         </span>
                       ) : uploadTrendStats.previousMonth ? (
                         <span className="text-text-tertiary ml-1 sm:ml-2 text-[11px] sm:text-[13px]">
-                          {uploadTrendStats.delta > 0 ? '首次出现上传记录' : '与上月持平'}
+                          {uploadTrendStats.delta > 0
+                            ? t(analyticsKeys.sections.upload.firstRecord)
+                            : t(analyticsKeys.sections.upload.compareEqual)}
                         </span>
                       ) : null}
                     </span>
@@ -341,44 +419,52 @@ export function DashboardAnalytics() {
               <UploadTrendsChart data={data.uploadTrends} />
             </>
           ) : (
-            <div className="text-text-tertiary mt-4 sm:mt-6 text-xs sm:text-sm">暂无上传记录。</div>
+            <div className="text-text-tertiary mt-4 sm:mt-6 text-xs sm:text-sm">
+              {t(analyticsKeys.sections.upload.empty)}
+            </div>
           )}
         </SectionPanel>
 
-        <SectionPanel title="Storage Usage" description="按存储提供方统计的容量占比">
+        <SectionPanel
+          title={t(analyticsKeys.sections.storage.title)}
+          description={t(analyticsKeys.sections.storage.description)}
+        >
           {isLoading ? (
             <ProvidersSkeleton />
           ) : isError ? (
-            <div className="text-red mt-5 text-sm">无法加载存储数据，请稍后再试。</div>
+            <div className="text-red mt-5 text-sm">{t(analyticsKeys.sections.storage.error)}</div>
           ) : storageUsage ? (
             (() => {
               const monthDeltaBytes = storageUsage.currentMonthBytes - storageUsage.previousMonthBytes
-              let monthDeltaDescription = '与上月持平'
+              let monthDeltaDescription = t(analyticsKeys.sections.storage.deltaEqual)
 
               if (storageUsage.previousMonthBytes > 0) {
                 if (monthDeltaBytes !== 0) {
                   const prefix = monthDeltaBytes > 0 ? '+' : '-'
-                  monthDeltaDescription = `${prefix}${formatBytes(Math.abs(monthDeltaBytes))} 对比上月`
+                  const deltaValue = `${prefix}${formatBytes(Math.abs(monthDeltaBytes))}`
+                  monthDeltaDescription = t(analyticsKeys.sections.storage.deltaCompare, { delta: deltaValue })
                 }
               } else if (storageUsage.currentMonthBytes > 0) {
-                monthDeltaDescription = '首次记录'
+                monthDeltaDescription = t(analyticsKeys.sections.storage.deltaFirst)
               }
 
               return (
                 <>
                   <div className="mt-4 sm:mt-5 grid gap-2 sm:gap-3 text-xs sm:text-sm">
                     <div className="flex items-center justify-between">
-                      <span className="text-text-secondary">总占用</span>
+                      <span className="text-text-secondary">{t(analyticsKeys.sections.storage.total)}</span>
                       <span className="text-text font-semibold text-right">{formatBytes(storageUsage.totalBytes)}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-text-secondary">照片数量</span>
+                      <span className="text-text-secondary">{t(analyticsKeys.sections.storage.photos)}</span>
                       <span className="text-text font-semibold">
-                        {plainNumberFormatter.format(storageUsage.totalPhotos)} 张
+                        {t(analyticsKeys.units.photos, {
+                          value: plainNumberFormatter.format(storageUsage.totalPhotos),
+                        })}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-text-secondary">本月新增</span>
+                      <span className="text-text-secondary">{t(analyticsKeys.sections.storage.current)}</span>
                       <span className="text-text font-semibold text-right">
                         <span className="block sm:inline">{formatBytes(storageUsage.currentMonthBytes)}</span>
                         <span className="text-text-tertiary ml-0 sm:ml-2 text-[11px] sm:text-[13px]">
@@ -393,27 +479,33 @@ export function DashboardAnalytics() {
               )
             })()
           ) : (
-            <div className="text-text-tertiary mt-5 text-sm">暂无存储使用数据。</div>
+            <div className="text-text-tertiary mt-5 text-sm">{t(analyticsKeys.sections.storage.empty)}</div>
           )}
         </SectionPanel>
 
-        <SectionPanel title="Popular Tags" description="最近上传中最常使用的标签">
+        <SectionPanel
+          title={t(analyticsKeys.sections.tags.title)}
+          description={t(analyticsKeys.sections.tags.description)}
+        >
           {isLoading ? (
             <RankedListSkeleton />
           ) : isError ? (
-            <div className="text-red mt-4 text-sm">无法加载标签数据，请稍后再试。</div>
+            <div className="text-red mt-4 text-sm">{t(analyticsKeys.sections.tags.error)}</div>
           ) : (
-            <RankedList items={popularTagItems ?? []} emptyText="暂无标签统计数据。" />
+            <RankedList items={popularTagItems ?? []} emptyTextKey={analyticsKeys.sections.tags.empty} />
           )}
         </SectionPanel>
 
-        <SectionPanel title="Top Devices" description="根据 EXIF 信息统计的热门拍摄设备">
+        <SectionPanel
+          title={t(analyticsKeys.sections.devices.title)}
+          description={t(analyticsKeys.sections.devices.description)}
+        >
           {isLoading ? (
             <RankedListSkeleton />
           ) : isError ? (
-            <div className="text-red mt-4 text-sm">无法加载设备数据，请稍后再试。</div>
+            <div className="text-red mt-4 text-sm">{t(analyticsKeys.sections.devices.error)}</div>
           ) : (
-            <RankedList items={deviceItems ?? []} emptyText="暂无设备统计数据。" />
+            <RankedList items={deviceItems ?? []} emptyTextKey={analyticsKeys.sections.devices.empty} />
           )}
         </SectionPanel>
       </div>

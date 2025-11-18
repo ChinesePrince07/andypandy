@@ -1,10 +1,12 @@
 import { clsxm } from '@afilmory/utils'
 import type { MouseEventHandler, ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { NavLink } from 'react-router'
 
 type PageTabItem = {
   id: string
-  label: ReactNode
+  label?: ReactNode
+  labelKey?: I18nKeys
   to?: string
   end?: boolean
   onSelect?: () => void
@@ -19,6 +21,9 @@ export interface PageTabsProps {
 }
 
 export function PageTabs({ items, activeId, onSelect, className }: PageTabsProps) {
+  const { t } = useTranslation()
+  const resolveLabel = (item: PageTabItem): ReactNode => (item.labelKey ? t(item.labelKey) : (item.label ?? item.id))
+
   const renderTabContent = (selected: boolean, label: ReactNode) => (
     <span
       className={clsxm(
@@ -38,7 +43,7 @@ export function PageTabs({ items, activeId, onSelect, className }: PageTabsProps
             <NavLink key={item.id} to={item.to} end={item.end}>
               {({ isActive }) => {
                 const selected = isActive || activeId === item.id
-                return renderTabContent(selected, item.label)
+                return renderTabContent(selected, resolveLabel(item))
               }}
             </NavLink>
           )
@@ -61,7 +66,7 @@ export function PageTabs({ items, activeId, onSelect, className }: PageTabsProps
             disabled={item.disabled}
             className="focus-visible:outline-none shape-squircle"
           >
-            {renderTabContent(selected, item.label)}
+            {renderTabContent(selected, resolveLabel(item))}
           </button>
         )
       })}

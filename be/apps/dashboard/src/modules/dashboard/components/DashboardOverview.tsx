@@ -1,6 +1,9 @@
 import { LinearDivider } from '@afilmory/ui'
 import { Spring } from '@afilmory/utils'
+import type { TFunction } from 'i18next'
 import { m } from 'motion/react'
+import { useCallback, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { LinearBorderPanel } from '~/components/common/GlassPanel'
 import { MainPageLayout } from '~/components/layouts/MainPageLayout'
@@ -8,29 +11,64 @@ import { MainPageLayout } from '~/components/layouts/MainPageLayout'
 import { useDashboardOverviewQuery } from '../hooks'
 import type { DashboardRecentActivityItem } from '../types'
 
-const compactNumberFormatter = new Intl.NumberFormat('zh-CN', {
-  notation: 'compact',
-  maximumFractionDigits: 1,
-})
-
-const plainNumberFormatter = new Intl.NumberFormat('zh-CN')
-
-const percentFormatter = new Intl.NumberFormat('zh-CN', {
-  style: 'percent',
-  maximumFractionDigits: 1,
-})
-
-const relativeTimeFormatter = new Intl.RelativeTimeFormat('zh-CN', { numeric: 'auto' })
-
-const dateTimeFormatter = new Intl.DateTimeFormat('zh-CN', {
-  dateStyle: 'medium',
-  timeStyle: 'short',
-})
-
-function formatCompactNumber(value: number) {
-  if (!Number.isFinite(value)) return '--'
-  if (value === 0) return '0'
-  return compactNumberFormatter.format(value)
+const overviewI18nKeys = {
+  pageTitle: 'dashboard.overview.page.title',
+  pageDescription: 'dashboard.overview.page.description',
+  timeUnknown: 'dashboard.overview.time.unknown',
+  activityEmpty: 'dashboard.overview.activity.empty',
+  activityNoPreview: 'dashboard.overview.activity.no-preview',
+  activityUploadedAt: 'dashboard.overview.activity.uploaded-at',
+  activityTakenAt: 'dashboard.overview.activity.taken-at',
+  activitySizeUnknown: 'dashboard.overview.activity.size-unknown',
+  activityIdLabel: 'dashboard.overview.activity.id-label',
+  activitySubtitleWithCount: 'dashboard.overview.activity.subtitle',
+  activitySubtitleEmpty: 'dashboard.overview.activity.subtitle-empty',
+  activityError: 'dashboard.overview.activity.error',
+  stats: {
+    totalLabel: 'dashboard.overview.stats.total.label',
+    totalHelper: 'dashboard.overview.stats.total.helper',
+    storageLabel: 'dashboard.overview.stats.storage.label',
+    storageHelperWithPhotos: 'dashboard.overview.stats.storage.helper.with-photos',
+    storageHelperEmpty: 'dashboard.overview.stats.storage.helper.empty',
+    monthLabel: 'dashboard.overview.stats.month.label',
+    monthEqual: 'dashboard.overview.stats.month.helper.equal',
+    monthFirst: 'dashboard.overview.stats.month.helper.first',
+    monthMore: 'dashboard.overview.stats.month.helper.more',
+    monthLess: 'dashboard.overview.stats.month.helper.less',
+    syncLabel: 'dashboard.overview.stats.sync.label',
+    syncHelper: 'dashboard.overview.stats.sync.helper',
+    syncHelperEmpty: 'dashboard.overview.stats.sync.helper-empty',
+  },
+  sectionActivityTitle: 'dashboard.overview.section.activity.title',
+} as const satisfies {
+  pageTitle: I18nKeys
+  pageDescription: I18nKeys
+  timeUnknown: I18nKeys
+  activityEmpty: I18nKeys
+  activityNoPreview: I18nKeys
+  activityUploadedAt: I18nKeys
+  activityTakenAt: I18nKeys
+  activitySizeUnknown: I18nKeys
+  activityIdLabel: I18nKeys
+  activitySubtitleWithCount: I18nKeys
+  activitySubtitleEmpty: I18nKeys
+  activityError: I18nKeys
+  stats: {
+    totalLabel: I18nKeys
+    totalHelper: I18nKeys
+    storageLabel: I18nKeys
+    storageHelperWithPhotos: I18nKeys
+    storageHelperEmpty: I18nKeys
+    monthLabel: I18nKeys
+    monthEqual: I18nKeys
+    monthFirst: I18nKeys
+    monthMore: I18nKeys
+    monthLess: I18nKeys
+    syncLabel: I18nKeys
+    syncHelper: I18nKeys
+    syncHelperEmpty: I18nKeys
+  }
+  sectionActivityTitle: I18nKeys
 }
 
 function formatBytes(bytes: number) {
@@ -65,53 +103,82 @@ const timeDivisions: TimeDivision[] = [
   { amount: Number.POSITIVE_INFINITY, unit: 'year' },
 ]
 
-function formatRelativeTime(iso: string | null | undefined) {
-  if (!iso) return '时间未知'
+type NumberFormatters = {
+  compact: Intl.NumberFormat
+  plain: Intl.NumberFormat
+  percent: Intl.NumberFormat
+  relative: Intl.RelativeTimeFormat
+  dateTime: Intl.DateTimeFormat
+}
+
+function createFormatters(locale: string): NumberFormatters {
+  return {
+    compact: new Intl.NumberFormat(locale, { notation: 'compact', maximumFractionDigits: 1 }),
+    plain: new Intl.NumberFormat(locale),
+    percent: new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 1 }),
+    relative: new Intl.RelativeTimeFormat(locale, { numeric: 'auto' }),
+    dateTime: new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }),
+  }
+}
+
+function formatCompactNumber(value: number, formatter: Intl.NumberFormat) {
+  if (!Number.isFinite(value)) return '--'
+  if (value === 0) return '0'
+  return formatter.format(value)
+}
+
+function formatRelativeTimeValue(
+  iso: string | null | undefined,
+  formatter: Intl.RelativeTimeFormat,
+  dateFormatter: Intl.DateTimeFormat,
+  fallback: string,
+) {
+  if (!iso) return fallback
   const date = new Date(iso)
   if (Number.isNaN(date.getTime())) {
-    return '时间未知'
+    return fallback
   }
 
   let diffInSeconds = (date.getTime() - Date.now()) / 1000
   for (const division of timeDivisions) {
     if (Math.abs(diffInSeconds) < division.amount) {
-      return relativeTimeFormatter.format(Math.round(diffInSeconds), division.unit)
+      return formatter.format(Math.round(diffInSeconds), division.unit)
     }
     diffInSeconds /= division.amount
   }
 
-  return dateTimeFormatter.format(date)
+  return dateFormatter.format(date)
 }
 
-function formatTakenAt(iso: string | null) {
+function formatTakenAtValue(iso: string | null, dateFormatter: Intl.DateTimeFormat) {
   if (!iso) return null
   const date = new Date(iso)
   if (Number.isNaN(date.getTime())) return null
-  return dateTimeFormatter.format(date)
+  return dateFormatter.format(date)
 }
 
 const STATUS_META = {
   synced: {
-    label: '已同步',
+    labelKey: 'dashboard.overview.status.synced',
     barClass: 'bg-emerald-400/80',
     dotClass: 'bg-emerald-400/90',
     badgeClass: 'bg-emerald-500/10 text-emerald-300',
   },
   pending: {
-    label: '处理中',
+    labelKey: 'dashboard.overview.status.pending',
     barClass: 'bg-orange-400/80',
     dotClass: 'bg-orange-400/90',
     badgeClass: 'bg-orange-500/10 text-orange-300',
   },
   conflict: {
-    label: '需关注',
+    labelKey: 'dashboard.overview.status.conflict',
     barClass: 'bg-red-500/80',
     dotClass: 'bg-red-500/90',
     badgeClass: 'bg-red-500/10 text-red-300',
   },
 } satisfies Record<
   DashboardRecentActivityItem['syncStatus'],
-  { label: string; barClass: string; dotClass: string; badgeClass: string }
+  { labelKey: I18nKeys; barClass: string; dotClass: string; badgeClass: string }
 >
 
 const EMPTY_STATS = {
@@ -153,9 +220,17 @@ function StatSkeleton() {
   )
 }
 
-function ActivityList({ items }: { items: DashboardRecentActivityItem[] }) {
+type ActivityListProps = {
+  items: DashboardRecentActivityItem[]
+  formatRelativeTime: (iso: string | null | undefined) => string
+  formatTakenAt: (iso: string | null) => string | null
+  formatBytesLabel: (bytes: number) => string
+  t: TFunction
+}
+
+function ActivityList({ items, formatRelativeTime, formatTakenAt, formatBytesLabel, t }: ActivityListProps) {
   if (items.length === 0) {
-    return <div className="text-text-tertiary mt-5 text-sm">暂无最近活动，上传照片后即可看到这里的动态。</div>
+    return <div className="text-text-tertiary mt-5 text-sm">{t(overviewI18nKeys.activityEmpty)}</div>
   }
 
   return (
@@ -179,28 +254,32 @@ function ActivityList({ items }: { items: DashboardRecentActivityItem[] }) {
                     <img src={item.previewUrl} alt={item.title} className="size-full object-cover" loading="lazy" />
                   ) : (
                     <div className="text-text-tertiary flex size-full items-center justify-center text-[10px]">
-                      No Preview
+                      {t(overviewI18nKeys.activityNoPreview)}
                     </div>
                   )}
                 </div>
                 <div className="min-w-0 flex-1 space-y-1 sm:space-y-1.5">
                   <div className="text-text truncate text-xs sm:text-sm font-semibold">{item.title}</div>
                   <div className="text-text-tertiary text-[11px] sm:text-xs leading-relaxed">
-                    <span>上传于 {formatRelativeTime(item.createdAt)}</span>
+                    <span>{t(overviewI18nKeys.activityUploadedAt, { time: formatRelativeTime(item.createdAt) })}</span>
                     {takenAtText ? (
                       <>
                         <span className="mx-1.5">•</span>
-                        <span>拍摄时间 {takenAtText}</span>
+                        <span>{t(overviewI18nKeys.activityTakenAt, { time: takenAtText })}</span>
                       </>
                     ) : null}
                   </div>
                   <div className="text-text-secondary flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
-                    <span>{item.size != null && item.size > 0 ? formatBytes(item.size) : '大小未知'}</span>
+                    <span>
+                      {item.size != null && item.size > 0
+                        ? formatBytesLabel(item.size)
+                        : t(overviewI18nKeys.activitySizeUnknown)}
+                    </span>
                     <span className="text-text-tertiary">•</span>
                     <span>{item.storageProvider}</span>
                     <span className="text-text-tertiary">•</span>
                     <span className={`rounded-full px-2 py-0.5 text-[10px] ${statusMeta.badgeClass}`}>
-                      {statusMeta.label}
+                      {t(statusMeta.labelKey)}
                     </span>
                   </div>
                   {item.tags.length > 0 ? (
@@ -215,7 +294,7 @@ function ActivityList({ items }: { items: DashboardRecentActivityItem[] }) {
                 </div>
               </div>
               <div className="text-text-tertiary min-w-0 truncate text-right text-[11px] sm:text-right">
-                ID:
+                {t(overviewI18nKeys.activityIdLabel)}
                 <span className="ml-1 truncate">{item.photoId}</span>
               </div>
             </div>
@@ -229,55 +308,80 @@ function ActivityList({ items }: { items: DashboardRecentActivityItem[] }) {
 }
 
 export function DashboardOverview() {
+  const { t, i18n } = useTranslation()
   const { data, isLoading, isError } = useDashboardOverviewQuery()
+  const locale = i18n.language ?? 'en'
+  const formatters = useMemo(() => createFormatters(locale), [locale])
+  const formatCompact = useCallback((value: number) => formatCompactNumber(value, formatters.compact), [formatters])
+  const formatPlain = useCallback((value: number) => formatters.plain.format(value), [formatters])
+  const formatPercentValue = useCallback(
+    (value: number | null) => (value === null ? '--' : formatters.percent.format(value)),
+    [formatters],
+  )
+  const formatRelativeTime = useCallback(
+    (iso: string | null | undefined) =>
+      formatRelativeTimeValue(iso, formatters.relative, formatters.dateTime, t(overviewI18nKeys.timeUnknown)),
+    [formatters, t],
+  )
+  const formatTakenAt = useCallback((iso: string | null) => formatTakenAtValue(iso, formatters.dateTime), [formatters])
 
   const stats = data?.stats ?? EMPTY_STATS
   const statusTotal = stats.sync.synced + stats.sync.pending + stats.sync.conflicts
   const syncCompletion = statusTotal === 0 ? null : stats.sync.synced / statusTotal
 
   const monthlyDelta = stats.thisMonthUploads - stats.previousMonthUploads
-  let monthlyTrendDescription = '与上月持平'
-  if (stats.previousMonthUploads === 0) {
-    monthlyTrendDescription = stats.thisMonthUploads === 0 ? '与上月持平' : '首次出现上传记录'
-  } else if (monthlyDelta > 0) {
-    monthlyTrendDescription = `比上月多 ${plainNumberFormatter.format(monthlyDelta)} 张`
-  } else if (monthlyDelta < 0) {
-    monthlyTrendDescription = `比上月少 ${plainNumberFormatter.format(Math.abs(monthlyDelta))} 张`
-  }
+  const monthlyTrendDescription = useMemo(() => {
+    if (stats.previousMonthUploads === 0) {
+      return stats.thisMonthUploads === 0 ? t(overviewI18nKeys.stats.monthEqual) : t(overviewI18nKeys.stats.monthFirst)
+    }
+    if (monthlyDelta > 0) {
+      return t(overviewI18nKeys.stats.monthMore, { difference: formatPlain(monthlyDelta) })
+    }
+    if (monthlyDelta < 0) {
+      return t(overviewI18nKeys.stats.monthLess, { difference: formatPlain(Math.abs(monthlyDelta)) })
+    }
+    return t(overviewI18nKeys.stats.monthEqual)
+  }, [formatPlain, monthlyDelta, stats.previousMonthUploads, stats.thisMonthUploads, t])
 
   const averageSize = stats.totalPhotos > 0 ? stats.totalStorageBytes / stats.totalPhotos : 0
 
   const statCards = [
     {
       key: 'total-photos',
-      label: '照片总数',
-      value: formatCompactNumber(stats.totalPhotos),
-      helper: `${plainNumberFormatter.format(stats.totalPhotos)} 张照片`,
+      label: t(overviewI18nKeys.stats.totalLabel),
+      value: formatCompact(stats.totalPhotos),
+      helper: t(overviewI18nKeys.stats.totalHelper, { value: formatPlain(stats.totalPhotos) }),
     },
     {
       key: 'storage',
-      label: '占用存储',
+      label: t(overviewI18nKeys.stats.storageLabel),
       value: formatBytes(stats.totalStorageBytes),
-      helper: stats.totalPhotos > 0 ? `平均每张 ${formatBytes(averageSize || 0)}` : '暂无照片，存储占用为 0',
+      helper:
+        stats.totalPhotos > 0
+          ? t(overviewI18nKeys.stats.storageHelperWithPhotos, { average: formatBytes(averageSize || 0) })
+          : t(overviewI18nKeys.stats.storageHelperEmpty),
     },
     {
       key: 'this-month',
-      label: '本月新增',
-      value: formatCompactNumber(stats.thisMonthUploads),
+      label: t(overviewI18nKeys.stats.monthLabel),
+      value: formatCompact(stats.thisMonthUploads),
       helper: monthlyTrendDescription,
     },
     {
       key: 'sync',
-      label: '同步完成率',
-      value: syncCompletion === null ? '--' : percentFormatter.format(syncCompletion),
+      label: t(overviewI18nKeys.stats.syncLabel),
+      value: formatPercentValue(syncCompletion),
       helper: statusTotal
-        ? `待处理 ${plainNumberFormatter.format(stats.sync.pending)} | 冲突 ${plainNumberFormatter.format(stats.sync.conflicts)}`
-        : '暂无同步任务',
+        ? t(overviewI18nKeys.stats.syncHelper, {
+            pending: formatPlain(stats.sync.pending),
+            conflicts: formatPlain(stats.sync.conflicts),
+          })
+        : t(overviewI18nKeys.stats.syncHelperEmpty),
     },
   ]
 
   return (
-    <MainPageLayout title="Dashboard" description="掌握图库运行状态与最近同步活动">
+    <MainPageLayout title={t(overviewI18nKeys.pageTitle)} description={t(overviewI18nKeys.pageDescription)}>
       <div className="space-y-4 sm:space-y-5">
         <div className="grid gap-3 sm:gap-5 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
           {isLoading
@@ -305,11 +409,11 @@ export function DashboardOverview() {
 
         <LinearBorderPanel className="bg-background-tertiary/60 relative overflow-hidden px-4 sm:px-5 py-4 sm:py-5">
           <div className="space-y-1 sm:space-y-1.5">
-            <h2 className="text-text text-sm sm:text-base font-semibold">最近活动</h2>
+            <h2 className="text-text text-sm sm:text-base font-semibold">{t(overviewI18nKeys.sectionActivityTitle)}</h2>
             <p className="text-text-tertiary text-xs sm:text-sm leading-relaxed">
               {data?.recentActivity?.length
-                ? `展示最近 ${data.recentActivity.length} 次上传和同步记录`
-                : '还没有任何上传，快来添加第一张照片吧～'}
+                ? t(overviewI18nKeys.activitySubtitleWithCount, { count: data.recentActivity.length })
+                : t(overviewI18nKeys.activitySubtitleEmpty)}
             </p>
           </div>
 
@@ -320,9 +424,15 @@ export function DashboardOverview() {
               ))}
             </div>
           ) : isError ? (
-            <div className="mt-5 text-sm text-red-400">无法获取活动数据，请稍后再试。</div>
+            <div className="mt-5 text-sm text-red-400">{t(overviewI18nKeys.activityError)}</div>
           ) : (
-            <ActivityList items={data?.recentActivity ?? []} />
+            <ActivityList
+              items={data?.recentActivity ?? []}
+              formatRelativeTime={formatRelativeTime}
+              formatTakenAt={formatTakenAt}
+              formatBytesLabel={formatBytes}
+              t={t}
+            />
           )}
         </LinearBorderPanel>
       </div>

@@ -3,7 +3,7 @@ import { useMemo } from 'react'
 
 import { LinearBorderPanel } from '~/components/common/GlassPanel'
 
-import { BILLING_USAGE_EVENT_CONFIG, getUsageEventLabel } from '../../constants'
+import { BILLING_USAGE_EVENT_CONFIG, getUsageEventDescription, getUsageEventLabel } from '../../constants'
 import type { BillingUsageEvent, BillingUsageOverview } from '../../types'
 
 type PhotoUsagePanelProps = {
@@ -31,8 +31,8 @@ export function PhotoUsagePanel({ overview, isLoading, isFetching, onRefresh }: 
       ][]
     ).map(([eventType, config]) => ({
       eventType,
-      label: config.label,
-      description: config.description,
+      label: getUsageEventLabel(eventType),
+      description: getUsageEventDescription(eventType),
       tone: config.tone,
       value: totalMap.get(eventType) ?? 0,
     }))
@@ -142,11 +142,8 @@ type UsageEventRowProps = {
 }
 
 function UsageEventRow({ event }: UsageEventRowProps) {
-  const config = BILLING_USAGE_EVENT_CONFIG[event.eventType] ?? {
-    label: getUsageEventLabel(event.eventType),
-    description: '',
-    tone: 'muted' as const,
-  }
+  const label = getUsageEventLabel(event.eventType)
+  const description = getUsageEventDescription(event.eventType)
   const quantityClass = event.quantity >= 0 ? 'text-emerald-400' : 'text-rose-400'
   const dateLabel = formatDateLabel(event.occurredAt)
   const relativeLabel = formatRelativeLabel(event.occurredAt)
@@ -154,8 +151,8 @@ function UsageEventRow({ event }: UsageEventRowProps) {
   return (
     <div className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:gap-6">
       <div className="flex-1">
-        <p className="text-sm font-semibold text-text">{config.label}</p>
-        {config.description && <p className="text-xs text-text-secondary">{config.description}</p>}
+        <p className="text-sm font-semibold text-text">{label}</p>
+        {description && <p className="text-xs text-text-secondary">{description}</p>}
         <MetadataBadges metadata={event.metadata} />
       </div>
       <div className="flex flex-col items-start gap-1 text-right text-sm sm:min-w-[160px]">

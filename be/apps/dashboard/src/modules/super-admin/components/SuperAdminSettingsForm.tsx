@@ -3,6 +3,7 @@ import { Spring } from '@afilmory/utils'
 import { isEqual } from 'es-toolkit'
 import { m } from 'motion/react'
 import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { LinearBorderPanel } from '~/components/common/GlassPanel'
 
@@ -51,6 +52,7 @@ interface SuperAdminSettingsFormProps {
 
 export function SuperAdminSettingsForm({ visibleSectionIds }: SuperAdminSettingsFormProps = {}) {
   const { data, isLoading, isError, error } = useSuperAdminSettingsQuery()
+  const { t } = useTranslation()
   const [fieldMap, setFieldMap] = useState<SuperAdminFieldMap>(() => new Map())
   const [formState, setFormState] = useState<FormState | null>(null)
   const [initialState, setInitialState] = useState<FormState | null>(null)
@@ -130,23 +132,26 @@ export function SuperAdminSettingsForm({ visibleSectionIds }: SuperAdminSettings
 
   const mutationMessage = useMemo(() => {
     if (updateMutation.isError) {
-      const reason = updateMutation.error instanceof Error ? updateMutation.error.message : '保存失败'
-      return `保存失败：${reason}`
+      const reason =
+        updateMutation.error instanceof Error
+          ? updateMutation.error.message
+          : t('superadmin.settings.message.unknown-error')
+      return t('superadmin.settings.message.error', { reason })
     }
 
     if (updateMutation.isPending) {
-      return '正在保存设置...'
+      return t('superadmin.settings.message.saving')
     }
 
     if (!hasChanges && updateMutation.isSuccess) {
-      return '保存成功，设置已更新'
+      return t('superadmin.settings.message.saved')
     }
 
     if (hasChanges) {
-      return '您有尚未保存的变更'
+      return t('superadmin.settings.message.dirty')
     }
 
-    return '所有设置已同步'
+    return t('superadmin.settings.message.idle')
   }, [hasChanges, updateMutation.error, updateMutation.isError, updateMutation.isPending, updateMutation.isSuccess])
 
   const shouldRenderNode = useMemo(() => {
@@ -166,7 +171,11 @@ export function SuperAdminSettingsForm({ visibleSectionIds }: SuperAdminSettings
     return (
       <LinearBorderPanel className="p-6">
         <div className="text-red text-sm">
-          <span>{`无法加载超级管理员设置：${error instanceof Error ? error.message : '未知错误'}`}</span>
+          <span>
+            {t('superadmin.settings.error.loading', {
+              reason: error instanceof Error ? error.message : t('superadmin.settings.message.unknown-error'),
+            })}
+          </span>
         </div>
       </LinearBorderPanel>
     )
@@ -217,13 +226,17 @@ export function SuperAdminSettingsForm({ visibleSectionIds }: SuperAdminSettings
       <div className="grid gap-4 md:grid-cols-2">
         <LinearBorderPanel className="p-6">
           <div className="space-y-1">
-            <p className="text-text-tertiary text-xs tracking-wide uppercase">当前用户总数</p>
+            <p className="text-text-tertiary text-xs tracking-wide uppercase">
+              {t('superadmin.settings.stats.total-users')}
+            </p>
             <p className="text-text text-3xl font-semibold">{typeof totalUsers === 'number' ? totalUsers : 0}</p>
           </div>
         </LinearBorderPanel>
         <LinearBorderPanel className="p-6">
           <div className="space-y-1">
-            <p className="text-text-tertiary text-xs tracking-wide uppercase">剩余可注册名额</p>
+            <p className="text-text-tertiary text-xs tracking-wide uppercase">
+              {t('superadmin.settings.stats.remaining')}
+            </p>
             <p className="text-text text-3xl font-semibold">{remainingLabel}</p>
           </div>
         </LinearBorderPanel>
@@ -235,11 +248,11 @@ export function SuperAdminSettingsForm({ visibleSectionIds }: SuperAdminSettings
           type="submit"
           disabled={!hasChanges}
           isLoading={updateMutation.isPending}
-          loadingText="保存中..."
+          loadingText={t('superadmin.settings.button.loading')}
           variant="primary"
           size="sm"
         >
-          保存修改
+          {t('superadmin.settings.button.save')}
         </Button>
       </div>
     </m.form>

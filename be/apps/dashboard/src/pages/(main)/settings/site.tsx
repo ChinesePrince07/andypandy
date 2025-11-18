@@ -1,10 +1,13 @@
+import { useTranslation } from 'react-i18next'
+
 import { MainPageLayout } from '~/components/layouts/MainPageLayout'
 import { SettingsNavigation } from '~/modules/settings'
 import { SiteSettingsForm } from '~/modules/site-settings'
 
 export function Component() {
+  const { t } = useTranslation()
   return (
-    <MainPageLayout title="站点设置" description="配置前台站点的品牌信息、社交渠道与地图展示。">
+    <MainPageLayout title={t('settings.site.title')} description={t('settings.site.description')}>
       <div className="space-y-6">
         <SettingsNavigation active="site" />
         <SiteSettingsForm />

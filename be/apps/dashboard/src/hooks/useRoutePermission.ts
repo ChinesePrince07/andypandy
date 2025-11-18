@@ -1,5 +1,6 @@
 import { FetchError } from 'ofetch'
 import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useLocation } from 'react-router'
 
 import { useSetAccessDenied } from '~/atoms/access-denied'
@@ -35,6 +36,7 @@ type UseRoutePermissionArgs = {
 export function useRoutePermission({ session, isLoading }: UseRoutePermissionArgs) {
   const location = useLocation()
   const setAccessDenied = useSetAccessDenied()
+  const { t } = useTranslation()
 
   useEffect(() => {
     if (isLoading) {
@@ -77,7 +79,7 @@ export function useRoutePermission({ session, isLoading }: UseRoutePermissionArg
           const reason =
             (error.data as { message?: string } | undefined)?.message ??
             error.response?._data?.message ??
-            '您没有权限访问该页面'
+            t('access-denied.default-reason')
           setAccessDenied({
             active: true,
             status: 403,

@@ -1,7 +1,9 @@
 import { Spring } from '@afilmory/utils'
 import { m } from 'motion/react'
 
-import { getConflictTypeLabel, PHOTO_ACTION_TYPE_CONFIG } from '../../constants'
+import { getI18n } from '~/i18n'
+
+import { getActionTypeMeta, getConflictTypeLabel, PHOTO_ACTION_TYPE_CONFIG } from '../../constants'
 import type { PhotoSyncAction, PhotoSyncLogLevel, PhotoSyncProgressStage, PhotoSyncProgressState } from '../../types'
 import { BorderOverlay } from './PhotoSyncResultPanel'
 
@@ -46,12 +48,12 @@ const LOG_LEVEL_CONFIG: Record<PhotoSyncLogLevel, { label: string; className: st
 
 const SUMMARY_FIELDS: Array<{
   key: keyof PhotoSyncProgressState['summary']
-  label: string
+  labelKey: I18nKeys
 }> = [
-  { key: 'inserted', label: '新增' },
-  { key: 'updated', label: '更新' },
-  { key: 'conflicts', label: '冲突' },
-  { key: 'errors', label: '错误' },
+  { key: 'inserted', labelKey: PHOTO_ACTION_TYPE_CONFIG.insert.labelKey },
+  { key: 'updated', labelKey: PHOTO_ACTION_TYPE_CONFIG.update.labelKey },
+  { key: 'conflicts', labelKey: PHOTO_ACTION_TYPE_CONFIG.conflict.labelKey },
+  { key: 'errors', labelKey: PHOTO_ACTION_TYPE_CONFIG.error.labelKey },
 ]
 
 const timeFormatter = new Intl.DateTimeFormat(undefined, {
@@ -73,13 +75,12 @@ type PhotoSyncProgressPanelProps = {
 }
 
 function formatActionLabel(action: PhotoSyncAction) {
-  const config = PHOTO_ACTION_TYPE_CONFIG[action.type]
+  const { label: baseLabel } = getActionTypeMeta(action.type)
   if (action.type === 'conflict' && action.conflictPayload) {
     const conflictLabel = getConflictTypeLabel(action.conflictPayload.type)
-    const base = config?.label ?? '冲突'
-    return `${base} · ${conflictLabel}`
+    return `${baseLabel} · ${conflictLabel}`
   }
-  return config?.label ?? action.type
+  return baseLabel
 }
 
 export function PhotoSyncProgressPanel({ progress }: PhotoSyncProgressPanelProps) {
@@ -110,8 +111,9 @@ export function PhotoSyncProgressPanel({ progress }: PhotoSyncProgressPanelProps
     }
   })
 
+  const i18n = getI18n()
   const summaryItems = SUMMARY_FIELDS.map((field) => ({
-    label: field.label,
+    label: i18n.t(field.labelKey),
     value: progress.summary[field.key],
   }))
 

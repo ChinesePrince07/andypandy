@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 import { toast } from 'sonner'
 
@@ -13,12 +14,16 @@ import { deleteTenantAccount, truncatePhotoAssetRecords } from './api'
 
 export function useTruncatePhotoAssetsMutation() {
   const queryClient = useQueryClient()
+  const { t } = useTranslation()
 
   return useMutation({
     mutationFn: truncatePhotoAssetRecords,
     onSuccess: async (result) => {
-      toast.success('数据库记录已清空', {
-        description: result.deleted > 0 ? `已标记删除 ${result.deleted} 条照片记录。` : '没有可清理的数据表记录。',
+      toast.success(t('data-management.truncate.success.title'), {
+        description:
+          result.deleted > 0
+            ? t('data-management.truncate.success.deleted', { count: result.deleted })
+            : t('data-management.truncate.success.empty'),
       })
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: PHOTO_ASSET_LIST_QUERY_KEY }),
@@ -27,8 +32,8 @@ export function useTruncatePhotoAssetsMutation() {
       ])
     },
     onError: (error) => {
-      const message = getRequestErrorMessage(error, '无法清空数据库记录，请稍后再试。')
-      toast.error('清理失败', { description: message })
+      const message = getRequestErrorMessage(error, t('data-management.truncate.error.fallback'))
+      toast.error(t('data-management.truncate.error.title'), { description: message })
     },
   })
 }
@@ -36,12 +41,13 @@ export function useTruncatePhotoAssetsMutation() {
 export function useDeleteTenantAccountMutation() {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+  const { t } = useTranslation()
 
   return useMutation({
     mutationFn: deleteTenantAccount,
     onSuccess: async () => {
-      toast.success('账户已删除', {
-        description: '已清理当前租户下的全部数据，并登出所有成员。',
+      toast.success(t('data-management.delete.success.title'), {
+        description: t('data-management.delete.success.description'),
       })
 
       try {
@@ -55,8 +61,8 @@ export function useDeleteTenantAccountMutation() {
       }
     },
     onError: (error) => {
-      const message = getRequestErrorMessage(error, '删除账户失败，请稍后再试。')
-      toast.error('操作失败', { description: message })
+      const message = getRequestErrorMessage(error, t('data-management.delete.error.fallback'))
+      toast.error(t('data-management.delete.error.title'), { description: message })
     },
   })
 }

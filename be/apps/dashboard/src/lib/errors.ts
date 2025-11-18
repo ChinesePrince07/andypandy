@@ -1,5 +1,7 @@
 import { FetchError } from 'ofetch'
 
+import { getI18n } from '~/i18n'
+
 type FetchErrorWithPayload = FetchError<unknown> & {
   response?: {
     _data?: unknown
@@ -49,7 +51,7 @@ function toMessage(value: unknown): string | null {
   return null
 }
 
-export function getRequestErrorMessage(error: unknown, fallback = '请求失败，请稍后重试。'): string {
+export function getRequestErrorMessage(error: unknown, fallback?: string): string {
   if (error instanceof FetchError) {
     const payload = (error as FetchErrorWithPayload).data ?? (error as FetchErrorWithPayload).response?._data
     const payloadMessage = toMessage(payload)
@@ -68,5 +70,5 @@ export function getRequestErrorMessage(error: unknown, fallback = '请求失败�
     return genericMessage
   }
 
-  return fallback
+  return fallback ?? getI18n().t('errors.request.generic')
 }

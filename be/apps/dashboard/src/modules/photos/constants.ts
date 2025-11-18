@@ -1,57 +1,85 @@
+import { getI18n } from '~/i18n'
+
 import type { BillingUsageEventType, PhotoSyncAction, PhotoSyncConflictType } from './types'
 
-export const PHOTO_CONFLICT_TYPE_CONFIG: Record<PhotoSyncConflictType, { label: string; description: string }> = {
+const photoConflictKeys = {
+  generic: 'photos.conflict.generic',
+} as const
+
+export const PHOTO_CONFLICT_TYPE_CONFIG: Record<
+  PhotoSyncConflictType,
+  { labelKey: I18nKeys; descriptionKey: I18nKeys }
+> = {
   'missing-in-storage': {
-    label: '存储缺失',
-    description: '数据库存在记录，但对应的存储对象已无法访问。',
+    labelKey: 'photos.conflict.missing.label',
+    descriptionKey: 'photos.conflict.missing.description',
   },
   'metadata-mismatch': {
-    label: '元数据不一致',
-    description: '存储对象与数据库记录的元数据不一致，需要确认以哪个为准。',
+    labelKey: 'photos.conflict.metadata.label',
+    descriptionKey: 'photos.conflict.metadata.description',
   },
   'photo-id-conflict': {
-    label: '照片 ID 冲突',
-    description: '同一个照片 ID 检测到多个对象，请选择保留的版本。',
+    labelKey: 'photos.conflict.id.label',
+    descriptionKey: 'photos.conflict.id.description',
   },
 }
 
 export function getConflictTypeLabel(type: PhotoSyncConflictType | null | undefined): string {
+  const i18n = getI18n()
   if (!type) {
-    return '冲突'
+    return i18n.t(photoConflictKeys.generic)
   }
-  return PHOTO_CONFLICT_TYPE_CONFIG[type]?.label ?? '冲突'
+  const key = PHOTO_CONFLICT_TYPE_CONFIG[type]?.labelKey
+  return key ? i18n.t(key) : i18n.t(photoConflictKeys.generic)
 }
 
-export const PHOTO_ACTION_TYPE_CONFIG: Record<PhotoSyncAction['type'], { label: string; badgeClass: string }> = {
-  insert: { label: '新增', badgeClass: 'bg-emerald-500/10 text-emerald-400' },
-  update: { label: '更新', badgeClass: 'bg-sky-500/10 text-sky-400' },
-  delete: { label: '删除', badgeClass: 'bg-rose-500/10 text-rose-400' },
-  conflict: { label: '冲突', badgeClass: 'bg-amber-500/10 text-amber-400' },
-  error: { label: '错误', badgeClass: 'bg-rose-500/20 text-rose-200' },
-  noop: { label: '跳过', badgeClass: 'bg-slate-500/10 text-slate-400' },
+export function getActionTypeMeta(type: PhotoSyncAction['type']) {
+  const i18n = getI18n()
+  const config = PHOTO_ACTION_TYPE_CONFIG[type]
+  if (!config) {
+    return { label: type, badgeClass: '' }
+  }
+  return { label: i18n.t(config.labelKey), badgeClass: config.badgeClass }
+}
+
+export const PHOTO_ACTION_TYPE_CONFIG: Record<PhotoSyncAction['type'], { labelKey: I18nKeys; badgeClass: string }> = {
+  insert: { labelKey: 'photos.actions.insert', badgeClass: 'bg-emerald-500/10 text-emerald-400' },
+  update: { labelKey: 'photos.actions.update', badgeClass: 'bg-sky-500/10 text-sky-400' },
+  delete: { labelKey: 'photos.actions.delete', badgeClass: 'bg-rose-500/10 text-rose-400' },
+  conflict: { labelKey: 'photos.actions.conflict', badgeClass: 'bg-amber-500/10 text-amber-400' },
+  error: { labelKey: 'photos.actions.error', badgeClass: 'bg-rose-500/20 text-rose-200' },
+  noop: { labelKey: 'photos.actions.noop', badgeClass: 'bg-slate-500/10 text-slate-400' },
 }
 
 export const BILLING_USAGE_EVENT_CONFIG: Record<
   BillingUsageEventType,
-  { label: string; description: string; tone: 'accent' | 'warning' | 'muted' }
+  { labelKey: I18nKeys; descriptionKey: I18nKeys; tone: 'accent' | 'warning' | 'muted' }
 > = {
   'photo.asset.created': {
-    label: '新增照片',
-    description: '通过上传或同步新增的照片资产。',
+    labelKey: 'photos.usage.photo-created.label',
+    descriptionKey: 'photos.usage.photo-created.description',
     tone: 'accent',
   },
   'photo.asset.deleted': {
-    label: '删除照片',
-    description: '从图库或存储中移除的照片资产。',
+    labelKey: 'photos.usage.photo-deleted.label',
+    descriptionKey: 'photos.usage.photo-deleted.description',
     tone: 'warning',
   },
   'data.sync.completed': {
-    label: '同步运行',
-    description: '一次数据同步执行完成时记录的汇总事件。',
+    labelKey: 'photos.usage.sync-completed.label',
+    descriptionKey: 'photos.usage.sync-completed.description',
     tone: 'muted',
   },
 }
 
 export function getUsageEventLabel(eventType: BillingUsageEventType): string {
-  return BILLING_USAGE_EVENT_CONFIG[eventType]?.label ?? eventType
+  const i18n = getI18n()
+  const key = BILLING_USAGE_EVENT_CONFIG[eventType]?.labelKey
+  return key ? i18n.t(key) : eventType
+}
+
+export function getUsageEventDescription(eventType: BillingUsageEventType): string {
+  const i18n = getI18n()
+  const key = BILLING_USAGE_EVENT_CONFIG[eventType]?.descriptionKey ?? null
+  return key ? i18n.t(key) : ''
 }

@@ -5,15 +5,103 @@ import { m } from 'motion/react'
 import { nanoid } from 'nanoid'
 import type { ReactNode } from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
 import { LinearBorderPanel } from '~/components/common/GlassPanel'
+import { getI18n } from '~/i18n'
 import { getRequestErrorMessage } from '~/lib/errors'
 import type { PhotoSyncLogLevel } from '~/modules/photos/types'
 import type { BuilderDebugProgressEvent, BuilderDebugResult } from '~/modules/super-admin'
 import { runBuilderDebugTest } from '~/modules/super-admin'
 
 const MAX_LOG_ENTRIES = 300
+
+const builderDebugKeys = {
+  title: 'superadmin.builder-debug.title',
+  description: 'superadmin.builder-debug.description',
+  toasts: {
+    pickFile: 'superadmin.builder-debug.toast.pick-file',
+    successTitle: 'superadmin.builder-debug.toast.success.title',
+    successDescription: 'superadmin.builder-debug.toast.success.description',
+    cancelled: 'superadmin.builder-debug.toast.cancelled',
+    failureFallback: 'superadmin.builder-debug.toast.failure-fallback',
+    failureTitle: 'superadmin.builder-debug.toast.failure.title',
+    manualCancelledMessage: 'superadmin.builder-debug.toast.manual-cancelled-message',
+    manualCancelledLog: 'superadmin.builder-debug.toast.manual-cancelled-log',
+    copySuccess: 'superadmin.builder-debug.toast.copy-success',
+    copyFailureTitle: 'superadmin.builder-debug.toast.copy-failure.title',
+    copyFailureDescription: 'superadmin.builder-debug.toast.copy-failure.description',
+  },
+  input: {
+    title: 'superadmin.builder-debug.input.title',
+    subtitle: 'superadmin.builder-debug.input.subtitle',
+    placeholder: 'superadmin.builder-debug.input.placeholder',
+    hint: 'superadmin.builder-debug.input.hint',
+    max: 'superadmin.builder-debug.input.max',
+    clear: 'superadmin.builder-debug.input.clear',
+    fileMeta: 'superadmin.builder-debug.input.file-meta',
+  },
+  actions: {
+    start: 'superadmin.builder-debug.actions.start',
+    cancel: 'superadmin.builder-debug.actions.cancel',
+  },
+  notes: 'superadmin.builder-debug.notes.keep-page-open',
+  recent: {
+    title: 'superadmin.builder-debug.recent.title',
+    file: 'superadmin.builder-debug.recent.file',
+    size: 'superadmin.builder-debug.recent.size',
+    storageKey: 'superadmin.builder-debug.recent.storage-key',
+  },
+  safety: {
+    title: 'superadmin.builder-debug.safety.title',
+    noDb: 'superadmin.builder-debug.safety.items.no-db',
+    noStorage: 'superadmin.builder-debug.safety.items.no-storage',
+    realtime: 'superadmin.builder-debug.safety.items.realtime',
+  },
+  logs: {
+    title: 'superadmin.builder-debug.logs.title',
+    subtitle: 'superadmin.builder-debug.logs.subtitle',
+    source: 'superadmin.builder-debug.logs.source',
+    initializing: 'superadmin.builder-debug.logs.initializing',
+    empty: 'superadmin.builder-debug.logs.empty',
+  },
+  output: {
+    title: 'superadmin.builder-debug.output.title',
+    subtitle: 'superadmin.builder-debug.output.subtitle',
+    copy: 'superadmin.builder-debug.output.copy',
+    noManifest: 'superadmin.builder-debug.output.no-manifest',
+    afterRun: 'superadmin.builder-debug.output.after-run',
+  },
+  summary: {
+    resultType: 'superadmin.builder-debug.summary.result-type',
+    storageKey: 'superadmin.builder-debug.summary.storage-key',
+    thumbnail: 'superadmin.builder-debug.summary.thumbnail',
+    thumbnailMissing: 'superadmin.builder-debug.summary.thumbnail-missing',
+    cleaned: 'superadmin.builder-debug.summary.cleaned',
+    cleanedYes: 'superadmin.builder-debug.summary.cleaned-yes',
+    cleanedNo: 'superadmin.builder-debug.summary.cleaned-no',
+  },
+  statuses: {
+    idle: 'superadmin.builder-debug.status.idle',
+    running: 'superadmin.builder-debug.status.running',
+    success: 'superadmin.builder-debug.status.success',
+    error: 'superadmin.builder-debug.status.error',
+  },
+  logStatus: {
+    start: 'superadmin.builder-debug.log.status.start',
+    complete: 'superadmin.builder-debug.log.status.complete',
+    error: 'superadmin.builder-debug.log.status.error',
+  },
+  logMessages: {
+    start: 'superadmin.builder-debug.log.message.start',
+    complete: 'superadmin.builder-debug.log.message.complete',
+  },
+  placeholders: {
+    unknown: 'common.unknown',
+  },
+  logLevelPrefix: 'superadmin.builder-debug.log.level.',
+} as const
 
 const LEVEL_THEME: Record<PhotoSyncLogLevel, string> = {
   info: 'border-sky-500/30 bg-sky-500/10 text-sky-100',
@@ -22,11 +110,11 @@ const LEVEL_THEME: Record<PhotoSyncLogLevel, string> = {
   error: 'border-rose-500/30 bg-rose-500/10 text-rose-100',
 }
 
-const STATUS_LABEL: Record<RunStatus, { label: string; className: string }> = {
-  idle: { label: '就绪', className: 'text-text-tertiary' },
-  running: { label: '调试中', className: 'text-accent' },
-  success: { label: '已完成', className: 'text-emerald-400' },
-  error: { label: '失败', className: 'text-rose-400' },
+const STATUS_LABEL: Record<RunStatus, { labelKey: I18nKeys; className: string }> = {
+  idle: { labelKey: builderDebugKeys.statuses.idle, className: 'text-text-tertiary' },
+  running: { labelKey: builderDebugKeys.statuses.running, className: 'text-accent' },
+  success: { labelKey: builderDebugKeys.statuses.success, className: 'text-emerald-400' },
+  error: { labelKey: builderDebugKeys.statuses.error, className: 'text-rose-400' },
 }
 
 type RunStatus = 'idle' | 'running' | 'success' | 'error'
@@ -73,6 +161,7 @@ function formatBytes(bytes: number | undefined | null): string {
 }
 
 export function Component() {
+  const { t } = useTranslation()
   return (
     <m.div
       initial={{ opacity: 0, y: 12 }}
@@ -81,10 +170,8 @@ export function Component() {
       className="space-y-6"
     >
       <header className="space-y-2">
-        <h1 className="text-text text-2xl font-semibold">Builder 调试工具</h1>
-        <p className="text-text-tertiary text-sm">
-          该工具用于单张图片的 Builder 管线验收。调试过程中不会写入数据库，所有上传与生成的文件会在任务完成后立刻清理。
-        </p>
+        <h1 className="text-text text-2xl font-semibold">{t(builderDebugKeys.title)}</h1>
+        <p className="text-text-tertiary text-sm">{t(builderDebugKeys.description)}</p>
       </header>
 
       <BuilderDebugConsole />
@@ -93,6 +180,7 @@ export function Component() {
 }
 
 function BuilderDebugConsole() {
+  const { t } = useTranslation()
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [runStatus, setRunStatus] = useState<RunStatus>('idle')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -179,7 +267,7 @@ function BuilderDebugConsole() {
 
   const handleStart = useCallback(async () => {
     if (!selectedFile) {
-      toast.info('请选择需要调试的图片文件')
+      toast.info(t(builderDebugKeys.toasts.pickFile))
       return
     }
 
@@ -201,21 +289,23 @@ function BuilderDebugConsole() {
 
       setResult(debugResult)
       setRunStatus('success')
-      toast.success('调试完成', { description: 'Builder 管线执行成功，产物已清理。' })
+      toast.success(t(builderDebugKeys.toasts.successTitle), {
+        description: t(builderDebugKeys.toasts.successDescription),
+      })
     } catch (error) {
       if (controller.signal.aborted) {
-        toast.info('调试已取消')
+        toast.info(t(builderDebugKeys.toasts.cancelled))
         setRunStatus('idle')
       } else {
-        const message = getRequestErrorMessage(error, '调试失败，请检查后重试。')
+        const message = getRequestErrorMessage(error, t(builderDebugKeys.toasts.failureFallback))
         setErrorMessage(message)
         setRunStatus('error')
-        toast.error('调试失败', { description: message })
+        toast.error(t(builderDebugKeys.toasts.failureTitle), { description: message })
       }
     } finally {
       abortControllerRef.current = null
     }
-  }, [handleProgressEvent, selectedFile])
+  }, [handleProgressEvent, selectedFile, t])
 
   const handleCancel = () => {
     if (!isRunning) {
@@ -224,17 +314,17 @@ function BuilderDebugConsole() {
     abortControllerRef.current?.abort()
     abortControllerRef.current = null
     setRunStatus('idle')
-    setErrorMessage('调试已被手动取消。')
+    setErrorMessage(t(builderDebugKeys.toasts.manualCancelledMessage))
     setLogEntries((prev) => [
       ...prev,
       {
         id: nanoid(),
         type: 'error',
-        message: '手动取消调试任务',
+        message: t(builderDebugKeys.toasts.manualCancelledLog),
         timestamp: Date.now(),
       },
     ])
-    toast.info('调试已取消')
+    toast.info(t(builderDebugKeys.toasts.cancelled))
   }
 
   const handleCopyManifest = async () => {
@@ -244,10 +334,10 @@ function BuilderDebugConsole() {
 
     try {
       await navigator.clipboard.writeText(manifestJson)
-      toast.success('已复制 manifest 数据')
+      toast.success(t(builderDebugKeys.toasts.copySuccess))
     } catch (error) {
-      toast.error('复制失败', {
-        description: getRequestErrorMessage(error, '请手动复制内容'),
+      toast.error(t(builderDebugKeys.toasts.copyFailureTitle), {
+        description: getRequestErrorMessage(error, t(builderDebugKeys.toasts.copyFailureDescription)),
       })
     }
   }
@@ -260,8 +350,8 @@ function BuilderDebugConsole() {
             <section className="space-y-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-text text-base font-semibold">调试输入</p>
-                  <p className="text-text-tertiary text-xs">选择一张原始图片，系统将模拟 Builder 处理链路。</p>
+                  <p className="text-text text-base font-semibold">{t(builderDebugKeys.input.title)}</p>
+                  <p className="text-text-tertiary text-xs">{t(builderDebugKeys.input.subtitle)}</p>
                 </div>
                 <StatusBadge status={runStatus} />
               </div>
@@ -275,9 +365,9 @@ function BuilderDebugConsole() {
               >
                 <Upload className="mb-3 h-6 w-6 text-text" />
                 <p className="text-text text-sm font-medium">
-                  {selectedFile ? selectedFile.name : '点击或拖拽图片到此区域'}
+                  {selectedFile ? selectedFile.name : t(builderDebugKeys.input.placeholder)}
                 </p>
-                <p className="text-text-tertiary mt-1 text-xs">仅支持单张图片，最大 25 MB</p>
+                <p className="text-text-tertiary mt-1 text-xs">{t(builderDebugKeys.input.max)}</p>
               </label>
               <input
                 id="builder-debug-file"
@@ -293,11 +383,14 @@ function BuilderDebugConsole() {
                   <div>
                     <p className="text-text text-sm font-medium">{selectedFile.name}</p>
                     <p className="text-text-tertiary text-xs mt-0.5">
-                      {formatBytes(selectedFile.size)} · {selectedFile.type || 'unknown'}
+                      {t(builderDebugKeys.input.fileMeta, {
+                        size: formatBytes(selectedFile.size),
+                        type: selectedFile.type || t(builderDebugKeys.placeholders.unknown),
+                      })}
                     </p>
                   </div>
                   <Button type="button" variant="ghost" size="xs" onClick={handleClearFile} disabled={isRunning}>
-                    清除
+                    {t(builderDebugKeys.input.clear)}
                   </Button>
                 </div>
               ) : null}
@@ -307,38 +400,36 @@ function BuilderDebugConsole() {
               <div className="flex flex-wrap gap-2">
                 <Button type="button" onClick={handleStart} disabled={!selectedFile || isRunning}>
                   <Play className="mr-2 h-4 w-4" />
-                  启动调试
+                  {t(builderDebugKeys.actions.start)}
                 </Button>
                 {isRunning ? (
                   <Button type="button" variant="ghost" onClick={handleCancel}>
                     <Square className="mr-2 h-4 w-4" />
-                    取消调试
+                    {t(builderDebugKeys.actions.cancel)}
                   </Button>
                 ) : null}
               </div>
-              <p className="text-text-tertiary text-xs">
-                执行期间请保持页面开启。调试依赖与 Data Sync 相同的 builder 配置，并实时返回日志。
-              </p>
+              <p className="text-text-tertiary text-xs">{t(builderDebugKeys.notes)}</p>
               {errorMessage ? <p className="text-rose-400 text-xs">{errorMessage}</p> : null}
             </section>
 
             {runMeta ? (
               <section className="space-y-2 rounded-lg bg-background-secondary/70 px-4 py-3 text-xs">
-                <p className="text-text text-sm font-semibold">最近一次任务</p>
+                <p className="text-text text-sm font-semibold">{t(builderDebugKeys.recent.title)}</p>
                 <div className="space-y-1">
-                  <DetailRow label="文件">{runMeta.filename}</DetailRow>
-                  <DetailRow label="大小">{formatBytes(runMeta.size)}</DetailRow>
-                  <DetailRow label="Storage Key">{runMeta.storageKey}</DetailRow>
+                  <DetailRow label={t(builderDebugKeys.recent.file)}>{runMeta.filename}</DetailRow>
+                  <DetailRow label={t(builderDebugKeys.recent.size)}>{formatBytes(runMeta.size)}</DetailRow>
+                  <DetailRow label={t(builderDebugKeys.recent.storageKey)}>{runMeta.storageKey}</DetailRow>
                 </div>
               </section>
             ) : null}
 
             <section className="rounded-lg bg-fill/10 px-3 py-2 text-[11px] leading-5 text-text-tertiary">
-              <p>⚠️ 调试以安全模式运行：</p>
+              <p>{t(builderDebugKeys.safety.title)}</p>
               <ul className="mt-1 list-disc pl-4">
-                <li>不写入照片资产数据库记录</li>
-                <li>不在存储中保留任何调试产物</li>
-                <li>所有日志均实时输出，供排查使用</li>
+                <li>{t(builderDebugKeys.safety.noDb)}</li>
+                <li>{t(builderDebugKeys.safety.noStorage)}</li>
+                <li>{t(builderDebugKeys.safety.realtime)}</li>
               </ul>
             </section>
           </div>
@@ -347,10 +438,12 @@ function BuilderDebugConsole() {
         <LinearBorderPanel className="bg-background-tertiary/70 relative flex min-h-[420px] flex-col rounded-xl p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-text text-base font-semibold">实时日志</p>
-              <p className="text-text-tertiary text-xs">最新 {logEntries.length} 条消息</p>
+              <p className="text-text text-base font-semibold">{t(builderDebugKeys.logs.title)}</p>
+              <p className="text-text-tertiary text-xs">
+                {t(builderDebugKeys.logs.subtitle, { count: logEntries.length })}
+              </p>
             </div>
-            <span className="text-text-tertiary text-xs">来源：Builder + Data Sync Relay</span>
+            <span className="text-text-tertiary text-xs">{t(builderDebugKeys.logs.source)}</span>
           </div>
 
           <div
@@ -359,7 +452,7 @@ function BuilderDebugConsole() {
           >
             {logEntries.length === 0 ? (
               <div className="text-text-tertiary flex h-full items-center justify-center text-sm">
-                {isRunning ? '正在初始化调试环境...' : '尚无日志'}
+                {isRunning ? t(builderDebugKeys.logs.initializing) : t(builderDebugKeys.logs.empty)}
               </div>
             ) : (
               <ul className="space-y-2 text-xs">
@@ -378,22 +471,31 @@ function BuilderDebugConsole() {
       <LinearBorderPanel className="bg-background-tertiary/70 rounded-xl p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-text text-base font-semibold">调试输出</p>
-            <p className="text-text-tertiary text-xs">展示 Builder 返回的 manifest 摘要</p>
+            <p className="text-text text-base font-semibold">{t(builderDebugKeys.output.title)}</p>
+            <p className="text-text-tertiary text-xs">{t(builderDebugKeys.output.subtitle)}</p>
           </div>
           <Button type="button" variant="ghost" size="sm" onClick={handleCopyManifest} disabled={!manifestJson}>
             <Copy className="mr-2 h-4 w-4" />
-            复制 manifest
+            {t(builderDebugKeys.output.copy)}
           </Button>
         </div>
 
         {result ? (
           <div className="mt-4 space-y-4">
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-              <SummaryTile label="Result Type" value={result.resultType.toUpperCase()} />
-              <SummaryTile label="Storage Key" value={result.storageKey} isMono />
-              <SummaryTile label="缩略图 URL" value={result.thumbnailUrl || '未生成'} isMono />
-              <SummaryTile label="产物已清理" value={result.filesDeleted ? 'Yes' : 'No'} />
+              <SummaryTile label={t(builderDebugKeys.summary.resultType)} value={result.resultType.toUpperCase()} />
+              <SummaryTile label={t(builderDebugKeys.summary.storageKey)} value={result.storageKey} isMono />
+              <SummaryTile
+                label={t(builderDebugKeys.summary.thumbnail)}
+                value={result.thumbnailUrl || t(builderDebugKeys.summary.thumbnailMissing)}
+                isMono
+              />
+              <SummaryTile
+                label={t(builderDebugKeys.summary.cleaned)}
+                value={
+                  result.filesDeleted ? t(builderDebugKeys.summary.cleanedYes) : t(builderDebugKeys.summary.cleanedNo)
+                }
+              />
             </div>
 
             {manifestJson ? (
@@ -401,11 +503,11 @@ function BuilderDebugConsole() {
                 {manifestJson}
               </pre>
             ) : (
-              <p className="text-text-tertiary text-sm">当前任务未生成 manifest 数据。</p>
+              <p className="text-text-tertiary text-sm">{t(builderDebugKeys.output.noManifest)}</p>
             )}
           </div>
         ) : (
-          <div className="text-text-tertiary mt-4 text-sm">运行调试后，这里会显示 manifest 内容与概要。</div>
+          <div className="text-text-tertiary mt-4 text-sm">{t(builderDebugKeys.output.afterRun)}</div>
         )}
       </LinearBorderPanel>
     </div>
@@ -423,12 +525,13 @@ function SummaryTile({ label, value, isMono }: { label: string; value: string; i
 
 function StatusBadge({ status }: { status: RunStatus }) {
   const config = STATUS_LABEL[status]
+  const { t } = useTranslation()
   return (
     <div className="flex items-center gap-1 text-xs font-medium">
       <span className={clsxm('relative inline-flex h-2.5 w-2.5 items-center justify-center', config.className)}>
         <span className="bg-current inline-flex h-1.5 w-1.5 rounded-full" />
       </span>
-      <span className={config.className}>{config.label}</span>
+      <span className={config.className}>{t(config.labelKey)}</span>
     </div>
   )
 }
@@ -443,10 +546,13 @@ function DetailRow({ label, children }: { label: string; children: ReactNode }) 
 }
 
 function LogPill({ entry }: { entry: DebugLogEntry }) {
+  const { t } = useTranslation()
   if (entry.type === 'log') {
     return (
       <div className={clsxm('min-w-0 flex-1 rounded-lg border px-3 py-2 text-xs', LEVEL_THEME[entry.level])}>
-        <p className="font-semibold uppercase tracking-wide text-[10px]">{entry.level}</p>
+        <p className="font-semibold uppercase tracking-wide text-[10px]">
+          {t(`${builderDebugKeys.logLevelPrefix}${entry.level}`)}
+        </p>
         <p className="mt-0.5 wrap-break-word text-[11px]">{entry.message}</p>
       </div>
     )
@@ -458,10 +564,15 @@ function LogPill({ entry }: { entry: DebugLogEntry }) {
       : entry.type === 'start'
         ? 'bg-accent/10 text-accent'
         : 'bg-emerald-500/10 text-emerald-100'
-  const label = entry.type === 'start' ? 'START' : entry.type === 'complete' ? 'COMPLETE' : 'ERROR'
+  const labelKey =
+    entry.type === 'start'
+      ? builderDebugKeys.logStatus.start
+      : entry.type === 'complete'
+        ? builderDebugKeys.logStatus.complete
+        : builderDebugKeys.logStatus.error
   return (
     <div className={clsxm('min-w-0 flex-1 rounded-lg px-3 py-2 text-xs', tone)}>
-      <p className="font-semibold uppercase tracking-wide text-[10px]">{label}</p>
+      <p className="font-semibold uppercase tracking-wide text-[10px]">{t(labelKey)}</p>
       <p className="mt-0.5 wrap-break-word text-[11px]">{entry.message}</p>
     </div>
   )
@@ -470,13 +581,14 @@ function LogPill({ entry }: { entry: DebugLogEntry }) {
 function buildLogEntry(event: BuilderDebugProgressEvent): DebugLogEntry | null {
   const id = nanoid()
   const timestamp = Date.now()
+  const i18n = getI18n()
 
   switch (event.type) {
     case 'start': {
       return {
         id,
         type: 'start',
-        message: `上传 ${event.payload.filename}，准备执行 Builder`,
+        message: i18n.t(builderDebugKeys.logMessages.start, { filename: event.payload.filename }),
         timestamp,
       }
     }
@@ -484,7 +596,7 @@ function buildLogEntry(event: BuilderDebugProgressEvent): DebugLogEntry | null {
       return {
         id,
         type: 'complete',
-        message: `构建完成 · 结果 ${event.payload.resultType}`,
+        message: i18n.t(builderDebugKeys.logMessages.complete, { resultType: event.payload.resultType }),
         timestamp,
       }
     }

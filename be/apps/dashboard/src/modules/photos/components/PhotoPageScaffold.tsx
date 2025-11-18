@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { MainPageLayout } from '~/components/layouts/MainPageLayout'
 import { PageTabs } from '~/components/navigation/PageTabs'
@@ -13,18 +14,19 @@ type PhotoPageScaffoldProps = {
 }
 
 export function PhotoPageScaffold({ activeTab, children }: PhotoPageScaffoldProps) {
+  const { t } = useTranslation()
   return (
-    <MainPageLayout title="照片库" description="在此同步和管理服务器中的照片资产。">
+    <MainPageLayout title={t('photos.page.title')} description={t('photos.page.description')}>
       <PhotoPageActions activeTab={activeTab} />
 
       <div className="space-y-4 sm:space-y-6">
         <PageTabs
           activeId={activeTab}
           items={[
-            { id: 'library', label: '图库管理', to: TAB_ROUTE_MAP.library, end: true },
-            { id: 'sync', label: '存储同步', to: TAB_ROUTE_MAP.sync, end: true },
-            { id: 'storage', label: '素材存储', to: TAB_ROUTE_MAP.storage, end: true },
-            { id: 'usage', label: '用量记录', to: TAB_ROUTE_MAP.usage, end: true },
+            { id: 'library', labelKey: 'photos.tabs.library', to: TAB_ROUTE_MAP.library, end: true },
+            { id: 'sync', labelKey: 'photos.tabs.sync', to: TAB_ROUTE_MAP.sync, end: true },
+            { id: 'storage', labelKey: 'photos.tabs.storage', to: TAB_ROUTE_MAP.storage, end: true },
+            { id: 'usage', labelKey: 'photos.tabs.usage', to: TAB_ROUTE_MAP.usage, end: true },
           ]}
         />
 

@@ -2,6 +2,7 @@ import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue }
 import { Spring } from '@afilmory/utils'
 import { RefreshCcwIcon } from 'lucide-react'
 import { m } from 'motion/react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
 import { LinearBorderPanel } from '~/components/common/GlassPanel'
@@ -18,6 +19,7 @@ export function SuperAdminTenantManager() {
   const tenantsQuery = useSuperAdminTenantsQuery()
   const updatePlanMutation = useUpdateTenantPlanMutation()
   const updateBanMutation = useUpdateTenantBanMutation()
+  const { t } = useTranslation()
 
   const { isLoading } = tenantsQuery
   const { isError } = tenantsQuery
@@ -34,11 +36,11 @@ export function SuperAdminTenantManager() {
       { tenantId: tenant.id, planId },
       {
         onSuccess: () => {
-          toast.success(`已将 ${tenant.name} 切换到 ${planId} 计划`)
+          toast.success(t('superadmin.tenants.toast.plan-success', { name: tenant.name, planId }))
         },
         onError: (error) => {
-          toast.error('更新订阅失败', {
-            description: error instanceof Error ? error.message : '请稍后再试',
+          toast.error(t('superadmin.tenants.toast.plan-error'), {
+            description: error instanceof Error ? error.message : t('common.retry-later'),
           })
         },
       },
@@ -51,11 +53,15 @@ export function SuperAdminTenantManager() {
       { tenantId: tenant.id, banned: next },
       {
         onSuccess: () => {
-          toast.success(next ? `已封禁租户 ${tenant.name}` : `已解除封禁 ${tenant.name}`)
+          toast.success(
+            next
+              ? t('superadmin.tenants.toast.ban-success', { name: tenant.name })
+              : t('superadmin.tenants.toast.unban-success', { name: tenant.name }),
+          )
         },
         onError: (error) => {
-          toast.error('更新封禁状态失败', {
-            description: error instanceof Error ? error.message : '请稍后再试',
+          toast.error(t('superadmin.tenants.toast.ban-error'), {
+            description: error instanceof Error ? error.message : t('common.retry-later'),
           })
         },
       },
@@ -71,7 +77,9 @@ export function SuperAdminTenantManager() {
   if (isError) {
     return (
       <LinearBorderPanel className="p-6 text-sm text-red">
-        无法加载租户数据：{tenantsQuery.error instanceof Error ? tenantsQuery.error.message : '未知错误'}
+        {t('superadmin.tenants.error.loading', {
+          reason: tenantsQuery.error instanceof Error ? tenantsQuery.error.message : t('common.unknown-error'),
+        })}
       </LinearBorderPanel>
     )
   }
@@ -85,8 +93,8 @@ export function SuperAdminTenantManager() {
       <LinearBorderPanel className="p-6 bg-background-secondary">
         <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-text text-lg font-semibold">租户列表</h2>
-            <p className="text-text-secondary text-sm">手动切换订阅计划或封禁违规租户。</p>
+            <h2 className="text-text text-lg font-semibold">{t('superadmin.tenants.title')}</h2>
+            <p className="text-text-secondary text-sm">{t('superadmin.tenants.description')}</p>
           </div>
           <Button
             type="button"
@@ -97,22 +105,22 @@ export function SuperAdminTenantManager() {
             disabled={tenantsQuery.isFetching}
           >
             <RefreshCcwIcon className="size-4" />
-            {tenantsQuery.isFetching ? '正在刷新…' : '刷新列表'}
+            {tenantsQuery.isFetching ? t('superadmin.tenants.refresh.loading') : t('superadmin.tenants.refresh.button')}
           </Button>
         </header>
 
         {tenants.length === 0 ? (
-          <p className="text-text-secondary text-sm">当前没有可管理的租户。</p>
+          <p className="text-text-secondary text-sm">{t('superadmin.tenants.empty')}</p>
         ) : (
           <div className="overflow-x-auto mt-4">
             <table className="min-w-full divide-y divide-border/40 text-sm">
               <thead>
                 <tr className="text-text-tertiary text-xs uppercase tracking-wide">
-                  <th className="px-3 py-2 text-left">租户</th>
-                  <th className="px-3 py-2 text-left">订阅计划</th>
-                  <th className="px-3 py-2 text-center">状态</th>
-                  <th className="px-3 py-2 text-center">封禁</th>
-                  <th className="px-3 py-2 text-left">创建时间</th>
+                  <th className="px-3 py-2 text-left">{t('superadmin.tenants.table.tenant')}</th>
+                  <th className="px-3 py-2 text-left">{t('superadmin.tenants.table.plan')}</th>
+                  <th className="px-3 py-2 text-center">{t('superadmin.tenants.table.status')}</th>
+                  <th className="px-3 py-2 text-center">{t('superadmin.tenants.table.ban')}</th>
+                  <th className="px-3 py-2 text-left">{t('superadmin.tenants.table.created')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/20">
@@ -142,7 +150,11 @@ export function SuperAdminTenantManager() {
                         onClick={() => handleToggleBanned(tenant)}
                         disabled={isBanUpdating(tenant.id)}
                       >
-                        {isBanUpdating(tenant.id) ? '处理中…' : tenant.banned ? '解除封禁' : '封禁'}
+                        {isBanUpdating(tenant.id)
+                          ? t('superadmin.tenants.button.processing')
+                          : tenant.banned
+                            ? t('superadmin.tenants.button.unban')
+                            : t('superadmin.tenants.button.ban')}
                       </Button>
                     </td>
                     <td className="px-3 py-3 text-text-secondary text-xs">{formatDateLabel(tenant.createdAt)}</td>
@@ -168,11 +180,12 @@ function PlanSelector({
   disabled?: boolean
   onChange: (value: string) => void
 }) {
+  const { t } = useTranslation()
   return (
     <div className="space-y-1">
       <Select value={value} onValueChange={(value) => onChange(value)} disabled={disabled}>
         <SelectTrigger>
-          <SelectValue placeholder="选择订阅计划" />
+          <SelectValue placeholder={t('superadmin.tenants.plan.placeholder')} />
         </SelectTrigger>
         <SelectContent>
           {plans.map((plan) => (
@@ -195,16 +208,33 @@ function PlanDescription({ plan }: { plan: BillingPlanDefinition | undefined }) 
 }
 
 function StatusBadge({ status, banned }: { status: SuperAdminTenantSummary['status']; banned: boolean }) {
+  const { t } = useTranslation()
   if (banned) {
-    return <span className="bg-rose-500/10 text-rose-400 rounded-full px-2 py-0.5 text-xs">已封禁</span>
+    return (
+      <span className="bg-rose-500/10 text-rose-400 rounded-full px-2 py-0.5 text-xs">
+        {t('superadmin.tenants.status.banned')}
+      </span>
+    )
   }
   if (status === 'active') {
-    return <span className="bg-emerald-500/10 text-emerald-400 rounded-full px-2 py-0.5 text-xs">活跃</span>
+    return (
+      <span className="bg-emerald-500/10 text-emerald-400 rounded-full px-2 py-0.5 text-xs">
+        {t('superadmin.tenants.status.active')}
+      </span>
+    )
   }
   if (status === 'suspended') {
-    return <span className="bg-amber-500/10 text-amber-400 rounded-full px-2 py-0.5 text-xs">已暂停</span>
+    return (
+      <span className="bg-amber-500/10 text-amber-400 rounded-full px-2 py-0.5 text-xs">
+        {t('superadmin.tenants.status.suspended')}
+      </span>
+    )
   }
-  return <span className="bg-slate-500/10 text-slate-400 rounded-full px-2 py-0.5 text-xs">未激活</span>
+  return (
+    <span className="bg-slate-500/10 text-slate-400 rounded-full px-2 py-0.5 text-xs">
+      {t('superadmin.tenants.status.inactive')}
+    </span>
+  )
 }
 
 function formatDateLabel(value: string): string {

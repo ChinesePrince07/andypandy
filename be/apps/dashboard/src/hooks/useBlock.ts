@@ -1,5 +1,6 @@
 import { Modal, Prompt } from '@afilmory/ui'
 import { useCallback, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useBeforeUnload, useBlocker } from 'react-router'
 
 type UseBlockOptions = {
@@ -12,21 +13,29 @@ type UseBlockOptions = {
   beforeUnloadMessage?: string
 }
 
-const DEFAULT_TITLE = '您有尚未保存的变更'
-const DEFAULT_DESCRIPTION = '离开当前页面会丢失未保存的更改，确定要继续吗？'
-const DEFAULT_CONFIRM_TEXT = '继续离开'
-const DEFAULT_CANCEL_TEXT = '留在此页'
-const DEFAULT_BEFORE_UNLOAD_MESSAGE = '您有未保存的更改，确定要离开吗？'
+const blockerI18nKeys = {
+  title: 'blocker.unsaved.title',
+  description: 'blocker.unsaved.description',
+  confirm: 'blocker.unsaved.confirm',
+  cancel: 'blocker.unsaved.cancel',
+  beforeUnload: 'blocker.unsaved.before-unload',
+} as const
 
 export function useBlock({
   when,
-  title = DEFAULT_TITLE,
-  description = DEFAULT_DESCRIPTION,
-  confirmText = DEFAULT_CONFIRM_TEXT,
-  cancelText = DEFAULT_CANCEL_TEXT,
+  title,
+  description,
+  confirmText,
+  cancelText,
   variant = 'danger',
-  beforeUnloadMessage = DEFAULT_BEFORE_UNLOAD_MESSAGE,
+  beforeUnloadMessage,
 }: UseBlockOptions) {
+  const { t } = useTranslation()
+  const resolvedTitle = title ?? t(blockerI18nKeys.title)
+  const resolvedDescription = description ?? t(blockerI18nKeys.description)
+  const resolvedConfirmText = confirmText ?? t(blockerI18nKeys.confirm)
+  const resolvedCancelText = cancelText ?? t(blockerI18nKeys.cancel)
+  const resolvedBeforeUnload = beforeUnloadMessage ?? t(blockerI18nKeys.beforeUnload)
   const promptIdRef = useRef<string | null>(null)
   const isPromptOpenRef = useRef(false)
 
@@ -57,10 +66,10 @@ export function useBlock({
 
     isPromptOpenRef.current = true
     promptIdRef.current = Prompt.prompt({
-      title,
-      description,
-      onConfirmText: confirmText,
-      onCancelText: cancelText,
+      title: resolvedTitle,
+      description: resolvedDescription,
+      onConfirmText: resolvedConfirmText,
+      onCancelText: resolvedCancelText,
       variant,
       onConfirm: async () => {
         closePrompt()
@@ -71,7 +80,7 @@ export function useBlock({
         blocker.reset?.()
       },
     })
-  }, [blocker, cancelText, closePrompt, confirmText, description, title, variant])
+  }, [blocker, closePrompt, resolvedCancelText, resolvedConfirmText, resolvedDescription, resolvedTitle, variant])
 
   useEffect(() => {
     if (!when) {
@@ -98,6 +107,6 @@ export function useBlock({
     }
 
     event.preventDefault()
-    event.returnValue = beforeUnloadMessage
+    event.returnValue = resolvedBeforeUnload
   })
 }

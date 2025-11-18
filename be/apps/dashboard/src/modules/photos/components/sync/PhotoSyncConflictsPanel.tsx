@@ -2,6 +2,7 @@ import { Button, Checkbox, Prompt } from '@afilmory/ui'
 import { Spring } from '@afilmory/utils'
 import { m } from 'motion/react'
 import { startTransition, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
 import { getRequestErrorMessage } from '~/lib/errors'
@@ -37,6 +38,7 @@ export function PhotoSyncConflictsPanel({
   onResolveBatch,
   onRequestStorageUrl,
 }: PhotoSyncConflictsPanelProps) {
+  const { t } = useTranslation()
   const sortedConflicts = useMemo(() => {
     if (!conflicts) return []
     return conflicts.toSorted((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
@@ -359,7 +361,7 @@ export function PhotoSyncConflictsPanel({
                             </span>
                             <code className="text-text-secondary text-xs">{conflict.photoId ?? '未绑定 Photo ID'}</code>
                             {typeConfig ? (
-                              <span className="text-text-tertiary text-xs">{typeConfig.description}</span>
+                              <span className="text-text-tertiary text-xs">{t(typeConfig.descriptionKey)}</span>
                             ) : null}
                           </div>
                           <div className="text-text-tertiary flex flex-wrap justify-end gap-2 text-xs">
