@@ -1,5 +1,6 @@
 import { isTenantSlugReserved } from '@afilmory/utils'
 import { BizException, ErrorCode } from 'core/errors'
+import { applySimpleCorsHeaders } from 'core/helpers/cors.helper'
 import { ROOT_TENANT_SLUG } from 'core/modules/platform/tenant/tenant.constants'
 import { getTenantContext, isPlaceholderTenantContext } from 'core/modules/platform/tenant/tenant.context'
 import type { Context } from 'hono'
@@ -94,9 +95,6 @@ export const StaticControllerUtils = {
   },
 
   applyStaticAssetCors(response: Response): Response {
-    response.headers.set('Access-Control-Allow-Origin', '*')
-    response.headers.set('Access-Control-Allow-Methods', 'GET,HEAD,OPTIONS')
-    response.headers.set('Access-Control-Allow-Headers', 'Content-Type')
-    return response
+    return applySimpleCorsHeaders(response)
   },
-};
+}

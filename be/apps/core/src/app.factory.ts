@@ -10,6 +10,7 @@ import { PgPoolProvider } from './database/database.provider'
 import { AllExceptionsFilter } from './filters/all-exceptions.filter'
 import { LoggingInterceptor } from './interceptors/logging.interceptor'
 import { ResponseTransformInterceptor } from './interceptors/response-transform.interceptor'
+import { SimpleCorsInterceptor } from './interceptors/simple-cors.interceptor'
 import { AppModules } from './modules/index.module'
 import { registerOpenApiRoutes } from './openapi'
 import { RedisProvider } from './redis/redis.provider'
@@ -45,6 +46,7 @@ export async function createConfiguredApp(options: BootstrapOptions = {}): Promi
 
   app.useGlobalFilters(new AllExceptionsFilter())
   app.useGlobalInterceptors(new LoggingInterceptor())
+  app.useGlobalInterceptors(new SimpleCorsInterceptor())
   app.useGlobalInterceptors(new ResponseTransformInterceptor())
 
   app.useGlobalPipes(new GlobalValidationPipe())

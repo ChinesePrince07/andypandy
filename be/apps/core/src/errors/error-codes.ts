@@ -6,6 +6,7 @@ export enum ErrorCode {
   COMMON_CONFLICT = 4,
   COMMON_RATE_LIMITED = 5,
   COMMON_INTERNAL_SERVER_ERROR = 6,
+  COMMON_FORBIDDEN = 7,
 
   // Auth
   AUTH_UNAUTHORIZED = 10,
@@ -57,6 +58,10 @@ export const ERROR_CODE_DESCRIPTORS: Record<ErrorCode, ErrorDescriptor> = {
   [ErrorCode.COMMON_INTERNAL_SERVER_ERROR]: {
     httpStatus: 500,
     message: 'Internal server error',
+  },
+  [ErrorCode.COMMON_FORBIDDEN]: {
+    httpStatus: 403,
+    message: 'Forbidden',
   },
   [ErrorCode.AUTH_UNAUTHORIZED]: {
     httpStatus: 401,

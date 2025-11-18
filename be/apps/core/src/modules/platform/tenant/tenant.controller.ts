@@ -1,17 +1,46 @@
-import { Body, Controller, Post } from '@afilmory/framework'
+import { Body, Controller, createZodSchemaDto, Post } from '@afilmory/framework'
 import { isTenantSlugReserved } from '@afilmory/utils'
 import { AllowPlaceholderTenant } from 'core/decorators/allow-placeholder.decorator'
+import { AllowSimpleCors } from 'core/decorators/simple-cors.decorator'
 import { SkipTenantGuard } from 'core/decorators/skip-tenant.decorator'
 import { BizException, ErrorCode } from 'core/errors'
 import { SystemSettingService } from 'core/modules/configuration/system-setting/system-setting.service'
+import { z } from 'zod'
 
 import { TenantService } from './tenant.service'
 
 const TENANT_SLUG_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i
 
-type CheckTenantSlugRequest = {
-  slug?: string | null
-}
+const checkTenantSlugSchema = z.object({
+  slug: z
+    .union([z.string(), z.null()])
+    .optional()
+    .transform((val) => {
+      if (!val) {
+        return null
+      }
+      const normalized = val.trim().toLowerCase()
+      return normalized.length > 0 ? normalized : null
+    })
+    .pipe(
+      z
+        .string()
+        .nullable()
+        .refine((val) => val !== null, { message: '空间名称不能为空' })
+        .transform((val) => val as string)
+        .pipe(
+          z
+            .string()
+            .min(3, { message: '空间名称至少需要 3 个字符' })
+            .max(63, { message: '空间名称长度不能超过 63 个字符' })
+            .regex(TENANT_SLUG_PATTERN, {
+              message: '空间名称只能包含字母、数字或连字符 (-)，且不能以连字符开头或结尾。',
+            }),
+        ),
+    ),
+})
+
+class CheckTenantSlugDto extends createZodSchemaDto(checkTenantSlugSchema) {}
 
 @Controller('tenant')
 export class TenantController {
@@ -20,18 +49,14 @@ export class TenantController {
     private readonly systemSettings: SystemSettingService,
   ) {}
 
+  @AllowSimpleCors()
   @AllowPlaceholderTenant()
   @SkipTenantGuard()
   @Post('/check-slug')
-  async checkTenantSlug(@Body() body: CheckTenantSlugRequest) {
+  async checkTenantSlug(@Body() body: CheckTenantSlugDto) {
     await this.systemSettings.ensureRegistrationAllowed()
 
-    const slug = this.normalizeTenantSlug(body?.slug)
-    if (!slug) {
-      throw new BizException(ErrorCode.COMMON_BAD_REQUEST, { message: '空间名称不能为空' })
-    }
-
-    this.validateTenantSlug(slug)
+    const { slug } = body
 
     if (isTenantSlugReserved(slug)) {
       throw new BizException(ErrorCode.TENANT_SLUG_RESERVED, { message: '该空间名称已被系统保留，请尝试其他名称。' })
@@ -51,28 +76,6 @@ export class TenantController {
       baseDomain: settings.baseDomain,
       tenantHost,
       nextUrl: this.buildTenantWelcomeUrl(slug, settings.baseDomain),
-    }
-  }
-
-  private normalizeTenantSlug(slug?: string | null): string | null {
-    if (!slug) {
-      return null
-    }
-    const normalized = slug.trim().toLowerCase()
-    return normalized.length > 0 ? normalized : null
-  }
-
-  private validateTenantSlug(slug: string): void {
-    if (slug.length < 3) {
-      throw new BizException(ErrorCode.COMMON_BAD_REQUEST, { message: '空间名称至少需要 3 个字符' })
-    }
-    if (slug.length > 63) {
-      throw new BizException(ErrorCode.COMMON_BAD_REQUEST, { message: '空间名称长度不能超过 63 个字符' })
-    }
-    if (!TENANT_SLUG_PATTERN.test(slug)) {
-      throw new BizException(ErrorCode.COMMON_BAD_REQUEST, {
-        message: '空间名称只能包含字母、数字或连字符 (-)，且不能以连字符开头或结尾。',
-      })
     }
   }
 
