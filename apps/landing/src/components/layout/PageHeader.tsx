@@ -1,6 +1,7 @@
 'use client'
 
 import { m, useMotionValueEvent, useScroll, useTransform } from 'motion/react'
+import Image from 'next/image'
 import { useTranslations } from 'next-intl'
 import { useMemo, useState } from 'react'
 
@@ -73,7 +74,7 @@ export const PageHeader = () => {
         >
           <m.div
             className={clsxm(
-              'flex size-10 items-center justify-center',
+              'flex size-10 items-center justify-center overflow-hidden',
               radius.lg,
               'border transition-all duration-300',
               scrolled
@@ -83,9 +84,16 @@ export const PageHeader = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            <span className="font-serif text-base font-medium tracking-wider text-white">
-              A
-            </span>
+            <Image
+              unoptimized
+              src="/logo-256.jpg"
+              alt="Afilmory logo"
+              width={40}
+              height={40}
+              sizes="40px"
+              priority
+              className="size-full object-cover"
+            />
           </m.div>
           <div className="hidden sm:block">
             <p className="font-serif text-base font-medium tracking-wide text-white">
