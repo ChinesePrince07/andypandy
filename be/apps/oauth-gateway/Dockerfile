@@ -10,7 +10,7 @@ WORKDIR /workspace
 
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY be/apps/oauth-gateway/package.json be/apps/oauth-gateway/package.json
-
+COPY patches ./patches
 RUN pnpm fetch --filter '@afilmory/oauth-gateway...'
 
 COPY . .
