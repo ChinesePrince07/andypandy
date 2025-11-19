@@ -36,7 +36,20 @@ export type {
   BuilderPluginHooks,
   BuilderPluginReference,
 } from './plugins/types.js'
-export type { ProgressCallback, ScanProgress, StorageConfig, StorageObject, StorageProvider } from './storage/index.js'
+export type {
+  LocalStorageConfig,
+  LocalStorageProviderName,
+  ProgressCallback,
+  RemoteStorageConfig,
+  RemoteStorageProviderName,
+  ScanProgress,
+  StorageConfig,
+  StorageObject,
+  StorageProvider,
+  StorageProviderCategory,
+} from './storage/index.js'
+export type { StorageProviderFactory, StorageProviderRegistrationOptions } from './storage/index.js'
+export { LOCAL_STORAGE_PROVIDERS, REMOTE_STORAGE_PROVIDERS } from './storage/index.js'
 export { StorageFactory, StorageManager } from './storage/index.js'
 export type { BuilderConfig, BuilderConfigInput } from './types/config.js'
 export type { AfilmoryManifest, CameraInfo, LensInfo } from './types/manifest.js'

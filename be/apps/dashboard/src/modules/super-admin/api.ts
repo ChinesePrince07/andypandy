@@ -1,6 +1,7 @@
 import { getI18n } from '~/i18n'
 import { coreApi, coreApiBaseURL } from '~/lib/api-client'
 import { camelCaseKeys } from '~/lib/case'
+import { withLanguageHeaderInit } from '~/lib/request-language'
 
 import type {
   BuilderDebugProgressEvent,
@@ -62,15 +63,18 @@ export async function runBuilderDebugTest(file: File, options?: RunBuilderDebugO
   const formData = new FormData()
   formData.append('file', file)
 
-  const response = await fetch(`${coreApiBaseURL}/super-admin/builder/debug`, {
-    method: 'POST',
-    headers: {
-      accept: 'text/event-stream',
-    },
-    credentials: 'include',
-    body: formData,
-    signal: options?.signal,
-  })
+  const response = await fetch(
+    `${coreApiBaseURL}/super-admin/builder/debug`,
+    withLanguageHeaderInit({
+      method: 'POST',
+      headers: {
+        accept: 'text/event-stream',
+      },
+      credentials: 'include',
+      body: formData,
+      signal: options?.signal,
+    }),
+  )
 
   if (!response.ok || !response.body) {
     throw new Error(

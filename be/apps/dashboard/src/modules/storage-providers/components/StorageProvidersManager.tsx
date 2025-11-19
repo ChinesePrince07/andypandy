@@ -2,7 +2,7 @@ import { Button, Modal, Prompt } from '@afilmory/ui'
 import { Spring } from '@afilmory/utils'
 import { DynamicIcon } from 'lucide-react/dynamic'
 import { m } from 'motion/react'
-import { startTransition, useEffect, useRef, useState } from 'react'
+import { startTransition, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 
@@ -12,19 +12,38 @@ import { MainPageLayout, useMainPageLayout } from '~/components/layouts/MainPage
 import { useBlock } from '~/hooks/useBlock'
 
 import { storageProvidersI18nKeys } from '../constants'
-import { useStorageProvidersQuery, useUpdateStorageProvidersMutation } from '../hooks'
+import { useStorageProviderSchemaQuery, useStorageProvidersQuery, useUpdateStorageProvidersMutation } from '../hooks'
 import type { StorageProvider } from '../types'
 import { createEmptyProvider, reorderProvidersByActive } from '../utils'
 import { ProviderCard } from './ProviderCard'
 import { ProviderEditModal } from './ProviderEditModal'
 
 export function StorageProvidersManager() {
-  const { data, isLoading, isError, error } = useStorageProvidersQuery()
+  const { t } = useTranslation()
+  const {
+    data,
+    isLoading: isProvidersLoading,
+    isError: isProvidersError,
+    error: providersError,
+  } = useStorageProvidersQuery()
+  const {
+    data: providerSchema,
+    isLoading: isSchemaLoading,
+    isError: isSchemaError,
+    error: schemaError,
+  } = useStorageProviderSchemaQuery()
   const updateMutation = useUpdateStorageProvidersMutation()
   const { setHeaderActionState } = useMainPageLayout()
   const navigate = useNavigate()
   const setPhotoSyncAutoRun = useSetPhotoSyncAutoRun()
-  const { t } = useTranslation()
+
+  const providerForm = providerSchema ?? null
+  const schemaReady = Boolean(providerForm)
+  const isLoading = (isProvidersLoading || isSchemaLoading) && (!data || !schemaReady)
+  const isError = isProvidersError || isSchemaError
+  const errorMessage =
+    (providersError instanceof Error ? providersError.message : undefined) ??
+    (schemaError instanceof Error ? schemaError.message : undefined)
 
   const [providers, setProviders] = useState<StorageProvider[]>([])
   const [activeProviderId, setActiveProviderId] = useState<string | null>(null)
@@ -64,16 +83,27 @@ export function StorageProvidersManager() {
     }
   }, [data])
 
+  const providerTypeLabels = useMemo(() => {
+    if (!providerForm) {
+      return new Map<string, string>()
+    }
+    return new Map(providerForm.types.map((type) => [type.value, type.label]))
+  }, [providerForm])
+
   const orderedProviders = reorderProvidersByActive(providers, activeProviderId)
 
   const markDirty = () => setIsDirty(true)
 
   const handleEditProvider = (provider: StorageProvider | null) => {
+    if (!providerForm) {
+      return
+    }
     Modal.present(
       ProviderEditModal,
       {
         provider,
         activeProviderId,
+        providerSchema: providerForm,
         onSave: handleSaveProvider,
         onSetActive: handleSetActive,
       },
@@ -84,7 +114,11 @@ export function StorageProvidersManager() {
   }
 
   const handleAddProvider = () => {
-    const newProvider = createEmptyProvider('s3')
+    if (!providerForm) {
+      return
+    }
+    const defaultType = providerForm.types[0]?.value ?? 's3'
+    const newProvider = createEmptyProvider(defaultType)
     handleEditProvider(newProvider)
   }
 
@@ -143,7 +177,8 @@ export function StorageProvidersManager() {
     )
   }
 
-  const disableSave = isLoading || isError || !isDirty || updateMutation.isPending || providers.length === 0
+  const disableSave =
+    isLoading || isError || !schemaReady || !isDirty || updateMutation.isPending || providers.length === 0
   useEffect(() => {
     setHeaderActionState((prev) => {
       const nextState = {
@@ -160,7 +195,7 @@ export function StorageProvidersManager() {
 
   const headerActionPortal = (
     <MainPageLayout.Actions>
-      <Button type="button" onClick={handleAddProvider} size="sm" variant="secondary">
+      <Button type="button" onClick={handleAddProvider} size="sm" variant="secondary" disabled={!schemaReady}>
         {t(storageProvidersI18nKeys.actions.add)}
       </Button>
       <Button
@@ -177,7 +212,7 @@ export function StorageProvidersManager() {
     </MainPageLayout.Actions>
   )
 
-  if (isLoading && !data) {
+  if (isLoading) {
     return (
       <>
         {headerActionPortal}
@@ -201,8 +236,7 @@ export function StorageProvidersManager() {
         {headerActionPortal}
         <div className="bg-background-tertiary text-red flex items-center justify-center gap-3 rounded p-8 text-sm">
           <span>
-            {t(storageProvidersI18nKeys.errors.load)}：
-            <span>{error instanceof Error ? error.message : t('common.unknown-error')}</span>
+            {t(storageProvidersI18nKeys.errors.load)}：<span>{errorMessage ?? t('common.unknown-error')}</span>
           </span>
         </div>
       </>
@@ -236,6 +270,7 @@ export function StorageProvidersManager() {
                 setActiveProviderId((prev) => (prev === provider.id ? null : provider.id))
                 markDirty()
               }}
+              typeLabel={providerTypeLabels.get(provider.type)}
             />
           </m.div>
         ))}
@@ -252,7 +287,7 @@ export function StorageProvidersManager() {
                 <p className="text-text-secondary text-sm">{t(storageProvidersI18nKeys.empty.title)}</p>
                 <p className="text-text-tertiary text-xs">{t(storageProvidersI18nKeys.empty.description)}</p>
               </div>
-              <Button type="button" size="sm" variant="primary" onClick={handleAddProvider}>
+              <Button type="button" size="sm" variant="primary" onClick={handleAddProvider} disabled={!schemaReady}>
                 {t(storageProvidersI18nKeys.empty.action)}
               </Button>
             </div>

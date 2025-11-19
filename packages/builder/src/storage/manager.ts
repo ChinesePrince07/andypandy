@@ -2,7 +2,7 @@ import { StorageFactory } from './factory.js'
 import type { StorageConfig, StorageObject, StorageProvider, StorageUploadOptions } from './interfaces.js'
 
 export class StorageManager {
-  private provider: StorageProvider
+  protected provider: StorageProvider
   private readonly excludeFilters: Array<(key: string) => boolean> = []
 
   constructor(config: StorageConfig) {

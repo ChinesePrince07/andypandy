@@ -1,6 +1,6 @@
 import { coreApi } from '~/lib/api-client'
 
-import type { StorageSettingEntry } from './types'
+import type { StorageProviderFormSchema, StorageSettingEntry } from './types'
 
 const STORAGE_SETTINGS_ENDPOINT = '/storage/settings'
 
@@ -19,4 +19,9 @@ export async function updateStorageSettings(entries: readonly StorageSettingEntr
     method: 'POST',
     body: { entries },
   })
+}
+
+export async function getStorageProviderFormSchema(): Promise<StorageProviderFormSchema> {
+  const response = await coreApi<{ providerForm: StorageProviderFormSchema }>(`${STORAGE_SETTINGS_ENDPOINT}/ui-schema`)
+  return response.providerForm
 }

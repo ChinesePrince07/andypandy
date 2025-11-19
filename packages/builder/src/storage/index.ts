@@ -1,8 +1,22 @@
+import './providers/register.js'
+
 // 导出接口
-export type { ProgressCallback, ScanProgress, StorageConfig, StorageObject, StorageProvider } from './interfaces.js'
+export type {
+  LocalStorageConfig,
+  LocalStorageProviderName,
+  ProgressCallback,
+  RemoteStorageConfig,
+  RemoteStorageProviderName,
+  ScanProgress,
+  StorageConfig,
+  StorageObject,
+  StorageProvider,
+  StorageProviderCategory,
+} from './interfaces.js'
+export { LOCAL_STORAGE_PROVIDERS, REMOTE_STORAGE_PROVIDERS } from './interfaces.js'
 
 // 导出工厂类
-export type { StorageProviderFactory } from './factory.js'
+export type { StorageProviderFactory, StorageProviderRegistrationOptions } from './factory.js'
 export { StorageFactory } from './factory.js'
 
 // 导出管理器

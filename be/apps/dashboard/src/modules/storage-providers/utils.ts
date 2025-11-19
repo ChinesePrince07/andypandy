@@ -1,6 +1,6 @@
 import { getI18n } from '~/i18n'
 
-import { STORAGE_PROVIDER_FIELD_DEFINITIONS, STORAGE_PROVIDER_TYPES, storageProvidersI18nKeys } from './constants'
+import { storageProvidersI18nKeys } from './constants'
 import type { StorageProvider, StorageProviderType } from './types'
 
 function generateId() {
@@ -10,14 +10,9 @@ function generateId() {
   return Math.random().toString(36).slice(2, 10)
 }
 
-export function isStorageProviderType(value: unknown): value is StorageProviderType {
-  return STORAGE_PROVIDER_TYPES.includes(value as StorageProviderType)
-}
-
-function normaliseConfigForType(type: StorageProviderType, config: Record<string, unknown>): Record<string, string> {
-  return STORAGE_PROVIDER_FIELD_DEFINITIONS[type].reduce<Record<string, string>>((acc, field) => {
-    const raw = config[field.key]
-    acc[field.key] = typeof raw === 'string' ? raw : raw == null ? '' : String(raw)
+function normalizeConfigRecord(config: Record<string, unknown>): Record<string, string> {
+  return Object.entries(config).reduce<Record<string, string>>((acc, [key, value]) => {
+    acc[key] = typeof value === 'string' ? value : value == null ? '' : String(value)
     return acc
   }, {})
 }
@@ -28,9 +23,9 @@ function coerceProvider(input: unknown): StorageProvider | null {
   }
 
   const i18n = getI18n()
-
   const record = input as Record<string, unknown>
-  const type = isStorageProviderType(record.type) ? record.type : 's3'
+  const typeInput = typeof record.type === 'string' ? record.type.trim() : ''
+  const type: StorageProviderType = typeInput.length > 0 ? typeInput : 's3'
   const configInput =
     record.config && typeof record.config === 'object' && !Array.isArray(record.config)
       ? (record.config as Record<string, unknown>)
@@ -43,7 +38,7 @@ function coerceProvider(input: unknown): StorageProvider | null {
         ? record.name.trim()
         : i18n.t(storageProvidersI18nKeys.card.untitled),
     type,
-    config: normaliseConfigForType(type, configInput),
+    config: normalizeConfigRecord(configInput),
   }
 
   if (typeof record.createdAt === 'string') {
@@ -78,7 +73,7 @@ export function serializeStorageProviders(providers: readonly StorageProvider[])
   return JSON.stringify(
     providers.map((provider) => ({
       ...provider,
-      config: normaliseConfigForType(provider.type, provider.config),
+      config: normalizeConfigRecord(provider.config),
     })),
   )
 }
@@ -86,15 +81,8 @@ export function serializeStorageProviders(providers: readonly StorageProvider[])
 export function normalizeStorageProviderConfig(provider: StorageProvider): StorageProvider {
   return {
     ...provider,
-    config: normaliseConfigForType(provider.type, provider.config),
+    config: normalizeConfigRecord(provider.config),
   }
-}
-
-export function getDefaultConfigForType(type: StorageProviderType): Record<string, string> {
-  return STORAGE_PROVIDER_FIELD_DEFINITIONS[type].reduce<Record<string, string>>((acc, field) => {
-    acc[field.key] = ''
-    return acc
-  }, {})
 }
 
 export function createEmptyProvider(type: StorageProviderType): StorageProvider {
@@ -104,7 +92,7 @@ export function createEmptyProvider(type: StorageProviderType): StorageProvider 
     id: '',
     name: i18n.t(storageProvidersI18nKeys.card.untitled),
     type,
-    config: getDefaultConfigForType(type),
+    config: {},
     createdAt: timestamp,
     updatedAt: timestamp,
   }

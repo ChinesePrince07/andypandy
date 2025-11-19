@@ -2,10 +2,13 @@ import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue }
 import { Spring } from '@afilmory/utils'
 import { RefreshCcwIcon } from 'lucide-react'
 import { m } from 'motion/react'
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
 import { LinearBorderPanel } from '~/components/common/GlassPanel'
+import { BILLING_USAGE_EVENT_CONFIG } from '~/modules/photos/constants'
+import type { BillingUsageEventType } from '~/modules/photos/types'
 
 import { useSuperAdminTenantsQuery, useUpdateTenantBanMutation, useUpdateTenantPlanMutation } from '../hooks'
 import type { BillingPlanDefinition, SuperAdminTenantSummary } from '../types'
@@ -91,11 +94,7 @@ export function SuperAdminTenantManager() {
   return (
     <m.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={Spring.presets.smooth}>
       <LinearBorderPanel className="p-6 bg-background-secondary">
-        <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-text text-lg font-semibold">{t('superadmin.tenants.title')}</h2>
-            <p className="text-text-secondary text-sm">{t('superadmin.tenants.description')}</p>
-          </div>
+        <header className="flex items-center justify-end gap-3">
           <Button
             type="button"
             variant="ghost"
@@ -105,7 +104,11 @@ export function SuperAdminTenantManager() {
             disabled={tenantsQuery.isFetching}
           >
             <RefreshCcwIcon className="size-4" />
-            {tenantsQuery.isFetching ? t('superadmin.tenants.refresh.loading') : t('superadmin.tenants.refresh.button')}
+            <span>
+              {tenantsQuery.isFetching
+                ? t('superadmin.tenants.refresh.loading')
+                : t('superadmin.tenants.refresh.button')}
+            </span>
           </Button>
         </header>
 
@@ -118,6 +121,7 @@ export function SuperAdminTenantManager() {
                 <tr className="text-text-tertiary text-xs uppercase tracking-wide">
                   <th className="px-3 py-2 text-left">{t('superadmin.tenants.table.tenant')}</th>
                   <th className="px-3 py-2 text-left">{t('superadmin.tenants.table.plan')}</th>
+                  <th className="px-3 py-2 text-left">{t('superadmin.tenants.table.usage')}</th>
                   <th className="px-3 py-2 text-center">{t('superadmin.tenants.table.status')}</th>
                   <th className="px-3 py-2 text-center">{t('superadmin.tenants.table.ban')}</th>
                   <th className="px-3 py-2 text-left">{t('superadmin.tenants.table.created')}</th>
@@ -138,10 +142,13 @@ export function SuperAdminTenantManager() {
                         onChange={(nextPlan) => handlePlanChange(tenant, nextPlan)}
                       />
                     </td>
-                    <td className="px-3 flex mt-4 justify-center">
+                    <td className="px-3 py-3 align-top">
+                      <TenantUsageCell usageTotals={tenant.usageTotals} />
+                    </td>
+                    <td className="px-3 py-3 text-center align-middle">
                       <StatusBadge status={tenant.status} banned={tenant.banned} />
                     </td>
-                    <td className="px-3 flex mt-4 justify-center">
+                    <td className="px-3 py-3 text-center align-middle">
                       <Button
                         type="button"
                         size="sm"
@@ -200,11 +207,117 @@ function PlanSelector({
   )
 }
 
+function TenantUsageCell({ usageTotals }: { usageTotals: SuperAdminTenantSummary['usageTotals'] }) {
+  const { t, i18n } = useTranslation()
+  const locale = i18n.language ?? i18n.resolvedLanguage ?? 'en'
+  const numberFormatter = useMemo(
+    () =>
+      new Intl.NumberFormat(locale, {
+        notation: 'compact',
+        maximumFractionDigits: 1,
+      }),
+    [locale],
+  )
+
+  const entries = useMemo(() => {
+    const totalsMap = new Map<BillingUsageEventType, { total: number; unit: 'count' | 'byte' }>()
+    usageTotals?.forEach((entry) => {
+      totalsMap.set(entry.eventType as BillingUsageEventType, {
+        total: entry.totalQuantity ?? 0,
+        unit: entry.unit,
+      })
+    })
+
+    return (Object.keys(BILLING_USAGE_EVENT_CONFIG) as BillingUsageEventType[]).map((eventType) => {
+      const config = BILLING_USAGE_EVENT_CONFIG[eventType]
+      const usage = totalsMap.get(eventType)
+      return {
+        eventType,
+        label: t(config.labelKey),
+        tone: config.tone,
+        total: usage?.total ?? 0,
+        unit: usage?.unit ?? 'count',
+      }
+    })
+  }, [usageTotals, t])
+
+  const activeEntries = entries.filter((entry) => entry.total > 0)
+
+  if (activeEntries.length === 0) {
+    return <p className="text-text-tertiary text-xs">{t('superadmin.tenants.usage.empty')}</p>
+  }
+
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {activeEntries.map((entry) => (
+        <UsageBadge
+          key={`${entry.eventType}`}
+          label={entry.label}
+          tone={entry.tone}
+          value={entry.total}
+          unit={entry.unit}
+          formatter={numberFormatter}
+        />
+      ))}
+    </div>
+  )
+}
+
 function PlanDescription({ plan }: { plan: BillingPlanDefinition | undefined }) {
   if (!plan) {
     return null
   }
   return <p className="text-text-tertiary text-xs">{plan.description}</p>
+}
+
+type UsageBadgeProps = {
+  label: string
+  tone: (typeof BILLING_USAGE_EVENT_CONFIG)[BillingUsageEventType]['tone']
+  value: number
+  unit: 'count' | 'byte'
+  formatter: Intl.NumberFormat
+}
+
+function UsageBadge({ label, tone, value, unit, formatter }: UsageBadgeProps) {
+  const toneClass =
+    tone === 'accent'
+      ? 'bg-emerald-500/10 text-emerald-200 border-emerald-500/30'
+      : tone === 'warning'
+        ? 'bg-rose-500/10 text-rose-200 border-rose-500/30'
+        : 'bg-fill/30 text-text-secondary border-border/40'
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium ${toneClass}`}
+    >
+      <span className="uppercase tracking-wide text-[10px] text-text-tertiary/80">{label}</span>
+      <span className="text-xs font-semibold text-text">{formatUsageValue(value, unit, formatter)}</span>
+    </span>
+  )
+}
+
+function formatUsageValue(value: number, unit: 'count' | 'byte', formatter: Intl.NumberFormat): string {
+  if (!Number.isFinite(value)) {
+    return '0'
+  }
+  if (unit === 'byte') {
+    return formatBytes(value)
+  }
+  return formatter.format(value)
+}
+
+function formatBytes(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes <= 0) {
+    return '0 B'
+  }
+  const units = ['B', 'KB', 'MB', 'GB', 'TB']
+  let value = bytes
+  let unitIndex = 0
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024
+    unitIndex += 1
+  }
+  return `${value.toFixed(value >= 10 ? 0 : 1)} ${units[unitIndex]}`
 }
 
 function StatusBadge({ status, banned }: { status: SuperAdminTenantSummary['status']; banned: boolean }) {
@@ -250,7 +363,7 @@ function TenantSkeleton() {
     <LinearBorderPanel className="space-y-4 p-6">
       <div className="bg-fill/40 h-6 w-1/3 animate-pulse rounded" />
       <div className="space-y-3">
-        {Array.from({ length: 4 }).map((_, index) => (
+        {Array.from({ length: 4 }, (_, index) => (
           <div key={`tenant-skeleton-${index}`} className="bg-fill/20 h-14 animate-pulse rounded" />
         ))}
       </div>

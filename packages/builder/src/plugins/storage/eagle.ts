@@ -13,9 +13,13 @@ export default function eagleStoragePlugin(options: EagleStoragePluginOptions = 
     name: `afilmory:storage:${providerName}`,
     hooks: {
       onInit: ({ registerStorageProvider }) => {
-        registerStorageProvider(providerName, (config) => {
-          return new EagleStorageProvider(config as EagleConfig)
-        })
+        registerStorageProvider(
+          providerName,
+          (config) => {
+            return new EagleStorageProvider(config as EagleConfig)
+          },
+          { category: 'local' },
+        )
       },
       /**
        * Inject Eagle image metadata (name, tags) into manifest items before saving.

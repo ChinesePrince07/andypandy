@@ -13,9 +13,13 @@ export default function b2StoragePlugin(options: B2StoragePluginOptions = {}): B
     name: `afilmory:storage:${providerName}`,
     hooks: {
       onInit: ({ registerStorageProvider }) => {
-        registerStorageProvider(providerName, (config) => {
-          return new B2StorageProvider(config as B2Config)
-        })
+        registerStorageProvider(
+          providerName,
+          (config) => {
+            return new B2StorageProvider(config as B2Config)
+          },
+          { category: 'remote' },
+        )
       },
     },
   }

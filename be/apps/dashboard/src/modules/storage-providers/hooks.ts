@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { getStorageSettings, updateStorageSettings } from './api'
+import { getStorageProviderFormSchema, getStorageSettings, updateStorageSettings } from './api'
 import { STORAGE_SETTING_KEYS } from './constants'
 import type { StorageProvider, StorageProvidersPayload } from './types'
 import {
@@ -11,6 +11,7 @@ import {
 } from './utils'
 
 export const STORAGE_PROVIDERS_QUERY_KEY = ['settings', 'storage-providers'] as const
+export const STORAGE_PROVIDER_SCHEMA_QUERY_KEY = ['settings', 'storage-providers', 'schema'] as const
 
 export function useStorageProvidersQuery(options?: { enabled?: boolean }) {
   return useQuery({
@@ -29,6 +30,14 @@ export function useStorageProvidersQuery(options?: { enabled?: boolean }) {
         activeProviderId: ensureActiveProviderId(providers, activeProviderId),
       }
     },
+    enabled: options?.enabled ?? true,
+  })
+}
+
+export function useStorageProviderSchemaQuery(options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: STORAGE_PROVIDER_SCHEMA_QUERY_KEY,
+    queryFn: async () => await getStorageProviderFormSchema(),
     enabled: options?.enabled ?? true,
   })
 }

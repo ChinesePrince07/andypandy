@@ -44,7 +44,9 @@ export async function createConfiguredApp(options: BootstrapOptions = {}): Promi
   const container = app.getContainer()
 
   app.useGlobalFilters(new AllExceptionsFilter())
-  app.useGlobalInterceptors(new LoggingInterceptor())
+  if (isDevelopment) {
+    app.useGlobalInterceptors(new LoggingInterceptor())
+  }
   app.useGlobalInterceptors(new ResponseTransformInterceptor())
 
   app.useGlobalPipes(new GlobalValidationPipe())

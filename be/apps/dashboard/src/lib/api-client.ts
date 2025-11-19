@@ -1,12 +1,16 @@
 import { $fetch } from 'ofetch'
 
 import { getAccessDenied, setAccessDenied } from '~/atoms/access-denied'
+import { withLanguageHeader } from '~/lib/request-language'
 
 export const coreApiBaseURL = import.meta.env.VITE_APP_API_BASE?.replace(/\/$/, '') || '/api'
 
 export const coreApi = $fetch.create({
   baseURL: coreApiBaseURL,
   credentials: 'include',
+  onRequest({ options }) {
+    options.headers = withLanguageHeader(options.headers)
+  },
   onResponseError({ response }) {
     if (response?.status !== 403) {
       return

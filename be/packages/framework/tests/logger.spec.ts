@@ -2,7 +2,7 @@ import 'reflect-metadata'
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { createLogger } from '../src'
+import { createLogger, registerLoggerContextProvider } from '../src'
 
 describe('PrettyLogger', () => {
   const fixedDate = new Date('2025-01-01T00:00:00.000Z')
@@ -252,5 +252,38 @@ describe('PrettyLogger', () => {
 
     logger.debug('debug message')
     expect(baseWriter.debug).toHaveBeenCalledTimes(1)
+  })
+
+  it('appends context segments from registered providers', () => {
+    const unregister = registerLoggerContextProvider(() => 'tenant:demo')
+
+    try {
+      const logger = createLogger('Ctx', {
+        writer: baseWriter,
+        clock: () => fixedDate,
+        colors: false,
+      })
+
+      logger.info('ctx message')
+
+      expect(baseWriter.info).toHaveBeenCalledTimes(1)
+      expect(baseWriter.info.mock.calls[0][0]).toBe('2025-01-01T00:00:00.000Z [i] [Ctx] [tenant:demo]')
+    } finally {
+      unregister()
+    }
+  })
+
+  it('supports per-logger context providers via options', () => {
+    const logger = createLogger('Ctx', {
+      writer: baseWriter,
+      clock: () => fixedDate,
+      colors: false,
+      contextProviders: [() => 'request:42'],
+    })
+
+    logger.warn('ctx message')
+
+    expect(baseWriter.warn).toHaveBeenCalledTimes(1)
+    expect(baseWriter.warn.mock.calls[0][0]).toBe('2025-01-01T00:00:00.000Z [!] [Ctx] [request:42]')
   })
 })

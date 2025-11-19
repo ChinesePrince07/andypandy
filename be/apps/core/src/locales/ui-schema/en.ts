@@ -347,6 +347,151 @@ const enUiSchema = {
       },
     },
   },
+  storage: {
+    providers: {
+      types: {
+        s3: 'AWS S3 Compatible Object Storage',
+        github: 'GitHub repository',
+        b2: 'Backblaze B2 cloud storage',
+      },
+      fields: {
+        s3: {
+          bucket: {
+            label: 'Bucket name',
+            description: 'Name of the S3 bucket that stores your photos.',
+            placeholder: 'afilmory-photos',
+          },
+          region: {
+            label: 'Region',
+            description: 'S3 region code, e.g. ap-southeast-1.',
+            placeholder: 'ap-southeast-1',
+          },
+          endpoint: {
+            label: 'Custom endpoint',
+            description: 'Optional endpoint for S3-compatible services.',
+            placeholder: 'https://s3.example.com',
+            helper: 'Leave empty for AWS S3. Required for MinIO or other vendors.',
+          },
+          'access-key': {
+            label: 'Access Key ID',
+            placeholder: 'AKIAxxxxxxxxxxxx',
+          },
+          'secret-key': {
+            label: 'Secret Access Key',
+            placeholder: '************',
+          },
+          prefix: {
+            label: 'Path prefix',
+            description: 'Optional. Limit scanning to objects under this prefix.',
+            placeholder: 'photos/',
+          },
+          'custom-domain': {
+            label: 'Custom public domain',
+            description: 'Domain used when generating public photo URLs.',
+            placeholder: 'https://cdn.example.com',
+          },
+          'exclude-regex': {
+            label: 'Exclude pattern (regex)',
+            description: 'Optional. Skip files that match this regular expression.',
+            placeholder: '\\.(tmp|bak)$',
+            helper: 'Use JavaScript-compatible regular expressions.',
+          },
+          'max-files': {
+            label: 'Max files',
+            description: 'Optional limit for how many files to scan per run.',
+            placeholder: '1000',
+          },
+        },
+        github: {
+          owner: {
+            label: 'Repository owner',
+            description: 'GitHub user or organization name.',
+            placeholder: 'afilmory',
+          },
+          repo: {
+            label: 'Repository name',
+            description: 'Repository that stores your photos.',
+            placeholder: 'photo-assets',
+          },
+          branch: {
+            label: 'Branch',
+            description: 'Optional branch to sync.',
+            placeholder: 'main',
+            helper: 'Defaults to master/main. Provide the full branch name if it differs.',
+          },
+          token: {
+            label: 'Access token',
+            description: 'Personal Access Token for private repositories.',
+            placeholder: 'ghp_xxxxxxxxxxxxxxxxxxxx',
+          },
+          path: {
+            label: 'Repository path',
+            description: 'Optional path within the repository to limit syncing.',
+            placeholder: 'public/photos',
+          },
+          'use-raw': {
+            label: 'Use raw URL',
+            description: 'Use raw.githubusercontent.com when generating public URLs.',
+            placeholder: 'true / false',
+            helper: 'Set to false if you serve files via a custom domain.',
+          },
+        },
+        b2: {
+          'application-key-id': {
+            label: 'Application Key ID',
+            description: 'Backblaze B2 application key ID used for API authentication.',
+            placeholder: '003xxxxxxxxxxxxxxxx000000000',
+          },
+          'application-key': {
+            label: 'Application Key',
+            description: 'Secret application key paired with the ID above.',
+            placeholder: 'K0000000000000000000000000000000',
+          },
+          'bucket-id': {
+            label: 'Bucket ID',
+            description: 'Unique ID of the bucket used for photo storage.',
+            placeholder: '4a48fe8875c6214145260818',
+          },
+          'bucket-name': {
+            label: 'Bucket name',
+            description: 'Friendly bucket name for reference or public URL generation.',
+            placeholder: 'afilmory-photos',
+          },
+          prefix: {
+            label: 'Path prefix',
+            description: 'Optional. Restrict scanning to files under this prefix.',
+            placeholder: 'photos/',
+          },
+          'custom-domain': {
+            label: 'Custom public domain',
+            description: 'Domain used when generating public URLs (e.g., CDN).',
+            placeholder: 'https://cdn.example.com',
+          },
+          'exclude-regex': {
+            label: 'Exclude pattern (regex)',
+            description: 'Optional regular expression to skip matching files.',
+            placeholder: '\\.(tmp|bak)$',
+            helper: 'Use JavaScript-compatible regular expressions.',
+          },
+          'max-files': {
+            label: 'Max files',
+            description: 'Optional limit for how many files to scan per run.',
+            placeholder: '1000',
+          },
+          'authorization-ttl': {
+            label: 'Authorization TTL (ms)',
+            description: 'Override cache duration for B2 authorization tokens.',
+            placeholder: '3600000',
+          },
+          'upload-ttl': {
+            label: 'Upload URL TTL (ms)',
+            description: 'Override cache duration for B2 upload URLs.',
+            placeholder: '900000',
+          },
+        },
+      },
+    },
+  },
 } as const
 
 export default enUiSchema

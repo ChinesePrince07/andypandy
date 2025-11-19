@@ -216,3 +216,14 @@ export interface CustomStorageConfig {
 }
 
 export type StorageConfig = S3Config | B2Config | GitHubConfig | EagleConfig | LocalConfig | CustomStorageConfig
+
+export const REMOTE_STORAGE_PROVIDERS = ['s3', 'b2', 'github'] as const
+export const LOCAL_STORAGE_PROVIDERS = ['eagle', 'local'] as const
+
+export type RemoteStorageProviderName = (typeof REMOTE_STORAGE_PROVIDERS)[number]
+export type LocalStorageProviderName = (typeof LOCAL_STORAGE_PROVIDERS)[number]
+
+export type StorageProviderCategory = 'remote' | 'local'
+
+export type RemoteStorageConfig = Extract<StorageConfig, { provider: RemoteStorageProviderName }>
+export type LocalStorageConfig = Extract<StorageConfig, { provider: LocalStorageProviderName }>

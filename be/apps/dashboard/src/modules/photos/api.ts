@@ -1,6 +1,7 @@
 import { coreApi, coreApiBaseURL } from '~/lib/api-client'
 import { camelCaseKeys } from '~/lib/case'
 import { getRequestErrorMessage } from '~/lib/errors'
+import { withLanguageHeaderInit } from '~/lib/request-language'
 
 import type {
   BillingUsageOverview,
@@ -94,16 +95,19 @@ export async function runPhotoSync(
   payload: RunPhotoSyncPayload,
   options?: RunPhotoSyncOptions,
 ): Promise<PhotoSyncResult> {
-  const response = await fetch(`${coreApiBaseURL}/data-sync/run`, {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      accept: 'text/event-stream',
-    },
-    credentials: 'include',
-    body: JSON.stringify({ dryRun: payload.dryRun ?? false }),
-    signal: options?.signal,
-  })
+  const response = await fetch(
+    `${coreApiBaseURL}/data-sync/run`,
+    withLanguageHeaderInit({
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        accept: 'text/event-stream',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ dryRun: payload.dryRun ?? false }),
+      signal: options?.signal,
+    }),
+  )
 
   if (!response.ok || !response.body) {
     const fallback = `Sync request failed: ${response.status} ${response.statusText}`

@@ -13,7 +13,7 @@ import type {
   BuilderPluginESMImporter,
   BuilderPluginEventPayloads,
 } from '../plugins/types.js'
-import type { StorageProviderFactory } from '../storage/factory.js'
+import type { StorageProviderFactory, StorageProviderRegistrationOptions } from '../storage/factory.js'
 import type { StorageConfig } from '../storage/index.js'
 import { StorageFactory, StorageManager } from '../storage/index.js'
 import type { BuilderConfig, UserBuilderSettings } from '../types/config.js'
@@ -580,8 +580,16 @@ export class AfilmoryBuilder {
     return this.ensureStorageManager()
   }
 
-  registerStorageProvider(provider: string, factory: StorageProviderFactory): void {
-    StorageFactory.registerProvider(provider, factory)
+  setStorageManager(manager: StorageManager): void {
+    this.storageManager = manager
+  }
+
+  registerStorageProvider(
+    provider: string,
+    factory: StorageProviderFactory,
+    options?: StorageProviderRegistrationOptions,
+  ): void {
+    StorageFactory.registerProvider(provider, factory, options)
 
     if (this.getStorageConfig().provider === provider) {
       this.storageManager = null

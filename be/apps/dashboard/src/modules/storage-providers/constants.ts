@@ -1,19 +1,10 @@
-import type { StorageProviderFieldDefinition, StorageProviderType } from './types'
-
 export const STORAGE_SETTING_KEYS = {
   providers: 'builder.storage.providers',
   activeProvider: 'builder.storage.activeProvider',
-} as const
-
-export const STORAGE_PROVIDER_TYPES: readonly StorageProviderType[] = ['s3', 'github']
-
-export const STORAGE_PROVIDER_TYPE_OPTIONS: ReadonlyArray<{
-  value: StorageProviderType
-  labelKey: I18nKeys
-}> = [
-  { value: 's3', labelKey: 'storage.providers.types.s3' },
-  { value: 'github', labelKey: 'storage.providers.types.github' },
-]
+} as const satisfies {
+  providers: string
+  activeProvider: string
+}
 
 export const storageProvidersI18nKeys = {
   blocker: {
@@ -68,6 +59,7 @@ export const storageProvidersI18nKeys = {
       namePlaceholder: 'storage.providers.modal.fields.name.placeholder',
       typeLabel: 'storage.providers.modal.fields.type.label',
       typePlaceholder: 'storage.providers.modal.fields.type.placeholder',
+      required: 'storage.providers.modal.fields.required',
     },
   },
   card: {
@@ -82,6 +74,7 @@ export const storageProvidersI18nKeys = {
   types: {
     s3: 'storage.providers.types.s3',
     github: 'storage.providers.types.github',
+    b2: 'storage.providers.types.b2',
     local: 'storage.providers.types.local',
     minio: 'storage.providers.types.minio',
     eagle: 'storage.providers.types.eagle',
@@ -139,6 +132,7 @@ export const storageProvidersI18nKeys = {
       namePlaceholder: I18nKeys
       typeLabel: I18nKeys
       typePlaceholder: I18nKeys
+      required: I18nKeys
     }
   }
   card: {
@@ -150,110 +144,12 @@ export const storageProvidersI18nKeys = {
     fallback: I18nKeys
     untitled: I18nKeys
   }
-  types: Record<'s3' | 'github' | 'local' | 'minio' | 'eagle', I18nKeys>
-}
-
-export const STORAGE_PROVIDER_FIELD_DEFINITIONS: Record<
-  StorageProviderType,
-  readonly StorageProviderFieldDefinition[]
-> = {
-  s3: [
-    {
-      key: 'bucket',
-      labelKey: 'storage.providers.fields.s3.bucket.label',
-      placeholderKey: 'storage.providers.fields.s3.bucket.placeholder',
-      descriptionKey: 'storage.providers.fields.s3.bucket.description',
-    },
-    {
-      key: 'region',
-      labelKey: 'storage.providers.fields.s3.region.label',
-      placeholderKey: 'storage.providers.fields.s3.region.placeholder',
-      descriptionKey: 'storage.providers.fields.s3.region.description',
-    },
-    {
-      key: 'endpoint',
-      labelKey: 'storage.providers.fields.s3.endpoint.label',
-      placeholderKey: 'storage.providers.fields.s3.endpoint.placeholder',
-      descriptionKey: 'storage.providers.fields.s3.endpoint.description',
-      helperKey: 'storage.providers.fields.s3.endpoint.helper',
-    },
-    {
-      key: 'accessKeyId',
-      labelKey: 'storage.providers.fields.s3.access-key.label',
-      placeholderKey: 'storage.providers.fields.s3.access-key.placeholder',
-    },
-    {
-      key: 'secretAccessKey',
-      labelKey: 'storage.providers.fields.s3.secret-key.label',
-      placeholderKey: 'storage.providers.fields.s3.secret-key.placeholder',
-      sensitive: true,
-    },
-    {
-      key: 'prefix',
-      labelKey: 'storage.providers.fields.s3.prefix.label',
-      placeholderKey: 'storage.providers.fields.s3.prefix.placeholder',
-      descriptionKey: 'storage.providers.fields.s3.prefix.description',
-    },
-    {
-      key: 'customDomain',
-      labelKey: 'storage.providers.fields.s3.custom-domain.label',
-      placeholderKey: 'storage.providers.fields.s3.custom-domain.placeholder',
-      descriptionKey: 'storage.providers.fields.s3.custom-domain.description',
-    },
-    {
-      key: 'excludeRegex',
-      labelKey: 'storage.providers.fields.s3.exclude-regex.label',
-      placeholderKey: 'storage.providers.fields.s3.exclude-regex.placeholder',
-      descriptionKey: 'storage.providers.fields.s3.exclude-regex.description',
-      multiline: true,
-      helperKey: 'storage.providers.fields.s3.exclude-regex.helper',
-    },
-    {
-      key: 'maxFileLimit',
-      labelKey: 'storage.providers.fields.s3.max-files.label',
-      placeholderKey: 'storage.providers.fields.s3.max-files.placeholder',
-      descriptionKey: 'storage.providers.fields.s3.max-files.description',
-    },
-  ],
-  github: [
-    {
-      key: 'owner',
-      labelKey: 'storage.providers.fields.github.owner.label',
-      placeholderKey: 'storage.providers.fields.github.owner.placeholder',
-      descriptionKey: 'storage.providers.fields.github.owner.description',
-    },
-    {
-      key: 'repo',
-      labelKey: 'storage.providers.fields.github.repo.label',
-      placeholderKey: 'storage.providers.fields.github.repo.placeholder',
-      descriptionKey: 'storage.providers.fields.github.repo.description',
-    },
-    {
-      key: 'branch',
-      labelKey: 'storage.providers.fields.github.branch.label',
-      placeholderKey: 'storage.providers.fields.github.branch.placeholder',
-      descriptionKey: 'storage.providers.fields.github.branch.description',
-      helperKey: 'storage.providers.fields.github.branch.helper',
-    },
-    {
-      key: 'token',
-      labelKey: 'storage.providers.fields.github.token.label',
-      placeholderKey: 'storage.providers.fields.github.token.placeholder',
-      descriptionKey: 'storage.providers.fields.github.token.description',
-      sensitive: true,
-    },
-    {
-      key: 'path',
-      labelKey: 'storage.providers.fields.github.path.label',
-      placeholderKey: 'storage.providers.fields.github.path.placeholder',
-      descriptionKey: 'storage.providers.fields.github.path.description',
-    },
-    {
-      key: 'useRawUrl',
-      labelKey: 'storage.providers.fields.github.use-raw.label',
-      placeholderKey: 'storage.providers.fields.github.use-raw.placeholder',
-      descriptionKey: 'storage.providers.fields.github.use-raw.description',
-      helperKey: 'storage.providers.fields.github.use-raw.helper',
-    },
-  ],
+  types: {
+    s3: I18nKeys
+    github: I18nKeys
+    b2: I18nKeys
+    local: I18nKeys
+    minio: I18nKeys
+    eagle: I18nKeys
+  }
 }

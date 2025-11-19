@@ -13,9 +13,13 @@ export default function localStoragePlugin(options: LocalStoragePluginOptions = 
     name: `afilmory:storage:${providerName}`,
     hooks: {
       onInit: ({ registerStorageProvider }) => {
-        registerStorageProvider(providerName, (config) => {
-          return new LocalStorageProvider(config as LocalConfig)
-        })
+        registerStorageProvider(
+          providerName,
+          (config) => {
+            return new LocalStorageProvider(config as LocalConfig)
+          },
+          { category: 'local' },
+        )
       },
     },
   }

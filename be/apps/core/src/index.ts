@@ -1,4 +1,5 @@
 import 'reflect-metadata'
+import './context/logger-context'
 
 import { env } from '@afilmory/env'
 import { serve } from '@hono/node-server'

@@ -7,49 +7,59 @@ import { useTranslation } from 'react-i18next'
 import { storageProvidersI18nKeys } from '../constants'
 import type { StorageProvider } from '../types'
 
-const providerTypeConfig = {
+const providerTypeConfig: Record<
+  string,
+  {
+    icon: string
+    color: string
+    bgColor: string
+  }
+> = {
   s3: {
     icon: 'database',
-    labelKey: storageProvidersI18nKeys.types.s3,
     color: 'text-orange-500',
     bgColor: 'bg-orange-500/10',
   },
+  b2: {
+    icon: 'cloud',
+    color: 'text-sky-500',
+    bgColor: 'bg-sky-500/10',
+  },
   github: {
     icon: 'github',
-    labelKey: storageProvidersI18nKeys.types.github,
     color: 'text-purple-500',
     bgColor: 'bg-purple-500/10',
   },
   local: {
     icon: 'folder',
-    labelKey: storageProvidersI18nKeys.types.local,
     color: 'text-blue-500',
     bgColor: 'bg-blue-500/10',
   },
   minio: {
     icon: 'server',
-    labelKey: storageProvidersI18nKeys.types.minio,
     color: 'text-red-500',
     bgColor: 'bg-red-500/10',
   },
   eagle: {
     icon: 'image',
-    labelKey: storageProvidersI18nKeys.types.eagle,
     color: 'text-amber-500',
     bgColor: 'bg-amber-500/10',
   },
-} as const
+}
 
 type ProviderCardProps = {
   provider: StorageProvider
   isActive: boolean
   onEdit: () => void
   onToggleActive: () => void
+  typeLabel?: string
 }
 
-export const ProviderCard: FC<ProviderCardProps> = ({ provider, isActive, onEdit, onToggleActive }) => {
+export const ProviderCard: FC<ProviderCardProps> = ({ provider, isActive, onEdit, onToggleActive, typeLabel }) => {
   const { t } = useTranslation()
-  const config = providerTypeConfig[provider.type as keyof typeof providerTypeConfig] || providerTypeConfig.s3
+  const config = providerTypeConfig[provider.type] ?? providerTypeConfig.s3
+  const knownTypeKey = storageProvidersI18nKeys.types[provider.type as keyof typeof storageProvidersI18nKeys.types]
+  const resolvedTypeLabel = typeLabel ?? (knownTypeKey ? t(knownTypeKey) : provider.type)
 
   // Extract preview info based on provider type
   const getPreviewInfo = () => {
@@ -60,6 +70,9 @@ export const ProviderCard: FC<ProviderCardProps> = ({ provider, isActive, onEdit
       }
       case 'github': {
         return cfg.repo || t(storageProvidersI18nKeys.card.notConfigured)
+      }
+      case 'b2': {
+        return cfg.bucketName || cfg.bucketId || t(storageProvidersI18nKeys.card.notConfigured)
       }
 
       default: {
@@ -103,12 +116,12 @@ export const ProviderCard: FC<ProviderCardProps> = ({ provider, isActive, onEdit
         <h3 className="text-text text-sm font-semibold">
           {provider.name || t(storageProvidersI18nKeys.card.untitled)}
         </h3>
-        <p className="text-text-tertiary text-xs font-medium">{t(config.labelKey)}</p>
+        <p className="text-text-tertiary text-xs font-medium">{resolvedTypeLabel}</p>
         <p className="text-text-tertiary/70 truncate text-xs">{getPreviewInfo()}</p>
       </div>
 
       {/* Actions - bottom right */}
-      <div className="absolute right-3 bottom-3 flex items-center">
+      <div className="flex items-center -mb-3 gap-0.5 justify-end -mt-2 -mr-3.5">
         {isActive ? (
           <Button
             type="button"

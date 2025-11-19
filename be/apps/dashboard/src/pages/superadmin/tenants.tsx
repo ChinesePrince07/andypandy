@@ -11,7 +11,7 @@ export function Component() {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={Spring.presets.smooth}
-      className="space-y-6"
+      className="space-y-6 mx-[calc(1/2*-1*(100vw-min(var(--container-5xl),100vw)))]"
     >
       <header className="space-y-2">
         <h1 className="text-text text-2xl font-semibold">{t('superadmin.tenants.title')}</h1>

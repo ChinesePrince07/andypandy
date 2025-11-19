@@ -1,14 +1,17 @@
 import type { BuilderConfig, StorageConfig } from '@afilmory/builder'
-import { StorageFactory } from '@afilmory/builder'
-import { GitHubStorageProvider, S3StorageProvider } from '@afilmory/builder/storage/index.js'
-import type { GitHubConfig, S3Config } from '@afilmory/builder/storage/interfaces.js'
+import { LOCAL_STORAGE_PROVIDERS } from '@afilmory/builder/storage/index.js'
+import type {
+  B2Config,
+  GitHubConfig,
+  LocalStorageProviderName,
+  S3Config,
+} from '@afilmory/builder/storage/interfaces.js'
 import { BizException, ErrorCode } from 'core/errors'
 import { BuilderConfigService } from 'core/modules/configuration/builder-config/builder-config.service'
 import { SettingService } from 'core/modules/configuration/setting/setting.service'
 import type { BuilderStorageProvider } from 'core/modules/configuration/setting/storage-provider.utils'
 import { injectable } from 'tsyringe'
 
-import type { PhotoBuilderService } from '../builder/photo-builder.service'
 
 type ResolveOverrides = {
   builderConfig?: BuilderConfig
@@ -49,33 +52,6 @@ export class PhotoStorageService {
     userSettings.storage = storageConfig
 
     return { builderConfig, storageConfig }
-  }
-
-  registerStorageProviderPlugin(
-    builder: ReturnType<PhotoBuilderService['createBuilder']>,
-    storageConfig: StorageConfig,
-  ): void {
-    this.assertProviderSupported(storageConfig.provider)
-
-    switch (storageConfig.provider) {
-      case 's3': {
-        builder.registerStorageProvider('s3', (config) => new S3StorageProvider(config as S3Config))
-        break
-      }
-      case 'github': {
-        builder.registerStorageProvider('github', (config) => new GitHubStorageProvider(config as GitHubConfig))
-        break
-      }
-      default: {
-        const provider = (storageConfig as StorageConfig)?.provider as string
-        const registered = StorageFactory.getRegisteredProviders()
-        if (!registered.includes(provider)) {
-          throw new BizException(ErrorCode.COMMON_BAD_REQUEST, {
-            message: `Unsupported storage provider type: ${provider}`,
-          })
-        }
-      }
-    }
   }
 
   private mapProviderToStorageConfig(provider: BuilderStorageProvider): StorageConfig {
@@ -151,6 +127,42 @@ export class PhotoStorageService {
 
         return result
       }
+      case 'b2': {
+        const applicationKeyId = this.requireString(
+          config.applicationKeyId,
+          'Active B2 storage provider is missing `applicationKeyId`.',
+        )
+        const applicationKey = this.requireString(
+          config.applicationKey,
+          'Active B2 storage provider is missing `applicationKey`.',
+        )
+        const bucketId = this.requireString(config.bucketId, 'Active B2 storage provider is missing `bucketId`.')
+
+        const bucketName = this.requireString(config.bucketName, 'Active B2 storage provider is missing `bucketName`.')
+
+        const result: B2Config = {
+          provider: 'b2',
+          applicationKeyId,
+          applicationKey,
+          bucketId,
+          bucketName,
+        }
+        const prefix = this.normalizeString(config.prefix)
+        if (prefix) result.prefix = prefix
+        const customDomain = this.normalizeString(config.customDomain)
+        if (customDomain) result.customDomain = customDomain
+        const excludeRegex = this.normalizeString(config.excludeRegex)
+        if (excludeRegex) result.excludeRegex = excludeRegex
+
+        const maxFileLimit = this.parseNumber(config.maxFileLimit)
+        if (typeof maxFileLimit === 'number') result.maxFileLimit = maxFileLimit
+        const authorizationTtlMs = this.parseNumber(config.authorizationTtlMs)
+        if (typeof authorizationTtlMs === 'number') result.authorizationTtlMs = authorizationTtlMs
+        const uploadUrlTtlMs = this.parseNumber(config.uploadUrlTtlMs)
+        if (typeof uploadUrlTtlMs === 'number') result.uploadUrlTtlMs = uploadUrlTtlMs
+
+        return result
+      }
       default: {
         throw new BizException(ErrorCode.COMMON_BAD_REQUEST, {
           message: `Unsupported storage provider type: ${provider.type}`,
@@ -160,9 +172,10 @@ export class PhotoStorageService {
   }
 
   private assertProviderSupported(provider: string): void {
-    if (provider === 'local' || provider === 'eagle') {
+    if (LOCAL_STORAGE_PROVIDERS.includes(provider as LocalStorageProviderName)) {
+      const label = provider === 'eagle' ? 'Eagle' : provider === 'local' ? 'Local' : provider
       throw new BizException(ErrorCode.COMMON_BAD_REQUEST, {
-        message: `云端服务不支持 ${provider === 'local' ? 'Local' : 'Eagle'} 存储提供商`,
+        message: `云端服务不支持 ${label} 存储提供商`,
       })
     }
   }

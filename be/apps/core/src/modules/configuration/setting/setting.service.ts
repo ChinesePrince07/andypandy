@@ -219,7 +219,7 @@ export class SettingService {
     }
   }
 
-  async getUiSchema(acceptLanguage?: string): Promise<SettingUiSchemaResponse> {
+  async getUiSchema(): Promise<SettingUiSchemaResponse> {
     const rawValues = await this.getMany(SETTING_UI_SCHEMA_KEYS, {})
     const typedValues: SettingUiSchemaResponse['values'] = {}
 
@@ -235,7 +235,7 @@ export class SettingService {
       typedValues[key] = rawValue as SettingValueMap[typeof key] | null
     }
 
-    const { t } = getUiSchemaTranslator(acceptLanguage)
+    const { t } = getUiSchemaTranslator()
 
     return {
       schema: createSettingUiSchema(t),

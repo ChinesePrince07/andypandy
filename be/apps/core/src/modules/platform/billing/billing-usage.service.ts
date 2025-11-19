@@ -2,7 +2,7 @@ import { billingUsageEvents } from '@afilmory/db'
 import { DbAccessor } from 'core/database/database.provider'
 import { BizException, ErrorCode } from 'core/errors'
 import { getTenantContext, requireTenantContext } from 'core/modules/platform/tenant/tenant.context'
-import { and, desc, eq, gte, lte, sql } from 'drizzle-orm'
+import { and, desc, eq, gte, inArray, lte, sql } from 'drizzle-orm'
 import { injectable } from 'tsyringe'
 
 import type { BillingUsageEventType, BillingUsageUnit } from './billing.constants'
@@ -145,6 +145,51 @@ export class BillingUsageService {
         unit: row.unit as BillingUsageUnit,
       })),
     }
+  }
+
+  async getUsageTotalsForTenants(tenantIds: readonly string[]): Promise<Record<string, BillingUsageTotalsEntry[]>> {
+    if (!tenantIds || tenantIds.length === 0) {
+      return {}
+    }
+
+    const normalizedTenantIds = Array.from(
+      new Set(tenantIds.filter((id) => typeof id === 'string' && id.trim().length > 0)),
+    )
+    if (normalizedTenantIds.length === 0) {
+      return {}
+    }
+
+    const db = this.dbAccessor.get()
+
+    const rows = await db
+      .select({
+        tenantId: billingUsageEvents.tenantId,
+        eventType: billingUsageEvents.eventType,
+        unit: billingUsageEvents.unit,
+        totalQuantity: sql<number>`coalesce(sum(${billingUsageEvents.quantity}), 0)`,
+      })
+      .from(billingUsageEvents)
+      .where(inArray(billingUsageEvents.tenantId, normalizedTenantIds))
+      .groupBy(billingUsageEvents.tenantId, billingUsageEvents.eventType, billingUsageEvents.unit)
+
+    const totalsByTenant: Record<string, BillingUsageTotalsEntry[]> = {}
+
+    for (const row of rows) {
+      const {tenantId} = row
+      if (!tenantId) {
+        continue
+      }
+
+      const current = totalsByTenant[tenantId] ?? []
+      current.push({
+        eventType: row.eventType as BillingUsageEventType,
+        totalQuantity: Number(row.totalQuantity ?? 0),
+        unit: row.unit as BillingUsageUnit,
+      })
+      totalsByTenant[tenantId] = current
+    }
+
+    return totalsByTenant
   }
 
   private mapRow(row: BillingUsageRow): BillingUsageEventRecord {

@@ -169,11 +169,11 @@ export class SystemSettingService {
     return settings.billingPlanPricing ?? {}
   }
 
-  async getOverview(acceptLanguage?: string): Promise<SystemSettingOverview> {
+  async getOverview(): Promise<SystemSettingOverview> {
     const settings = await this.getSettings()
     const totalUsers = await this.getTotalUserCount()
     const stats = this.buildStats(settings, totalUsers)
-    const { t } = getUiSchemaTranslator(acceptLanguage)
+    const { t } = getUiSchemaTranslator()
     return {
       schema: createSystemSettingUiSchema(t),
       values: this.buildValueMap(settings),

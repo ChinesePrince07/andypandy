@@ -1,3 +1,5 @@
+import { HttpContext } from '@afilmory/framework'
+
 import enUiSchema from '../../../locales/ui-schema/en'
 import zhCnUiSchema from '../../../locales/ui-schema/zh-CN'
 
@@ -81,7 +83,11 @@ export function getUiSchemaTranslator(acceptLanguage?: string | null): {
     throw new Error('UI schema i18n is not initialized')
   }
 
-  const language = detectLanguageFromHeader(acceptLanguage)
+  const contextLanguage = HttpContext.getValue('language') as SupportedLanguage | undefined
+  const language =
+    typeof acceptLanguage === 'string'
+      ? detectLanguageFromHeader(acceptLanguage)
+      : (contextLanguage ?? DEFAULT_LANGUAGE)
   const translate: UiSchemaTFunction = (key: string) => {
     const localized = resolveTranslation(resources[language], key)
     if (localized) {

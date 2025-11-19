@@ -48,11 +48,11 @@ export async function preprocessImage(
   photoKey: string,
 ): Promise<{ rawBuffer: Buffer; processedBuffer: Buffer } | null> {
   const loggers = getGlobalLoggers()
-  const { storageManager } = getPhotoExecutionContext()
+  const { storageManager, prefetchedBuffers } = getPhotoExecutionContext()
 
   try {
     // 获取图片数据
-    const rawImageBuffer = await storageManager.getFile(photoKey)
+    const rawImageBuffer = prefetchedBuffers?.get(photoKey) ?? (await storageManager.getFile(photoKey))
     if (!rawImageBuffer) {
       loggers.image.error(`无法获取图片数据：${photoKey}`)
       return null

@@ -1,6 +1,6 @@
 import type { PhotoManifestItem } from '@afilmory/builder'
 
-import type { PhotoSyncLogLevel } from '../photos/types'
+import type { BillingUsageTotalsEntry, PhotoSyncLogLevel } from '../photos/types'
 import type { SchemaFormValue, UiSchema } from '../schema-form/types'
 
 export type SuperAdminSettingField = string
@@ -92,6 +92,7 @@ export interface SuperAdminTenantSummary {
   banned: boolean
   createdAt: string
   updatedAt: string
+  usageTotals?: BillingUsageTotalsEntry[]
 }
 
 export interface SuperAdminTenantListResponse {

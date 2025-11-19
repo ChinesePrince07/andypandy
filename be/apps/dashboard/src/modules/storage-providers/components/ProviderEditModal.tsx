@@ -20,22 +20,20 @@ import { nanoid } from 'nanoid'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import {
-  STORAGE_PROVIDER_FIELD_DEFINITIONS,
-  STORAGE_PROVIDER_TYPE_OPTIONS,
-  storageProvidersI18nKeys,
-} from '../constants'
-import type { StorageProvider, StorageProviderType } from '../types'
+import { storageProvidersI18nKeys } from '../constants'
+import type { StorageProvider, StorageProviderFormSchema, StorageProviderType } from '../types'
 
 type ProviderEditModalProps = ModalComponentProps & {
   provider: StorageProvider | null
   activeProviderId: string | null
+  providerSchema: StorageProviderFormSchema
   onSave: (provider: StorageProvider) => void
   onSetActive: (id: string) => void
 }
 
 export function ProviderEditModal({
   provider,
+  providerSchema,
 
   onSave,
 
@@ -57,8 +55,8 @@ export function ProviderEditModal({
 
   const selectedFields = useMemo(() => {
     if (!formData) return []
-    return STORAGE_PROVIDER_FIELD_DEFINITIONS[formData.type] || []
-  }, [formData])
+    return providerSchema.fields[formData.type] ?? []
+  }, [formData, providerSchema])
 
   const handleNameChange = (value: string) => {
     if (!formData) return
@@ -152,17 +150,14 @@ export function ProviderEditModal({
 
                 <div className="space-y-2">
                   <Label htmlFor="provider-type">{t(storageProvidersI18nKeys.modal.fields.typeLabel)}</Label>
-                  <Select
-                    value={formData.type}
-                    onValueChange={(value) => handleTypeChange(value as StorageProviderType)}
-                  >
+                  <Select value={formData.type} onValueChange={(value) => handleTypeChange(value)}>
                     <SelectTrigger id="provider-type">
                       <SelectValue placeholder={t(storageProvidersI18nKeys.modal.fields.typePlaceholder)} />
                     </SelectTrigger>
                     <SelectContent>
-                      {STORAGE_PROVIDER_TYPE_OPTIONS.map((option) => (
+                      {providerSchema.types.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
-                          {t(option.labelKey)}
+                          {option.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -180,19 +175,25 @@ export function ProviderEditModal({
                 <div className="space-y-4">
                   {selectedFields.map((field) => {
                     const value = formData.config[field.key] || ''
-                    const placeholder = field.placeholderKey ? t(field.placeholderKey) : undefined
+                    const placeholder = field.placeholder ?? undefined
                     return (
                       <div
                         key={field.key}
                         className="border-fill-tertiary/40 bg-background/30 space-y-2 rounded border p-4"
                       >
                         <div className="space-y-1">
-                          <Label htmlFor={`field-${field.key}`} className="font-semibold">
-                            {t(field.labelKey)}
+                          <Label
+                            htmlFor={`field-${field.key}`}
+                            className="font-semibold flex items-center gap-2 text-sm"
+                          >
+                            <span>{field.label}</span>
+                            {field.required ? (
+                              <span className="text-red border-red/30 bg-red/10 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+                                {t(storageProvidersI18nKeys.modal.fields.required)}
+                              </span>
+                            ) : null}
                           </Label>
-                          {field.descriptionKey ? (
-                            <p className="text-text-tertiary text-xs">{t(field.descriptionKey)}</p>
-                          ) : null}
+                          {field.description ? <p className="text-text-tertiary text-xs">{field.description}</p> : null}
                         </div>
 
                         {field.multiline ? (
@@ -203,6 +204,8 @@ export function ProviderEditModal({
                             placeholder={placeholder}
                             rows={3}
                             className="bg-background/60"
+                            required={field.required}
+                            aria-required={field.required || undefined}
                           />
                         ) : (
                           <Input
@@ -213,10 +216,12 @@ export function ProviderEditModal({
                             placeholder={placeholder}
                             className="bg-background/60"
                             autoComplete="off"
+                            required={field.required}
+                            aria-required={field.required || undefined}
                           />
                         )}
 
-                        {field.helperKey ? <FormHelperText>{t(field.helperKey)}</FormHelperText> : null}
+                        {field.helperText ? <FormHelperText>{field.helperText}</FormHelperText> : null}
                       </div>
                     )
                   })}

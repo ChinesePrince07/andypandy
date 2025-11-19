@@ -5,6 +5,8 @@ import type { AuthSession } from 'core/modules/platform/auth/auth.provider'
 import { AuthProvider } from 'core/modules/platform/auth/auth.provider'
 import { getTenantContext } from 'core/modules/platform/tenant/tenant.context'
 import { TenantContextResolver } from 'core/modules/platform/tenant/tenant-context-resolver.service'
+import type { SupportedLanguage } from 'core/modules/ui/ui-schema/ui-schema.i18n'
+import { detectLanguageFromHeader } from 'core/modules/ui/ui-schema/ui-schema.i18n'
 import type { Context, Next } from 'hono'
 import { injectable } from 'tsyringe'
 
@@ -19,9 +21,25 @@ export class RequestContextMiddleware implements HttpMiddleware {
   ) {}
 
   async use(context: Context, next: Next): Promise<Response | void> {
+    this.ensureLanguageContext(context)
     await this.ensureTenantContext(context)
     await this.ensureAuthContext(context)
     return await next()
+  }
+
+  private ensureLanguageContext(context: Context): void {
+    const language = this.resolveRequestLanguage(context)
+    HttpContext.assign({ language })
+  }
+
+  private resolveRequestLanguage(context: Context): SupportedLanguage {
+    const preferred = context.req.header('x-lang')
+    if (preferred && preferred.trim().length > 0) {
+      return detectLanguageFromHeader(preferred)
+    }
+
+    const acceptLanguage = context.req.header('accept-language')
+    return detectLanguageFromHeader(acceptLanguage)
   }
 
   private async ensureTenantContext(context: Context): Promise<void> {

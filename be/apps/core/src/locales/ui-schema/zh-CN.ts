@@ -344,6 +344,151 @@ const zhCnUiSchema = {
       },
     },
   },
+  storage: {
+    providers: {
+      types: {
+        s3: 'AWS S3 兼容对象存储',
+        github: 'GitHub 仓库',
+        b2: 'Backblaze B2 云存储',
+      },
+      fields: {
+        s3: {
+          bucket: {
+            label: 'Bucket 名称',
+            description: '存放照片的 S3 Bucket 名称。',
+            placeholder: 'afilmory-photos（示例）',
+          },
+          region: {
+            label: '区域',
+            description: 'S3 区域代码，例如 ap-southeast-1。',
+            placeholder: 'ap-southeast-1（示例）',
+          },
+          endpoint: {
+            label: '自定义 Endpoint',
+            description: 'S3 兼容服务的自定义 Endpoint。',
+            placeholder: 'https://s3.example.com（示例）',
+            helper: '使用 AWS S3 时可留空，MinIO 或其他厂商需要填写。',
+          },
+          'access-key': {
+            label: 'Access Key ID（公钥）',
+            placeholder: 'AKIAxxxxxxxxxxxx（示例）',
+          },
+          'secret-key': {
+            label: 'Secret Access Key（私钥）',
+            placeholder: '************（示例）',
+          },
+          prefix: {
+            label: '路径前缀',
+            description: '可选，仅扫描该前缀下的对象。',
+            placeholder: 'photos/（前缀）',
+          },
+          'custom-domain': {
+            label: '自定义公开域名',
+            description: '用于生成公开照片链接的域名。',
+            placeholder: 'https://cdn.example.com（示例）',
+          },
+          'exclude-regex': {
+            label: '排除规则（正则）',
+            description: '可选，跳过匹配该正则表达式的文件。',
+            placeholder: '\\.(tmp|bak)$',
+            helper: '使用 JavaScript 兼容的正则表达式。',
+          },
+          'max-files': {
+            label: '最大文件数',
+            description: '可选，每次扫描的最大文件数。',
+            placeholder: '1000（可选）',
+          },
+        },
+        github: {
+          owner: {
+            label: '仓库拥有者',
+            description: 'GitHub 用户或组织名称。',
+            placeholder: 'afilmory（示例）',
+          },
+          repo: {
+            label: '仓库名称',
+            description: '存放照片的仓库。',
+            placeholder: 'photo-assets（示例）',
+          },
+          branch: {
+            label: '分支',
+            description: '可选，要同步的分支。',
+            placeholder: 'main（示例）',
+            helper: '默认 master/main，如有不同请填写完整分支名。',
+          },
+          token: {
+            label: '访问令牌',
+            description: '用于私有仓库的 Personal Access Token。',
+            placeholder: 'ghp_xxxxxxxxxxxxxxxxxxxx（示例）',
+          },
+          path: {
+            label: '仓库路径',
+            description: '可选，限制同步的仓库路径。',
+            placeholder: 'public/photos（可选）',
+          },
+          'use-raw': {
+            label: '使用 raw 链接',
+            description: '生成公开链接时使用 raw.githubusercontent.com。',
+            placeholder: 'true / false（布尔）',
+            helper: '如果通过自定义域名分发文件，请设为 false。',
+          },
+        },
+        b2: {
+          'application-key-id': {
+            label: 'Application Key ID',
+            description: 'Backblaze B2 的应用密钥 ID，用于 API 认证。',
+            placeholder: '003xxxxxxxxxxxxxxxx000000000',
+          },
+          'application-key': {
+            label: 'Application Key',
+            description: '与上方 ID 配对的应用密钥（请妥善保管）。',
+            placeholder: 'K0000000000000000000000000000000',
+          },
+          'bucket-id': {
+            label: 'Bucket ID',
+            description: '保存照片的 Bucket 唯一 ID。',
+            placeholder: '4a48fe8875c6214145260818',
+          },
+          'bucket-name': {
+            label: 'Bucket 名称',
+            description: '用于记录或生成公开链接的友好名称。',
+            placeholder: 'afilmory-photos',
+          },
+          prefix: {
+            label: '路径前缀',
+            description: '可选，仅扫描该前缀下的文件。',
+            placeholder: 'photos/',
+          },
+          'custom-domain': {
+            label: '自定义公开域名',
+            description: '用于生成公开照片链接的域名（如 CDN）。',
+            placeholder: 'https://cdn.example.com',
+          },
+          'exclude-regex': {
+            label: '排除规则（正则）',
+            description: '可选，跳过匹配该正则的文件。',
+            placeholder: '\\.(tmp|bak)$',
+            helper: '请使用与 JavaScript 兼容的正则表达式。',
+          },
+          'max-files': {
+            label: '最大文件数',
+            description: '可选，每次扫描的最大文件数量。',
+            placeholder: '1000',
+          },
+          'authorization-ttl': {
+            label: '授权缓存时长（毫秒）',
+            description: '覆盖 B2 授权 Token 的缓存时间。',
+            placeholder: '3600000',
+          },
+          'upload-ttl': {
+            label: '上传 URL 缓存时长（毫秒）',
+            description: '覆盖 B2 上传 URL 的缓存时间。',
+            placeholder: '900000',
+          },
+        },
+      },
+    },
+  },
 } as const
 
 export default zhCnUiSchema

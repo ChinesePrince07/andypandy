@@ -5,13 +5,10 @@ import { LinearBorderPanel } from '~/components/common/GlassPanel'
 
 import { ProcessingPanel } from '../ProcessingPanel'
 import { usePhotoUploadStore } from '../store'
-import { UploadFileList } from '../UploadFileList'
 
 export function ErrorStep() {
-  const { uploadEntries, progress, processingState, processingLogs, errorMessage } = usePhotoUploadStore(
+  const { processingState, processingLogs, errorMessage } = usePhotoUploadStore(
     useShallow((state) => ({
-      uploadEntries: state.uploadEntries,
-      progress: state.totalSize === 0 ? 0 : Math.min(1, state.uploadedBytes / state.totalSize),
       processingState: state.processingState,
       processingLogs: state.processingLogs,
       errorMessage: state.uploadError ?? state.processingError ?? '上传过程中发生错误，请稍后再试。',
@@ -27,11 +24,10 @@ export function ErrorStep() {
         <p className="text-text-tertiary text-sm">请查看错误信息后重试，或稍后再尝试上传。</p>
       </div>
 
-      <LinearBorderPanel className="border border-rose-400/40 bg-rose-500/5 px-3 py-2 text-xs text-rose-200">
+      <LinearBorderPanel className="border border-rose-400/40 bg-rose-500/5 px-3 py-2 text-xs text-rose-200 min-w-0 overflow-auto max-h-64">
         {errorMessage}
       </LinearBorderPanel>
 
-      <UploadFileList entries={uploadEntries} overallProgress={progress} />
       <ProcessingPanel state={processingState} logs={processingLogs} />
 
       <div className="flex items-center justify-end gap-2">

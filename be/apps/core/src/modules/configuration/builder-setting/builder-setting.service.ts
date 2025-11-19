@@ -29,11 +29,11 @@ export class BuilderSettingService {
     private readonly settingService: SettingService,
   ) {}
 
-  async getUiSchema(acceptLanguage?: string): Promise<BuilderSettingUiSchemaResponse> {
+  async getUiSchema(): Promise<BuilderSettingUiSchemaResponse> {
     const tenant = requireTenantContext()
     const config = await this.builderConfigService.getConfigForTenant(tenant.tenant.id)
     const values = this.buildFieldValues(config)
-    const { t } = getUiSchemaTranslator(acceptLanguage)
+    const { t } = getUiSchemaTranslator()
 
     return {
       schema: createBuilderSettingUiSchema(t),

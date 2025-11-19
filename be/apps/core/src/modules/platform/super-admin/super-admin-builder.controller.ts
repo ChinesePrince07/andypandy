@@ -98,7 +98,9 @@ export class SuperAdminBuilderDebugController {
     builderConfig.user.storage = storageConfig
 
     const builder = this.photoBuilderService.createBuilder(builderConfig)
-    builder.registerStorageProvider(DEBUG_STORAGE_PROVIDER, () => new InMemoryDebugStorageProvider())
+    builder.registerStorageProvider(DEBUG_STORAGE_PROVIDER, () => new InMemoryDebugStorageProvider(), {
+      category: 'local',
+    })
     this.photoBuilderService.applyStorageConfig(builder, storageConfig)
 
     return {

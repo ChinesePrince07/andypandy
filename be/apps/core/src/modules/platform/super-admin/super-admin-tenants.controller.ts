@@ -2,6 +2,7 @@ import { Body, Controller, Get, Param, Patch } from '@afilmory/framework'
 import { Roles } from 'core/guards/roles.decorator'
 import { BypassResponseTransform } from 'core/interceptors/response-transform.decorator'
 import { BillingPlanService } from 'core/modules/platform/billing/billing-plan.service'
+import { BillingUsageService } from 'core/modules/platform/billing/billing-usage.service'
 import { TenantService } from 'core/modules/platform/tenant/tenant.service'
 
 import type { BillingPlanId } from '../billing/billing-plan.types'
@@ -14,17 +15,24 @@ export class SuperAdminTenantController {
   constructor(
     private readonly tenantService: TenantService,
     private readonly billingPlanService: BillingPlanService,
+    private readonly billingUsageService: BillingUsageService,
   ) {}
 
   @Get('/')
   async listTenants() {
-    const [tenants, plans] = await Promise.all([
+    const [tenantAggregates, plans] = await Promise.all([
       this.tenantService.listTenants(),
       Promise.resolve(this.billingPlanService.getPlanDefinitions()),
     ])
 
+    const tenantIds = tenantAggregates.map((aggregate) => aggregate.tenant.id)
+    const usageTotalsMap = await this.billingUsageService.getUsageTotalsForTenants(tenantIds)
+
     return {
-      tenants: tenants.map((aggregate) => aggregate.tenant),
+      tenants: tenantAggregates.map((aggregate) => ({
+        ...aggregate.tenant,
+        usageTotals: usageTotalsMap[aggregate.tenant.id] ?? [],
+      })),
       plans,
     }
   }

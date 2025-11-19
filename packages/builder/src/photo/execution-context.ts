@@ -11,6 +11,7 @@ export interface PhotoExecutionContext {
   storageConfig: StorageConfig
   normalizeStorageKey: (key: string) => string
   loggers?: PhotoProcessingLoggers
+  prefetchedBuffers?: Map<string, Buffer>
 }
 
 const photoContextStorage = new AsyncLocalStorage<PhotoExecutionContext>()

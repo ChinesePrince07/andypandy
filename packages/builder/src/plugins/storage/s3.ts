@@ -13,9 +13,13 @@ export default function s3StoragePlugin(options: S3StoragePluginOptions = {}): B
     name: `afilmory:storage:${providerName}`,
     hooks: {
       onInit: ({ registerStorageProvider }) => {
-        registerStorageProvider(providerName, (config) => {
-          return new S3StorageProvider(config as S3Config)
-        })
+        registerStorageProvider(
+          providerName,
+          (config) => {
+            return new S3StorageProvider(config as S3Config)
+          },
+          { category: 'remote' },
+        )
       },
     },
   }

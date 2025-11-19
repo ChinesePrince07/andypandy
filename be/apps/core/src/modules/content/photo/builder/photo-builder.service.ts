@@ -37,6 +37,7 @@ export type ProcessPhotoOptions = {
   processorOptions?: Partial<PhotoProcessorOptions>
   builder?: AfilmoryBuilder
   builderConfig?: BuilderConfig
+  prefetchedBuffers?: Map<string, Buffer>
 }
 
 @injectable()
@@ -57,7 +58,7 @@ export class PhotoBuilderService {
     object: StorageObject,
     options?: ProcessPhotoOptions,
   ): Promise<Awaited<ReturnType<typeof processPhotoWithPipeline>>> {
-    const { existingItem, livePhotoMap, processorOptions, builder, builderConfig } = options ?? {}
+    const { existingItem, livePhotoMap, processorOptions, builder, builderConfig, prefetchedBuffers } = options ?? {}
     const activeBuilder = this.resolveBuilder(builder, builderConfig)
     await activeBuilder.ensurePluginsReady()
 
@@ -87,6 +88,7 @@ export class PhotoBuilderService {
         storageConfig,
         normalizeStorageKey: createStorageKeyNormalizer(storageConfig),
         loggers: photoLoggers,
+        prefetchedBuffers,
       },
       async () => await processPhotoWithPipeline(context, runtime),
     )

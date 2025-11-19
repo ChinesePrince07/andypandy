@@ -338,7 +338,6 @@ export class DataSyncService {
     }
 
     this.logger.verbose('effectiveStorageConfig', effectiveStorageConfig)
-    this.registerStorageProviderPlugin(builder, effectiveStorageConfig)
     if (storageConfig) {
       this.photoBuilderService.applyStorageConfig(builder, storageConfig)
     }
@@ -395,13 +394,6 @@ export class DataSyncService {
       statusReconciliation,
       db,
     }
-  }
-
-  private registerStorageProviderPlugin(
-    builder: ReturnType<PhotoBuilderService['createBuilder']>,
-    storageConfig: StorageConfig,
-  ): void {
-    this.photoStorageService.registerStorageProviderPlugin(builder, storageConfig)
   }
 
   private async resolveBuilderConfigForTenant(
@@ -1620,7 +1612,7 @@ export class DataSyncService {
       this.photoBuilderService.applyStorageConfig(builder, options.storageConfig)
     }
 
-    this.photoStorageService.registerStorageProviderPlugin(builder, effectiveStorageConfig)
+    await builder.ensurePluginsReady()
     const storageManager = builder.getStorageManager()
 
     if (payload.type === 'missing-in-storage') {

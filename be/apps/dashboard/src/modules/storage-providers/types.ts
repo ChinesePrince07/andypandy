@@ -1,4 +1,4 @@
-export type StorageProviderType = 's3' | 'github'
+export type StorageProviderType = string
 
 export interface StorageProvider {
   id: string
@@ -21,10 +21,16 @@ export interface StorageSettingEntry {
 
 export interface StorageProviderFieldDefinition {
   key: string
-  labelKey: I18nKeys
-  placeholderKey?: I18nKeys
-  descriptionKey?: I18nKeys
-  helperKey?: I18nKeys
+  label: string
+  placeholder?: string | null
+  description?: string | null
+  helperText?: string | null
   multiline?: boolean
   sensitive?: boolean
+  required?: boolean
+}
+
+export interface StorageProviderFormSchema {
+  types: ReadonlyArray<{ value: StorageProviderType; label: string }>
+  fields: Record<string, ReadonlyArray<StorageProviderFieldDefinition>>
 }

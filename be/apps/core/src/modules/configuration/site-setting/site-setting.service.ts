@@ -20,7 +20,7 @@ export class SiteSettingService {
     private readonly dbAccessor: DbAccessor,
   ) {}
 
-  async getUiSchema(acceptLanguage?: string): Promise<SiteSettingUiSchemaResponse> {
+  async getUiSchema(): Promise<SiteSettingUiSchemaResponse> {
     const values = await this.settingService.getMany(SITE_SETTING_UI_SCHEMA_KEYS, {})
     const typedValues: SiteSettingUiSchemaResponse['values'] = {}
 
@@ -28,7 +28,7 @@ export class SiteSettingService {
       typedValues[key] = values[key] ?? null
     }
 
-    const { t } = getUiSchemaTranslator(acceptLanguage)
+    const { t } = getUiSchemaTranslator()
 
     return {
       schema: createSiteSettingUiSchema(t),
@@ -36,10 +36,10 @@ export class SiteSettingService {
     }
   }
 
-  async getOnboardingUiSchema(acceptLanguage?: string): Promise<SiteSettingUiSchemaResponse> {
+  async getOnboardingUiSchema(): Promise<SiteSettingUiSchemaResponse> {
     const allowedKeys = new Set<SiteSettingKey>(ONBOARDING_SITE_SETTING_KEYS)
 
-    const { t } = getUiSchemaTranslator(acceptLanguage)
+    const { t } = getUiSchemaTranslator()
     const schema = this.filterSchema(createSiteSettingUiSchema(t), allowedKeys)
 
     return {
