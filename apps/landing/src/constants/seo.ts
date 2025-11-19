@@ -27,7 +27,8 @@ export const buildAbsoluteUrl = (path = '/') => {
   return new URL(normalizedPath, SITE_URL).toString()
 }
 
-export const OG_IMAGE_URL = buildAbsoluteUrl(OG_IMAGE_PATH)
+export const OG_IMAGE_URL =
+  'https://github.com/Afilmory/assets/blob/main/afilmory-readme.webp?raw=true'
 export const FAVICON_URL = buildAbsoluteUrl(FAVICON_PATH)
 export const SITE_HOST = new URL(SITE_URL).host
 
