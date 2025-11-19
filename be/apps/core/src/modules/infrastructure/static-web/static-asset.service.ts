@@ -380,7 +380,6 @@ export abstract class StaticAssetService {
     headers.set('last-modified', file.stats.mtime.toUTCString())
 
     this.applyCacheHeaders(headers, file.relativePath)
-    this.applyCorsHeaders(headers)
 
     if (headOnly) {
       return new Response(null, { headers, status: 200 })
@@ -403,7 +402,6 @@ export abstract class StaticAssetService {
     headers.set('content-length', `${Buffer.byteLength(transformed, 'utf-8')}`)
     headers.set('last-modified', file.stats.mtime.toUTCString())
     this.applyCacheHeaders(headers, file.relativePath)
-    this.applyCorsHeaders(headers)
 
     if (headOnly) {
       return new Response(null, { headers, status: 200 })
@@ -473,12 +471,6 @@ export abstract class StaticAssetService {
     headers.set('cache-control', policy.browser)
     headers.set('cdn-cache-control', policy.cdn)
     headers.set('surrogate-control', policy.cdn)
-  }
-
-  private applyCorsHeaders(headers: Headers): void {
-    headers.set('access-control-allow-origin', '*')
-    headers.set('access-control-allow-methods', 'GET, HEAD, OPTIONS')
-    headers.set('access-control-allow-headers', 'content-type')
   }
 
   private resolveCachePolicy(relativePath: string): { browser: string; cdn: string } {

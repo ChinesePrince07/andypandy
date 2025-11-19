@@ -1,6 +1,5 @@
 import { isTenantSlugReserved } from '@afilmory/utils'
 import { BizException, ErrorCode } from 'core/errors'
-import { applySimpleCorsHeaders } from 'core/helpers/cors.helper'
 import { ROOT_TENANT_SLUG } from 'core/modules/platform/tenant/tenant.constants'
 import { getTenantContext, isPlaceholderTenantContext } from 'core/modules/platform/tenant/tenant.context'
 import type { Context } from 'hono'
@@ -92,9 +91,5 @@ export const StaticControllerUtils = {
     throw new BizException(ErrorCode.COMMON_FORBIDDEN, {
       message: 'Workspace access restricted',
     })
-  },
-
-  applyStaticAssetCors(response: Response): Response {
-    return applySimpleCorsHeaders(response)
   },
 }

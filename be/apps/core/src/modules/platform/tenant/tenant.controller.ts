@@ -1,7 +1,6 @@
 import { Body, Controller, createZodSchemaDto, Post } from '@afilmory/framework'
 import { isTenantSlugReserved } from '@afilmory/utils'
 import { AllowPlaceholderTenant } from 'core/decorators/allow-placeholder.decorator'
-import { AllowSimpleCors } from 'core/decorators/simple-cors.decorator'
 import { SkipTenantGuard } from 'core/decorators/skip-tenant.decorator'
 import { BizException, ErrorCode } from 'core/errors'
 import { SystemSettingService } from 'core/modules/configuration/system-setting/system-setting.service'
@@ -49,7 +48,6 @@ export class TenantController {
     private readonly systemSettings: SystemSettingService,
   ) {}
 
-  @AllowSimpleCors()
   @AllowPlaceholderTenant()
   @SkipTenantGuard()
   @Post('/check-slug')
