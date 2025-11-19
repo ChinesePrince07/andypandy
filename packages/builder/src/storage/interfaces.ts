@@ -105,6 +105,20 @@ export type S3Config = {
   downloadConcurrency?: number
 }
 
+export type B2Config = {
+  provider: 'b2'
+  applicationKeyId: string
+  applicationKey: string
+  bucketId: string
+  bucketName?: string
+  prefix?: string
+  customDomain?: string
+  excludeRegex?: string
+  maxFileLimit?: number
+  authorizationTtlMs?: number
+  uploadUrlTtlMs?: number
+}
+
 export type GitHubConfig = {
   provider: 'github'
   owner: string
@@ -201,4 +215,4 @@ export interface CustomStorageConfig {
   [key: string]: unknown
 }
 
-export type StorageConfig = S3Config | GitHubConfig | EagleConfig | LocalConfig | CustomStorageConfig
+export type StorageConfig = S3Config | B2Config | GitHubConfig | EagleConfig | LocalConfig | CustomStorageConfig

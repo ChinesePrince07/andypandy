@@ -82,6 +82,7 @@ function createTaggedLogger(tag: string): ConsolaInstance {
 export const logger = {
   main: createTaggedLogger('MAIN'),
   s3: createTaggedLogger('S3'),
+  b2: createTaggedLogger('B2'),
   image: createTaggedLogger('IMAGE'),
   thumbnail: createTaggedLogger('THUMBNAIL'),
   blurhash: createTaggedLogger('BLURHASH'),

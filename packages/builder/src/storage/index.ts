@@ -9,6 +9,7 @@ export { StorageFactory } from './factory.js'
 export { StorageManager } from './manager.js'
 
 // 导出具体提供商（如果需要直接使用）
+export { B2StorageProvider } from './providers/b2-provider.js'
 export { EagleStorageProvider } from './providers/eagle-provider.js'
 export { GitHubStorageProvider } from './providers/github-provider.js'
 export { LocalStorageProvider } from './providers/local-provider.js'

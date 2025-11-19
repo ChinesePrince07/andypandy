@@ -15,6 +15,8 @@ export {
 export type { PhotoProcessorOptions } from './photo/processor.js'
 export type { GitHubRepoSyncPluginOptions } from './plugins/github-repo-sync.js'
 export { createGitHubRepoSyncPlugin, default as githubRepoSyncPlugin } from './plugins/github-repo-sync.js'
+export type { B2StoragePluginOptions } from './plugins/storage/b2.js'
+export { default as b2StoragePlugin } from './plugins/storage/b2.js'
 export type { EagleStoragePluginOptions } from './plugins/storage/eagle.js'
 export { default as eagleStoragePlugin } from './plugins/storage/eagle.js'
 export type { GitHubStoragePluginOptions } from './plugins/storage/github.js'

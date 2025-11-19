@@ -639,6 +639,7 @@ export class AfilmoryBuilder {
 
     const storagePluginByProvider: Record<string, BuilderPluginESMImporter> = {
       s3: () => import('@afilmory/builder/plugins/storage/s3.js'),
+      b2: () => import('@afilmory/builder/plugins/storage/b2.js'),
       github: () => import('@afilmory/builder/plugins/storage/github.js'),
       eagle: () => import('@afilmory/builder/plugins/storage/eagle.js'),
       local: () => import('@afilmory/builder/plugins/storage/local.js'),
