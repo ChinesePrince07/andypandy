@@ -296,3 +296,7 @@ html *::-webkit-scrollbar-thumb:active {
 html *::-webkit-scrollbar-corner {
   background: var(--color-background-secondary);
 }
+
+html body {
+  @apply bg-black;
+}
