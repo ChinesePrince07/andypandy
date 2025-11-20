@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
-import { LinearBorderPanel } from '~/components/common/GlassPanel'
+import { LinearBorderPanel } from '~/components/common/LinearBorderPanel'
 import { MainPageLayout } from '~/components/layouts/MainPageLayout'
 import type { SessionResponse } from '~/modules/auth/api/session'
 import { AUTH_SESSION_QUERY_KEY } from '~/modules/auth/api/session'

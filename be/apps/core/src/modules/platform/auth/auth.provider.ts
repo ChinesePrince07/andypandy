@@ -192,6 +192,20 @@ export class AuthProvider implements OnModuleInit {
     return `${normalizedBase}${basePath}${query ? `?${query}` : ''}`
   }
 
+  private async buildTrustedOrigins(): Promise<string[]> {
+    if (env.NODE_ENV !== 'production') {
+      return ['http://*.localhost:*', 'https://*.localhost:*', 'http://localhost:*', 'https://localhost:*']
+    }
+
+    const settings = await this.systemSettings.getSettings()
+    return [
+      `https://*.${settings.baseDomain}`,
+      `http://*.${settings.baseDomain}`,
+      `https://${settings.baseDomain}`,
+      `http://${settings.baseDomain}`,
+    ]
+  }
+
   private async createAuthForEndpoint(
     tenantSlug: string | null,
     options: AuthModuleOptions,
@@ -217,6 +231,7 @@ export class AuthProvider implements OnModuleInit {
       }),
       socialProviders: socialProviders as any,
       emailAndPassword: { enabled: true },
+      trustedOrigins: await this.buildTrustedOrigins(),
       session: {
         freshAge: 0,
       },

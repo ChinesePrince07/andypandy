@@ -153,7 +153,7 @@ export class TenantService {
     return existing === null
   }
 
-  private ensureTenantIsActive(tenant: TenantAggregate['tenant']): void {
+  ensureTenantIsActive(tenant: TenantAggregate['tenant']): void {
     if (tenant.banned) {
       throw new BizException(ErrorCode.TENANT_BANNED)
     }

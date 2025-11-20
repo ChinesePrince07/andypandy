@@ -6,7 +6,7 @@ import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
-import { LinearBorderPanel } from '~/components/common/GlassPanel'
+import { LinearBorderPanel } from '~/components/common/LinearBorderPanel'
 import { BILLING_USAGE_EVENT_CONFIG } from '~/modules/photos/constants'
 import type { BillingUsageEventType } from '~/modules/photos/types'
 

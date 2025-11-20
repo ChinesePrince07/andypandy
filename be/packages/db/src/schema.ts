@@ -15,6 +15,7 @@ const snowflakeId = createSnowflakeId('id').primaryKey()
 export const userRoleEnum = pgEnum('user_role', ['user', 'admin', 'superadmin'])
 
 export const tenantStatusEnum = pgEnum('tenant_status', ['active', 'inactive', 'suspended'])
+export const tenantDomainStatusEnum = pgEnum('tenant_domain_status', ['pending', 'verified', 'disabled'])
 export const photoSyncStatusEnum = pgEnum('photo_sync_status', ['pending', 'synced', 'conflict'])
 export const CURRENT_PHOTO_MANIFEST_VERSION = 'v7' as const
 
@@ -67,6 +68,23 @@ export const tenants = pgTable(
     updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
   },
   (t) => [unique('uq_tenant_slug').on(t.slug)],
+)
+
+export const tenantDomains = pgTable(
+  'tenant_domain',
+  {
+    id: snowflakeId,
+    tenantId: text('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    domain: text('domain').notNull(),
+    status: tenantDomainStatusEnum('status').notNull().default('pending'),
+    verificationToken: text('verification_token').notNull(),
+    verifiedAt: timestamp('verified_at', { mode: 'string' }),
+    createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
+  },
+  (t) => [unique('uq_tenant_domain_domain').on(t.domain), index('idx_tenant_domain_tenant').on(t.tenantId)],
 )
 
 // Custom users table (Better Auth: user)
@@ -326,6 +344,7 @@ export const billingUsageEvents = pgTable(
 
 export const dbSchema = {
   tenants,
+  tenantDomains,
   authUsers,
   authSessions,
   authAccounts,
