@@ -21,26 +21,30 @@ export function DomainListItem({ domain, onVerify, onDelete, isVerifying, isDele
   return (
     <LinearBorderPanel className="bg-background p-4 transition-all duration-200 hover:bg-fill/30">
       <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 flex-wrap min-w-0 flex-1">
-            <span className="text-sm font-semibold text-text break-all">{domain.domain}</span>
-            <DomainBadge status={domain.status} />
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            {domain.status === 'pending' ? (
-              <Button variant="secondary" size="sm" onClick={() => onVerify(domain.id)} isLoading={isVerifying}>
-                {t('settings.domain.actions.verify')}
-              </Button>
-            ) : null}
+        <div className="flex flex-col gap-4">
+          <div className="flex justify-between">
+            <span className="text-sm font-semibold text-text break-all min-w-0 truncate">{domain.domain}</span>
             <Button
-              variant="ghost"
+              variant="text"
               size="sm"
               onClick={() => onDelete(domain.id)}
               disabled={isDeleting}
-              className="text-text-tertiary hover:text-red"
+              className="text-text-tertiary hover:text-red shrink-0 ml-2"
             >
               <Trash2 className="h-4 w-4" />
             </Button>
+          </div>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3 flex-wrap min-w-0 flex-1">
+              <DomainBadge status={domain.status} />
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              {domain.status === 'pending' ? (
+                <Button variant="text" size="sm" onClick={() => onVerify(domain.id)} isLoading={isVerifying}>
+                  {t('settings.domain.actions.verify')}
+                </Button>
+              ) : null}
+            </div>
           </div>
         </div>
         {domain.status === 'pending' ? (

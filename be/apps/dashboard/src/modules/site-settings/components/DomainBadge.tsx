@@ -14,7 +14,7 @@ export function DomainBadge({ status }: { status: TenantDomain['status'] }) {
   const label = t(`settings.domain.status.${status}`)
   const icon = STATUS_ICON_MAP[status]
   return (
-    <span className="inline-flex items-center gap-2 px-3 py-1 text-xs text-text-secondary">
+    <span className="inline-flex items-center gap-2 text-xs text-text-secondary">
       {icon}
       <span>{label}</span>
     </span>

@@ -50,7 +50,7 @@ function buildVerificationInstructions(normalizedBase = 'your-domain.com') {
 export function CustomDomainCard() {
   const { t } = useTranslation()
   const [domainInput, setDomainInput] = useState('')
-  const { data: domains = [], isLoading } = useTenantDomainsQuery()
+  const { data: domains = [], isLoading, isFetching } = useTenantDomainsQuery()
   const requestDomainMutation = useRequestTenantDomainMutation()
   const verifyMutation = useVerifyTenantDomainMutation()
   const deleteMutation = useDeleteTenantDomainMutation()
@@ -106,31 +106,34 @@ export function CustomDomainCard() {
             </p>
             <div className="mt-3 space-y-3">
               {steps.map((step, index) => (
-                <LinearBorderPanel key={step.titleKey} className="bg-background">
-                  <m.div
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ ...Spring.presets.smooth, delay: index * 0.04 }}
-                    className="flex gap-3 px-3 py-3"
-                  >
-                    <span className="mt-0.5 text-sm font-semibold text-text">{index + 1}</span>
-                    <div className="flex-1 space-y-1">
-                      <p className="text-sm font-semibold text-text">{t(step.titleKey)}</p>
-                      <p className="text-text-secondary text-sm">
-                        {t(step.descriptionKey, { base: baseDomain })}
-                        {step.meta ? <code className="ml-2 bg-fill px-2 py-1 text-xs">{step.meta}</code> : null}
-                      </p>
-                    </div>
-                  </m.div>
-                </LinearBorderPanel>
+                <m.div
+                  key={step.titleKey}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ ...Spring.presets.smooth, delay: index * 0.04 }}
+                  className="flex gap-3 px-3 py-3"
+                >
+                  <span className="size-6 rounded-full bg-accent flex items-center justify-center -mt-0.5 text-sm font-semibold text-text">
+                    {index + 1}
+                  </span>
+                  <div className="flex-1 space-y-1">
+                    <p className="text-sm font-semibold text-text">{t(step.titleKey)}</p>
+                    <p className="text-text-secondary text-sm">
+                      {t(step.descriptionKey, { base: baseDomain })}
+                      {step.meta ? <code className="ml-2 bg-fill px-2 py-1 text-xs">{step.meta}</code> : null}
+                    </p>
+                  </div>
+                </m.div>
               ))}
             </div>
           </div>
 
           <div className="flex flex-col">
-            <div className="mb-4 flex items-center justify-between">
+            <div className="mb-4 flex items-center justify-between h-5">
               <p className="text-sm font-semibold text-text">{t('settings.domain.bound-list.title')}</p>
-              {isLoading && <Loader2 className="h-4 w-4 animate-spin text-text-tertiary" />}
+              <div className="h-4 w-4">
+                {(isLoading || isFetching) && <Loader2 className="h-4 w-4 animate-spin text-text-tertiary" />}
+              </div>
             </div>
             {domains.length === 0 ? (
               <p className="text-sm text-text-tertiary">{t('settings.domain.bound-list.empty')}</p>
