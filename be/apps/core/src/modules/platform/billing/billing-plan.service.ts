@@ -1,6 +1,7 @@
 import { tenants } from '@afilmory/db'
 import { DbAccessor } from 'core/database/database.provider'
 import { BizException, ErrorCode } from 'core/errors'
+import { normalizeString } from 'core/helpers/normalize.helper'
 import { SystemSettingService } from 'core/modules/configuration/system-setting/system-setting.service'
 import { requireTenantContext } from 'core/modules/platform/tenant/tenant.context'
 import { eq } from 'drizzle-orm'
@@ -189,7 +190,7 @@ export class BillingPlanService {
     if (!entry) {
       return undefined
     }
-    const creemProductId = this.normalizeString(entry.creemProductId)
+    const creemProductId = normalizeString(entry.creemProductId)
     if (!creemProductId) {
       return undefined
     }
@@ -217,14 +218,6 @@ export class BillingPlanService {
       monthlyPrice: hasPrice ? entry.monthlyPrice : null,
       currency: entry.currency ?? null,
     }
-  }
-
-  private normalizeString(value?: string | null): string | null {
-    if (typeof value !== 'string') {
-      return null
-    }
-    const trimmed = value.trim()
-    return trimmed.length > 0 ? trimmed : null
   }
 }
 

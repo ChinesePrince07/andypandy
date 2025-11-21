@@ -42,8 +42,8 @@ export class StoragePlanService {
       .map(([id, entry]) =>
         this.buildPlanSummary(
           {
-            id,
             ...entry,
+            id,
           },
           pricing[id],
           products[id],
@@ -64,7 +64,7 @@ export class StoragePlanService {
       return null
     }
 
-    return this.buildPlanSummary({ id: planId, ...definition }, pricing[planId], products[planId])
+    return this.buildPlanSummary({ ...definition, id: planId }, pricing[planId], products[planId])
   }
 
   async getQuotaForTenant(tenantId: string): Promise<StorageQuotaSummary> {
@@ -124,6 +124,13 @@ export class StoragePlanService {
     const tenant = requireTenantContext()
     await this.assignPlanToTenant(tenant.tenant.id, planId)
     return await this.getOverviewForCurrentTenant()
+  }
+
+  /**
+   * Update the managed storage plan for the given tenant directly (e.g. from billing webhooks).
+   */
+  async updateTenantPlan(tenantId: string, planId: string | null): Promise<void> {
+    await this.assignPlanToTenant(tenantId, planId)
   }
 
   private async resolveStoragePlanIdForTenant(tenantId: string): Promise<string | null> {

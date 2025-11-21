@@ -6,12 +6,12 @@ import { useTranslation } from 'react-i18next'
 
 import { LinearBorderPanel } from '~/components/common/LinearBorderPanel'
 import { PageTabs } from '~/components/navigation/PageTabs'
-import type { UpdateSuperAdminSettingsPayload } from '~/modules/super-admin'
 import {
   SuperAdminSettingsForm,
   useSuperAdminSettingsQuery,
   useUpdateSuperAdminSettingsMutation,
 } from '~/modules/super-admin'
+import type { UpdateSuperAdminSettingsPayload } from '~/modules/super-admin/types'
 
 const APP_PLAN_SECTION_IDS = ['billing-plan-settings'] as const
 const STORAGE_PLAN_SECTION_IDS = ['storage-plan-settings'] as const
@@ -101,7 +101,6 @@ function StoragePlanEditor() {
     const catalog = (rawValues?.storagePlanCatalog as Record<string, StoragePlanCatalogEntry> | undefined) ?? {}
     const pricing = (rawValues?.storagePlanPricing as Record<string, StoragePlanPricingEntry> | undefined) ?? {}
     const products = (rawValues?.storagePlanProducts as Record<string, StoragePlanProductEntry> | undefined) ?? {}
-    const provider = (rawValues?.managedStorageProvider as string | null | undefined) ?? ''
 
     return {
       rows: Object.entries(catalog).map(([id, entry]) => ({
@@ -114,16 +113,13 @@ function StoragePlanEditor() {
         currency: pricing[id]?.currency ?? '',
         creemProductId: products[id]?.creemProductId ?? '',
       })),
-      provider,
     }
   }, [rawValues])
 
   const [rows, setRows] = useState<StoragePlanRow[]>(parsed.rows)
-  const [providerKey, setProviderKey] = useState<string>(parsed.provider ?? '')
 
   useEffect(() => {
     setRows(parsed.rows)
-    setProviderKey(parsed.provider ?? '')
   }, [parsed])
 
   const errors = useMemo(() => {
@@ -172,20 +168,21 @@ function StoragePlanEditor() {
     })
 
     return {
-      managedStorageProvider: providerKey.trim() || null,
-    }
-  }, [providerKey, rows])
+      storagePlanCatalog: catalog as Record<string, unknown>,
+      storagePlanPricing: pricing as Record<string, unknown>,
+      storagePlanProducts: products as Record<string, unknown>,
+    } as UpdateSuperAdminSettingsPayload
+  }, [rows])
 
   const baselinePayload = useMemo(() => {
     const catalog = (rawValues?.storagePlanCatalog as Record<string, StoragePlanCatalogEntry> | undefined) ?? {}
     const pricing = (rawValues?.storagePlanPricing as Record<string, StoragePlanPricingEntry> | undefined) ?? {}
     const products = (rawValues?.storagePlanProducts as Record<string, StoragePlanProductEntry> | undefined) ?? {}
-    const provider = (rawValues?.managedStorageProvider as string | null | undefined) ?? null
+
     return {
       storagePlanCatalog: catalog,
       storagePlanPricing: pricing,
       storagePlanProducts: products,
-      managedStorageProvider: provider,
     }
   }, [rawValues])
 

@@ -14,8 +14,10 @@ export async function getManagedStorageOverview(): Promise<ManagedStorageOvervie
 }
 
 export async function updateManagedStoragePlan(planId: string | null): Promise<ManagedStorageOverview> {
-  return await coreApi<ManagedStorageOverview>(STORAGE_BILLING_ENDPOINT, {
-    method: 'PATCH',
-    body: { planId },
-  })
+  return camelCaseKeys<ManagedStorageOverview>(
+    await coreApi(STORAGE_BILLING_ENDPOINT, {
+      method: 'PATCH',
+      body: { planId },
+    }),
+  )
 }

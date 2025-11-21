@@ -15,15 +15,41 @@ const managedStorageI18nKeys = {
   action: 'photos.storage.managed.actions.subscribe',
   seePlans: 'photos.storage.managed.actions.switch',
   loading: 'photos.storage.managed.actions.loading',
+  subscribed: 'photos.storage.managed.actions.subscribed',
+  upgrade: 'photos.storage.managed.actions.upgrade',
+  makeActive: 'photos.storage.managed.actions.make-active',
+  makeInactive: 'photos.storage.managed.actions.make-inactive',
 } as const
 
-export function ManagedStorageEntryCard() {
+type ManagedStorageEntryCardProps = {
+  isActive?: boolean
+  canToggle?: boolean
+  onMakeActive?: () => void
+  onMakeInactive?: () => void
+}
+
+export function ManagedStorageEntryCard({
+  isActive,
+  canToggle,
+  onMakeActive,
+  onMakeInactive,
+}: ManagedStorageEntryCardProps) {
   const { t } = useTranslation()
   const plansQuery = useManagedStoragePlansQuery()
 
   const openModal = () => {
     Modal.present(ManagedStoragePlansModal, {}, { dismissOnOutsideClick: true })
   }
+
+  const currentPlan = plansQuery.data?.currentPlan ?? null
+
+  const capacityLabel = (() => {
+    const val = currentPlan?.capacityBytes ?? null
+    if (val === null) return t('photos.storage.managed.capacity.unlimited')
+    if (val === undefined || Number.isNaN(val)) return t('photos.storage.managed.capacity.unknown')
+    const gb = val / 1024 ** 3
+    return `${t(managedStorageI18nKeys.subscribed)}: ${gb.toFixed(0)} GB`
+  })()
 
   return (
     <m.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
@@ -41,7 +67,9 @@ export function ManagedStorageEntryCard() {
 
         <div className="flex-1 space-y-1">
           <h3 className="text-text text-sm font-semibold">{t(managedStorageI18nKeys.title)}</h3>
-          <p className="text-text-tertiary text-xs">{t(managedStorageI18nKeys.description)}</p>
+          <p className="text-text-tertiary text-xs">
+            {currentPlan ? capacityLabel : t(managedStorageI18nKeys.description)}
+          </p>
         </div>
         {/* 
         <div className="text-text-tertiary/80 text-xs">
@@ -54,21 +82,75 @@ export function ManagedStorageEntryCard() {
                 : t(managedStorageI18nKeys.unavailable)}
         </div> */}
 
-        <div className="flex justify-end -mb-3 -mt-2 -mr-3.5">
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            disabled={
-              plansQuery.isLoading ||
-              plansQuery.isError ||
-              !plansQuery.data ||
-              (!plansQuery.data.managedStorageEnabled && plansQuery.data.availablePlans.length === 0)
-            }
-            onClick={openModal}
-          >
-            {t(managedStorageI18nKeys.action)}
-          </Button>
+        <div className="flex justify-end gap-2 -mb-3 -mt-2 -mr-3.5">
+          {currentPlan ? (
+            <>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                disabled={plansQuery.isLoading || plansQuery.isError}
+                onClick={openModal}
+              >
+                {t(managedStorageI18nKeys.upgrade)}
+              </Button>
+              {canToggle && isActive && onMakeInactive ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  disabled={plansQuery.isLoading || plansQuery.isError}
+                  onClick={onMakeInactive}
+                >
+                  {t(managedStorageI18nKeys.makeInactive)}
+                </Button>
+              ) : null}
+              {canToggle && !isActive && onMakeActive ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  disabled={plansQuery.isLoading || plansQuery.isError}
+                  onClick={onMakeActive}
+                >
+                  {t(managedStorageI18nKeys.makeActive)}
+                </Button>
+              ) : null}
+            </>
+          ) : (
+            <>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                disabled={
+                  plansQuery.isLoading ||
+                  plansQuery.isError ||
+                  !plansQuery.data ||
+                  (!plansQuery.data.managedStorageEnabled && plansQuery.data.availablePlans.length === 0)
+                }
+                onClick={openModal}
+              >
+                {t(managedStorageI18nKeys.action)}
+              </Button>
+              {canToggle && !isActive && onMakeActive ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  disabled={
+                    plansQuery.isLoading ||
+                    plansQuery.isError ||
+                    !plansQuery.data ||
+                    (!plansQuery.data.managedStorageEnabled && plansQuery.data.availablePlans.length === 0)
+                  }
+                  onClick={onMakeActive}
+                >
+                  {t(managedStorageI18nKeys.makeActive)}
+                </Button>
+              ) : null}
+            </>
+          )}
         </div>
       </div>
     </m.div>

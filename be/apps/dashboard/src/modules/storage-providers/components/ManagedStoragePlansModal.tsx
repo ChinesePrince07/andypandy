@@ -1,11 +1,18 @@
+import type { ModalComponent } from '@afilmory/ui'
 import { Button, DialogDescription, DialogHeader, DialogTitle } from '@afilmory/ui'
 import { clsxm } from '@afilmory/utils'
+import { useQueryClient } from '@tanstack/react-query'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
 import { getI18n } from '~/i18n'
+import type { SessionResponse } from '~/modules/auth/api/session'
+import { AUTH_SESSION_QUERY_KEY } from '~/modules/auth/api/session'
+import { authClient } from '~/modules/auth/auth-client'
+import { buildCheckoutSuccessUrl } from '~/modules/billing/creem-utils'
 import type { ManagedStoragePlanSummary } from '~/modules/storage-plans'
-import { useManagedStoragePlansQuery, useUpdateManagedStoragePlanMutation } from '~/modules/storage-plans'
+import { useManagedStoragePlansQuery } from '~/modules/storage-plans'
 
 const managedStorageI18nKeys = {
   title: 'photos.storage.managed.title',
@@ -22,30 +29,82 @@ const managedStorageI18nKeys = {
   actionsCurrent: 'photos.storage.managed.actions.current',
   actionsCancel: 'photos.storage.managed.actions.cancel',
   actionsLoading: 'photos.storage.managed.actions.loading',
+  actionsManage: 'photos.storage.managed.actions.manage',
   errorLoad: 'photos.storage.managed.error.load',
   toastSuccess: 'photos.storage.managed.toast.success',
   toastError: 'photos.storage.managed.toast.error',
+  toastCheckoutFailure: 'photos.storage.managed.toast.checkout-failure',
+  toastMissingCheckoutUrl: 'photos.storage.managed.toast.missing-checkout-url',
+  toastPortalFailure: 'photos.storage.managed.toast.portal-failure',
+  toastMissingPortalUrl: 'photos.storage.managed.toast.missing-portal-url',
+  toastCheckoutUnavailable: 'photos.storage.managed.toast.checkout-unavailable',
 } as const
 
-export function ManagedStoragePlansModal() {
-  const { t, i18n } = useTranslation()
-  const locale = i18n.language ?? i18n.resolvedLanguage ?? 'en'
+export const ManagedStoragePlansModal: ModalComponent = () => {
+  const { t } = useTranslation()
   const plansQuery = useManagedStoragePlansQuery()
-  const updateMutation = useUpdateManagedStoragePlanMutation()
+  const queryClient = useQueryClient()
+  const session = (queryClient.getQueryData<SessionResponse | null>(AUTH_SESSION_QUERY_KEY) ??
+    null) as SessionResponse | null
+  const tenantId = session?.tenant?.id ?? null
+  const tenantSlug = session?.tenant?.slug ?? null
+  const creemCustomerId = session?.user?.creemCustomerId ?? null
+  const [activeAction, setActiveAction] = useState<string | null>(null)
 
-  const numberFormatter = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 })
-  const priceFormatter = new Intl.NumberFormat(locale, { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+  const handleCheckout = async (plan: ManagedStoragePlanSummary) => {
+    const productId = plan.payment?.creemProductId ?? null
+    if (!tenantId || !productId) {
+      toast.error(t(managedStorageI18nKeys.toastCheckoutUnavailable))
+      return
+    }
+    const successUrl = buildCheckoutSuccessUrl(tenantSlug)
+    const metadata: Record<string, string> = { tenantId, storagePlanId: plan.id }
+    if (tenantSlug) {
+      metadata.tenantSlug = tenantSlug
+    }
 
-  const handleSelect = async (planId: string | null) => {
+    setActiveAction(plan.id)
     try {
-      await updateMutation.mutateAsync(planId)
-      toast.success(t(managedStorageI18nKeys.toastSuccess))
+      const { data, error } = await authClient.creem.createCheckout({
+        productId,
+        successUrl,
+        metadata,
+      })
+      if (error) {
+        throw new Error(error.message ?? t(managedStorageI18nKeys.toastCheckoutFailure))
+      }
+      if (data?.url) {
+        window.location.href = data.url
+        return
+      }
+      toast.error(t(managedStorageI18nKeys.toastMissingCheckoutUrl))
     } catch (error) {
-      toast.error(
-        t(managedStorageI18nKeys.toastError, {
-          reason: extractErrorMessage(error, t('common.unknown-error')),
-        }),
-      )
+      toast.error(error instanceof Error ? error.message : t(managedStorageI18nKeys.toastCheckoutFailure))
+    } finally {
+      setActiveAction(null)
+    }
+  }
+
+  const handlePortal = async () => {
+    if (!creemCustomerId) {
+      toast.error(t(managedStorageI18nKeys.toastCheckoutUnavailable))
+      return
+    }
+    setActiveAction('portal')
+    try {
+      const { data, error } = await authClient.creem.createPortal({ customerId: creemCustomerId })
+      if (error) {
+        throw new Error(error.message ?? t(managedStorageI18nKeys.toastPortalFailure))
+      }
+      if (data?.url) {
+        window.location.href = data.url
+        return
+      }
+      toast.error(t(managedStorageI18nKeys.toastMissingPortalUrl))
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t(managedStorageI18nKeys.toastPortalFailure))
+    } finally {
+      setActiveAction(null)
     }
   }
 
@@ -60,80 +119,81 @@ export function ManagedStoragePlansModal() {
         </DialogDescription>
       </DialogHeader>
 
-      <div className="space-y-4 mt-4">
+      <div className="mt-6 space-y-4">
         {plansQuery.isLoading ? (
-          <div className="grid gap-4 md:grid-cols-2">
-            {Array.from({ length: 2 }).map((_, index) => (
-              <div key={index} className="bg-background-tertiary h-40 animate-pulse rounded-xl" />
+          <div className="grid gap-5 md:grid-cols-2">
+            {Array.from({ length: 2 }, (_, index) => `skeleton-${index}`).map((key) => (
+              <div key={key} className="bg-background-tertiary h-64 animate-pulse rounded-lg" />
             ))}
           </div>
         ) : plansQuery.isError ? (
-          <div className="rounded-xl border border-red/30 bg-red/10 p-4 text-sm text-red">
+          <div className="rounded-lg border border-red/30 bg-red/10 p-4 text-sm text-red">
             {t(managedStorageI18nKeys.errorLoad)}
           </div>
         ) : !plansQuery.data?.managedStorageEnabled ? (
-          <div className="rounded-xl border border-border/30 bg-background-secondary/30 p-4 text-sm text-text-secondary">
+          <div className="rounded-lg border border-fill-tertiary bg-background-tertiary p-4 text-sm text-text-secondary">
             {t(managedStorageI18nKeys.unavailable)}
           </div>
         ) : plansQuery.data.availablePlans.length === 0 ? (
-          <div className="rounded-xl border border-border/30 bg-background-secondary/30 p-4 text-sm text-text-secondary">
+          <div className="rounded-lg border border-fill-tertiary bg-background-tertiary p-4 text-sm text-text-secondary">
             {t(managedStorageI18nKeys.empty)}
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-5 md:grid-cols-2">
             {plansQuery.data.availablePlans.map((plan) => (
               <PlanCard
                 key={plan.id}
                 plan={plan}
                 isCurrent={plansQuery.data?.currentPlanId === plan.id}
                 hasCurrentPlan={Boolean(plansQuery.data?.currentPlanId)}
-                isProcessing={updateMutation.isPending}
-                onSelect={() => handleSelect(plan.id)}
-                formatCapacity={(bytes) => formatCapacity(bytes, numberFormatter)}
-                formatPrice={(value, currency) => formatPrice(value, currency, priceFormatter)}
+                isProcessing={activeAction !== null}
+                onCheckout={() => handleCheckout(plan)}
+                onPortal={handlePortal}
+                canCheckout={Boolean(plan.payment?.creemProductId && tenantId)}
+                canManage={Boolean(
+                  plansQuery.data?.currentPlanId === plan.id && plan.payment?.creemProductId && creemCustomerId,
+                )}
+                isActiveAction={activeAction === plan.id}
               />
             ))}
           </div>
         )}
-
-        {plansQuery.data?.currentPlanId ? (
-          <div className="flex justify-end">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              disabled={updateMutation.isPending}
-              onClick={() => handleSelect(null)}
-            >
-              {updateMutation.isPending
-                ? t(managedStorageI18nKeys.actionsLoading)
-                : t(managedStorageI18nKeys.actionsCancel)}
-            </Button>
-          </div>
-        ) : null}
       </div>
     </div>
   )
 }
 
+ManagedStoragePlansModal.contentClassName = 'w-[700px] max-w-[85vw]'
 function PlanCard({
   plan,
   isCurrent,
   hasCurrentPlan,
   isProcessing,
-  onSelect,
-  formatCapacity,
-  formatPrice,
+  onCheckout,
+  onPortal,
+  canCheckout,
+  canManage,
+  isActiveAction,
 }: {
   plan: ManagedStoragePlanSummary
   isCurrent: boolean
   hasCurrentPlan: boolean
   isProcessing: boolean
-  onSelect: () => void
-  formatCapacity: (bytes: number | null) => string
-  formatPrice: (value: number, currency: string | null | undefined) => string
+  onCheckout: () => void
+  onPortal: () => void
+  canCheckout: boolean
+  canManage: boolean
+  isActiveAction: boolean
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const locale = i18n.language ?? i18n.resolvedLanguage ?? 'en'
+
+  const { priceFormatter, numberFormatter } = useMemo(() => {
+    return {
+      priceFormatter: new Intl.NumberFormat(locale, { minimumFractionDigits: 0, maximumFractionDigits: 2 }),
+      numberFormatter: new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }),
+    }
+  }, [locale])
 
   const hasPrice =
     plan.pricing &&
@@ -143,50 +203,70 @@ function PlanCard({
 
   const priceLabel = hasPrice
     ? t(managedStorageI18nKeys.priceLabel, {
-        price: formatPrice(plan.pricing!.monthlyPrice as number, plan.pricing!.currency ?? null),
+        price: formatPrice(plan.pricing!.monthlyPrice as number, plan.pricing!.currency ?? null, priceFormatter),
       })
     : t(managedStorageI18nKeys.priceFree)
 
-  const capacityLabel = formatCapacity(plan.capacityBytes)
+  const capacityLabel = formatCapacity(plan.capacityBytes, numberFormatter)
   const actionLabel = isCurrent
     ? t(managedStorageI18nKeys.actionsCurrent)
     : hasCurrentPlan
       ? t(managedStorageI18nKeys.actionsSwitch)
       : t(managedStorageI18nKeys.actionsSubscribe)
 
+  const isPaidPlan = Boolean(plan.payment?.creemProductId)
+  const showManage = isCurrent && canManage
+  const primaryAction = showManage ? onPortal : onCheckout
+  const primaryLabel = showManage ? t(managedStorageI18nKeys.actionsManage) : actionLabel
+  const shouldDisable = isProcessing || (isPaidPlan && !canCheckout) || (isCurrent && !showManage && isPaidPlan)
+
   return (
     <div
       className={clsxm(
-        'border-border/40 bg-background-secondary/40 flex h-full flex-col rounded-2xl border p-5',
-        isCurrent && 'border-accent/50 shadow-[0_0_0_1px_rgba(var(--color-accent-rgb),0.3)]',
+        'border-fill-tertiary bg-background-tertiary flex h-full flex-col rounded-lg border transition-all duration-200',
+        isCurrent && 'border-accent/60 bg-background',
+        !isCurrent && 'hover:border-fill-secondary',
       )}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="text-text text-base font-semibold">{plan.name}</h3>
-          {plan.description ? <p className="text-text-tertiary mt-1 text-sm leading-snug">{plan.description}</p> : null}
+      {/* Header Section */}
+      <div className="border-fill-tertiary flex items-start justify-between gap-3 border-b p-5">
+        <div className="flex-1 min-w-0">
+          <h3 className="text-text text-lg font-semibold leading-tight">{plan.name}</h3>
+          {plan.description ? (
+            <p className="text-text-tertiary mt-2 text-sm leading-relaxed whitespace-pre-line">{plan.description}</p>
+          ) : null}
         </div>
         {isCurrent ? (
-          <span className="text-accent border-accent/40 bg-accent/10 rounded-full px-2 py-0.5 text-xs font-semibold">
+          <span className="text-accent border-accent/40 bg-accent/10 shrink-0 rounded-full px-3 py-1 text-xs font-semibold whitespace-nowrap">
             {t(managedStorageI18nKeys.actionsCurrent)}
           </span>
         ) : null}
       </div>
 
-      <div className="mt-4 space-y-1 text-sm">
-        <p className="text-text font-medium">{capacityLabel}</p>
-        <p className="text-text-secondary">{priceLabel}</p>
+      {/* Features Section */}
+      <div className="flex-1 p-5 space-y-4">
+        <div>
+          <p className="text-text-secondary mb-1.5 text-xs font-medium uppercase tracking-wider">Capacity</p>
+          <p className="text-text text-base font-semibold">{capacityLabel}</p>
+        </div>
+        <div>
+          <p className="text-text-secondary mb-1.5 text-xs font-medium uppercase tracking-wider">Price</p>
+          <p className="text-text text-base font-semibold">{priceLabel}</p>
+        </div>
       </div>
 
-      <Button
-        type="button"
-        className="mt-6 w-full"
-        variant={isCurrent ? 'secondary' : 'primary'}
-        disabled={isCurrent || isProcessing}
-        onClick={onSelect}
-      >
-        {isProcessing ? t(managedStorageI18nKeys.actionsLoading) : actionLabel}
-      </Button>
+      {/* Action Button */}
+      <div className="border-fill-tertiary border-t p-5">
+        <Button
+          type="button"
+          className="w-full"
+          variant={isCurrent ? 'secondary' : 'primary'}
+          disabled={shouldDisable}
+          onClick={primaryAction}
+        >
+          {isProcessing && isActiveAction ? t(managedStorageI18nKeys.actionsLoading) : primaryLabel}
+        </Button>
+      </div>
     </div>
   )
 }
@@ -210,12 +290,4 @@ function formatPrice(value: number, currency: string | null | undefined, formatt
   const formatted = formatter.format(value)
   const normalizedCurrency = currency?.toUpperCase()?.trim()
   return normalizedCurrency ? `${normalizedCurrency} ${formatted}` : formatted
-}
-
-function extractErrorMessage(error: unknown, fallback: string) {
-  if (error instanceof Error && error.message) return error.message
-  if (typeof error === 'object' && error && 'message' in error && typeof (error as any).message === 'string') {
-    return (error as any).message
-  }
-  return fallback
 }

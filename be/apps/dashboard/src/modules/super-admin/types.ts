@@ -38,6 +38,9 @@ export type SuperAdminSettingsResponse =
 export type UpdateSuperAdminSettingsPayload = Partial<{
   managedStorageProvider: string | null
   managedStorageProviders: StorageProvider[]
+  storagePlanCatalog: Record<string, unknown>
+  storagePlanPricing: Record<string, unknown>
+  storagePlanProducts: Record<string, unknown>
 }>
 
 export type BuilderDebugProgressEvent =

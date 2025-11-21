@@ -1,6 +1,7 @@
 import { authUsers } from '@afilmory/db'
 import { DbAccessor } from 'core/database/database.provider'
 import { BizException, ErrorCode } from 'core/errors'
+import { normalizeNullableString } from 'core/helpers/normalize.helper'
 import type { SocialProvidersConfig } from 'core/modules/platform/auth/auth.config'
 import {
   BILLING_PLAN_OVERRIDES_SETTING_KEY,
@@ -229,6 +230,15 @@ export class SystemSettingService {
     return settings.managedStorageProvider ?? null
   }
 
+  async getManagedStorageProvider(): Promise<BuilderStorageProvider | null> {
+    const settings = await this.getSettings()
+    const providerKey = settings.managedStorageProvider?.trim()
+    if (!providerKey) {
+      return null
+    }
+    return (settings.managedStorageProviders ?? []).find((provider) => provider.id === providerKey) ?? null
+  }
+
   async getOverview(): Promise<SystemSettingOverview> {
     const settings = await this.getSettings()
     const totalUsers = await this.getTotalUserCount()
@@ -328,28 +338,28 @@ export class SystemSettingService {
     }
 
     if (patch.oauthGoogleClientId !== undefined) {
-      const sanitized = this.normalizeNullableString(patch.oauthGoogleClientId)
+      const sanitized = normalizeNullableString(patch.oauthGoogleClientId)
       if (sanitized !== current.oauthGoogleClientId) {
         enqueueUpdate('oauthGoogleClientId', sanitized)
       }
     }
 
     if (patch.oauthGoogleClientSecret !== undefined) {
-      const sanitized = this.normalizeNullableString(patch.oauthGoogleClientSecret)
+      const sanitized = normalizeNullableString(patch.oauthGoogleClientSecret)
       if (sanitized !== current.oauthGoogleClientSecret) {
         enqueueUpdate('oauthGoogleClientSecret', sanitized)
       }
     }
 
     if (patch.oauthGithubClientId !== undefined) {
-      const sanitized = this.normalizeNullableString(patch.oauthGithubClientId)
+      const sanitized = normalizeNullableString(patch.oauthGithubClientId)
       if (sanitized !== current.oauthGithubClientId) {
         enqueueUpdate('oauthGithubClientId', sanitized)
       }
     }
 
     if (patch.oauthGithubClientSecret !== undefined) {
-      const sanitized = this.normalizeNullableString(patch.oauthGithubClientSecret)
+      const sanitized = normalizeNullableString(patch.oauthGithubClientSecret)
       if (sanitized !== current.oauthGithubClientSecret) {
         enqueueUpdate('oauthGithubClientSecret', sanitized)
       }
@@ -371,7 +381,7 @@ export class SystemSettingService {
     }
 
     if (patch.managedStorageProvider !== undefined && patch.managedStorageProvider !== current.managedStorageProvider) {
-      enqueueUpdate('managedStorageProvider', this.normalizeNullableString(patch.managedStorageProvider))
+      enqueueUpdate('managedStorageProvider', normalizeNullableString(patch.managedStorageProvider))
     }
 
     if (patch.managedStorageProviders !== undefined) {
@@ -527,8 +537,8 @@ export class SystemSettingService {
           raw === null || raw === undefined
             ? null
             : typeof raw === 'string'
-              ? this.normalizeNullableString(raw)
-              : this.normalizeNullableString(String(raw))
+              ? normalizeNullableString(raw)
+              : normalizeNullableString(String(raw))
         planPatch.currency = normalized
       } else if (descriptor.key === 'monthlyPrice') {
         const numericValue = raw === null || raw === undefined ? null : typeof raw === 'number' ? raw : Number(raw)
@@ -549,8 +559,8 @@ export class SystemSettingService {
         raw === null || raw === undefined
           ? null
           : typeof raw === 'string'
-            ? this.normalizeNullableString(raw)
-            : this.normalizeNullableString(String(raw))
+            ? normalizeNullableString(raw)
+            : normalizeNullableString(String(raw))
       summary.products[descriptor.planId] = { creemProductId: normalized }
     }
 
@@ -609,7 +619,7 @@ export class SystemSettingService {
       for (const [planId, product] of Object.entries(updates.products) as Array<
         [BillingPlanId, BillingPlanPaymentInfo]
       >) {
-        const normalized = this.normalizeNullableString(product.creemProductId)
+        const normalized = normalizeNullableString(product.creemProductId)
         if (!normalized) {
           delete nextProducts[planId]
         } else {
@@ -682,14 +692,6 @@ export class SystemSettingService {
     }
 
     return providers
-  }
-
-  private normalizeNullableString(value: string | null | undefined): string | null {
-    if (value === undefined || value === null) {
-      return null
-    }
-    const trimmed = value.trim()
-    return trimmed.length > 0 ? trimmed : null
   }
 
   private normalizeGatewayUrl(value: string | null | undefined): string | null {

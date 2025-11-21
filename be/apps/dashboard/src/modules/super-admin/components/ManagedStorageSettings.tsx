@@ -11,7 +11,6 @@ import { storageProvidersI18nKeys } from '~/modules/storage-providers/constants'
 import {
   createEmptyProvider,
   normalizeStorageProviderConfig,
-  reorderProvidersByActive,
 } from '~/modules/storage-providers/utils'
 
 import { useSuperAdminSettingsQuery, useUpdateSuperAdminSettingsMutation } from '../hooks'
@@ -89,7 +88,6 @@ export function ManagedStorageSettings() {
     }
   }, [providers, managedId])
 
-  const orderedProviders = useMemo(() => reorderProvidersByActive(providers, managedId), [providers, managedId])
   const providersChanged = useMemo(
     () => JSON.stringify(baselineProviders) !== JSON.stringify(providers),
     [baselineProviders, providers],
@@ -183,11 +181,11 @@ export function ManagedStorageSettings() {
         </Button>
       </div>
 
-      {orderedProviders.length === 0 ? (
+      {providers.length === 0 ? (
         <p className="text-text-secondary text-sm">{t('superadmin.settings.managed-storage.empty')}</p>
       ) : (
         <div className="space-y-3">
-          {orderedProviders.map((provider) => (
+          {providers.map((provider) => (
             <div
               key={provider.id}
               className={[
