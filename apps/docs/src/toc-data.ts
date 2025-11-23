@@ -453,6 +453,12 @@ export const tocData: FileToc[] = [
                 "level": 3,
                 "text": "Docker",
                 "children": []
+              },
+              {
+                "id": "heading-multi-tenant-saas",
+                "level": 3,
+                "text": "Multi-tenant SaaS",
+                "children": []
               }
             ]
           },
@@ -848,6 +854,99 @@ export const tocData: FileToc[] = [
     ]
   },
   {
+    "file": "deployment/saas.mdx",
+    "path": "/deployment/saas",
+    "title": "Advanced SaaS Deployment",
+    "toc": [
+      {
+        "id": "heading-advanced-saas-deployment",
+        "level": 1,
+        "text": "Advanced SaaS Deployment",
+        "children": [
+          {
+            "id": "heading-components",
+            "level": 2,
+            "text": "Components",
+            "children": []
+          },
+          {
+            "id": "heading-quick-start-with-docker-all-in-one-core-image",
+            "level": 2,
+            "text": "Quick start with Docker (all-in-one core image)",
+            "children": []
+          },
+          {
+            "id": "heading-first-login-flow",
+            "level": 2,
+            "text": "First-login flow",
+            "children": []
+          },
+          {
+            "id": "heading-domain-model",
+            "level": 2,
+            "text": "Domain model",
+            "children": []
+          },
+          {
+            "id": "heading-dns-layout",
+            "level": 2,
+            "text": "DNS layout",
+            "children": []
+          },
+          {
+            "id": "heading-runtime-configuration",
+            "level": 2,
+            "text": "Runtime configuration",
+            "children": [
+              {
+                "id": "heading-core-service-beappscore",
+                "level": 3,
+                "text": "Core service (`be/apps/core`)",
+                "children": []
+              },
+              {
+                "id": "heading-oauth-gateway-beappsoauth-gateway",
+                "level": 3,
+                "text": "OAuth Gateway (`be/apps/oauth-gateway`)",
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "heading-request-routing-flow",
+            "level": 2,
+            "text": "Request routing flow",
+            "children": []
+          },
+          {
+            "id": "heading-tenant-lifecycle",
+            "level": 2,
+            "text": "Tenant lifecycle",
+            "children": []
+          },
+          {
+            "id": "heading-deployment-checklist",
+            "level": 2,
+            "text": "Deployment checklist",
+            "children": []
+          },
+          {
+            "id": "heading-licensing-notice-commercial-use",
+            "level": 2,
+            "text": "Licensing notice (commercial use)",
+            "children": []
+          },
+          {
+            "id": "heading-notes",
+            "level": 2,
+            "text": "Notes",
+            "children": []
+          }
+        ]
+      }
+    ]
+  },
+  {
     "file": "deployment/vercel.mdx",
     "path": "/deployment/vercel",
     "title": "Vercel",
@@ -963,7 +1062,7 @@ export const tocData: FileToc[] = [
   {
     "file": "docs-site.mdx",
     "path": "/docs-site",
-    "title": "Docs site",
+    "title": "Docs Site",
     "toc": [
       {
         "id": "heading-afilmory-docs-site",

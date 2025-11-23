@@ -77,11 +77,11 @@ function App({ url }: { url?: string }) {
 
           <main className="bg-background flex flex-1 items-center justify-center">
             {/* 移动端顶部栏 */}
-            <div className="bg-background fixed top-0 right-0 left-0 z-30 h-16 border-b border-gray-200 lg:hidden">
+            <div className="fixed top-0 right-0 left-0 z-30 h-16 border-b border-zinc-200 bg-white/80 backdrop-blur-xl lg:hidden dark:border-zinc-800 dark:bg-zinc-950/80">
               <div className="flex h-full items-center px-4">
                 <button
                   onClick={toggleSidebar}
-                  className="text-text-primary hover:bg-background-secondary rounded-lg p-2 transition-colors"
+                  className="rounded-lg p-2 text-zinc-700 transition-colors hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
                   type="button"
                 >
                   <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -89,7 +89,7 @@ function App({ url }: { url?: string }) {
                   </svg>
                 </button>
                 <div className="flex-1 text-center">
-                  <h1 className="text-text-primary text-lg font-semibold">Afilmory Docs</h1>
+                  <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Afilmory Docs</h1>
                 </div>
                 <div className="w-10" /> {/* 平衡按钮 */}
               </div>
@@ -149,11 +149,11 @@ function App({ url }: { url?: string }) {
 
         {/* 主内容区域 */}
         <main className="bg-background relative flex-1 overflow-y-auto" ref={mainContentRef}>
-          <div className="bg-background border-border sticky top-0 z-30 h-16 border-b backdrop-blur-3xl lg:hidden">
+          <div className="sticky top-0 z-30 h-16 border-b border-zinc-200 bg-white/80 backdrop-blur-xl lg:hidden dark:border-zinc-800 dark:bg-zinc-950/80">
             <div className="flex h-full items-center px-4">
               <button
                 onClick={toggleSidebar}
-                className="text-text-primary hover:bg-background-secondary rounded-lg p-2 transition-colors"
+                className="rounded-lg p-2 text-zinc-700 transition-colors hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
                 type="button"
               >
                 <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -162,7 +162,7 @@ function App({ url }: { url?: string }) {
               </button>
               <div className="flex-1 text-center">
                 <a href="/" className="select-none">
-                  <h1 className="text-text-primary text-lg font-semibold">Afilmory Docs</h1>
+                  <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Afilmory Docs</h1>
                 </a>
               </div>
               <div className="w-10" /> {/* 平衡按钮 */}

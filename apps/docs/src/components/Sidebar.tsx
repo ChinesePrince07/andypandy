@@ -197,7 +197,7 @@ export function Sidebar({ currentPath, onNavigate }: SidebarProps) {
   const navigationTree = buildNavigationTree(routes)
 
   return (
-    <aside className="relative h-screen w-72 overflow-x-hidden overflow-y-auto border-r border-zinc-200 dark:border-zinc-800">
+    <aside className="lg:bg-background relative h-screen w-72 overflow-x-hidden overflow-y-auto border-r border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
       <HeaderLogoSection />
 
       <nav className="space-y-0.5 px-2 py-3">

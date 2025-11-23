@@ -17,7 +17,7 @@ export function MobileTableOfContents({ currentPath, handleScroll, scrollerEleme
       {/* TOC 按钮 */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="hover:bg-material-opaque text-text-primary  bg-material-opaque border-border fixed right-4 bottom-6 z-50 flex h-12 w-12 items-center justify-center rounded-full border backdrop-blur-xl transition-all duration-200 xl:hidden"
+        className="fixed right-4 bottom-6 z-50 flex h-12 w-12 items-center justify-center rounded-full border border-zinc-200 bg-white/90 text-zinc-700 shadow-lg backdrop-blur-xl transition-all duration-200 hover:bg-white hover:shadow-xl xl:hidden dark:border-zinc-800 dark:bg-zinc-900/90 dark:text-zinc-300 dark:hover:bg-zinc-900"
         aria-label="Toggle TOC"
         type="button"
       >
