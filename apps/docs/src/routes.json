@@ -143,6 +143,17 @@
     }
   },
   {
+    "path": "/saas/architecture",
+    "title": "SaaS Architecture",
+    "meta": {
+      "title": "SaaS Architecture",
+      "description": "Tenant model, domain routing, OAuth flow, and data injection paths.",
+      "createdAt": "2025-11-23T20:20:00+08:00",
+      "lastModified": "2025-11-23T20:44:02+08:00",
+      "order": "36"
+    }
+  },
+  {
     "path": "/storage/providers/eagle",
     "title": "Eagle Storage",
     "meta": {
@@ -154,13 +165,24 @@
     }
   },
   {
+    "path": "/saas/deployment",
+    "title": "SaaS Deployment",
+    "meta": {
+      "title": "SaaS Deployment",
+      "description": "Deploy the multi-tenant stack (core API + OAuth gateway) with subdomains and custom domains.",
+      "createdAt": "2025-11-23T19:50:00+08:00",
+      "lastModified": "2025-11-23T20:44:02+08:00",
+      "order": "37"
+    }
+  },
+  {
     "path": "/builder",
     "title": "Builder",
     "meta": {
       "title": "Builder",
       "description": "Overview of the photo pipeline and how to choose the right entrypoint for your run.",
       "createdAt": "2025-11-14T22:10:00+08:00",
-      "lastModified": "2025-11-23T19:40:52+08:00",
+      "lastModified": "2025-11-23T20:44:02+08:00",
       "order": "40"
     }
   },
@@ -171,7 +193,7 @@
       "title": "Deployment",
       "description": "Deploy your gallery to static hosting, SSR platforms, or Docker.",
       "createdAt": "2025-07-20T22:35:03+08:00",
-      "lastModified": "2025-11-23T20:22:24+08:00",
+      "lastModified": "2025-11-23T20:44:02+08:00",
       "order": "50"
     }
   },
@@ -220,14 +242,25 @@
     }
   },
   {
-    "path": "/deployment/saas",
-    "title": "Advanced SaaS Deployment",
+    "path": "/saas",
+    "title": "SaaS Mode",
     "meta": {
-      "title": "Advanced SaaS Deployment",
-      "description": "Run the full multi-tenant stack (API + OAuth gateway) with subdomains and custom domains.",
-      "createdAt": "2025-11-23T19:50:00+08:00",
-      "lastModified": "2025-11-23T20:22:24+08:00",
+      "title": "SaaS Mode",
+      "description": "Why run Afilmory as a multi-tenant SaaS, what it can do, and where to start.",
+      "createdAt": "2025-11-23T20:20:00+08:00",
+      "lastModified": "2025-11-23T20:44:02+08:00",
       "order": "60"
+    }
+  },
+  {
+    "path": "/saas/cms",
+    "title": "CMS & Live Updates",
+    "meta": {
+      "title": "CMS & Live Updates",
+      "description": "How SaaS mode lets users change photos and metadata and see updates instantly without rebuilding.",
+      "createdAt": "2025-11-23T20:26:00+08:00",
+      "lastModified": "2025-11-23T20:44:02+08:00",
+      "order": "61"
     }
   },
   {

@@ -2,13 +2,15 @@
 title: Deployment
 description: Deploy your gallery to static hosting, SSR platforms, or Docker.
 createdAt: 2025-07-20T22:35:03+08:00
-lastModified: 2025-11-23T20:22:24+08:00
+lastModified: 2025-11-23T20:44:02+08:00
 order: 50
 ---
 
 # Deployment
 
 Afilmory supports multiple deployment options, from simple static hosting to full server-side rendering. Choose the method that best fits your needs.
+
+**Recommendation:** For most users, deploy with our Docker image (see [Docker guide](/deployment/docker)) to get SSR-grade SEO and proper social sharing OG images. The pure SPA build cannot surface new photos until you rebuild. If you need real-time updates and a full CMS/backoffice, use the SaaS stack ([SaaS Deployment](/saas/deployment))—one install can host many tenants. Official SaaS demo: https://afilmory.art/.
 
 ## Deployment Options
 
@@ -51,9 +53,7 @@ Bundle everything in a container for self-hosting or cloud deployment.
 
 ### Multi-tenant SaaS
 
-Deploy the full backend + OAuth gateway with subdomains and custom domains.
-
-- [Advanced SaaS Deployment](/deployment/saas)
+- See the dedicated chapter: [SaaS Mode](/saas) and [SaaS Deployment](/saas/deployment)
 
 ## Deployment Workflow
 

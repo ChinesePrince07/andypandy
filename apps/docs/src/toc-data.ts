@@ -854,99 +854,6 @@ export const tocData: FileToc[] = [
     ]
   },
   {
-    "file": "deployment/saas.mdx",
-    "path": "/deployment/saas",
-    "title": "Advanced SaaS Deployment",
-    "toc": [
-      {
-        "id": "heading-advanced-saas-deployment",
-        "level": 1,
-        "text": "Advanced SaaS Deployment",
-        "children": [
-          {
-            "id": "heading-components",
-            "level": 2,
-            "text": "Components",
-            "children": []
-          },
-          {
-            "id": "heading-quick-start-with-docker-all-in-one-core-image",
-            "level": 2,
-            "text": "Quick start with Docker (all-in-one core image)",
-            "children": []
-          },
-          {
-            "id": "heading-first-login-flow",
-            "level": 2,
-            "text": "First-login flow",
-            "children": []
-          },
-          {
-            "id": "heading-domain-model",
-            "level": 2,
-            "text": "Domain model",
-            "children": []
-          },
-          {
-            "id": "heading-dns-layout",
-            "level": 2,
-            "text": "DNS layout",
-            "children": []
-          },
-          {
-            "id": "heading-runtime-configuration",
-            "level": 2,
-            "text": "Runtime configuration",
-            "children": [
-              {
-                "id": "heading-core-service-beappscore",
-                "level": 3,
-                "text": "Core service (`be/apps/core`)",
-                "children": []
-              },
-              {
-                "id": "heading-oauth-gateway-beappsoauth-gateway",
-                "level": 3,
-                "text": "OAuth Gateway (`be/apps/oauth-gateway`)",
-                "children": []
-              }
-            ]
-          },
-          {
-            "id": "heading-request-routing-flow",
-            "level": 2,
-            "text": "Request routing flow",
-            "children": []
-          },
-          {
-            "id": "heading-tenant-lifecycle",
-            "level": 2,
-            "text": "Tenant lifecycle",
-            "children": []
-          },
-          {
-            "id": "heading-deployment-checklist",
-            "level": 2,
-            "text": "Deployment checklist",
-            "children": []
-          },
-          {
-            "id": "heading-licensing-notice-commercial-use",
-            "level": 2,
-            "text": "Licensing notice (commercial use)",
-            "children": []
-          },
-          {
-            "id": "heading-notes",
-            "level": 2,
-            "text": "Notes",
-            "children": []
-          }
-        ]
-      }
-    ]
-  },
-  {
     "file": "deployment/vercel.mdx",
     "path": "/deployment/vercel",
     "title": "Vercel",
@@ -1266,6 +1173,225 @@ export const tocData: FileToc[] = [
             "id": "heading-next-steps",
             "level": 2,
             "text": "Next Steps",
+            "children": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "file": "saas/index.mdx",
+    "path": "/saas",
+    "title": "SaaS Mode",
+    "toc": [
+      {
+        "id": "heading-saas-mode",
+        "level": 1,
+        "text": "SaaS Mode",
+        "children": [
+          {
+            "id": "heading-why-saas",
+            "level": 2,
+            "text": "Why SaaS?",
+            "children": []
+          },
+          {
+            "id": "heading-what-you-can-do",
+            "level": 2,
+            "text": "What you can do",
+            "children": []
+          },
+          {
+            "id": "heading-architecture-at-a-glance",
+            "level": 2,
+            "text": "Architecture at a glance",
+            "children": []
+          },
+          {
+            "id": "heading-licensing-note",
+            "level": 2,
+            "text": "Licensing note",
+            "children": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "file": "saas/architecture.mdx",
+    "path": "/saas/architecture",
+    "title": "SaaS Architecture",
+    "toc": [
+      {
+        "id": "heading-saas-architecture",
+        "level": 1,
+        "text": "SaaS Architecture",
+        "children": [
+          {
+            "id": "heading-tenant-model",
+            "level": 2,
+            "text": "Tenant model",
+            "children": []
+          },
+          {
+            "id": "heading-domains",
+            "level": 2,
+            "text": "Domains",
+            "children": []
+          },
+          {
+            "id": "heading-tenant-resolution-core",
+            "level": 2,
+            "text": "Tenant resolution (core)",
+            "children": []
+          },
+          {
+            "id": "heading-oauth-gateway-flow",
+            "level": 2,
+            "text": "OAuth gateway flow",
+            "children": []
+          },
+          {
+            "id": "heading-data-path",
+            "level": 2,
+            "text": "Data path",
+            "children": []
+          },
+          {
+            "id": "heading-static-assets-roots",
+            "level": 2,
+            "text": "Static assets roots",
+            "children": []
+          },
+          {
+            "id": "heading-billing-plans",
+            "level": 2,
+            "text": "Billing & plans",
+            "children": []
+          },
+          {
+            "id": "heading-root-account-provisioning",
+            "level": 2,
+            "text": "Root account provisioning",
+            "children": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "file": "saas/cms.mdx",
+    "path": "/saas/cms",
+    "title": "CMS & Live Updates",
+    "toc": [
+      {
+        "id": "heading-cms-live-updates",
+        "level": 1,
+        "text": "CMS & Live Updates",
+        "children": [
+          {
+            "id": "heading-how-it-works",
+            "level": 2,
+            "text": "How it works",
+            "children": []
+          },
+          {
+            "id": "heading-editing-flow-dashboardcms",
+            "level": 2,
+            "text": "Editing flow (dashboard/CMS)",
+            "children": []
+          },
+          {
+            "id": "heading-when-to-run-the-builder",
+            "level": 2,
+            "text": "When to run the builder",
+            "children": []
+          },
+          {
+            "id": "heading-caching-behavior",
+            "level": 2,
+            "text": "Caching behavior",
+            "children": []
+          },
+          {
+            "id": "heading-permissions",
+            "level": 2,
+            "text": "Permissions",
+            "children": []
+          },
+          {
+            "id": "heading-gotchas",
+            "level": 2,
+            "text": "Gotchas",
+            "children": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "file": "saas/deployment.mdx",
+    "path": "/saas/deployment",
+    "title": "SaaS Deployment",
+    "toc": [
+      {
+        "id": "heading-saas-deployment",
+        "level": 1,
+        "text": "SaaS Deployment",
+        "children": [
+          {
+            "id": "heading-components",
+            "level": 2,
+            "text": "Components",
+            "children": []
+          },
+          {
+            "id": "heading-domain-model-dns",
+            "level": 2,
+            "text": "Domain model & DNS",
+            "children": []
+          },
+          {
+            "id": "heading-quick-start-with-docker-core",
+            "level": 2,
+            "text": "Quick start with Docker (core)",
+            "children": [
+              {
+                "id": "heading-minimal-env-core",
+                "level": 3,
+                "text": "Minimal env (core)",
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "heading-oauth-gateway",
+            "level": 2,
+            "text": "OAuth Gateway",
+            "children": []
+          },
+          {
+            "id": "heading-first-login-flow",
+            "level": 2,
+            "text": "First-login flow",
+            "children": []
+          },
+          {
+            "id": "heading-request-routing",
+            "level": 2,
+            "text": "Request routing",
+            "children": []
+          },
+          {
+            "id": "heading-deployment-checklist",
+            "level": 2,
+            "text": "Deployment checklist",
+            "children": []
+          },
+          {
+            "id": "heading-licensing-notice-commercial-use",
+            "level": 2,
+            "text": "Licensing notice (commercial use)",
             "children": []
           }
         ]

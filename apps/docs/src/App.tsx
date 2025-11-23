@@ -101,7 +101,7 @@ function App({ url }: { url?: string }) {
               <p className="text-text-secondary text-lg">Page not found</p>
               <button
                 onClick={() => handleNavigate('/')}
-                className="bg-accent mt-6 rounded-2xl px-4 py-2 text-white transition-opacity hover:opacity-90"
+                className="bg-accent mt-6 rounded-full px-4 py-2 text-white transition-opacity hover:opacity-90 dark:text-zinc-900"
                 type="button"
               >
                 Return Home <ArrowRight className="inline-block h-4 w-4" />

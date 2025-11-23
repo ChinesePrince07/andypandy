@@ -6,20 +6,23 @@ import Route3 from '../contents/architecture.mdx'
 import Route7 from '../contents/builder/built-ins.mdx'
 import Route1 from '../contents/builder/cli.mdx'
 import Route4 from '../contents/builder/config.mdx'
-import Route14 from '../contents/builder/index.mdx'
+import Route16 from '../contents/builder/index.mdx'
 import Route5 from '../contents/builder/pipeline.mdx'
 import Route6 from '../contents/builder/plugins.mdx'
-import Route18 from '../contents/deployment/cloudflare-pages.mdx'
-import Route16 from '../contents/deployment/docker.mdx'
-import Route17 from '../contents/deployment/github-pages.mdx'
-import Route15 from '../contents/deployment/index.mdx'
-import Route20 from '../contents/deployment/saas.mdx'
-import Route19 from '../contents/deployment/vercel.mdx'
-import Route21 from '../contents/docs-site.mdx'
+import Route20 from '../contents/deployment/cloudflare-pages.mdx'
+import Route18 from '../contents/deployment/docker.mdx'
+import Route19 from '../contents/deployment/github-pages.mdx'
+import Route17 from '../contents/deployment/index.mdx'
+import Route21 from '../contents/deployment/vercel.mdx'
+import Route24 from '../contents/docs-site.mdx'
 import Route2 from '../contents/getting-started/quick-start.mdx'
 import Route0 from '../contents/index.mdx'
+import Route13 from '../contents/saas/architecture.mdx'
+import Route23 from '../contents/saas/cms.mdx'
+import Route15 from '../contents/saas/deployment.mdx'
+import Route22 from '../contents/saas/index.mdx'
 import Route10 from '../contents/storage/providers/b2.mdx'
-import Route13 from '../contents/storage/providers/eagle.mdx'
+import Route14 from '../contents/storage/providers/eagle.mdx'
 import Route11 from '../contents/storage/providers/github.mdx'
 import Route8 from '../contents/storage/providers/index.mdx'
 import Route12 from '../contents/storage/providers/local.mdx'
@@ -190,8 +193,20 @@ export const routes: RouteConfig[] = [
     }
   },
   {
-    path: '/storage/providers/eagle',
+    path: '/saas/architecture',
     component: Route13,
+    title: 'SaaS Architecture',
+    meta: {
+        "title": "SaaS Architecture",
+        "description": "Tenant model, domain routing, OAuth flow, and data injection paths.",
+        "createdAt": "2025-11-23T20:20:00+08:00",
+        "lastModified": "2025-11-23T20:44:02+08:00",
+        "order": "36"
+    }
+  },
+  {
+    path: '/storage/providers/eagle',
+    component: Route14,
     title: 'Eagle Storage',
     meta: {
         "title": "Eagle Storage",
@@ -202,32 +217,44 @@ export const routes: RouteConfig[] = [
     }
   },
   {
+    path: '/saas/deployment',
+    component: Route15,
+    title: 'SaaS Deployment',
+    meta: {
+        "title": "SaaS Deployment",
+        "description": "Deploy the multi-tenant stack (core API + OAuth gateway) with subdomains and custom domains.",
+        "createdAt": "2025-11-23T19:50:00+08:00",
+        "lastModified": "2025-11-23T20:44:02+08:00",
+        "order": "37"
+    }
+  },
+  {
     path: '/builder',
-    component: Route14,
+    component: Route16,
     title: 'Builder',
     meta: {
         "title": "Builder",
         "description": "Overview of the photo pipeline and how to choose the right entrypoint for your run.",
         "createdAt": "2025-11-14T22:10:00+08:00",
-        "lastModified": "2025-11-23T19:40:52+08:00",
+        "lastModified": "2025-11-23T20:44:02+08:00",
         "order": "40"
     }
   },
   {
     path: '/deployment',
-    component: Route15,
+    component: Route17,
     title: 'Deployment',
     meta: {
         "title": "Deployment",
         "description": "Deploy your gallery to static hosting, SSR platforms, or Docker.",
         "createdAt": "2025-07-20T22:35:03+08:00",
-        "lastModified": "2025-11-23T20:22:24+08:00",
+        "lastModified": "2025-11-23T20:44:02+08:00",
         "order": "50"
     }
   },
   {
     path: '/deployment/docker',
-    component: Route16,
+    component: Route18,
     title: 'Docker',
     meta: {
         "title": "Docker",
@@ -239,7 +266,7 @@ export const routes: RouteConfig[] = [
   },
   {
     path: '/deployment/github-pages',
-    component: Route17,
+    component: Route19,
     title: 'GitHub Pages',
     meta: {
         "title": "GitHub Pages",
@@ -251,7 +278,7 @@ export const routes: RouteConfig[] = [
   },
   {
     path: '/deployment/cloudflare-pages',
-    component: Route18,
+    component: Route20,
     title: 'Cloudflare Pages',
     meta: {
         "title": "Cloudflare Pages",
@@ -263,7 +290,7 @@ export const routes: RouteConfig[] = [
   },
   {
     path: '/deployment/vercel',
-    component: Route19,
+    component: Route21,
     title: 'Vercel',
     meta: {
         "title": "Vercel",
@@ -274,20 +301,32 @@ export const routes: RouteConfig[] = [
     }
   },
   {
-    path: '/deployment/saas',
-    component: Route20,
-    title: 'Advanced SaaS Deployment',
+    path: '/saas',
+    component: Route22,
+    title: 'SaaS Mode',
     meta: {
-        "title": "Advanced SaaS Deployment",
-        "description": "Run the full multi-tenant stack (API + OAuth gateway) with subdomains and custom domains.",
-        "createdAt": "2025-11-23T19:50:00+08:00",
-        "lastModified": "2025-11-23T20:22:24+08:00",
+        "title": "SaaS Mode",
+        "description": "Why run Afilmory as a multi-tenant SaaS, what it can do, and where to start.",
+        "createdAt": "2025-11-23T20:20:00+08:00",
+        "lastModified": "2025-11-23T20:44:02+08:00",
         "order": "60"
     }
   },
   {
+    path: '/saas/cms',
+    component: Route23,
+    title: 'CMS & Live Updates',
+    meta: {
+        "title": "CMS & Live Updates",
+        "description": "How SaaS mode lets users change photos and metadata and see updates instantly without rebuilding.",
+        "createdAt": "2025-11-23T20:26:00+08:00",
+        "lastModified": "2025-11-23T20:44:02+08:00",
+        "order": "61"
+    }
+  },
+  {
     path: '/docs-site',
-    component: Route21,
+    component: Route24,
     title: 'Docs Site',
     meta: {
         "title": "Docs Site",
