@@ -10,9 +10,10 @@ const spring: Transition = {
   damping: 250,
 }
 
+const defaultScrollerElement = typeof window !== 'undefined' ? document.documentElement : undefined
 export const springScrollTo = (
   value: number,
-  scrollerElement: HTMLElement = document.documentElement,
+  scrollerElement: HTMLElement = defaultScrollerElement!,
   axis: 'x' | 'y' = 'y',
 ) => {
   const currentValue = axis === 'x' ? scrollerElement?.scrollLeft : scrollerElement?.scrollTop
@@ -64,13 +65,13 @@ export const springScrollTo = (
 export const springScrollToElement = (
   element: HTMLElement,
   delta = 40,
-  scrollerElement: HTMLElement = document.documentElement,
+  scrollerElement: HTMLElement = defaultScrollerElement!,
 ) => {
   const y = calculateElementTop(element)
 
   const to = y + delta
 
-  return springScrollTo(to, scrollerElement || document.documentElement)
+  return springScrollTo(to, scrollerElement)
 }
 
 const calculateElementTop = (el: HTMLElement) => {
