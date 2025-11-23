@@ -1,7 +1,6 @@
 export { ContentFooter } from './ContentFooter'
 export { DocumentNavigation } from './DocumentNavigation'
 export { HeaderLogoSection } from './HeaderLogoSection'
-export { Divider, LinearBorderPanel, VerticalDivider } from './LinearBorderPanel'
 export { MDX } from './MDX'
 export { MobileTableOfContents } from './MobileTableOfContents'
 export { Sidebar } from './Sidebar'

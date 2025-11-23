@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "build": "pnpm build:client && pnpm build:static && pnpm output",
-    "build:client": "tsc -b && vite build",
+    "build:client": "vite build",
     "build:static": "vite build --ssr src/main-static.tsx --outDir dist/static",
     "create:doc": "tsx ../../scripts/create-doc.ts",
     "dev": "vite",
