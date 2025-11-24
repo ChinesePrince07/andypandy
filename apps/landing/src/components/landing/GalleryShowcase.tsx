@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useLocale, useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
+import Masonry, { ResponsiveMasonry } from 'react-responsive-masonry'
 
 import { API_URL } from '~/constants/env'
 
@@ -152,109 +153,113 @@ export const GalleryShowcase = () => {
       )}
 
       {!isLoading && !error && galleries.length > 0 && (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {galleries.map((gallery) => (
-            <a
-              key={gallery.id}
-              href={buildGalleryUrl(gallery)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group relative overflow-hidden rounded-3xl border border-white/10 bg-linear-to-br from-white/8 to-transparent p-6 transition hover:border-white/30 hover:bg-white/10"
-            >
-              {/* Author Avatar & Info */}
-              {gallery.author && (
-                <div className="mb-4 flex items-center gap-3">
-                  <div className="relative size-10 shrink-0 overflow-hidden rounded-full border border-white/10 bg-white/5">
-                    {gallery.author.avatar ? (
-                      <img
-                        src={gallery.author.avatar}
-                        alt={gallery.author.name}
-                        className="h-full w-full object-cover"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement
-                          target.style.display = 'none'
-                        }}
-                      />
-                    ) : null}
-                    {(!gallery.author.avatar ||
-                      gallery.author.avatar === '') && (
-                      <div className="bg-accent-20 text-accent flex h-full w-full items-center justify-center">
-                        <span className="text-sm font-medium">
-                          {gallery.author.name.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                    )}
+        <ResponsiveMasonry
+          columnsCountBreakPoints={{ 350: 1, 640: 2, 1024: 3 }}
+        >
+          <Masonry gutter="1rem">
+            {galleries.map((gallery) => (
+              <a
+                key={gallery.id}
+                href={buildGalleryUrl(gallery)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group relative block w-full overflow-hidden rounded-3xl border border-white/10 bg-linear-to-br from-white/8 to-transparent p-6 transition hover:border-white/30 hover:bg-white/10"
+              >
+                {/* Author Avatar & Info */}
+                {gallery.author && (
+                  <div className="mb-4 flex items-center gap-3">
+                    <div className="relative size-10 shrink-0 overflow-hidden rounded-full border border-white/10 bg-white/5">
+                      {gallery.author.avatar ? (
+                        <img
+                          src={gallery.author.avatar}
+                          alt={gallery.author.name}
+                          className="h-full w-full object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement
+                            target.style.display = 'none'
+                          }}
+                        />
+                      ) : null}
+                      {(!gallery.author.avatar ||
+                        gallery.author.avatar === '') && (
+                        <div className="bg-accent-20 text-accent flex h-full w-full items-center justify-center">
+                          <span className="text-sm font-medium">
+                            {gallery.author.name.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-white">
+                        {gallery.author.name}
+                      </p>
+                      <p className="truncate text-xs text-white/50">
+                        {getDisplayUrl(gallery)}
+                      </p>
+                    </div>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-white">
-                      {gallery.author.name}
-                    </p>
-                    <p className="truncate text-xs text-white/50">
-                      {getDisplayUrl(gallery)}
-                    </p>
-                  </div>
-                </div>
-              )}
+                )}
 
-              {/* Site Name */}
-              <h3 className="group-hover:text-accent mb-2 font-serif text-xl text-white transition">
-                {gallery.name}
-              </h3>
+                {/* Site Name */}
+                <h3 className="group-hover:text-accent mb-2 font-serif text-xl text-white transition">
+                  {gallery.name}
+                </h3>
 
-              {/* Description */}
-              {gallery.description && (
-                <p className="mb-4 line-clamp-2 text-sm leading-relaxed text-white/70">
-                  {gallery.description}
-                </p>
-              )}
+                {/* Description */}
+                {gallery.description && (
+                  <p className="mb-4 line-clamp-2 text-sm leading-relaxed text-white/70">
+                    {gallery.description}
+                  </p>
+                )}
 
-              {/* Photo Count & Tags */}
-              <div className="mb-4 space-y-2">
-                {gallery.photoCount > 0 && (
-                  <div className="flex items-center gap-2 text-xs text-white/60">
-                    <i className="i-lucide-image size-3.5" />
-                    <span>
-                      {gallery.photoCount}{' '}
+                {/* Photo Count & Tags */}
+                <div className="mb-4 space-y-2">
+                  {gallery.photoCount > 0 && (
+                    <div className="flex items-center gap-2 text-xs text-white/60">
+                      <i className="i-lucide-image size-3.5" />
                       <span>
-                        {gallery.photoCount === 1 ? 'photo' : 'photos'}
+                        {gallery.photoCount}{' '}
+                        <span>
+                          {gallery.photoCount === 1 ? 'photo' : 'photos'}
+                        </span>
                       </span>
-                    </span>
-                  </div>
-                )}
-                {gallery.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5">
-                    {gallery.tags.slice(0, 4).map((tag) => (
-                      <span
-                        key={tag}
-                        className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-xs text-white/70"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                    {gallery.tags.length > 4 && (
-                      <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-xs text-white/50">
-                        +{gallery.tags.length - 4}
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Divider */}
-              <div className="mb-4 h-px w-full bg-linear-to-r from-transparent via-white/30 to-transparent opacity-50" />
-
-              {/* Footer */}
-              <div className="flex items-center justify-between">
-                <div className="text-xs text-white/40">
-                  {formatDate(gallery.createdAt)}
+                    </div>
+                  )}
+                  {gallery.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {gallery.tags.slice(0, 4).map((tag) => (
+                        <span
+                          key={tag}
+                          className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-xs text-white/70"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                      {gallery.tags.length > 4 && (
+                        <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-xs text-white/50">
+                          +{gallery.tags.length - 4}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
-                <div className="text-white/30 transition group-hover:text-white/60">
-                  <i className="i-lucide-external-link size-4" />
+
+                {/* Divider */}
+                <div className="mb-4 h-px w-full bg-linear-to-r from-transparent via-white/30 to-transparent opacity-50" />
+
+                {/* Footer */}
+                <div className="flex items-center justify-between">
+                  <div className="text-xs text-white/40">
+                    {formatDate(gallery.createdAt)}
+                  </div>
+                  <div className="text-white/30 transition group-hover:text-white/60">
+                    <i className="i-lucide-external-link size-4" />
+                  </div>
                 </div>
-              </div>
-            </a>
-          ))}
-        </div>
+              </a>
+            ))}
+          </Masonry>
+        </ResponsiveMasonry>
       )}
     </section>
   )
