@@ -112,10 +112,21 @@ export const PageHeader = () => {
 
         {/* CTA 按钮组 */}
         <div className="relative z-10 flex items-center gap-2">
-          <NocturneButton
-            onClick={handleGetStarted}
-            className="px-5 py-2 text-xs"
+          <a
+            href="https://github.com/Afilmory/Afilmory"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={clsxm(
+              'flex h-10 w-10 items-center justify-center rounded-full border transition-all duration-300',
+              scrolled
+                ? 'border-white/20 bg-white/8 text-white/80 hover:border-white/30 hover:bg-white/12 hover:text-white'
+                : 'border-white/15 bg-white/5 text-white/70 hover:border-white/25 hover:bg-white/8 hover:text-white/90',
+            )}
+            aria-label="GitHub"
           >
+            <i className="i-lucide-github size-4" />
+          </a>
+          <NocturneButton onClick={handleGetStarted} className="px-5 text-xs">
             {t('cta')}
           </NocturneButton>
         </div>

@@ -23,25 +23,13 @@ export const NocturneButton = ({
     <button
       type="button"
       className={cn(
-        'group relative inline-flex items-center gap-4 overflow-hidden rounded-full px-8 py-3 text-sm tracking-[0.4em] uppercase transition',
+        'group relative inline-flex h-10 items-center justify-center overflow-hidden rounded-full px-8 text-sm tracking-[0.4em] uppercase transition',
         variantStyles,
         className,
       )}
       {...props}
     >
-      <span className="relative z-10 flex items-center gap-4">
-        <span
-          className={cn(
-            'inline-flex size-6 items-center justify-center rounded-full border text-[0.55rem] tracking-[0.3em]',
-            variant === 'primary'
-              ? 'border-black/30 bg-black/5 text-black/70'
-              : 'border-white/30 text-white/70',
-          )}
-        >
-          AF
-        </span>
-        <span className="tracking-normal">{children}</span>
-      </span>
+      <span className="relative z-10 tracking-normal">{children}</span>
       <span className="pointer-events-none absolute inset-0 rounded-full border border-white/10 opacity-40" />
       {variant === 'primary' ? (
         <span className="pointer-events-none absolute inset-0 bg-linear-to-r from-white/60 via-transparent to-white/60 opacity-40" />

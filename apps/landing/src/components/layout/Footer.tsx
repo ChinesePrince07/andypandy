@@ -27,6 +27,14 @@ export const Footer = () => {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <p>{t('copyright')}</p>
             <div className="flex gap-6 text-white/70">
+              <a
+                href="https://github.com/Afilmory/Afilmory"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="transition hover:text-white"
+              >
+                {t('github')}
+              </a>
               <Link href="/privacy" className="transition hover:text-white">
                 {t('privacy')}
               </Link>

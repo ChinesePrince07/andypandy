@@ -3,7 +3,6 @@ import { Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { LinearBorderPanel } from '~/components/common/LinearBorderPanel'
-import { resolveBaseDomain } from '~/modules/auth/utils/domain'
 
 import type { TenantDomain } from '../types'
 import { DomainBadge } from './DomainBadge'
@@ -18,7 +17,7 @@ interface DomainListItemProps {
 
 export function DomainListItem({ domain, onVerify, onDelete, isVerifying, isDeleting }: DomainListItemProps) {
   const { t } = useTranslation()
-  const baseDomain = resolveBaseDomain(typeof window !== 'undefined' ? window.location.host : '')
+
   const txtName = `_afilmory-verification.${domain.domain}`
   const verificationToken = domain.verificationToken ?? '—'
 
@@ -79,7 +78,7 @@ export function DomainListItem({ domain, onVerify, onDelete, isVerifying, isDele
               <div className="space-y-2 rounded-lg border border-fill bg-background p-3">
                 <KeyValueRow label={t('settings.domain.dns.type')} value="CNAME" />
                 <KeyValueRow label={t('settings.domain.dns.name')} value={domain.domain} copyable monospace />
-                <KeyValueRow label={t('settings.domain.dns.value')} value={baseDomain} copyable monospace />
+                <KeyValueRow label={t('settings.domain.dns.value')} value={window.location.host} copyable monospace />
                 <FormHelperText className="text-xs text-text-tertiary">
                   {t('settings.domain.dns.cname.helper')}
                 </FormHelperText>
