@@ -510,7 +510,7 @@
   "settings.domain.banner.pending": "Pending verification for {{domain}}. DNS changes may take a few minutes to propagate.",
   "settings.domain.bound-list.empty": "No custom domains yet. Add one on the left to start verification.",
   "settings.domain.bound-list.title": "Bound domains",
-  "settings.domain.description": "Bind your own domain to serve the gallery under a branded URL. Verification requires the TXT token; after it passes, point a CNAME to {{base}} to route traffic.",
+  "settings.domain.description": "Bind your own domain to serve the gallery under a branded URL.",
   "settings.domain.dns.cname.helper": "Once TXT passes, point your custom domain to this target.",
   "settings.domain.dns.cname.title": "CNAME target (after TXT verified)",
   "settings.domain.dns.hint.ttl": "300s or provider default",

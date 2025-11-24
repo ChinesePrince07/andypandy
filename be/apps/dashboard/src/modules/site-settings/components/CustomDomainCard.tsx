@@ -7,7 +7,6 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
 import { LinearBorderPanel } from '~/components/common/LinearBorderPanel'
-import { resolveBaseDomain } from '~/modules/auth/utils/domain'
 
 import {
   useDeleteTenantDomainMutation,
@@ -18,14 +17,11 @@ import {
 import { DomainListItem } from './DomainListItem'
 
 function normalizeHostname(): string {
-  if (typeof window === 'undefined') {
-    return ''
-  }
   const { hostname } = window.location
   return hostname ?? ''
 }
 
-function buildVerificationInstructions(normalizedBase = 'your-domain.com') {
+function buildVerificationInstructions() {
   return [
     {
       titleKey: 'settings.domain.steps.txt.title',
@@ -34,7 +30,6 @@ function buildVerificationInstructions(normalizedBase = 'your-domain.com') {
     {
       titleKey: 'settings.domain.steps.cname.title',
       descriptionKey: 'settings.domain.steps.cname.desc',
-      meta: normalizedBase,
     },
     {
       titleKey: 'settings.domain.steps.verify.title',
@@ -43,7 +38,6 @@ function buildVerificationInstructions(normalizedBase = 'your-domain.com') {
   ] satisfies {
     titleKey: I18nKeys
     descriptionKey: I18nKeys
-    meta?: string
   }[]
 }
 
@@ -55,8 +49,8 @@ export function CustomDomainCard() {
   const verifyMutation = useVerifyTenantDomainMutation()
   const deleteMutation = useDeleteTenantDomainMutation()
 
-  const baseDomain = useMemo(() => resolveBaseDomain(normalizeHostname()), [])
-  const steps = useMemo(() => buildVerificationInstructions(baseDomain), [baseDomain])
+  const baseDomain = useMemo(normalizeHostname, [])
+  const steps = useMemo(() => buildVerificationInstructions(), [])
 
   const handleRequest = async () => {
     if (!domainInput.trim()) {
@@ -118,10 +112,7 @@ export function CustomDomainCard() {
                   </span>
                   <div className="flex-1 space-y-1">
                     <p className="text-sm font-semibold text-text">{t(step.titleKey)}</p>
-                    <p className="text-text-secondary text-sm">
-                      {t(step.descriptionKey, { base: baseDomain })}
-                      {step.meta ? <code className="ml-2 bg-fill px-2 py-1 text-xs">{step.meta}</code> : null}
-                    </p>
+                    <p className="text-text-secondary text-sm">{t(step.descriptionKey, { base: baseDomain })}</p>
                   </div>
                 </m.div>
               ))}

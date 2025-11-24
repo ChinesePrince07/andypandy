@@ -509,7 +509,7 @@
   "settings.domain.banner.pending": "{{domain}} 正在验证中，DNS 生效可能需要几分钟。",
   "settings.domain.bound-list.empty": "还没有绑定域名，请在左侧输入后开始验证。",
   "settings.domain.bound-list.title": "已绑定域名",
-  "settings.domain.description": "绑定自己的域名，用品牌地址访问。验证必须通过 TXT Token；完成后再将 CNAME 指向 {{base}} 以正式接入。",
+  "settings.domain.description": "绑定自己的域名，用品牌地址访问。",
   "settings.domain.dns.cname.helper": "TXT 验证通过后，将自定义域名指向此目标。",
   "settings.domain.dns.cname.title": "CNAME 目标（TXT 通过后）",
   "settings.domain.dns.hint.ttl": "300 秒或使用默认值",
