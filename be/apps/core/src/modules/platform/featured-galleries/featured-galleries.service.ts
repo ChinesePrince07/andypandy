@@ -1,4 +1,4 @@
-import { authUsers, settings, tenantDomains } from '@afilmory/db'
+import { authUsers, photoAssets, settings, tenantDomains } from '@afilmory/db'
 import { DbAccessor } from 'core/database/database.provider'
 import { normalizeDate } from 'core/helpers/normalize.helper'
 import { and, asc, eq, inArray, sql } from 'drizzle-orm'
@@ -60,6 +60,48 @@ export class FeaturedGalleriesService {
       .from(tenantDomains)
       .where(and(inArray(tenantDomains.tenantId, tenantIds), eq(tenantDomains.status, 'verified')))
 
+    // Fetch photo counts for all tenants (only synced/conflict photos)
+    const photoCounts = await db
+      .select({
+        tenantId: photoAssets.tenantId,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(photoAssets)
+      .where(and(inArray(photoAssets.tenantId, tenantIds), inArray(photoAssets.syncStatus, ['synced', 'conflict'])))
+      .groupBy(photoAssets.tenantId)
+
+    // Fetch popular tags for all tenants
+    // This query extracts tags from manifest JSONB and counts them per tenant
+    // Process tags per tenant to ensure proper SQL parameterization
+    const tagMap = new Map<string, string[]>()
+
+    for (const tenantId of tenantIds) {
+      const tagsResult = await db.execute<{ tag: string | null; count: number | null }>(sql`
+        select tag, count(*)::int as count
+        from (
+          select nullif(trim(jsonb_array_elements_text(${photoAssets.manifest}->'data'->'tags')), '') as tag
+          from ${photoAssets}
+          where ${photoAssets.tenantId} = ${tenantId}
+            and ${photoAssets.syncStatus} in ('synced', 'conflict')
+        ) as tag_items
+        where tag is not null and tag != ''
+        group by tag
+        order by count desc
+        limit 5
+      `)
+
+      const tags = tagsResult.rows
+        .map((row) => {
+          const tag = row.tag?.trim()
+          return tag && tag.length > 0 ? tag : null
+        })
+        .filter((tag): tag is string => tag !== null)
+
+      if (tags.length > 0) {
+        tagMap.set(tenantId, tags)
+      }
+    }
+
     // Build maps for quick lookup
     const settingsMap = new Map<string, Map<string, string | null>>()
     for (const setting of siteSettings) {
@@ -87,12 +129,19 @@ export class FeaturedGalleriesService {
       }
     }
 
+    const photoCountMap = new Map<string, number>()
+    for (const count of photoCounts) {
+      photoCountMap.set(count.tenantId, Number(count.count ?? 0))
+    }
+
     // Build response
     const featuredGalleries = validTenants.map((aggregate) => {
       const { tenant } = aggregate
       const tenantSettings = settingsMap.get(tenant.id) ?? new Map()
       const author = authorMap.get(tenant.id)
       const domain = domainMap.get(tenant.id)
+      const photoCount = photoCountMap.get(tenant.id) ?? 0
+      const tags = tagMap.get(tenant.id) ?? []
 
       return {
         id: tenant.id,
@@ -106,6 +155,8 @@ export class FeaturedGalleriesService {
               avatar: author.avatar,
             }
           : null,
+        photoCount,
+        tags,
         createdAt: normalizeDate(tenant.createdAt) ?? tenant.createdAt,
       }
     })

@@ -18,6 +18,8 @@ interface FeaturedGallery {
   domain: string | null
   description: string | null
   author: FeaturedGalleryAuthor | null
+  photoCount: number
+  tags: string[]
   createdAt: string
 }
 
@@ -205,6 +207,38 @@ export const GalleryShowcase = () => {
                   {gallery.description}
                 </p>
               )}
+
+              {/* Photo Count & Tags */}
+              <div className="mb-4 space-y-2">
+                {gallery.photoCount > 0 && (
+                  <div className="flex items-center gap-2 text-xs text-white/60">
+                    <i className="i-lucide-image size-3.5" />
+                    <span>
+                      {gallery.photoCount}{' '}
+                      <span>
+                        {gallery.photoCount === 1 ? 'photo' : 'photos'}
+                      </span>
+                    </span>
+                  </div>
+                )}
+                {gallery.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {gallery.tags.slice(0, 4).map((tag) => (
+                      <span
+                        key={tag}
+                        className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-xs text-white/70"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                    {gallery.tags.length > 4 && (
+                      <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-xs text-white/50">
+                        +{gallery.tags.length - 4}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
 
               {/* Divider */}
               <div className="mb-4 h-px w-full bg-linear-to-r from-transparent via-white/30 to-transparent opacity-50" />
