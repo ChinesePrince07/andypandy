@@ -4,6 +4,7 @@
  */
 
 export { CreateSpaceModal } from './CreateSpaceModal'
+export { GalleryShowcase } from './GalleryShowcase'
 export { NocturneBackground } from './NocturneBackground'
 export { NocturneButton } from './NocturneButton'
 export * from './NocturneSections'

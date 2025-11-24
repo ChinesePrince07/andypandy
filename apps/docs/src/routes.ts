@@ -282,7 +282,7 @@ export const routes: RouteConfig[] = [
     title: 'Cloudflare Pages',
     meta: {
       title: 'Cloudflare Pages',
-      description: 'Deploy your gallery to Cloudflare Pages for fast global CDN distribution.',
+      description: 'Guide to deploying Afilmory via Cloudflare Pages.',
       createdAt: '2025-07-20T22:35:03+08:00',
       lastModified: '2025-11-23T19:40:52+08:00',
       order: '53',

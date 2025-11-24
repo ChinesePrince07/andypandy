@@ -29,6 +29,7 @@ import { AuthModule } from './platform/auth/auth.module'
 import { BillingModule } from './platform/billing/billing.module'
 import { DashboardModule } from './platform/dashboard/dashboard.module'
 import { DataManagementModule } from './platform/data-management/data-management.module'
+import { FeaturedGalleriesModule } from './platform/featured-galleries/featured-galleries.module'
 import { SuperAdminModule } from './platform/super-admin/super-admin.module'
 import { TenantModule } from './platform/tenant/tenant.module'
 
@@ -62,6 +63,7 @@ function createEventModuleOptions(redis: RedisAccessor) {
     BillingModule,
     DataManagementModule,
     TenantModule,
+    FeaturedGalleriesModule,
     DataSyncModule,
     FeedModule,
     OgModule,

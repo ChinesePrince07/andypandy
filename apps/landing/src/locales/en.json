@@ -177,5 +177,12 @@
     "privacy": "Privacy Policy",
     "terms": "Terms of Service",
     "copyright": "© 2025 Afilmory.art"
+  },
+  "GalleryShowcase": {
+    "eyebrow": "Registered Galleries",
+    "title": "Explore registered visual spaces",
+    "description": "Discover amazing photography archives created by other photographers and curators, experience different visual storytelling styles.",
+    "error": "Failed to load gallery list, please try again later.",
+    "empty": "No registered galleries yet."
   }
 }
