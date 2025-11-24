@@ -44,7 +44,7 @@
 
 :root,
 body {
-  @apply text-text;
+  @apply text-text bg-background;
   @apply font-sans;
   @apply text-base leading-normal;
   @apply antialiased;
