@@ -29,7 +29,8 @@ export class ManagedStorageProvider implements StorageProvider {
 
     const scopedConfig = this.applyTenantPrefix(config.upstream, this.effectivePrefix)
     this.upstreamConfig = scopedConfig
-    this.needsManualPrefix = scopedConfig.provider === 's3'
+    this.needsManualPrefix =
+      scopedConfig.provider === 's3' || scopedConfig.provider === 'oss' || scopedConfig.provider === 'cos'
     this.upstream = StorageFactory.createProvider(scopedConfig)
   }
 
@@ -53,10 +54,9 @@ export class ManagedStorageProvider implements StorageProvider {
     return await this.upstream.generatePublicUrl(targetKey)
   }
 
-  async detectLivePhotos(allObjects?: StorageObject[]): Promise<Map<string, StorageObject>> {
-    const upstreamObjects = allObjects ? this.toUpstreamObjects(allObjects) : undefined
-    const sourceObjects = upstreamObjects ?? (await this.upstream.listAllFiles())
-    const liveMap = await Promise.resolve(this.upstream.detectLivePhotos(sourceObjects))
+  detectLivePhotos(allObjects: StorageObject[]): Map<string, StorageObject> {
+    const upstreamObjects = this.toUpstreamObjects(allObjects)
+    const liveMap = this.upstream.detectLivePhotos(upstreamObjects)
     const result = new Map<string, StorageObject>()
 
     for (const [key, value] of liveMap.entries()) {
@@ -161,7 +161,7 @@ export class ManagedStorageProvider implements StorageProvider {
   }
 
   private joinSegments(...segments: Array<string | null>): string {
-    const filtered = segments.filter(Boolean)
+    const filtered = segments.filter((segment): segment is string => typeof segment === 'string' && segment.length > 0)
     if (filtered.length === 0) {
       return ''
     }
@@ -174,6 +174,8 @@ export class ManagedStorageProvider implements StorageProvider {
   private extractUpstreamBasePath(config: RemoteStorageConfig): string | null {
     switch (config.provider) {
       case 's3':
+      case 'oss':
+      case 'cos':
       case 'b2': {
         return this.normalizePath(config.prefix)
       }
@@ -193,7 +195,9 @@ export class ManagedStorageProvider implements StorageProvider {
     }
 
     switch (config.provider) {
-      case 's3': {
+      case 's3':
+      case 'oss':
+      case 'cos': {
         return { ...config, prefix: normalizedPrefix }
       }
       case 'b2': {

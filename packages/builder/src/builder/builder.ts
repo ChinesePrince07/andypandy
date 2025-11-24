@@ -522,7 +522,9 @@ export class AfilmoryBuilder {
   private logBuildStart(): void {
     const storage = this.getStorageConfig()
     switch (storage.provider) {
-      case 's3': {
+      case 's3':
+      case 'oss':
+      case 'cos': {
         const endpoint = storage.endpoint || '默认 AWS S3'
         const customDomain = storage.customDomain || '未设置'
         const { bucket } = storage

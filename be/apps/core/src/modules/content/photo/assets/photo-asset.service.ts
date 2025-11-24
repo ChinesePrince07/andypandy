@@ -7,7 +7,7 @@ import {
   DEFAULT_DIRECTORY as DEFAULT_THUMBNAIL_DIRECTORY,
 } from '@afilmory/builder/plugins/thumbnail-storage/shared.js'
 import { StorageManager } from '@afilmory/builder/storage/index.js'
-import type { GitHubConfig, ManagedStorageConfig, S3Config } from '@afilmory/builder/storage/interfaces.js'
+import type { GitHubConfig, ManagedStorageConfig, S3CompatibleConfig } from '@afilmory/builder/storage/interfaces.js'
 import { CURRENT_PHOTO_MANIFEST_VERSION, DATABASE_ONLY_PROVIDER, photoAssets } from '@afilmory/db'
 import { EventEmitterService } from '@afilmory/framework'
 import { DbAccessor } from 'core/database/database.provider'
@@ -1477,8 +1477,10 @@ export class PhotoAssetService {
 
   private resolveStorageDirectory(storageConfig: StorageConfig): string | null {
     switch (storageConfig.provider) {
-      case 's3': {
-        return this.normalizeDirectory((storageConfig as unknown as S3Config).prefix)
+      case 's3':
+      case 'oss':
+      case 'cos': {
+        return this.normalizeDirectory((storageConfig as S3CompatibleConfig).prefix)
       }
       case 'github': {
         return this.normalizeDirectory((storageConfig as GitHubConfig).path)
@@ -1545,8 +1547,8 @@ export class PhotoAssetService {
       return null
     }
 
-    if (storageConfig.provider === 's3') {
-      const base = this.normalizeStorageSegment((storageConfig as S3Config).prefix)
+    if (storageConfig.provider === 's3' || storageConfig.provider === 'oss' || storageConfig.provider === 'cos') {
+      const base = this.normalizeStorageSegment((storageConfig as S3CompatibleConfig).prefix)
       return this.joinStorageSegments(base, directory)
     }
 

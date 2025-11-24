@@ -76,7 +76,9 @@ async function main() {
     logger.main.info(`   存储提供商：${storage.provider}`)
 
     switch (storage.provider) {
-      case 's3': {
+      case 's3':
+      case 'oss':
+      case 'cos': {
         logger.main.info(`   存储桶：${storage.bucket}`)
         logger.main.info(`   区域：${storage.region || '未设置'}`)
         logger.main.info(`   端点：${storage.endpoint || '默认'}`)

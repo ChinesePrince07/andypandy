@@ -22,10 +22,12 @@ import Route23 from '../contents/saas/cms.mdx'
 import Route15 from '../contents/saas/deployment.mdx'
 import Route22 from '../contents/saas/index.mdx'
 import Route10 from '../contents/storage/providers/b2.mdx'
+import Route26 from '../contents/storage/providers/cos.mdx'
 import Route14 from '../contents/storage/providers/eagle.mdx'
 import Route11 from '../contents/storage/providers/github.mdx'
 import Route8 from '../contents/storage/providers/index.mdx'
 import Route12 from '../contents/storage/providers/local.mdx'
+import Route25 from '../contents/storage/providers/oss.mdx'
 import Route9 from '../contents/storage/providers/s3.mdx'
 
 export interface RouteConfig {
@@ -140,7 +142,7 @@ export const routes: RouteConfig[] = [
       title: 'Storage Providers',
       description: 'Choose a storage provider for your photo collection.',
       createdAt: '2025-11-14T22:40:00+08:00',
-      lastModified: '2025-11-23T19:40:52+08:00',
+      lastModified: '2025-11-24T10:15:00+08:00',
       order: '30',
     },
   },
@@ -154,6 +156,30 @@ export const routes: RouteConfig[] = [
       createdAt: '2025-11-14T22:10:00+08:00',
       lastModified: '2025-11-23T19:40:52+08:00',
       order: '32',
+    },
+  },
+  {
+    path: '/storage/providers/oss',
+    component: Route25,
+    title: 'Aliyun OSS',
+    meta: {
+      title: 'Aliyun OSS',
+      description: 'Configure Aliyun Object Storage Service (OSS) for China-mainland friendly deployments.',
+      createdAt: '2025-11-24T10:05:00+08:00',
+      lastModified: '2025-11-24T10:05:00+08:00',
+      order: '37',
+    },
+  },
+  {
+    path: '/storage/providers/cos',
+    component: Route26,
+    title: 'Tencent COS',
+    meta: {
+      title: 'Tencent COS',
+      description: 'Configure Tencent Cloud Object Storage (COS) for deployments within the Tencent ecosystem.',
+      createdAt: '2025-11-24T10:06:00+08:00',
+      lastModified: '2025-11-24T10:06:00+08:00',
+      order: '38',
     },
   },
   {

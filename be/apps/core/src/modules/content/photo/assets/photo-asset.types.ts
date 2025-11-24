@@ -1,6 +1,5 @@
-import type { photoAssets } from '@afilmory/db'
+import type { PhotoAssetManifest, photoAssets } from '@afilmory/db'
 
-export type { PhotoAssetManifest } from '@afilmory/db'
 export type PhotoAssetRecord = typeof photoAssets.$inferSelect
 
 export interface PhotoAssetListItem {

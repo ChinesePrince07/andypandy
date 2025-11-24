@@ -1,12 +1,12 @@
 import type { SimpleS3Client } from '../../s3/client.js'
 import { createS3Client, encodeS3Key } from '../../s3/client.js'
-import type { S3Config } from '../interfaces.js'
+import type { S3CompatibleConfig } from '../interfaces.js'
 import { sanitizeS3Etag } from './s3-utils.js'
 
 export class S3ProviderClient {
   private readonly client: SimpleS3Client
 
-  constructor(config: S3Config) {
+  constructor(config: S3CompatibleConfig) {
     this.client = createS3Client(config)
   }
 

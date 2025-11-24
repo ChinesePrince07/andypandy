@@ -3,13 +3,13 @@ import { z } from 'zod'
 
 import { ConflictResolutionStrategy } from './data-sync.types'
 
-const s3ConfigSchema = z.object({
-  provider: z.literal('s3'),
+const s3CompatibleBaseSchema = z.object({
   bucket: z.string().min(1),
   region: z.string().optional(),
   endpoint: z.string().optional(),
   accessKeyId: z.string().optional(),
   secretAccessKey: z.string().optional(),
+  sessionToken: z.string().optional(),
   prefix: z.string().optional(),
   customDomain: z.string().optional(),
   excludeRegex: z.string().optional(),
@@ -24,6 +24,19 @@ const s3ConfigSchema = z.object({
   retryMode: z.enum(['standard', 'adaptive', 'legacy']).optional(),
   maxAttempts: z.number().int().positive().optional(),
   downloadConcurrency: z.number().int().positive().optional(),
+  sigV4Service: z.string().optional(),
+})
+
+const s3ConfigSchema = s3CompatibleBaseSchema.extend({
+  provider: z.literal('s3'),
+})
+
+const ossConfigSchema = s3CompatibleBaseSchema.extend({
+  provider: z.literal('oss'),
+})
+
+const cosConfigSchema = s3CompatibleBaseSchema.extend({
+  provider: z.literal('cos'),
 })
 
 const githubConfigSchema = z.object({
@@ -36,7 +49,12 @@ const githubConfigSchema = z.object({
   useRawUrl: z.boolean().optional(),
 })
 
-const storageConfigSchema = z.discriminatedUnion('provider', [s3ConfigSchema, githubConfigSchema])
+const storageConfigSchema = z.discriminatedUnion('provider', [
+  s3ConfigSchema,
+  ossConfigSchema,
+  cosConfigSchema,
+  githubConfigSchema,
+])
 
 const builderProcessingSchema = z
   .object({

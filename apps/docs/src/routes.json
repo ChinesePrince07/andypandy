@@ -94,7 +94,7 @@
       "title": "Storage Providers",
       "description": "Choose a storage provider for your photo collection.",
       "createdAt": "2025-11-14T22:40:00+08:00",
-      "lastModified": "2025-11-23T19:40:52+08:00",
+      "lastModified": "2025-11-24T10:15:00+08:00",
       "order": "30"
     }
   },
@@ -107,6 +107,28 @@
       "createdAt": "2025-11-14T22:10:00+08:00",
       "lastModified": "2025-11-23T19:40:52+08:00",
       "order": "32"
+    }
+  },
+  {
+    "path": "/storage/providers/oss",
+    "title": "Aliyun OSS",
+    "meta": {
+      "title": "Aliyun OSS",
+      "description": "Configure Aliyun Object Storage Service (OSS) for China-mainland friendly deployments.",
+      "createdAt": "2025-11-24T10:05:00+08:00",
+      "lastModified": "2025-11-24T10:05:00+08:00",
+      "order": "37"
+    }
+  },
+  {
+    "path": "/storage/providers/cos",
+    "title": "Tencent COS",
+    "meta": {
+      "title": "Tencent COS",
+      "description": "Configure Tencent Cloud Object Storage (COS) for deployments within the Tencent ecosystem.",
+      "createdAt": "2025-11-24T10:06:00+08:00",
+      "lastModified": "2025-11-24T10:06:00+08:00",
+      "order": "38"
     }
   },
   {

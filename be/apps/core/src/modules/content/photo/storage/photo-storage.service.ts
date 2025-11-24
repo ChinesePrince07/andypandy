@@ -6,7 +6,7 @@ import type {
   LocalStorageProviderName,
   ManagedStorageConfig,
   RemoteStorageConfig,
-  S3Config,
+  S3CompatibleConfig,
 } from '@afilmory/builder/storage/interfaces.js'
 import { BizException, ErrorCode } from 'core/errors'
 import { normalizeStringToUndefined, requireStringWithMessage } from 'core/helpers/normalize.helper'
@@ -110,10 +110,16 @@ export class PhotoStorageService {
 
     const config = provider.config ?? {}
     switch (provider.type) {
-      case 's3': {
-        const bucket = requireStringWithMessage(config.bucket, 'Active S3 storage provider is missing `bucket`.')
-        const result: S3Config = {
-          provider: 's3',
+      case 's3':
+      case 'oss':
+      case 'cos': {
+        const providerLabel = provider.type.toUpperCase()
+        const bucket = requireStringWithMessage(
+          config.bucket,
+          `Active ${providerLabel} storage provider is missing \`bucket\`.`,
+        )
+        const result: S3CompatibleConfig = {
+          provider: provider.type as S3CompatibleConfig['provider'],
           bucket,
         }
 
@@ -154,6 +160,8 @@ export class PhotoStorageService {
         if (typeof maxAttempts === 'number') result.maxAttempts = maxAttempts
         const downloadConcurrency = this.parseNumber(config.downloadConcurrency)
         if (typeof downloadConcurrency === 'number') result.downloadConcurrency = downloadConcurrency
+        const sigV4Service = normalizeStringToUndefined(config.sigV4Service)
+        if (sigV4Service) result.sigV4Service = sigV4Service
 
         return result
       }
@@ -260,7 +268,7 @@ export class PhotoStorageService {
     return undefined
   }
 
-  private parseRetryMode(value?: string | null): S3Config['retryMode'] | undefined {
+  private parseRetryMode(value?: string | null): S3CompatibleConfig['retryMode'] | undefined {
     const normalized = normalizeStringToUndefined(value)
     if (!normalized) {
       return undefined

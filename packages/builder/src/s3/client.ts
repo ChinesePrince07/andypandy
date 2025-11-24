@@ -1,6 +1,6 @@
 import crypto from 'node:crypto'
 
-import type { S3Config } from '../storage/interfaces'
+import type { S3CompatibleConfig } from '../storage/interfaces'
 
 export interface SimpleS3Client {
   fetch: (input: string | URL, init?: RequestInit) => Promise<Response>
@@ -9,9 +9,13 @@ export interface SimpleS3Client {
   readonly region: string
 }
 
-export function createS3Client(config: S3Config): SimpleS3Client {
-  if (config.provider !== 's3') {
-    throw new Error('Storage provider is not s3')
+type S3CompatibleProviderName = S3CompatibleConfig['provider']
+
+const S3_COMPATIBLE_PROVIDERS = new Set(['s3', 'oss', 'cos'])
+
+export function createS3Client(config: S3CompatibleConfig): SimpleS3Client {
+  if (!S3_COMPATIBLE_PROVIDERS.has(config.provider)) {
+    throw new Error('Storage provider is not S3-compatible')
   }
 
   const { accessKeyId, secretAccessKey, endpoint, bucket } = config
@@ -25,14 +29,15 @@ export function createS3Client(config: S3Config): SimpleS3Client {
     throw new Error('accessKeyId and secretAccessKey are required')
   }
 
-  const baseUrl = buildBaseUrl({ bucket, region, endpoint })
+  const baseUrl = buildBaseUrl({ bucket, region, endpoint, provider: config.provider })
+  const sigV4Service = config.sigV4Service ?? inferSigV4Service(config.provider)
 
   const signer = new SigV4Signer({
     accessKeyId,
     secretAccessKey,
     sessionToken: config.sessionToken,
     region,
-    service: 's3',
+    service: sigV4Service,
   })
 
   return {
@@ -56,10 +61,25 @@ export function createS3Client(config: S3Config): SimpleS3Client {
   }
 }
 
-function buildBaseUrl(params: { bucket: string; region: string; endpoint?: string }): string {
-  const { bucket, region, endpoint } = params
+function buildBaseUrl(params: {
+  bucket: string
+  region: string
+  endpoint?: string
+  provider: S3CompatibleProviderName
+}): string {
+  const { bucket, region, endpoint, provider } = params
   if (!endpoint) {
-    return `https://${bucket}.s3.${region}.amazonaws.com/`
+    switch (provider) {
+      case 'oss': {
+        return `https://${bucket}.${region}.aliyuncs.com/`
+      }
+      case 'cos': {
+        return `https://${bucket}.cos.${region}.myqcloud.com/`
+      }
+      default: {
+        return `https://${bucket}.s3.${region}.amazonaws.com/`
+      }
+    }
   }
 
   const trimmed = endpoint.replace(/\/$/, '')
@@ -69,6 +89,14 @@ function buildBaseUrl(params: { bucket: string; region: string; endpoint?: strin
 
   if (trimmed.includes(bucket)) {
     return trimmed.endsWith('/') ? trimmed : `${trimmed}/`
+  }
+
+  if (provider === 'oss' || /aliyuncs\.com/.test(trimmed)) {
+    return ensureTrailingSlash(injectBucketAsSubdomain(trimmed, bucket))
+  }
+
+  if (provider === 'cos' || /myqcloud\.com/.test(trimmed)) {
+    return ensureTrailingSlash(injectBucketAsSubdomain(trimmed, bucket))
   }
 
   return `${trimmed}/${bucket}/`
@@ -114,6 +142,37 @@ function encodeRfc3986(value: string): string {
 }
 
 const EMPTY_HASH = crypto.createHash('sha256').update('').digest('hex')
+
+function inferSigV4Service(provider: S3CompatibleProviderName): string {
+  switch (provider) {
+    case 'oss': {
+      return 'oss'
+    }
+    default: {
+      return 's3'
+    }
+  }
+}
+
+function ensureTrailingSlash(value: string): string {
+  return value.endsWith('/') ? value : `${value}/`
+}
+
+function injectBucketAsSubdomain(endpoint: string, bucket: string): string {
+  if (!/^https?:\/\//i.test(endpoint)) {
+    return `${endpoint.replace(/\/$/, '')}/${bucket}`
+  }
+
+  try {
+    const url = new URL(endpoint)
+    if (!url.hostname.startsWith(`${bucket}.`)) {
+      url.hostname = `${bucket}.${url.hostname}`
+    }
+    return url.toString()
+  } catch {
+    return `${endpoint.replace(/\/$/, '')}/${bucket}`
+  }
+}
 
 class SigV4Signer {
   constructor(
