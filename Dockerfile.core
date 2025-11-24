@@ -38,6 +38,7 @@ WORKDIR /app
 # - vips: runtime library for sharp
 # - libheif: enable HEIF/HEIC support in libvips when available
 RUN apk add --no-cache \
+  curl \
   perl \
   exiftool \
   perl-image-exiftool \
@@ -54,6 +55,7 @@ COPY --from=builder /workspace/be/apps/core/dist ./dist
 COPY --from=builder /workspace/be/packages/db/migrations ./migrations
 COPY --from=builder /workspace/be/apps/core/docker-entrypoint.sh ./docker-entrypoint.sh
 COPY --from=builder /workspace/patches/ ./patches/
+
 
 RUN chmod +x ./docker-entrypoint.sh
 
