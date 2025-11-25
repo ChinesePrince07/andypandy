@@ -300,3 +300,17 @@ html *::-webkit-scrollbar-corner {
 html body {
   @apply bg-black;
 }
+
+@theme {
+  /* Accent color: black in light mode, soft white in dark mode (not too bright) */
+  --color-accent: #000000;
+
+  --color-link: #000;
+}
+
+[data-theme='dark'] {
+  /* Soft white accent in dark mode - not too bright to avoid eye strain */
+  --color-accent: #c0c0c0;
+
+  --color-link: #fff;
+}

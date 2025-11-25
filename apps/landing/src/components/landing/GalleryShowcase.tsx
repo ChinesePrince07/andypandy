@@ -79,22 +79,13 @@ export const GalleryShowcase = () => {
   }
 
   const buildGalleryUrl = (gallery: FeaturedGallery) => {
-    if (typeof window === 'undefined') return '#'
     const { protocol } = window.location
     // Prefer custom domain, fallback to slug subdomain
-    if (gallery.domain) {
-      return `${protocol}//${gallery.domain}`
-    }
+    // if (gallery.domain) {
+    //   return `${protocol}//${gallery.domain}`
+    // }
     const baseDomain = getBaseDomain()
     return `${protocol}//${gallery.slug}.${baseDomain}`
-  }
-
-  const getDisplayUrl = (gallery: FeaturedGallery) => {
-    // Prefer custom domain, fallback to slug subdomain
-    if (gallery.domain) {
-      return gallery.domain
-    }
-    return `${gallery.slug}.${getBaseDomain()}`
   }
 
   const formatDate = (dateString: string) => {
@@ -194,7 +185,7 @@ export const GalleryShowcase = () => {
                         {gallery.author.name}
                       </p>
                       <p className="truncate text-xs text-white/50">
-                        {getDisplayUrl(gallery)}
+                        {buildGalleryUrl(gallery)}
                       </p>
                     </div>
                   </div>
