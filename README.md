@@ -21,7 +21,6 @@ The easiest way to create your photo gallery is through our hosted service at **
 - ✅ **Custom domains** - Bind your own domain with DNS verification
 - ✅ **Automatic updates** - Always running the latest version with new features
 - ✅ **Managed infrastructure** - We handle scaling, backups, and maintenance
-- ✅ **Built-in billing** - Flexible plans with usage-based pricing
 
 [**Get Started Now →**](https://afilmory.art/)
 
