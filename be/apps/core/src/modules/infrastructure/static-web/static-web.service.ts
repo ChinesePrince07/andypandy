@@ -103,6 +103,7 @@ export class StaticWebService extends StaticAssetService {
         image: `${origin}/og/${photo.id}`,
         url: `${origin}/${photo.id}`,
       })
+      this.injectFaviconLinks(document)
 
       const serialized = document.documentElement.outerHTML
       return this.createManualHtmlResponse(serialized, headers, 200)
@@ -137,6 +138,7 @@ export class StaticWebService extends StaticAssetService {
         image: `${origin}/og`,
         url: origin,
       })
+      this.injectFaviconLinks(document)
 
       const serialized = document.documentElement.outerHTML
       return this.createManualHtmlResponse(serialized, headers, 200)
@@ -283,6 +285,42 @@ export class StaticWebService extends StaticAssetService {
       element.setAttribute(attributeName, key)
       element.setAttribute('content', content)
       document.head?.append(element)
+    }
+  }
+
+  private injectFaviconLinks(document: StaticAssetDocument): void {
+    if (!document.head) {
+      return
+    }
+
+    const faviconLinks = [
+      { rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon.png' },
+      { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32x32.png' },
+      { rel: 'icon', type: 'image/png', sizes: '16x16', href: '/favicon-16x16.png' },
+      { rel: 'manifest', href: '/site.webmanifest' },
+      { rel: 'shortcut icon', href: '/favicon.ico' },
+    ]
+
+    for (const linkAttrs of faviconLinks) {
+      // Check if link already exists to avoid duplicates
+      const existingLink = Array.from(document.head.querySelectorAll('link')).find((link) => {
+        const rel = link.getAttribute('rel')
+        const href = link.getAttribute('href')
+        return rel === linkAttrs.rel && href === linkAttrs.href
+      })
+
+      if (!existingLink) {
+        const linkElement = document.createElement('link')
+        linkElement.setAttribute('rel', linkAttrs.rel)
+        linkElement.setAttribute('href', linkAttrs.href)
+        if (linkAttrs.sizes) {
+          linkElement.setAttribute('sizes', linkAttrs.sizes)
+        }
+        if (linkAttrs.type) {
+          linkElement.setAttribute('type', linkAttrs.type)
+        }
+        document.head.append(linkElement)
+      }
     }
   }
 
