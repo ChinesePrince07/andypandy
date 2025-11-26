@@ -16,8 +16,25 @@ export interface StorageObject {
   etag?: string
 }
 
+export type StorageUploadStatus = 'start' | 'progress' | 'complete' | 'error'
+
+export type StorageUploadProgress = {
+  key: string
+  status: StorageUploadStatus
+  provider?: StorageConfig['provider']
+  size?: number
+  bytesUploaded?: number
+  totalBytes?: number
+  elapsedMs?: number
+  error?: unknown
+  metadata?: Record<string, unknown> | null
+}
+
+export type StorageUploadProgressHandler = (progress: StorageUploadProgress) => Promise<void> | void
+
 export interface StorageUploadOptions {
   contentType?: string
+  onProgress?: StorageUploadProgressHandler
 }
 
 // 存储提供商的通用接口

@@ -40,6 +40,7 @@ import {
 } from '../access/storage-access.utils'
 import { PhotoBuilderService } from '../builder/photo-builder.service'
 import { PhotoStorageService } from '../storage/photo-storage.service'
+import type { TransactionalUploadProgressEvent } from '../storage/transactional-storage.manager'
 import { TransactionalStorageManager } from '../storage/transactional-storage.manager'
 import type { PhotoAssetListItem, PhotoAssetRecord, PhotoAssetSummary, UploadAssetInput } from './photo-asset.types'
 import { inferContentTypeFromKey } from './storage.utils'
@@ -516,6 +517,7 @@ export class PhotoAssetService {
         videoBufferMap,
         abortSignal: options?.abortSignal,
         builderLogEmitter,
+        progressEmitter: options?.progress,
         secureAccessEnabled,
         onProcessed: async ({ storageObject, manifestItem }) => {
           throwIfAborted()
@@ -933,6 +935,7 @@ export class PhotoAssetService {
     videoBufferMap: Map<string, Buffer>
     abortSignal?: AbortSignal
     builderLogEmitter?: DataSyncProgressEmitter
+    progressEmitter?: DataSyncProgressEmitter
     secureAccessEnabled: boolean
     onProcessed?: (payload: {
       plan: PreparedUploadPlan
@@ -953,12 +956,90 @@ export class PhotoAssetService {
       videoBufferMap,
       abortSignal,
       builderLogEmitter,
+      progressEmitter,
       secureAccessEnabled,
       onProcessed,
     } = params
 
     const results: PhotoAssetListItem[] = []
     const transactionalManager = storageManager instanceof TransactionalStorageManager ? storageManager : null
+
+    const emitStorageUploadProgress = async (event: TransactionalUploadProgressEvent) => {
+      if (!progressEmitter) {
+        return
+      }
+
+      const sizeBytes = typeof event.size === 'number' ? event.size : 0
+      const readableSize = formatBytesForDisplay(sizeBytes)
+      const providerLabel = storageConfig.provider
+      const baseMessage = `[${providerLabel}]`
+      let level: DataSyncLogLevel = 'info'
+      let message: string
+
+      switch (event.status) {
+        case 'start': {
+          message = `${baseMessage} 开始上传 ${event.key} (${event.index}/${event.total}, ${readableSize})`
+
+          break
+        }
+        case 'progress': {
+          const uploadedBytes = event.bytesUploaded ?? 0
+          const totalBytes = event.totalBytes ?? sizeBytes
+          const readableUploaded = formatBytesForDisplay(uploadedBytes)
+          const readableTotal = totalBytes ? formatBytesForDisplay(totalBytes) : readableSize
+          const percentage =
+            totalBytes && totalBytes > 0 ? `（${Math.min(100, Math.round((uploadedBytes / totalBytes) * 100))}%）` : ''
+          message = `${baseMessage} 上传中 ${event.key} ${readableUploaded}/${readableTotal}${percentage}`
+
+          break
+        }
+        case 'complete': {
+          level = 'success'
+          const durationSegment = typeof event.elapsedMs === 'number' ? `，耗时 ${event.elapsedMs}ms` : ''
+          message = `${baseMessage} 上传完成 ${event.key} (${event.index}/${event.total}, ${readableSize}${durationSegment})`
+
+          break
+        }
+        default: {
+          level = 'error'
+          const reason =
+            event.error instanceof Error
+              ? event.error.message
+              : typeof event.error === 'string'
+                ? event.error
+                : '未知错误'
+          message = `${baseMessage} 上传失败 ${event.key}：${reason}`
+        }
+      }
+
+      const details: Record<string, unknown> = {
+        kind: 'storage-upload',
+        provider: providerLabel,
+        key: event.key,
+        size: event.size,
+        bytesUploaded: event.bytesUploaded ?? null,
+        totalBytes: event.totalBytes ?? null,
+        index: event.index,
+        total: event.total,
+        elapsedMs: event.elapsedMs ?? null,
+        status: event.status,
+      }
+      if (event.status === 'error' && event.error) {
+        details.error = event.error instanceof Error ? event.error.message : String(event.error)
+      }
+
+      await progressEmitter({
+        type: 'log',
+        payload: {
+          level,
+          message,
+          timestamp: new Date().toISOString(),
+          stage: 'missing-in-db',
+          details,
+        },
+      })
+    }
+    const uploadProgressHandler = progressEmitter ? emitStorageUploadProgress : undefined
 
     const throwIfAborted = () => {
       if (abortSignal?.aborted) {
@@ -1023,7 +1104,9 @@ export class PhotoAssetService {
       }
 
       if (transactionalManager) {
-        await transactionalManager.flushUploads()
+        await transactionalManager.flushUploads({
+          onProgress: uploadProgressHandler,
+        })
         transactionalManager.clearPrefetchedBuffer(resolvedPhotoKey)
         if (videoObject) {
           transactionalManager.clearPrefetchedBuffer(videoObject.key)
