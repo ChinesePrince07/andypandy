@@ -1,4 +1,14 @@
-import { authSessions, authUsers, photoAssets, reactions, settings, tenants } from '@afilmory/db'
+import {
+  authSessions,
+  authUsers,
+  commentReactions,
+  comments,
+  photoAssets,
+  reactions,
+  settings,
+  tenantDomains,
+  tenants,
+} from '@afilmory/db'
 import { EventEmitterService } from '@afilmory/framework'
 import { DbAccessor } from 'core/database/database.provider'
 import { BizException, ErrorCode } from 'core/errors'
@@ -66,9 +76,14 @@ export class DataManagementService {
       await tx.delete(photoAssets).where(eq(photoAssets.tenantId, tenantId))
       await tx.delete(reactions).where(eq(reactions.tenantId, tenantId))
       await tx.delete(settings).where(eq(settings.tenantId, tenantId))
+      await tx.delete(tenantDomains).where(eq(tenantDomains.tenantId, tenantId))
+
+      await tx.delete(comments).where(eq(comments.tenantId, tenantId))
+      await tx.delete(commentReactions).where(eq(commentReactions.tenantId, tenantId))
 
       await tx.delete(authSessions).where(eq(authSessions.tenantId, tenantId))
-      await tx.update(authUsers).set({ tenantId: null, role: 'user' }).where(eq(authUsers.tenantId, tenantId))
+      // await tx.delete(authAccounts).where(eq(authAccounts.tenantId, tenantId))
+      await tx.delete(authUsers).where(eq(authUsers.tenantId, tenantId))
       await tx.delete(tenants).where(eq(tenants.id, tenantId))
     })
 
