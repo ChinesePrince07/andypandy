@@ -1,3 +1,5 @@
+import { Spring } from '@afilmory/utils'
+import { AnimatePresence, m } from 'motion/react'
 import { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -52,14 +54,22 @@ export const PageHeaderCenter = ({ dateRange, location, showDateRange }: PageHea
 
   const formattedDate = useMemo(() => (dateRange ? parseMainDate(dateRange) : undefined), [dateRange, parseMainDate])
 
-  if (!showDateRange || !formattedDate) {
-    return null
-  }
+  const visible = showDateRange && formattedDate
 
   return (
-    <div className="absolute left-1/2 hidden -translate-x-1/2 flex-col items-center lg:flex">
-      <span className="text-sm font-semibold text-white">{formattedDate}</span>
-      {location && <span className="text-xs text-white/60">{location}</span>}
-    </div>
+    <AnimatePresence>
+      {visible && (
+        <m.div
+          initial={{ y: 20, opacity: 0, filter: 'blur(8px)' }}
+          animate={{ y: 0, opacity: 1, filter: 'blur(0px)' }}
+          exit={{ y: 20, opacity: 0, filter: 'blur(8px)' }}
+          transition={Spring.presets.smooth}
+          className="absolute left-1/2 hidden -translate-x-1/2 flex-col items-center lg:flex"
+        >
+          <span className="text-sm font-semibold text-white">{formattedDate}</span>
+          {location && <span className="text-xs text-white/60">{location}</span>}
+        </m.div>
+      )}
+    </AnimatePresence>
   )
 }
