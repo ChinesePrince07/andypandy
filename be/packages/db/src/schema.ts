@@ -29,7 +29,7 @@ const snowflakeId = createSnowflakeId('id').primaryKey()
 
 export const userRoleEnum = pgEnum('user_role', ['user', 'admin', 'superadmin'])
 
-export const tenantStatusEnum = pgEnum('tenant_status', ['active', 'inactive', 'suspended'])
+export const tenantStatusEnum = pgEnum('tenant_status', ['pending', 'active', 'inactive', 'suspended'])
 export const tenantDomainStatusEnum = pgEnum('tenant_domain_status', ['pending', 'verified', 'disabled'])
 export const photoSyncStatusEnum = pgEnum('photo_sync_status', ['pending', 'synced', 'conflict'])
 export const commentStatusEnum = pgEnum('comment_status', ['pending', 'approved', 'rejected', 'hidden'])
@@ -107,24 +107,34 @@ export const tenantDomains = pgTable(
 )
 
 // Custom users table (Better Auth: user)
-export const authUsers = pgTable('auth_user', {
-  id: text('id').primaryKey(),
-  name: text('name').notNull(),
-  email: text('email').notNull().unique(),
-  emailVerified: boolean('email_verified').default(false).notNull(),
-  image: text('image'),
-  creemCustomerId: text('creem_customer_id'),
-  role: userRoleEnum('role').notNull().default('user'),
-  tenantId: text('tenant_id').references(() => tenants.id, { onDelete: 'set null' }),
-  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
-  updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
-  twoFactorEnabled: boolean('two_factor_enabled').default(false).notNull(),
-  username: text('username'),
-  displayUsername: text('display_username'),
-  banned: boolean('banned').default(false).notNull(),
-  banReason: text('ban_reason'),
-  banExpires: timestamp('ban_expires_at', { mode: 'string' }),
-})
+// Note: Multi-tenant design - same email can exist in different tenants
+export const authUsers = pgTable(
+  'auth_user',
+  {
+    id: text('id').primaryKey(),
+    name: text('name').notNull(),
+    email: text('email').notNull(),
+    emailVerified: boolean('email_verified').default(false).notNull(),
+    image: text('image'),
+    creemCustomerId: text('creem_customer_id'),
+    role: userRoleEnum('role').notNull().default('user'),
+    tenantId: text('tenant_id').references(() => tenants.id, { onDelete: 'set null' }),
+    createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
+    twoFactorEnabled: boolean('two_factor_enabled').default(false).notNull(),
+    username: text('username'),
+    displayUsername: text('display_username'),
+    banned: boolean('banned').default(false).notNull(),
+    banReason: text('ban_reason'),
+    banExpires: timestamp('ban_expires_at', { mode: 'string' }),
+  },
+  (t) => [
+    // Multi-tenant: same email can exist in different tenants
+    unique('uq_auth_user_tenant_email').on(t.tenantId, t.email),
+    index('idx_auth_user_email').on(t.email),
+    index('idx_auth_user_tenant').on(t.tenantId),
+  ],
+)
 
 // Custom sessions table (Better Auth: session)
 export const authSessions = pgTable('auth_session', {
@@ -142,23 +152,35 @@ export const authSessions = pgTable('auth_session', {
 })
 
 // Custom accounts table (Better Auth: account)
-export const authAccounts = pgTable('auth_account', {
-  id: text('id').primaryKey(),
-  accountId: text('account_id').notNull(),
-  providerId: text('provider_id').notNull(),
-  userId: text('user_id')
-    .notNull()
-    .references(() => authUsers.id, { onDelete: 'cascade' }),
-  accessToken: text('access_token'),
-  refreshToken: text('refresh_token'),
-  idToken: text('id_token'),
-  accessTokenExpiresAt: timestamp('access_token_expires_at', { mode: 'string' }),
-  refreshTokenExpiresAt: timestamp('refresh_token_expires_at', { mode: 'string' }),
-  scope: text('scope'),
-  password: text('password'),
-  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
-  updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
-})
+// Note: Multi-tenant design - same social account can exist in different tenants
+export const authAccounts = pgTable(
+  'auth_account',
+  {
+    id: text('id').primaryKey(),
+    accountId: text('account_id').notNull(),
+    providerId: text('provider_id').notNull(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => authUsers.id, { onDelete: 'cascade' }),
+    tenantId: text('tenant_id').references(() => tenants.id, { onDelete: 'set null' }),
+    accessToken: text('access_token'),
+    refreshToken: text('refresh_token'),
+    idToken: text('id_token'),
+    accessTokenExpiresAt: timestamp('access_token_expires_at', { mode: 'string' }),
+    refreshTokenExpiresAt: timestamp('refresh_token_expires_at', { mode: 'string' }),
+    scope: text('scope'),
+    password: text('password'),
+    createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
+  },
+  (t) => [
+    // Multi-tenant: same social account can exist in different tenants
+    unique('uq_auth_account_tenant_provider').on(t.tenantId, t.providerId, t.accountId),
+    index('idx_auth_account_user').on(t.userId),
+    index('idx_auth_account_tenant').on(t.tenantId),
+    index('idx_auth_account_provider').on(t.providerId, t.accountId),
+  ],
+)
 
 export const authVerifications = pgTable('auth_verification', {
   id: text('id').primaryKey(),
