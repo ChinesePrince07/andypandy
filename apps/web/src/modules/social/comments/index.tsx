@@ -33,17 +33,6 @@ const CommentsContent: FC = () => {
   const sessionUser = useAtomValue(sessionUserAtom)
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col">
-      <div className="flex items-center justify-between px-4 pt-3 pb-2 text-sm text-white/70">
-        <div className="ml-4 flex items-center gap-2">
-          <i className="i-mingcute-comment-line mr-2" />
-          <span>{t('inspector.tab.comments')}</span>
-          {comments.length > 0 && (
-            <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/70">{comments.length}</span>
-          )}
-        </div>
-        {status.isLoading && <span className="text-xs text-white/40">{t('comments.loading')}</span>}
-      </div>
-
       <ScrollArea rootClassName="flex-1 min-h-0" viewportClassName="px-4">
         <div className="space-y-4 pb-4">
           {status.isLoading ? (
