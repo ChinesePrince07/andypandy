@@ -7,7 +7,7 @@ import { gallerySettingAtom } from '~/atoms/app'
 import { siteConfig } from '~/config'
 import { useMobile } from '~/hooks/useMobile'
 import { getFilteredPhotos, usePhotos, usePhotoViewer } from '~/hooks/usePhotoViewer'
-import { MasonryRoot } from '~/modules/gallery/MasonryRoot'
+import { PhotosRoot } from '~/modules/gallery/PhotosRoot'
 import { PhotosProvider } from '~/providers/photos-provider'
 
 export const Component = () => {
@@ -38,11 +38,11 @@ export const Component = () => {
 
         {isMobile ? (
           <ScrollElementContext value={document.body}>
-            <MasonryRoot />
+            <PhotosRoot />
           </ScrollElementContext>
         ) : (
-          <ScrollArea rootClassName={'h-svh w-full'} viewportClassName="size-full">
-            <MasonryRoot />
+          <ScrollArea rootClassName={'h-svh w-full'} viewportClassName="size-full" scrollbarClassName="mt-16">
+            <PhotosRoot />
           </ScrollArea>
         )}
 
