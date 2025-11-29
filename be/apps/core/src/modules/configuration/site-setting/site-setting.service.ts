@@ -1,7 +1,7 @@
 import { authUsers } from '@afilmory/db'
 import { DbAccessor } from 'core/database/database.provider'
 import { BizException, ErrorCode } from 'core/errors'
-import { normalizeStringToUndefined, parseBoolean } from 'core/helpers/normalize.helper'
+import { normalizeStringToUndefined } from 'core/helpers/normalize.helper'
 import { requireTenantContext } from 'core/modules/platform/tenant/tenant.context'
 import { asc, eq, sql } from 'drizzle-orm'
 import { injectable } from 'tsyringe'
@@ -309,7 +309,6 @@ interface SiteConfigAuthor {
 interface SiteConfigSocial {
   twitter?: string
   github?: string
-  rss?: boolean
 }
 
 interface SiteConfigFeed {
@@ -407,11 +406,6 @@ function buildSocialConfig(values: SiteSettingValueMap): SiteConfig['social'] | 
   assignString(values['site.social.github'], (value) => {
     social.github = value
   })
-
-  const rss = parseBoolean(values['site.social.rss'])
-  if (typeof rss === 'boolean') {
-    social.rss = rss
-  }
 
   return Object.keys(social).length > 0 ? social : undefined
 }

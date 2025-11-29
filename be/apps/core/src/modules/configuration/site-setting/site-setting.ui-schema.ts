@@ -128,18 +128,6 @@ export function createSiteSettingUiSchema(t: UiSchemaTFunction): UiSchema<SiteSe
                 },
                 icon: 'github',
               },
-              {
-                type: 'field',
-                id: 'site-social-rss',
-                title: t('site.sections.social.groups.channels.fields.rss.title'),
-                description: t('site.sections.social.groups.channels.fields.rss.description'),
-                helperText: t('site.sections.social.groups.channels.fields.rss.helper'),
-                key: 'site.social.rss',
-                component: {
-                  type: 'switch',
-                },
-                icon: 'rss',
-              },
             ],
           },
         ],

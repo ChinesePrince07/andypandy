@@ -10,7 +10,6 @@ export const SITE_SETTING_KEYS = [
   'site.accentColor',
   'site.social.twitter',
   'site.social.github',
-  'site.social.rss',
   'site.feed.folo.challenge.feedId',
   'site.feed.folo.challenge.userId',
   'site.map.providers',

@@ -148,11 +148,6 @@ const zhCnUiSchema = {
                 title: 'GitHub',
                 helper: '支持完整链接或用户名。',
               },
-              rss: {
-                title: '生成 RSS 订阅源',
-                description: '启用后将在前台站点暴露 RSS 订阅入口。',
-                helper: '开启后访客可通过 RSS 订阅最新照片。',
-              },
             },
           },
         },

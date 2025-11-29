@@ -4,7 +4,7 @@
 
 - `name`, `title`, `description`, `url`, `accentColor`
 - `author`: `{ name, url, avatar }`
-- `social`: `{ github?, twitter?, rss? }`
+- `social`: `{ github?, twitter? }`
 - `feed`: optional `folo.challenge.feedId` and `userId`
 - `map`: e.g. `["maplibre"]`
 - `mapStyle`: `builtin` or provider style

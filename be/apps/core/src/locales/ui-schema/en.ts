@@ -149,11 +149,6 @@ const enUiSchema = {
                 title: 'GitHub',
                 helper: 'Supports full URLs or usernames.',
               },
-              rss: {
-                title: 'Expose RSS feed',
-                description: 'Enable to publish an RSS endpoint on the public site.',
-                helper: 'Visitors can subscribe to the latest photos via RSS.',
-              },
             },
           },
         },
