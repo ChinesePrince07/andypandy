@@ -45,7 +45,7 @@ export const PhotosRoot = () => {
         showDateRange={showFloatingActions && !!dateRange.formattedRange}
       />
 
-      <div className="mt-16 p-1 **:select-none! lg:px-0 lg:pb-0">
+      <div className="mt-12 p-1 **:select-none! lg:px-0 lg:pb-0">
         {viewMode === 'list' ? <ListView photos={photos} /> : <MasonryView photos={photos} onRender={handleRender} />}
       </div>
 

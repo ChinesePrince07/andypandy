@@ -19,17 +19,17 @@ export function resolveSocialUrl(
   return `${baseUrl}${normalized}`
 }
 
-// 小型社交按钮样式（用于 PageHeaderLeft）
+// 小型社交按钮样式（用于 PageHeaderRight）
 export const SocialIconButton = ({ icon, title, href }: { icon: string; title: string; href: string }) => {
   return (
     <a
       href={href}
       target="_blank"
       rel="noreferrer"
-      className="inline-flex size-6 items-center justify-center rounded-md text-white/40 transition-colors duration-200 hover:text-white/80"
+      className="inline-flex size-6 items-center justify-center rounded text-white/40 transition-colors duration-200 hover:text-white/80 lg:size-7"
       title={title}
     >
-      <i className={`${icon} text-base`} />
+      <i className={`${icon} text-sm lg:text-base`} />
     </a>
   )
 }
@@ -49,13 +49,13 @@ export const ActionIconButton = ({
   href?: string
 }) => {
   const commonClasses =
-    'relative flex size-9 items-center justify-center rounded-full bg-white/10 text-white/60 transition-all duration-200 hover:bg-white/20 hover:text-white lg:size-10'
+    'relative flex size-7 items-center justify-center rounded text-white/60 transition-all duration-200 hover:bg-white/10 hover:text-white lg:size-8'
 
   const content = (
     <>
-      <i className={`${icon} text-base lg:text-lg`} />
+      <i className={`${icon} text-sm lg:text-base`} />
       {badge !== undefined && badge > 0 && (
-        <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-blue-500 text-[10px] font-medium text-white">
+        <span className="absolute -top-0.5 -right-0.5 flex size-3.5 items-center justify-center rounded-full bg-blue-500 text-[9px] font-medium text-white lg:size-4">
           {badge}
         </span>
       )}

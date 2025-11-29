@@ -16,45 +16,39 @@ export const PageHeaderLeft = () => {
     siteConfig.social && siteConfig.social.twitter
       ? resolveSocialUrl(siteConfig.social.twitter, { baseUrl: 'https://twitter.com/', stripAt: true })
       : undefined
-  const hasRss = siteConfig.social && siteConfig.social.rss
-
-  const hasSocialLinks = githubUrl || twitterUrl || hasRss
+  const hasRss = true
 
   return (
-    <div className="flex items-center gap-2 lg:gap-3">
-      <div className="relative flex items-center gap-2 lg:gap-3">
-        {siteConfig.author.avatar ? (
-          <AvatarPrimitive.Root>
-            <AvatarPrimitive.Image
-              src={siteConfig.author.avatar}
-              className="size-8 rounded-lg lg:size-9"
-              alt={siteConfig.author.name}
-            />
-            <AvatarPrimitive.Fallback>
-              <div className="flex size-8 items-center justify-center rounded-lg bg-white/10 lg:size-9">
-                <i className="i-mingcute-camera-2-line text-base text-white/60 lg:text-lg" />
-              </div>
-            </AvatarPrimitive.Fallback>
-          </AvatarPrimitive.Root>
-        ) : (
-          <div className="flex size-8 items-center justify-center rounded-lg bg-white/10 lg:size-9">
-            <i className="i-mingcute-camera-2-line text-base text-white/60 lg:text-lg" />
-          </div>
-        )}
-      </div>
-      <div className="flex flex-col">
-        <div className="flex items-baseline gap-1.5 lg:gap-2">
-          <h1 className="truncate text-base font-semibold text-white lg:text-lg">{siteConfig.name}</h1>
-          <span className="text-xs text-white/40 lg:text-sm">{visiblePhotoCount}</span>
+    <div className="flex items-center gap-2">
+      {siteConfig.author.avatar ? (
+        <AvatarPrimitive.Root>
+          <AvatarPrimitive.Image
+            src={siteConfig.author.avatar}
+            className="size-7 rounded-lg lg:size-8"
+            alt={siteConfig.author.name}
+          />
+          <AvatarPrimitive.Fallback>
+            <div className="flex size-7 items-center justify-center rounded-lg bg-white/10 lg:size-8">
+              <i className="i-mingcute-camera-2-line text-sm text-white/60 lg:text-base" />
+            </div>
+          </AvatarPrimitive.Fallback>
+        </AvatarPrimitive.Root>
+      ) : (
+        <div className="flex size-7 items-center justify-center rounded-lg bg-white/10 lg:size-8">
+          <i className="i-mingcute-camera-2-line text-sm text-white/60 lg:text-base" />
         </div>
-        {hasSocialLinks && (
-          <div className="flex items-center gap-2">
-            {githubUrl && <SocialIconButton icon="i-mingcute-github-fill" title="GitHub" href={githubUrl} />}
-            {twitterUrl && <SocialIconButton icon="i-mingcute-twitter-fill" title="Twitter" href={twitterUrl} />}
-            {hasRss && <SocialIconButton icon="i-mingcute-rss-2-fill" title="RSS" href="/feed.xml" />}
-          </div>
-        )}
+      )}
+      <div className="flex items-center gap-1.5">
+        <h1 className="truncate text-sm font-semibold text-white lg:text-base">{siteConfig.name}</h1>
+        <span className="text-xs text-white/40 lg:text-sm">{visiblePhotoCount}</span>
       </div>
+      {(githubUrl || twitterUrl || hasRss) && (
+        <div className="ml-1 flex items-center gap-1 border-l border-white/10 pl-2">
+          {githubUrl && <SocialIconButton icon="i-mingcute-github-fill" title="GitHub" href={githubUrl} />}
+          {twitterUrl && <SocialIconButton icon="i-mingcute-twitter-fill" title="Twitter" href={twitterUrl} />}
+          {hasRss && <SocialIconButton icon="i-mingcute-rss-2-fill" title="RSS" href="/feed.xml" />}
+        </div>
+      )}
     </div>
   )
 }

@@ -8,7 +8,7 @@ This document tracks the current subscription plans, quota knobs, and the design
 - Decouple plan defaults from tenant-specific overrides so superadmins can hotfix limits without redeploys.
 - Keep room for future self-serve subscriptions while allowing manual override flows during private beta.
 
-## Plan Catalog (2024-xx-xx)
+## Plan Catalog (2025-11-30)
 
 | Plan ID    | Label              | Availability          | Monthly Process Limit | Library Items | Upload Size (MB) | Sync Object (MB) | Notes |
 |------------|--------------------|-----------------------|-----------------------|---------------|------------------|------------------|-------|
@@ -17,6 +17,17 @@ This document tracks the current subscription plans, quota knobs, and the design
 | `friend`   | Friend (Internal)  | Manual via superadmin | Unlimited (null)      | Unlimited     | Unlimited        | Unlimited        | Private plan for friends/internal testers; never exposed in product UI. |
 
 > `Unlimited` == `null` in the DB schema, meaning enforcement is skipped for that quota dimension.
+
+## Global Hard Caps (system guardrails)
+
+These apply to every plan (including `friend`) to protect the service from pathological requests. Plan-specific limits are enforced first, then clipped by these ceilings:
+
+- Max file size: **1 GB** (`ABSOLUTE_MAX_FILE_SIZE_BYTES`)
+- Max request payload: **5 GB** (`ABSOLUTE_MAX_REQUEST_SIZE_BYTES`)
+- Max files per batch: **128** (`MAX_UPLOAD_FILES_PER_BATCH`)
+- Max text fields per request: **256** (`MAX_TEXT_FIELDS_PER_REQUEST`)
+
+> Effectively: `resolvedFileLimit = min(plan.uploadLimit, 1 GB)` and `resolvedBatchLimit = min(resolvedFileLimit * 128, 5 GB)`.
 
 ## Design Notes
 

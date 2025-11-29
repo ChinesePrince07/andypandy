@@ -15,11 +15,11 @@ export const ViewModeSegment = () => {
   }
 
   return (
-    <div className="relative flex h-9 items-center gap-0.5 rounded-full bg-white/5 p-0.5 lg:h-10 lg:gap-1 lg:p-1">
+    <div className="border-border relative flex h-7 items-center gap-0.5 rounded-lg border-[0.5px] bg-white/5 p-0.5 lg:h-8 lg:gap-1 lg:p-1">
       <button
         type="button"
         onClick={() => handleViewModeChange('masonry')}
-        className={`relative z-10 flex h-full items-center gap-1.5 rounded-full px-2.5 text-sm font-medium transition-colors duration-200 lg:px-3 ${
+        className={`relative z-10 flex h-full items-center justify-center rounded-lg px-2 text-xs font-medium transition-colors duration-200 lg:px-4 ${
           settings.viewMode === 'masonry' ? 'text-white' : 'text-white/60 hover:text-white/80'
         }`}
         title={t('gallery.view.masonry')}
@@ -27,17 +27,16 @@ export const ViewModeSegment = () => {
         {settings.viewMode === 'masonry' && (
           <motion.span
             layoutId="segment-indicator"
-            className="absolute inset-0 rounded-full bg-white/15 shadow-sm"
+            className="absolute inset-0 rounded-md bg-white/15 shadow-sm"
             transition={Spring.presets.snappy}
           />
         )}
         <i className="i-mingcute-grid-line relative z-10 text-sm lg:text-base" />
-        <span className="relative z-10 hidden lg:inline">{t('gallery.view.masonry')}</span>
       </button>
       <button
         type="button"
         onClick={() => handleViewModeChange('list')}
-        className={`relative z-10 flex h-full items-center gap-1.5 rounded-full px-2.5 text-sm font-medium transition-colors duration-200 lg:px-3 ${
+        className={`relative z-10 flex h-full items-center justify-center rounded-lg px-2 text-xs font-medium transition-colors duration-200 lg:px-4 ${
           settings.viewMode === 'list' ? 'text-white' : 'text-white/60 hover:text-white/80'
         }`}
         title={t('gallery.view.list')}
@@ -45,12 +44,11 @@ export const ViewModeSegment = () => {
         {settings.viewMode === 'list' && (
           <motion.span
             layoutId="segment-indicator"
-            className="absolute inset-0 rounded-full bg-white/15 shadow-sm"
+            className="absolute inset-0 rounded-md bg-white/15 shadow-sm"
             transition={Spring.presets.snappy}
           />
         )}
         <i className="i-mingcute-list-ordered-line relative z-10 text-sm lg:text-base" />
-        <span className="relative z-10 hidden lg:inline">{t('gallery.view.list')}</span>
       </button>
     </div>
   )

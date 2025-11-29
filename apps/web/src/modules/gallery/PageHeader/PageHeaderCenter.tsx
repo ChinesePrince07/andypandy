@@ -66,8 +66,8 @@ export const PageHeaderCenter = ({ dateRange, location, showDateRange }: PageHea
           transition={Spring.presets.smooth}
           className="absolute left-1/2 hidden -translate-x-1/2 flex-col items-center lg:flex"
         >
-          <span className="text-sm font-semibold text-white">{formattedDate}</span>
-          {location && <span className="text-xs text-white/60">{location}</span>}
+          <span className="text-xs font-semibold text-white lg:text-sm">{formattedDate}</span>
+          {location && <span className="text-[10px] text-white/60 lg:text-xs">{location}</span>}
         </m.div>
       )}
     </AnimatePresence>

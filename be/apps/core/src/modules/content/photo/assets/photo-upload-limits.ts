@@ -3,10 +3,10 @@ import type { Context } from 'hono'
 
 import type { UploadAssetInput } from './photo-asset.types'
 
-export const ABSOLUTE_MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024 // 50 MB
-export const ABSOLUTE_MAX_REQUEST_SIZE_BYTES = 500 * 1024 * 1024 // 500 MB
-export const MAX_UPLOAD_FILES_PER_BATCH = 32
-export const MAX_TEXT_FIELDS_PER_REQUEST = 64
+export const ABSOLUTE_MAX_FILE_SIZE_BYTES = 1024 * 1024 * 1024 // 1 GB hard cap per file
+export const ABSOLUTE_MAX_REQUEST_SIZE_BYTES = 5 * 1024 * 1024 * 1024 // 5 GB hard cap per request
+export const MAX_UPLOAD_FILES_PER_BATCH = 128
+export const MAX_TEXT_FIELDS_PER_REQUEST = 256
 
 const PHOTO_UPLOAD_LIMIT_CONTEXT_KEY = 'photo.upload.limits'
 const PHOTO_UPLOAD_INPUT_CONTEXT_KEY = 'photo.upload.inputs'

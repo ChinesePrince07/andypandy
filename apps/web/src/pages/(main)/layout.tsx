@@ -41,7 +41,7 @@ export const Component = () => {
             <PhotosRoot />
           </ScrollElementContext>
         ) : (
-          <ScrollArea rootClassName={'h-svh w-full'} viewportClassName="size-full" scrollbarClassName="mt-16">
+          <ScrollArea rootClassName={'h-svh w-full'} viewportClassName="size-full" scrollbarClassName="mt-12">
             <PhotosRoot />
           </ScrollArea>
         )}
