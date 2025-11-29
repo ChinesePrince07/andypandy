@@ -178,7 +178,7 @@ export default async function LocaleLayout({
   return (
     <>
       <ClientInit />
-      <html lang={locale} suppressHydrationWarning>
+      <html lang={locale} data-theme="dark" suppressHydrationWarning>
         <head>
           <script
             type="application/ld+json"
