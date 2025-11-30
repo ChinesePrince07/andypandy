@@ -14,13 +14,13 @@ import { Drawer } from 'vaul'
 
 import { gallerySettingAtom, isCommandPaletteOpenAtom } from '~/atoms/app'
 import { sessionUserAtom } from '~/atoms/session'
-import { injectConfig } from '~/config'
+import { injectConfig, siteConfig } from '~/config'
 import { useMobile } from '~/hooks/useMobile'
 import { authApi } from '~/lib/api/auth'
 
 import { UserAvatar } from '../../social/comments/UserAvatar'
 import { ViewPanel } from '../panels/ViewPanel'
-import { ActionIconButton } from './utils'
+import { ActionIconButton, resolveSocialUrl } from './utils'
 
 export const PageHeaderRight = () => {
   const { t } = useTranslation()
@@ -77,6 +77,8 @@ export const PageHeaderRight = () => {
             <ViewPanel />
           </DesktopViewButton>
         )}
+
+        {isMobile && <MoreActionMenu />}
       </div>
 
       {/* Auth Section - Only show when useCloud is true */}
@@ -86,6 +88,84 @@ export const PageHeaderRight = () => {
         </div>
       )}
     </div>
+  )
+}
+
+const MoreActionMenu = () => {
+  const { t } = useTranslation()
+  const [settings, setSettings] = useAtom(gallerySettingAtom)
+
+  const githubUrl =
+    siteConfig.social && siteConfig.social.github
+      ? resolveSocialUrl(siteConfig.social.github, { baseUrl: 'https://github.com/' })
+      : undefined
+  const twitterUrl =
+    siteConfig.social && siteConfig.social.twitter
+      ? resolveSocialUrl(siteConfig.social.twitter, { baseUrl: 'https://twitter.com/', stripAt: true })
+      : undefined
+  const hasRss = true
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className="relative flex size-7 items-center justify-center rounded text-white/60 transition-all duration-200 hover:bg-white/10 hover:text-white lg:hidden"
+        >
+          <i className="i-mingcute-more-2-line text-lg" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="min-w-[180px]">
+        <div className="px-2 py-1.5 text-xs font-medium text-white/50">{t('action.view.title')}</div>
+        <DropdownMenuItem
+          onClick={() => setSettings((prev) => ({ ...prev, viewMode: 'masonry' }))}
+          className="justify-between"
+        >
+          <span className="flex items-center gap-2">
+            <i className="i-mingcute-grid-line text-base" />
+            {t('gallery.view.masonry')}
+          </span>
+          {settings.viewMode === 'masonry' && <i className="i-mingcute-check-line text-base" />}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => setSettings((prev) => ({ ...prev, viewMode: 'list' }))}
+          className="justify-between"
+        >
+          <span className="flex items-center gap-2">
+            <i className="i-mingcute-list-ordered-line text-base" />
+            {t('gallery.view.list')}
+          </span>
+          {settings.viewMode === 'list' && <i className="i-mingcute-check-line text-base" />}
+        </DropdownMenuItem>
+
+        {(githubUrl || twitterUrl || hasRss) && <DropdownMenuSeparator />}
+
+        {githubUrl && (
+          <DropdownMenuItem asChild>
+            <a href={githubUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2">
+              <i className="i-mingcute-github-fill text-base" />
+              GitHub
+            </a>
+          </DropdownMenuItem>
+        )}
+        {twitterUrl && (
+          <DropdownMenuItem asChild>
+            <a href={twitterUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2">
+              <i className="i-mingcute-twitter-fill text-base" />
+              Twitter
+            </a>
+          </DropdownMenuItem>
+        )}
+        {hasRss && (
+          <DropdownMenuItem asChild>
+            <a href="/feed.xml" target="_blank" rel="noreferrer" className="flex items-center gap-2">
+              <i className="i-mingcute-rss-2-fill text-base" />
+              RSS
+            </a>
+          </DropdownMenuItem>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
 

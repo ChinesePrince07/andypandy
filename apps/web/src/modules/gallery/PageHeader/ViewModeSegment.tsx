@@ -15,7 +15,7 @@ export const ViewModeSegment = () => {
   }
 
   return (
-    <div className="bg-material-medium/40 relative flex h-7 items-center gap-0.5 rounded-lg p-0.5 lg:h-8 lg:gap-1 lg:p-1">
+    <div className="bg-material-medium/40 relative hidden h-7 items-center gap-0.5 rounded-lg p-0.5 lg:flex lg:h-8 lg:gap-1 lg:p-1">
       <button
         type="button"
         onClick={() => handleViewModeChange('masonry')}

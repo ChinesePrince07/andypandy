@@ -43,7 +43,7 @@ export const PageHeaderLeft = () => {
         <span className="text-xs text-white/40 lg:text-sm">{visiblePhotoCount}</span>
       </div>
       {(githubUrl || twitterUrl || hasRss) && (
-        <div className="ml-1 flex items-center gap-1 border-l border-white/10 pl-2">
+        <div className="ml-1 hidden items-center gap-1 border-l border-white/10 pl-2 lg:flex">
           {githubUrl && <SocialIconButton icon="i-mingcute-github-fill" title="GitHub" href={githubUrl} />}
           {twitterUrl && <SocialIconButton icon="i-mingcute-twitter-fill" title="Twitter" href={twitterUrl} />}
           {hasRss && <SocialIconButton icon="i-mingcute-rss-2-fill" title="RSS" href="/feed.xml" />}
