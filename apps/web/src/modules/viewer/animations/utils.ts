@@ -9,11 +9,6 @@ const THUMBNAIL_SIZE = {
   desktop: 64,
 } as const
 
-const THUMBNAIL_PADDING = {
-  mobile: 12,
-  desktop: 16,
-} as const
-
 export const escapeAttributeValue = (value: string) => {
   if (window.CSS?.escape) {
     return window.CSS.escape(value)
@@ -52,9 +47,7 @@ export const computeViewerImageFrame = (
 ): AnimationFrameRect => {
   const baseFontSize = getRootFontSize()
   const exifWidth = isMobile ? 0 : DESKTOP_EXIF_PANEL_WIDTH_REM * baseFontSize
-  const thumbnailHeight = isMobile
-    ? THUMBNAIL_SIZE.mobile + THUMBNAIL_PADDING.mobile * 2
-    : THUMBNAIL_SIZE.desktop + THUMBNAIL_PADDING.desktop * 2
+  const thumbnailHeight = isMobile ? THUMBNAIL_SIZE.mobile : THUMBNAIL_SIZE.desktop
 
   const viewportWidth = viewportRect?.width ?? window.innerWidth
   const viewportHeight = viewportRect?.height ?? window.innerHeight
