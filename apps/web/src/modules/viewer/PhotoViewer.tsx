@@ -42,12 +42,12 @@ export const PhotoViewer = ({
   triggerElement,
 }: PhotoViewerProps) => {
   const { t } = useTranslation()
+  const isMobile = useMobile()
   const swiperRef = useRef<SwiperType | null>(null)
   const [isImageZoomed, setIsImageZoomed] = useState(false)
-  const [showExifPanel, setShowExifPanel] = useState(false)
+  const [isInspectorVisible, setIsInspectorVisible] = useState(!isMobile)
   const [currentBlobSrc, setCurrentBlobSrc] = useState<string | null>(null)
 
-  const isMobile = useMobile()
   const currentPhoto = photos[currentIndex]
 
   const {
@@ -72,10 +72,10 @@ export const PhotoViewer = ({
   useEffect(() => {
     if (!isOpen) {
       setIsImageZoomed(false)
-      setShowExifPanel(false)
+      setIsInspectorVisible(!isMobile)
       setCurrentBlobSrc(null)
     }
-  }, [isOpen])
+  }, [isMobile, isOpen])
 
   const handlePrevious = useCallback(() => {
     if (currentIndex > 0) {
@@ -152,7 +152,7 @@ export const PhotoViewer = ({
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
     }
-  }, [isOpen, handlePrevious, handleNext, onClose, showExifPanel])
+  }, [isOpen, handlePrevious, handleNext, onClose])
 
   if (!currentPhoto) return null
 
@@ -224,8 +224,8 @@ export const PhotoViewer = ({
                       {isMobile && (
                         <button
                           type="button"
-                          className={`bg-material-ultra-thick pointer-events-auto flex size-8 items-center justify-center rounded-full text-white backdrop-blur-2xl duration-200 hover:bg-black/40 ${showExifPanel ? 'bg-accent' : ''}`}
-                          onClick={() => setShowExifPanel(!showExifPanel)}
+                          className={`bg-material-ultra-thick pointer-events-auto flex size-8 items-center justify-center rounded-full text-white backdrop-blur-2xl duration-200 hover:bg-black/40 ${isInspectorVisible ? 'bg-accent' : ''}`}
+                          onClick={() => setIsInspectorVisible((visible) => !visible)}
                         >
                           <i className="i-mingcute-information-line" />
                         </button>
@@ -248,6 +248,18 @@ export const PhotoViewer = ({
                           </button>
                         }
                       />
+
+                      {/* 展开信息面板（桌面端在折叠时显示） */}
+                      {!isMobile && !isInspectorVisible && (
+                        <button
+                          type="button"
+                          className="bg-material-ultra-thick pointer-events-auto flex size-8 items-center justify-center rounded-full text-white backdrop-blur-2xl duration-200 hover:bg-black/40"
+                          onClick={() => setIsInspectorVisible(true)}
+                          title={t('inspector.tab.info')}
+                        >
+                          <i className="i-lucide-panel-right-open" />
+                        </button>
+                      )}
 
                       {/* 关闭按钮 */}
                       <button
@@ -377,16 +389,16 @@ export const PhotoViewer = ({
                 </Suspense>
               </div>
 
-              {/* PhotoInspector - 在桌面端始终显示,在移动端根据状态显示 */}
+              {/* PhotoInspector - 根据设备与折叠状态展示 */}
 
               <Suspense>
                 <AnimatePresenceOnlyMobile>
-                  {(!isMobile || showExifPanel) && (
+                  {isInspectorVisible && (
                     <PhotoInspector
                       currentPhoto={currentPhoto}
                       exifData={currentPhoto.exif}
-                      visible={isViewerContentVisible}
-                      onClose={isMobile ? () => setShowExifPanel(false) : undefined}
+                      visible={isInspectorVisible && isViewerContentVisible}
+                      onClose={() => setIsInspectorVisible(false)}
                     />
                   )}
                 </AnimatePresenceOnlyMobile>

@@ -102,7 +102,8 @@ export const InspectorPanel: FC<{
           </div>
         ) : (
           /* Desktop: Segment control */
-          <div className="relative mt-2 mb-3 flex items-center justify-center">
+          <div className="relative mt-3.5 mb-3 flex items-center justify-between px-3.5">
+            <div className="size-8" />
             <SegmentGroup
               value={activeTab}
               onValueChanged={(value) => setActiveTab(value as Tab)}
@@ -133,6 +134,16 @@ export const InspectorPanel: FC<{
                 />
               )}
             </SegmentGroup>
+            {onClose && (
+              <button
+                type="button"
+                className="bg-material-ultra-thick pointer-events-auto flex size-8 items-center justify-center rounded-full text-white backdrop-blur-2xl duration-200 hover:bg-black/40"
+                onClick={onClose}
+                aria-label="Collapse inspector panel"
+              >
+                <i className="i-lucide-panel-right-close" />
+              </button>
+            )}
           </div>
         )}
       </div>
