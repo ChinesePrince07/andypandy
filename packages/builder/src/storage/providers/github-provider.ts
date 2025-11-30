@@ -341,6 +341,12 @@ export class GitHubStorageProvider implements StorageProvider {
   generatePublicUrl(key: string): string {
     const fullPath = this.getFullPath(key)
 
+    // 如果设置了自定义 CDN 域名，直接使用
+    if (this.githubConfig.customDomain) {
+      const customDomain = this.githubConfig.customDomain.replace(/\/+$/, '') // 移除末尾的斜杠
+      return `https://${customDomain.replace(/^https?:\/\//, '')}/${fullPath}`
+    }
+
     if (this.githubConfig.useRawUrl) {
       // 使用 raw.githubusercontent.com 获取文件
       return `https://raw.githubusercontent.com/${this.githubConfig.owner}/${this.githubConfig.repo}/${this.githubConfig.branch}/${fullPath}`

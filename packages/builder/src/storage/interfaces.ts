@@ -170,6 +170,14 @@ export type GitHubConfig = {
   token?: string
   path?: string
   useRawUrl?: boolean
+  /**
+   * Optional custom CDN domain for generated URLs.
+   * When set, URLs will use this domain instead of raw.githubusercontent.com.
+   * Useful for jsDelivr, Cloudflare CDN, or other GitHub CDN proxies.
+   * @example 'cdn.jsdelivr.net/gh/owner/repo@branch'
+   * @example 'cdn.example.com'
+   */
+  customDomain?: string
 }
 
 export type LocalConfig = {

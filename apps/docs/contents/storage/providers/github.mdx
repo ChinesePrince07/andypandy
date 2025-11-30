@@ -74,6 +74,37 @@ useRawUrl: true
 
 This provides faster access and better caching for public repositories.
 
+## Custom CDN Domain
+
+For faster access in regions where `raw.githubusercontent.com` is slow, you can configure a custom CDN:
+
+```typescript
+import { defineBuilderConfig } from '@afilmory/builder'
+
+export default defineBuilderConfig(() => ({
+  storage: {
+    provider: 'github',
+    owner: 'your-username',
+    repo: 'photo-storage',
+    branch: 'main',
+    path: 'photos',
+    // Use jsDelivr CDN instead of raw.githubusercontent.com
+    customDomain: 'cdn.jsdelivr.net/gh/your-username/photo-storage@main',
+  },
+}))
+```
+
+**Popular CDN options:**
+
+- **jsDelivr**: `cdn.jsdelivr.net/gh/owner/repo@branch`
+- **Statically**: `cdn.statically.io/gh/owner/repo/branch`
+- **Custom proxy**: Your own CDN proxy domain
+
+When `customDomain` is set, it takes precedence over `useRawUrl`. The generated URL will be:
+```
+https://{customDomain}/{path}/{filename}
+```
+
 ## Private Repositories
 
 For private repositories:

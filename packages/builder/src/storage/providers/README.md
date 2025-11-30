@@ -96,7 +96,36 @@ const githubConfig: StorageConfig = {
   token: 'ghp_xxxxxxxxxxxx', // GitHub 访问令牌（可选）
   path: 'photos', // 照片存储路径（可选）
   useRawUrl: true, // 使用 raw.githubusercontent.com（默认 true）
+  customDomain: 'cdn.jsdelivr.net/gh/your-username/photo-gallery@main', // 自定义 CDN 域名（可选）
 }
+```
+
+### 自定义 CDN 域名
+
+如果 `raw.githubusercontent.com` 在你的地区访问速度较慢，可以配置自定义 CDN：
+
+```typescript
+const githubConfig: StorageConfig = {
+  provider: 'github',
+  owner: 'your-username',
+  repo: 'photo-gallery',
+  branch: 'main',
+  path: 'photos',
+  // 使用 jsDelivr CDN
+  customDomain: 'cdn.jsdelivr.net/gh/your-username/photo-gallery@main',
+}
+```
+
+**常用 CDN 选项：**
+
+- **jsDelivr**: `cdn.jsdelivr.net/gh/owner/repo@branch`
+- **Statically**: `cdn.statically.io/gh/owner/repo/branch`
+- **自定义代理**: 你自己的 CDN 代理域名
+
+当配置了 `customDomain` 时，它会优先于 `useRawUrl`。生成的 URL 格式为：
+
+```
+https://{customDomain}/{path}/{filename}
 ```
 
 ### 设置步骤
@@ -123,6 +152,7 @@ const githubConfig: StorageConfig = {
    ```
 
 4. **更新配置文件**
+
    ```typescript
    // builder.config.ts
    export const builderConfig: BuilderConfig = {

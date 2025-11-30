@@ -191,6 +191,8 @@ export class PhotoStorageService {
         if (pathValue) result.path = pathValue
         const useRawUrl = parseBoolean(config.useRawUrl)
         if (typeof useRawUrl === 'boolean') result.useRawUrl = useRawUrl
+        const customDomain = normalizeStringToUndefined(config.customDomain)
+        if (customDomain) result.customDomain = customDomain
 
         return result
       }

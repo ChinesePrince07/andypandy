@@ -136,6 +136,13 @@ const STORAGE_PROVIDER_FIELD_CONFIG: Record<StorageProviderType, readonly Storag
       descriptionKey: 'storage.providers.fields.github.path.description',
     },
     {
+      key: 'customDomain',
+      labelKey: 'storage.providers.fields.github.custom-domain.label',
+      placeholderKey: 'storage.providers.fields.github.custom-domain.placeholder',
+      descriptionKey: 'storage.providers.fields.github.custom-domain.description',
+      helperKey: 'storage.providers.fields.github.custom-domain.helper',
+    },
+    {
       key: 'useRawUrl',
       labelKey: 'storage.providers.fields.github.use-raw.label',
       placeholderKey: 'storage.providers.fields.github.use-raw.placeholder',

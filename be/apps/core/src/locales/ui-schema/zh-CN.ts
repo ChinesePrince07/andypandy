@@ -451,6 +451,12 @@ const zhCnUiSchema = {
             description: '可选，限制同步的仓库路径。',
             placeholder: 'public/photos（可选）',
           },
+          'custom-domain': {
+            label: '自定义 CDN 域名',
+            description: '用于生成公开链接的 CDN 或代理域名。',
+            placeholder: 'cdn.jsdelivr.net/gh/owner/repo@branch（示例）',
+            helper: '留空则继续使用 raw.githubusercontent.com。',
+          },
           'use-raw': {
             label: '使用 raw 链接',
             description: '生成公开链接时使用 raw.githubusercontent.com。',
