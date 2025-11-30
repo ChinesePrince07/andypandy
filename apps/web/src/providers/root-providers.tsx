@@ -1,4 +1,4 @@
-import { Toaster } from '@afilmory/ui'
+import { ModalContainer, Toaster } from '@afilmory/ui'
 import { Spring } from '@afilmory/utils'
 import { Provider } from 'jotai'
 import { domMax, LazyMotion, MotionConfig } from 'motion/react'
@@ -28,6 +28,7 @@ export const RootProviders: FC<PropsWithChildren> = ({ children }) => {
 
             <ContextMenuProvider />
             <I18nProvider>{children}</I18nProvider>
+            <ModalContainer />
           </QueryProvider>
         </Provider>
       </MotionConfig>

@@ -1,3 +1,3 @@
 export * from './comments'
 export * from './Reaction'
-export * from './SharePanel'
+export * from './ShareModal'

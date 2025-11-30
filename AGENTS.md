@@ -200,9 +200,12 @@ class PhotoLoader {
 - Support pluralization with `_one` and `_other` suffixes.
 - Modify English first, then other languages (ESLint auto-removes unused keys).
 - **CRITICAL: Avoid nested key conflicts in flat structure.**
+  - During build, flat dot-separated keys are automatically converted to nested objects. A key cannot be both a string value AND a parent object.
   - ❌ WRONG: `"action.tag.mode.and": "AND"` + `"action.tag.mode.and.tooltip": "..."`
   - ✅ CORRECT: `"action.tag.mode.and": "AND"` + `"action.tag.tooltip.and": "..."`
-  - Rule: A key cannot be both a string value AND a parent object.
+  - ❌ WRONG: `"photo.share.preview": "Share preview"` + `"photo.share.preview.download": "Download preview"`
+  - ✅ CORRECT: `"photo.share.preview": "Share preview"` + `"photo.share.downloadPreview": "Download preview"`
+  - Rule: If a key `a.b.c` exists as a string value, you cannot use `a.b.c.d` as a child key. Use a different parent path like `a.b.d` or rename the child key to avoid the conflict.
 
 ### Testing Strategy
 

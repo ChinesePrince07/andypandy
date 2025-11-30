@@ -16,7 +16,7 @@ import { useMobile } from '~/hooks/useMobile'
 import type { LoadingIndicatorRef } from '~/modules/inspector/LoadingIndicator'
 import { LoadingIndicator } from '~/modules/inspector/LoadingIndicator'
 import { PhotoInspector } from '~/modules/inspector/PhotoInspector'
-import { SharePanel } from '~/modules/social/SharePanel'
+import { ShareModal } from '~/modules/social/ShareModal'
 import type { PhotoManifest } from '~/types/photo'
 
 import { PhotoViewerTransitionPreview } from './animations/PhotoViewerTransitionPreview'
@@ -235,7 +235,7 @@ export const PhotoViewer = ({
                     {/* 右侧按钮组 */}
                     <div className="flex items-center gap-2">
                       {/* 分享按钮 */}
-                      <SharePanel
+                      <ShareModal
                         photo={currentPhoto}
                         blobSrc={currentBlobSrc || undefined}
                         trigger={
