@@ -1279,6 +1279,9 @@ importers:
       '@afilmory/be-utils':
         specifier: workspace:*
         version: link:../../packages/utils
+      '@afilmory/utils':
+        specifier: workspace:*
+        version: link:../../../packages/utils
       '@hono/node-server':
         specifier: ^1.13.5
         version: 1.19.6(hono@4.10.7)
