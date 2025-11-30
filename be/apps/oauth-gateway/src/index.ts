@@ -46,7 +46,8 @@ callbackRouter.all('/:provider', (c) => {
     requestUrl.searchParams.set('gatewayState', originalStateParam)
   }
 
-  const tenantSlugFromState = decodedState?.tenantSlug ?? null
+  const rawTenantSlugFromState = decodedState?.tenantSlug ?? null
+  const tenantSlugFromState = sanitizeTenantSlug(rawTenantSlugFromState ?? undefined) ?? rawTenantSlugFromState
   const tenantSlug = sanitizeTenantSlug(tenantSlugParam ?? tenantSlugFromState ?? undefined)
   const explicitHostFromState = sanitizeExplicitHost(decodedState?.targetHost)
   const explicitHost = sanitizeExplicitHost(explicitHostParam) ?? explicitHostFromState
@@ -67,7 +68,10 @@ callbackRouter.all('/:provider', (c) => {
     return c.json({ error: 'invalid_host', message: 'Target host is invalid.' }, 400)
   }
 
-  const targetHost = resolveTargetHost(gatewayConfig, { tenantSlug, explicitHost })
+  const targetHost = resolveTargetHost(gatewayConfig, {
+    tenantSlug: tenantSlug ?? tenantSlugFromState,
+    explicitHost,
+  })
   if (!targetHost) {
     return c.json({ error: 'unresolvable_host', message: 'Unable to resolve target tenant host.' }, 400)
   }
