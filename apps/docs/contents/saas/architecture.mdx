@@ -2,7 +2,7 @@
 title: SaaS Architecture
 description: Tenant model, domain routing, OAuth flow, and data injection paths.
 createdAt: 2025-11-23T20:20:00+08:00
-lastModified: 2025-11-23T20:44:02+08:00
+lastModified: 2025-11-30T14:03:05+08:00
 order: 36
 ---
 
@@ -30,8 +30,8 @@ order: 36
 
 ## OAuth gateway flow
 
-- Providers redirect to `https://auth.<baseDomain>/api/auth/callback/{provider}?tenantSlug=<slug>`.
-- Gateway rewrites to `https://<slug>.<baseDomain>/api/auth/callback/{provider}` preserving query params.
+- Providers redirect to the fixed `https://auth.<baseDomain>/api/auth/callback/{provider}`.
+- Tenant slug is wrapped into the OAuth `state` so the gateway can restore the inner Better Auth state and forward to `https://<slug>.<baseDomain>/api/auth/callback/{provider}`.
 - Keeps provider config simple (single callback URL) while maintaining per-tenant sessions.
 
 ## Data path

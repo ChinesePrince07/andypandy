@@ -1,3 +1,5 @@
+import { decodeGatewayState } from '@afilmory/be-utils'
+import { env } from '@afilmory/env'
 import { HttpContext } from '@afilmory/framework'
 import { DEFAULT_BASE_DOMAIN, isTenantSlugReserved } from '@afilmory/utils'
 import { BizException, ErrorCode } from 'core/errors'
@@ -28,6 +30,7 @@ export interface TenantResolutionOptions {
 @injectable()
 export class TenantContextResolver {
   private readonly log = logger.extend('TenantResolver')
+  private readonly gatewayStateSecret = env.AUTH_GATEWAY_STATE_SECRET ?? env.CONFIG_ENCRYPTION_KEY
 
   constructor(
     private readonly tenantService: TenantService,
@@ -73,15 +76,24 @@ export class TenantContextResolver {
     }
 
     if (!derivedSlug) {
-      // Allow resolving tenant from query param for OAuth callbacks (Gateway flow)
-      const querySlug = context.req.query('tenantSlug')
-      if (querySlug && context.req.path.startsWith('/api/auth/callback/')) {
-        derivedSlug = querySlug
-      }
-    }
-
-    if (!derivedSlug) {
       derivedSlug = host ? (extractTenantSlugFromHost(host, baseDomain) ?? undefined) : undefined
+    }
+    if (
+      !derivedSlug &&
+      this.gatewayStateSecret &&
+      context.req.path.startsWith('/api/auth/callback/') &&
+      context.req.query
+    ) {
+      const gatewayState = context.req.query('gatewayState')
+      const state = context.req.query('state')
+      const decoded =
+        decodeGatewayState(gatewayState, { secret: this.gatewayStateSecret }) ||
+        decodeGatewayState(state, { secret: this.gatewayStateSecret })
+
+      if (decoded?.tenantSlug) {
+        derivedSlug = decoded.tenantSlug
+        this.log.verbose('Resolved tenant from gateway state during OAuth callback', { slug: derivedSlug })
+      }
     }
     if (!derivedSlug && this.isRootTenantPath(context.req.path)) {
       derivedSlug = ROOT_TENANT_SLUG

@@ -159,7 +159,7 @@ export class AuthProvider implements OnModuleInit {
 
     return entries.reduce<Record<string, { clientId: string; clientSecret: string; redirectURI?: string }>>(
       (acc, [key, value]) => {
-        const redirectUri = this.buildRedirectUri(tenantSlug, key, oauthGatewayUrl)
+        const redirectUri = this.buildRedirectUri(key, oauthGatewayUrl)
         acc[key] = {
           clientId: value.clientId,
           clientSecret: value.clientSecret,
@@ -171,15 +171,11 @@ export class AuthProvider implements OnModuleInit {
     )
   }
 
-  private buildRedirectUri(
-    tenantSlug: string | null,
-    provider: keyof SocialProvidersConfig,
-    oauthGatewayUrl: string | null,
-  ): string | null {
+  private buildRedirectUri(provider: keyof SocialProvidersConfig, oauthGatewayUrl: string | null): string | null {
     const basePath = `/api/auth/callback/${provider}`
 
     if (oauthGatewayUrl) {
-      return this.buildGatewayRedirectUri(oauthGatewayUrl, basePath, tenantSlug)
+      return this.buildGatewayRedirectUri(oauthGatewayUrl, basePath)
     }
     logger.error(
       ['[AuthProvider] OAuth 网关地址未配置，无法为第三方登录生成回调 URL。', `provider=${String(provider)}`].join(' '),
@@ -187,14 +183,9 @@ export class AuthProvider implements OnModuleInit {
     return null
   }
 
-  private buildGatewayRedirectUri(gatewayBaseUrl: string, basePath: string, tenantSlug: string | null): string {
+  private buildGatewayRedirectUri(gatewayBaseUrl: string, basePath: string): string {
     const normalizedBase = gatewayBaseUrl.replace(/\/+$/, '')
-    const searchParams = new URLSearchParams()
-    if (tenantSlug) {
-      searchParams.set('tenantSlug', tenantSlug)
-    }
-    const query = searchParams.toString()
-    return `${normalizedBase}${basePath}${query ? `?${query}` : ''}`
+    return `${normalizedBase}${basePath}`
   }
 
   private async buildTrustedOrigins(): Promise<string[]> {

@@ -19,7 +19,8 @@ This document describes how tenant resolution, Better Auth instances, and dashbo
   1. `HttpContext.tenant.requestedSlug`
   2. `HttpContext.tenant.slug`
   3. Derived from the host (when the context slug is still the placeholder).
-- Redirect URIs are always built as `<OAuthGateway>/api/auth/callback/:provider?tenantSlug=...`.
+- Redirect URIs are fixed to `<OAuthGateway>/api/auth/callback/:provider` (Google-friendly).
+- Tenant routing is encoded into the OAuth `state` value (HMAC wrapped) so the gateway can forward callbacks to the right tenant without dynamic redirect URIs.
 - Because the requested slug participates in the cache key, the same Better Auth instance handles both the `/auth/social` request and the gateway callback, preserving OAuth state.
 
 ## System Settings & Gateway

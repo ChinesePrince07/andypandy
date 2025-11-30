@@ -1276,9 +1276,9 @@ importers:
 
   be/apps/oauth-gateway:
     dependencies:
-      '@afilmory/utils':
+      '@afilmory/be-utils':
         specifier: workspace:*
-        version: link:../../../packages/utils
+        version: link:../../packages/utils
       '@hono/node-server':
         specifier: ^1.13.5
         version: 1.19.6(hono@4.10.7)
@@ -1605,7 +1605,7 @@ importers:
         version: 0.16.7(synckit@0.11.11)(typescript@5.9.3)
       unplugin-dts:
         specifier: 1.0.0-beta.6
-        version: 1.0.0-beta.6(@microsoft/api-extractor@7.52.13(@types/node@24.10.1))(esbuild@0.25.12)(rolldown@1.0.0-beta.51)(rollup@4.53.3)(typescript@5.9.3)(vite@7.2.4(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.20.6)(yaml@2.8.1))
+        version: 1.0.0-beta.6(@microsoft/api-extractor@7.52.13(@types/node@24.10.1))(esbuild@0.25.12)(rollup@4.53.3)(typescript@5.9.3)(vite@7.2.4(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.20.6)(yaml@2.8.1))
       vite:
         specifier: 7.2.4
         version: 7.2.4(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.20.6)(yaml@2.8.1)
@@ -24533,7 +24533,7 @@ snapshots:
       magic-string-ast: 1.0.3
       unplugin: 2.3.10
 
-  unplugin-dts@1.0.0-beta.6(@microsoft/api-extractor@7.52.13(@types/node@24.10.1))(esbuild@0.25.12)(rolldown@1.0.0-beta.51)(rollup@4.53.3)(typescript@5.9.3)(vite@7.2.4(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.20.6)(yaml@2.8.1)):
+  unplugin-dts@1.0.0-beta.6(@microsoft/api-extractor@7.52.13(@types/node@24.10.1))(esbuild@0.25.12)(rollup@4.53.3)(typescript@5.9.3)(vite@7.2.4(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.20.6)(yaml@2.8.1)):
     dependencies:
       '@rollup/pluginutils': 5.3.0(rollup@4.53.3)
       '@volar/typescript': 2.4.23
@@ -24547,7 +24547,6 @@ snapshots:
     optionalDependencies:
       '@microsoft/api-extractor': 7.52.13(@types/node@24.10.1)
       esbuild: 0.25.12
-      rolldown: 1.0.0-beta.51
       rollup: 4.53.3
       vite: 7.2.4(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.20.6)(yaml@2.8.1)
     transitivePeerDependencies:

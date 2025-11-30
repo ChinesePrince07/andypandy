@@ -44,3 +44,4 @@ SELECT * FROM drizzle.__drizzle_migrations WHERE id = 7;
 -- DELETE FROM drizzle.__drizzle_migrations WHERE id = 7 AND hash = 'wrong_hash_here';
 */
 
+

@@ -1,6 +1,8 @@
 import { TextDecoder } from 'node:util'
 
+import { decodeGatewayState, encodeGatewayState } from '@afilmory/be-utils'
 import { authUsers } from '@afilmory/db'
+import { env } from '@afilmory/env'
 import { Body, ContextParam, Controller, Get, HttpContext, Post } from '@afilmory/framework'
 import { freshSessionMiddleware } from 'better-auth/api'
 import { DbAccessor } from 'core/database/database.provider'
@@ -78,6 +80,7 @@ type SocialSignInRequest = {
   errorCallbackURL?: string
   newUserCallbackURL?: string
   disableRedirect?: boolean
+  additionalData?: Record<string, unknown>
 }
 
 type LinkSocialAccountRequest = {
@@ -85,6 +88,7 @@ type LinkSocialAccountRequest = {
   callbackURL?: string
   errorCallbackURL?: string
   disableRedirect?: boolean
+  additionalData?: Record<string, unknown>
 }
 
 type UnlinkSocialAccountRequest = {
@@ -110,6 +114,7 @@ export class AuthController {
     private readonly registration: AuthRegistrationService,
     private readonly tenantService: TenantService,
   ) {}
+  private readonly gatewayStateSecret = env.AUTH_GATEWAY_STATE_SECRET ?? env.CONFIG_ENCRYPTION_KEY
 
   @AllowPlaceholderTenant()
   @Get('/session')
@@ -183,6 +188,17 @@ export class AuthController {
   @Post('/social/link')
   @Roles(RoleBit.ADMIN)
   async linkSocialAccount(@ContextParam() context: Context, @Body() body: LinkSocialAccountRequest) {
+    return await this.handleLinkSocialAccount(context, body)
+  }
+
+  // Compatibility for Better Auth client default path
+  @Post('/link-social')
+  @Roles(RoleBit.ADMIN)
+  async linkSocialAccountCompat(@ContextParam() context: Context, @Body() body: LinkSocialAccountRequest) {
+    return await this.handleLinkSocialAccount(context, body)
+  }
+
+  private async handleLinkSocialAccount(context: Context, body: LinkSocialAccountRequest) {
     const provider = body?.provider?.trim()
     if (!provider) {
       throw new BizException(ErrorCode.COMMON_BAD_REQUEST, { message: '缺少 OAuth Provider 参数' })
@@ -198,6 +214,8 @@ export class AuthController {
     const errorCallbackURL = this.normalizeCallbackUrl(body?.errorCallbackURL)
 
     const auth = await this.auth.getAuth()
+    const tenantSlug = getTenantContext()?.requestedSlug ?? null
+
     const response = await auth.api.linkSocialAccount({
       headers,
       body: {
@@ -206,11 +224,15 @@ export class AuthController {
         disableRedirect: body?.disableRedirect ?? true,
         ...(callbackURL ? { callbackURL } : {}),
         ...(errorCallbackURL ? { errorCallbackURL } : {}),
+        additionalData: {
+          ...body?.additionalData,
+          tenantSlug,
+        },
       },
       asResponse: true,
     })
 
-    return response
+    return await this.rewriteOAuthState(response, tenantSlug)
   }
 
   @Post('/social/unlink')
@@ -299,6 +321,17 @@ export class AuthController {
   @AllowPlaceholderTenant()
   @Post('/social')
   async signInSocial(@ContextParam() context: Context, @Body() body: SocialSignInRequest) {
+    return await this.handleSocialSignIn(context, body)
+  }
+
+  // Compatibility for Better Auth client default path
+  @AllowPlaceholderTenant()
+  @Post('/sign-in/social')
+  async signInSocialCompat(@ContextParam() context: Context, @Body() body: SocialSignInRequest) {
+    return await this.handleSocialSignIn(context, body)
+  }
+
+  private async handleSocialSignIn(context: Context, body: SocialSignInRequest) {
     const provider = body?.provider?.trim()
     if (!provider) {
       throw new BizException(ErrorCode.COMMON_BAD_REQUEST, { message: '缺少 OAuth Provider 参数' })
@@ -306,6 +339,7 @@ export class AuthController {
 
     const { headers } = context.req.raw
     const tenantContext = getTenantContext()
+    const tenantSlug = tenantContext?.requestedSlug ?? tenantContext?.tenant?.slug ?? null
 
     // Only allow auto sign-up on real tenants (not placeholder)
     // On placeholder tenant, users must explicitly register first
@@ -318,12 +352,16 @@ export class AuthController {
         ...body,
         provider,
         requestSignUp: shouldAllowSignUp,
+        additionalData: {
+          ...body.additionalData,
+          tenantSlug,
+        },
       },
       headers,
       asResponse: true,
     })
 
-    return response
+    return await this.rewriteOAuthState(response, tenantSlug)
   }
 
   @SkipTenantGuard()
@@ -387,15 +425,40 @@ export class AuthController {
   @SkipTenantGuard()
   @Get('/callback/*')
   async callback(@ContextParam() context: Context) {
-    const query = context.req.query()
-    const { tenantSlug } = query
-
     const reqUrl = new URL(context.req.url)
+
+    let didRewriteState = false
+    let didRewriteHost = false
+    const wrappedState = reqUrl.searchParams.get('state')
+    let tenantSlugFromState: string | null = null
+    if (this.gatewayStateSecret && wrappedState) {
+      const decoded = decodeGatewayState(wrappedState, { secret: this.gatewayStateSecret })
+      if (decoded?.innerState) {
+        reqUrl.searchParams.set('gatewayState', wrappedState)
+        reqUrl.searchParams.set('state', decoded.innerState)
+        didRewriteState = decoded.innerState !== wrappedState
+        tenantSlugFromState = decoded.tenantSlug ?? null
+      }
+    }
+
+    if (tenantSlugFromState) {
+      const { hostname } = reqUrl
+      if (!hostname.startsWith(`${tenantSlugFromState}.`)) {
+        reqUrl.hostname = `${tenantSlugFromState}.${hostname}`
+        didRewriteHost = true
+      }
+    }
+
+    const tenantSlug = reqUrl.searchParams.get('tenantSlug')
 
     if (tenantSlug) {
       reqUrl.hostname = `${tenantSlug}.${reqUrl.hostname}`
       reqUrl.searchParams.delete('tenantSlug')
 
+      return context.redirect(reqUrl.toString(), 302)
+    }
+
+    if (didRewriteState || didRewriteHost) {
       return context.redirect(reqUrl.toString(), 302)
     }
 
@@ -515,5 +578,102 @@ export class AuthController {
       statusText: source.statusText,
       headers,
     })
+  }
+
+  /**
+   * Wraps the Better Auth `state` parameter with tenant metadata so the OAuth gateway
+   * can route callbacks without dynamic redirect URIs. Preserves cookies/headers from
+   * the upstream Better Auth response.
+   */
+  private async rewriteOAuthState(response: Response, tenantSlug: string | null): Promise<Response> {
+    if (!this.gatewayStateSecret) {
+      return response
+    }
+
+    const location = response.headers.get('location')
+    if (location) {
+      const wrappedLocation = this.wrapGatewayState(location, tenantSlug)
+      if (wrappedLocation !== location) {
+        const headers = new Headers()
+        response.headers.forEach((value, key) => {
+          headers.append(key, value)
+        })
+        headers.set('location', wrappedLocation)
+        return new Response(response.body, {
+          status: response.status,
+          statusText: response.statusText,
+          headers,
+        })
+      }
+    }
+
+    const contentType = response.headers.get('content-type') ?? ''
+    if (!contentType.includes('application/json')) {
+      return response
+    }
+
+    const clone = response.clone()
+    let payload: unknown
+    try {
+      payload = await clone.json()
+    } catch {
+      return response
+    }
+
+    if (!payload || typeof payload !== 'object') {
+      return response
+    }
+
+    const payloadRecord = payload as Record<string, unknown>
+    const url = typeof payloadRecord.url === 'string' ? payloadRecord.url : null
+    if (!url) {
+      return response
+    }
+
+    const wrappedUrl = this.wrapGatewayState(url, tenantSlug)
+    if (wrappedUrl === url) {
+      return response
+    }
+
+    const headers = new Headers()
+    response.headers.forEach((value, key) => {
+      headers.append(key, value)
+    })
+    headers.set('content-type', 'application/json; charset=utf-8')
+
+    const nextPayload = {
+      ...payloadRecord,
+      url: wrappedUrl,
+    }
+
+    return new Response(JSON.stringify(nextPayload), {
+      status: response.status,
+      statusText: response.statusText,
+      headers,
+    })
+  }
+
+  private wrapGatewayState(url: string, tenantSlug: string | null): string {
+    if (!this.gatewayStateSecret) {
+      return url
+    }
+
+    try {
+      const parsed = new URL(url)
+      const state = parsed.searchParams.get('state')
+      if (!state) {
+        return url
+      }
+
+      const wrapped = encodeGatewayState({
+        secret: this.gatewayStateSecret,
+        tenantSlug,
+        innerState: state,
+      })
+      parsed.searchParams.set('state', wrapped)
+      return parsed.toString()
+    } catch {
+      return url
+    }
   }
 }

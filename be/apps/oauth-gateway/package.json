@@ -9,7 +9,7 @@
     "start": "node dist/main.js"
   },
   "dependencies": {
-    "@afilmory/utils": "workspace:*",
+    "@afilmory/be-utils": "workspace:*",
     "@hono/node-server": "^1.13.5",
     "hono": "^4.10.7",
     "zod": "catalog:"

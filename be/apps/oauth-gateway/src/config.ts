@@ -37,6 +37,11 @@ const envSchema = z.object({
     .min(1)
     .regex(/^[a-z0-9-]+$/i)
     .default('root'),
+  STATE_SECRET: z
+    .string()
+    .trim()
+    .min(1, { message: 'AUTH_GATEWAY_STATE_SECRET or CONFIG_ENCRYPTION_KEY is required for state decoding.' })
+    .default(process.env.AUTH_GATEWAY_STATE_SECRET ?? process.env.CONFIG_ENCRYPTION_KEY ?? ''),
 })
 
 const parsed = envSchema.parse({
@@ -47,6 +52,7 @@ const parsed = envSchema.parse({
   CALLBACK_BASE_PATH: process.env.AUTH_GATEWAY_CALLBACK_BASE_PATH,
   ALLOW_CUSTOM_HOST: process.env.AUTH_GATEWAY_ALLOW_CUSTOM_HOST,
   ROOT_SLUG: process.env.AUTH_GATEWAY_ROOT_SLUG,
+  STATE_SECRET: process.env.AUTH_GATEWAY_STATE_SECRET ?? process.env.CONFIG_ENCRYPTION_KEY,
 })
 
 export const gatewayConfig = {
@@ -57,6 +63,7 @@ export const gatewayConfig = {
   callbackBasePath: parsed.CALLBACK_BASE_PATH,
   allowCustomHost: Boolean(parsed.ALLOW_CUSTOM_HOST),
   rootSlug: parsed.ROOT_SLUG.toLowerCase(),
+  stateSecret: parsed.STATE_SECRET,
 } as const
 
 export type GatewayConfig = typeof gatewayConfig

@@ -1,3 +1,4 @@
+import { decodeGatewayState } from '@afilmory/be-utils'
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 
@@ -25,8 +26,30 @@ callbackRouter.all('/:provider', (c) => {
   const requestUrl = new URL(c.req.url)
   const tenantSlugParam = requestUrl.searchParams.get('tenantSlug') ?? requestUrl.searchParams.get('tenant')
   const explicitHostParam = requestUrl.searchParams.get('targetHost')
-  const tenantSlug = sanitizeTenantSlug(tenantSlugParam)
-  const explicitHost = sanitizeExplicitHost(explicitHostParam)
+  const stateParam = requestUrl.searchParams.get('state')
+  const originalStateParam = stateParam
+
+  const decodedState =
+    gatewayConfig.stateSecret && stateParam
+      ? decodeGatewayState(stateParam, { secret: gatewayConfig.stateSecret })
+      : null
+
+  if (stateParam && gatewayConfig.stateSecret && !decodedState) {
+    return c.json({ error: 'invalid_state', message: 'OAuth state is invalid or expired.' }, 400)
+  }
+
+  if (decodedState?.innerState) {
+    requestUrl.searchParams.set('state', decodedState.innerState)
+  }
+
+  if (decodedState && originalStateParam) {
+    requestUrl.searchParams.set('gatewayState', originalStateParam)
+  }
+
+  const tenantSlugFromState = decodedState?.tenantSlug ?? null
+  const tenantSlug = sanitizeTenantSlug(tenantSlugParam ?? tenantSlugFromState ?? undefined)
+  const explicitHostFromState = sanitizeExplicitHost(decodedState?.targetHost)
+  const explicitHost = sanitizeExplicitHost(explicitHostParam) ?? explicitHostFromState
 
   requestUrl.searchParams.delete('tenant')
   requestUrl.searchParams.delete('tenantSlug')
@@ -34,6 +57,10 @@ callbackRouter.all('/:provider', (c) => {
 
   if (tenantSlugParam && !tenantSlug) {
     return c.json({ error: 'invalid_tenant', message: 'Tenant slug is invalid.' }, 400)
+  }
+
+  if (decodedState?.tenantSlug && !tenantSlug) {
+    return c.json({ error: 'invalid_tenant', message: 'Tenant slug in state is invalid.' }, 400)
   }
 
   if (explicitHostParam && !explicitHost) {
