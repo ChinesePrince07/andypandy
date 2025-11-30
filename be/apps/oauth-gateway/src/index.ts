@@ -24,10 +24,7 @@ callbackRouter.all('/:provider', (c) => {
   }
 
   const requestUrl = new URL(c.req.url)
-  const tenantSlugParam = requestUrl.searchParams.get('tenantSlug') ?? requestUrl.searchParams.get('tenant')
-  const explicitHostParam = requestUrl.searchParams.get('targetHost')
   const stateParam = requestUrl.searchParams.get('state')
-  const originalStateParam = stateParam
 
   const decodedState =
     gatewayConfig.stateSecret && stateParam
@@ -42,35 +39,11 @@ callbackRouter.all('/:provider', (c) => {
     requestUrl.searchParams.set('state', decodedState.innerState)
   }
 
-  if (decodedState && originalStateParam) {
-    requestUrl.searchParams.set('gatewayState', originalStateParam)
-  }
-
-  const rawTenantSlugFromState = decodedState?.tenantSlug ?? null
-  const tenantSlugFromState = sanitizeTenantSlug(rawTenantSlugFromState ?? undefined) ?? rawTenantSlugFromState
-  const tenantSlug = sanitizeTenantSlug(tenantSlugParam ?? tenantSlugFromState ?? undefined)
-  const explicitHostFromState = sanitizeExplicitHost(decodedState?.targetHost)
-  const explicitHost = sanitizeExplicitHost(explicitHostParam) ?? explicitHostFromState
-
-  requestUrl.searchParams.delete('tenant')
-  requestUrl.searchParams.delete('tenantSlug')
-  requestUrl.searchParams.delete('targetHost')
-
-  if (tenantSlugParam && !tenantSlug) {
-    return c.json({ error: 'invalid_tenant', message: 'Tenant slug is invalid.' }, 400)
-  }
-
-  if (decodedState?.tenantSlug && !tenantSlug) {
-    return c.json({ error: 'invalid_tenant', message: 'Tenant slug in state is invalid.' }, 400)
-  }
-
-  if (explicitHostParam && !explicitHost) {
-    return c.json({ error: 'invalid_host', message: 'Target host is invalid.' }, 400)
-  }
+  const tenantSlug = sanitizeTenantSlug(decodedState?.tenantSlug ?? undefined) ?? decodedState?.tenantSlug ?? null
 
   const targetHost = resolveTargetHost(gatewayConfig, {
-    tenantSlug: tenantSlug ?? tenantSlugFromState,
-    explicitHost,
+    tenantSlug,
+    explicitHost: sanitizeExplicitHost(decodedState?.targetHost),
   })
   if (!targetHost) {
     return c.json({ error: 'unresolvable_host', message: 'Unable to resolve target tenant host.' }, 400)

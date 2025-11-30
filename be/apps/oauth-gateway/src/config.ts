@@ -30,7 +30,7 @@ const envSchema = z.object({
     .trim()
     .default('/api/auth/callback')
     .transform((value) => value.replace(/\/+$/, '') || '/api/auth/callback'),
-  ALLOW_CUSTOM_HOST: booleanSchema.default(false),
+
   ROOT_SLUG: z
     .string()
     .trim()
@@ -61,7 +61,6 @@ export const gatewayConfig = {
   baseDomain: parsed.BASE_DOMAIN.toLowerCase(),
   forceHttps: Boolean(parsed.FORCE_HTTPS),
   callbackBasePath: parsed.CALLBACK_BASE_PATH,
-  allowCustomHost: Boolean(parsed.ALLOW_CUSTOM_HOST),
   rootSlug: parsed.ROOT_SLUG.toLowerCase(),
   stateSecret: parsed.STATE_SECRET,
 } as const

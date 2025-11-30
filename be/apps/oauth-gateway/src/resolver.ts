@@ -39,7 +39,7 @@ export function sanitizeExplicitHost(host: string | null | undefined): string | 
 }
 
 export function resolveTargetHost(config: GatewayConfig, input: TargetResolutionInput): string | null {
-  if (input.explicitHost && config.allowCustomHost) {
+  if (input.explicitHost) {
     return input.explicitHost
   }
 
