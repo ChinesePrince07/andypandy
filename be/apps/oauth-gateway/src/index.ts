@@ -21,18 +21,6 @@ callbackRouter.all('/:provider', (c) => {
   const provider = c.req.param('provider')
   const requestUrl = new URL(c.req.url)
   const stateParam = requestUrl.searchParams.get('state')
-  const codeParam = requestUrl.searchParams.get('code')
-  const errorParam = requestUrl.searchParams.get('error')
-
-  console.info('[oauth-gateway:callback] Request received', {
-    provider,
-    method: c.req.method,
-    path: c.req.path,
-    hasState: !!stateParam,
-    hasCode: !!codeParam,
-    hasError: !!errorParam,
-    queryParams: Object.fromEntries(requestUrl.searchParams),
-  })
 
   if (!provider) {
     console.warn('[oauth-gateway:callback] Missing provider param', {
@@ -46,15 +34,6 @@ callbackRouter.all('/:provider', (c) => {
     gatewayConfig.stateSecret && stateParam
       ? decodeGatewayState(stateParam, { secret: gatewayConfig.stateSecret })
       : null
-
-  console.info('[oauth-gateway:callback] State decoding result', {
-    provider,
-    hasStateParam: !!stateParam,
-    hasStateSecret: !!gatewayConfig.stateSecret,
-    decodedSuccessfully: !!decodedState,
-    decodedTenantSlug: decodedState?.tenantSlug ?? null,
-    hasInnerState: !!decodedState?.innerState,
-  })
 
   if (stateParam && gatewayConfig.stateSecret && !decodedState) {
     console.error('[oauth-gateway:callback] Invalid or expired state', {
@@ -75,22 +54,8 @@ callbackRouter.all('/:provider', (c) => {
 
   const tenantSlug = sanitizeTenantSlug(decodedState?.tenantSlug ?? undefined) ?? decodedState?.tenantSlug ?? null
 
-  console.info('[oauth-gateway:callback] Tenant resolution', {
-    provider,
-    rawTenantSlug: decodedState?.tenantSlug ?? null,
-    sanitizedTenantSlug: tenantSlug,
-  })
-
   const targetHost = resolveTargetHost(gatewayConfig, {
     tenantSlug,
-  })
-
-  console.info('[oauth-gateway:callback] Target host resolution', {
-    provider,
-    tenantSlug,
-    targetHost,
-    baseDomain: gatewayConfig.baseDomain,
-    rootSlug: gatewayConfig.rootSlug,
   })
 
   if (!targetHost) {
@@ -107,14 +72,6 @@ callbackRouter.all('/:provider', (c) => {
     provider,
     host: targetHost,
     query: requestUrl.searchParams,
-  })
-
-  console.info('[oauth-gateway:callback] Redirecting', {
-    provider,
-    tenantSlug,
-    targetHost,
-    location,
-    queryParams: Object.fromEntries(requestUrl.searchParams),
   })
 
   return c.redirect(location, 302)
