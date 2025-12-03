@@ -1,9 +1,11 @@
-import { authUsers, commentReactions, comments, photoAssets } from '@afilmory/db'
+import { authAccounts, authUsers, commentReactions, comments, photoAssets, tenantDomains, tenants } from '@afilmory/db'
 import { EventEmitterService, HttpContext } from '@afilmory/framework'
+import { DEFAULT_BASE_DOMAIN } from '@afilmory/utils'
 import { getClientIp } from 'core/context/http-context.helper'
 import { DbAccessor } from 'core/database/database.provider'
 import { BizException, ErrorCode } from 'core/errors'
 import { logger } from 'core/helpers/logger.helper'
+import { SystemSettingService } from 'core/modules/configuration/system-setting/system-setting.service'
 import { CommentCreatedEvent } from 'core/modules/content/comment/events/comment-created.event'
 import { requireTenantContext } from 'core/modules/platform/tenant/tenant.context'
 import { and, eq, gt, inArray, isNull, or, sql } from 'drizzle-orm'
@@ -29,6 +31,7 @@ export interface UserViewModel {
   id: string
   name: string
   image: string | null
+  website?: string | null
 }
 
 interface ViewerContext {
@@ -47,6 +50,7 @@ export class CommentService {
     private readonly dbAccessor: DbAccessor,
     @inject(COMMENT_MODERATION_HOOK) private readonly moderationHook: CommentModerationHook,
     private readonly eventEmitter: EventEmitterService,
+    private readonly systemSettings: SystemSettingService,
   ) {}
 
   async createComment(
@@ -132,28 +136,8 @@ export class CommentService {
     }
 
     // Fetch user info
-    const users: Record<string, UserViewModel> = {}
     const userIds = [auth.userId, ...Object.values(relations).map((r) => r.userId)].filter(Boolean)
-    const uniqueUserIds = [...new Set(userIds)]
-
-    if (uniqueUserIds.length > 0) {
-      const userRows = await db
-        .select({
-          id: authUsers.id,
-          name: authUsers.name,
-          image: authUsers.image,
-        })
-        .from(authUsers)
-        .where(inArray(authUsers.id, uniqueUserIds))
-
-      for (const user of userRows) {
-        users[user.id] = {
-          id: user.id,
-          name: user.name,
-          image: user.image,
-        }
-      }
-    }
+    const users = await this.fetchUsersWithProfiles(userIds)
 
     // Emit event asynchronously
     this.eventEmitter
@@ -285,29 +269,11 @@ export class CommentService {
     }
 
     // Build users map (userId -> user)
-    const users: Record<string, UserViewModel> = {}
     const allUserIds = [
       ...new Set([...items.map((item) => item.userId), ...Object.values(relations).map((r) => r.userId)]),
     ]
 
-    if (allUserIds.length > 0) {
-      const userRows = await db
-        .select({
-          id: authUsers.id,
-          name: authUsers.name,
-          image: authUsers.image,
-        })
-        .from(authUsers)
-        .where(inArray(authUsers.id, allUserIds))
-
-      for (const user of userRows) {
-        users[user.id] = {
-          id: user.id,
-          name: user.name,
-          image: user.image,
-        }
-      }
-    }
+    const users = await this.fetchUsersWithProfiles(allUserIds)
 
     return {
       comments: commentItems,
@@ -424,29 +390,11 @@ export class CommentService {
     }
 
     // Build users map (userId -> user)
-    const users: Record<string, UserViewModel> = {}
     const allUserIds = [
       ...new Set([...items.map((item) => item.userId), ...Object.values(relations).map((r) => r.userId)]),
     ]
 
-    if (allUserIds.length > 0) {
-      const userRows = await db
-        .select({
-          id: authUsers.id,
-          name: authUsers.name,
-          image: authUsers.image,
-        })
-        .from(authUsers)
-        .where(inArray(authUsers.id, allUserIds))
-
-      for (const user of userRows) {
-        users[user.id] = {
-          id: user.id,
-          name: user.name,
-          image: user.image,
-        }
-      }
-    }
+    const users = await this.fetchUsersWithProfiles(allUserIds)
 
     return {
       comments: commentItems,
@@ -719,5 +667,77 @@ export class CommentService {
       reactionCounts: model.reactionCounts,
       viewerReactions: model.viewerReactions,
     }
+  }
+
+  private async fetchUsersWithProfiles(userIds: string[]): Promise<Record<string, UserViewModel>> {
+    const db = this.dbAccessor.get()
+    const uniqueUserIds = [...new Set(userIds)].filter(Boolean)
+    const result: Record<string, UserViewModel> = {}
+
+    if (uniqueUserIds.length === 0) {
+      return result
+    }
+
+    const userRows = await db
+      .select({
+        id: authUsers.id,
+        name: authUsers.name,
+        image: authUsers.image,
+      })
+      .from(authUsers)
+      .where(inArray(authUsers.id, uniqueUserIds))
+
+    for (const user of userRows) {
+      result[user.id] = {
+        id: user.id,
+        name: user.name,
+        image: user.image,
+        website: null,
+      }
+    }
+
+    const accounts = await db
+      .select({
+        userId: authAccounts.userId,
+        providerId: authAccounts.providerId,
+        accountId: authAccounts.accountId,
+      })
+      .from(authAccounts)
+      .where(inArray(authAccounts.userId, uniqueUserIds))
+
+    if (accounts.length > 0) {
+      const conditions = accounts.map((acc) =>
+        and(eq(authAccounts.providerId, acc.providerId), eq(authAccounts.accountId, acc.accountId)),
+      )
+
+      const matchedTenants = await db
+        .select({
+          providerId: authAccounts.providerId,
+          accountId: authAccounts.accountId,
+          slug: tenants.slug,
+          customDomain: tenantDomains.domain,
+        })
+        .from(authAccounts)
+        .innerJoin(authUsers, eq(authAccounts.userId, authUsers.id))
+        .innerJoin(tenants, eq(authUsers.tenantId, tenants.id))
+        .leftJoin(tenantDomains, and(eq(tenantDomains.tenantId, tenants.id), eq(tenantDomains.status, 'verified')))
+        .where(and(or(...conditions), eq(authUsers.role, 'admin')))
+
+      const baseDomain = (await this.systemSettings.getSettings()).baseDomain || DEFAULT_BASE_DOMAIN
+
+      for (const acc of accounts) {
+        const match = matchedTenants.find((t) => t.providerId === acc.providerId && t.accountId === acc.accountId)
+
+        if (match && result[acc.userId]) {
+          if (match.customDomain) {
+            result[acc.userId].website = `https://${match.customDomain}`
+          } else {
+            result[acc.userId].website = `https://${match.slug}.${baseDomain}`
+          }
+        }
+      }
+    }
+
+    return result
   }
 }

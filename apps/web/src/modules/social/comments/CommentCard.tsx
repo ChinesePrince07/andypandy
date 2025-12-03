@@ -34,6 +34,9 @@ export const CommentItem = memo(({ comment, reacted, locale }: CommentItemProps)
       [atoms.usersAtom, comment.userId],
     ),
   )
+  const user = useAtomValue(
+    useMemo(() => selectAtom(atoms.usersAtom, (users) => users[comment.userId]), [atoms.usersAtom, comment.userId]),
+  )
   const userName = useAtomValue(
     useMemo(
       () => selectAtom(atoms.usersAtom, (users) => users[comment.userId]?.name),
@@ -67,7 +70,7 @@ export const CommentItem = memo(({ comment, reacted, locale }: CommentItemProps)
       <div className="relative z-10 flex min-w-0 flex-row gap-3">
         <UserAvatar image={userImage} name={userName ?? comment.userId} fallback="?" size={36} />
         <div className="flex min-w-0 flex-1 flex-col space-y-2">
-          <CommentHeader comment={comment} author={authorName(comment)} locale={locale} />
+          <CommentHeader comment={comment} author={authorName(comment)} locale={locale} user={user} />
           <CommentContent comment={comment} parentId={comment.parentId} authorName={authorName} />
           <CommentActionBar reacted={reacted} reactionCount={comment.reactionCounts.like ?? 0} comment={comment} />
         </div>

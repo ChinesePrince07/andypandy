@@ -32,6 +32,7 @@ export interface CommentUser {
   id: string
   name: string
   image: string | null
+  website?: string | null
 }
 
 export interface CommentListResult {
@@ -62,6 +63,7 @@ interface CommentUserDto {
   id: string
   name: string
   image: string | null
+  website?: string | null
 }
 
 interface CommentListResponseDto {
