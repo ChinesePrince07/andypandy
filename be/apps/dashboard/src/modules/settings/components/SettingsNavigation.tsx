@@ -7,12 +7,12 @@ const SETTINGS_TABS = [
     path: '/settings/site',
     end: true,
   },
-  {
-    id: 'domain',
-    labelKey: 'settings.nav.domain',
-    path: '/settings/domain',
-    end: true,
-  },
+  // {
+  //   id: 'domain',
+  //   labelKey: 'settings.nav.domain',
+  //   path: '/settings/domain',
+  //   end: true,
+  // },
   {
     id: 'user',
     labelKey: 'settings.nav.user',
