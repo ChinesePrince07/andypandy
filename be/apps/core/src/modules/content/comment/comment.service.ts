@@ -1,8 +1,10 @@
 import { authUsers, commentReactions, comments, photoAssets } from '@afilmory/db'
-import { HttpContext } from '@afilmory/framework'
+import { EventEmitterService, HttpContext } from '@afilmory/framework'
 import { getClientIp } from 'core/context/http-context.helper'
 import { DbAccessor } from 'core/database/database.provider'
 import { BizException, ErrorCode } from 'core/errors'
+import { logger } from 'core/helpers/logger.helper'
+import { CommentCreatedEvent } from 'core/modules/content/comment/events/comment-created.event'
 import { requireTenantContext } from 'core/modules/platform/tenant/tenant.context'
 import { and, eq, gt, inArray, isNull, or, sql } from 'drizzle-orm'
 import type { Context } from 'hono'
@@ -44,6 +46,7 @@ export class CommentService {
   constructor(
     private readonly dbAccessor: DbAccessor,
     @inject(COMMENT_MODERATION_HOOK) private readonly moderationHook: CommentModerationHook,
+    private readonly eventEmitter: EventEmitterService,
   ) {}
 
   async createComment(
@@ -151,6 +154,24 @@ export class CommentService {
         }
       }
     }
+
+    // Emit event asynchronously
+    this.eventEmitter
+      .emit(
+        'comment.created',
+        new CommentCreatedEvent(
+          record.id,
+          tenant.tenant.id,
+          dto.photoId,
+          auth.userId,
+          parent?.id ?? null,
+          dto.content.trim(),
+          record.createdAt,
+        ),
+      )
+      .catch((error) => {
+        logger.error('Failed to emit comment.created event', error)
+      })
 
     return { comments: [item], relations, users }
   }

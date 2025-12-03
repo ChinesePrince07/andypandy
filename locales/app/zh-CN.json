@@ -49,7 +49,6 @@
   "comments.chooseProvider": "选择登录方式",
   "comments.empty": "暂无评论。快来发表第一条评论吧!",
   "comments.error": "评论加载失败",
-  "comments.hint": "按 Enter 发送,Shift+Enter 换行",
   "comments.loadMore": "加载更多",
   "comments.loading": "正在加载评论…",
   "comments.loginRequired": "登录后才能发表评论。",

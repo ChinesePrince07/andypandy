@@ -33,9 +33,9 @@ const CommentsContent: FC = () => {
   const sessionUser = useAtomValue(sessionUserAtom)
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col">
-      <ScrollArea rootClassName="flex-1 min-h-0" viewportClassName="px-4">
+      <ScrollArea mask rootClassName="flex-1 min-h-0" viewportClassName="px-4">
         <div className="space-y-4 pb-4">
-          {status.isLoading ? (
+          {status.isLoading && !status.isLoadingMore && !status.isError && comments.length === 0 ? (
             <SkeletonList />
           ) : status.isError ? (
             <ErrorBox />

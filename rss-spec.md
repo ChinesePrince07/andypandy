@@ -228,7 +228,7 @@
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0" xmlns:exif="https://afilmory.com/rss/exif">
+<rss version="2.0" xmlns:exif="https://afilmory.art/rss/exif">
   <channel>
     <title><![CDATA[我的风景摄影画廊]]></title>
     <link>https://example.com</link>

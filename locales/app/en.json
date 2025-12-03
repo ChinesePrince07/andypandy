@@ -52,7 +52,6 @@
   "comments.chooseProvider": "Choose sign in method",
   "comments.empty": "No comments yet. Be the first to comment!",
   "comments.error": "Failed to load comments",
-  "comments.hint": "Press Enter to send, Shift+Enter for new line",
   "comments.loadMore": "Load more",
   "comments.loading": "Loading comments...",
   "comments.loginRequired": "Please sign in to leave a comment.",

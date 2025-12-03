@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import { Trans } from 'react-i18next'
 
 import type { Comment } from '~/lib/api/comments'
+import { autolink } from '~/lib/autolink'
 
 import { useCommentsContext } from './context'
 
@@ -24,7 +25,7 @@ export const CommentContent = ({ comment, parentId, authorName }: CommentContent
   return (
     <>
       {parent ? (
-        <div className="rounded-lg border border-white/5 bg-white/5 px-3 py-2 text-xs text-white/70">
+        <div className="flex min-w-0 flex-col rounded-lg border border-white/5 bg-white/5 px-3 py-2 text-xs text-white/70">
           <div className="mb-1 flex items-center text-[11px] tracking-wide text-white/40 uppercase">
             <i className="i-lucide-reply mr-2" />
 
@@ -34,11 +35,13 @@ export const CommentContent = ({ comment, parentId, authorName }: CommentContent
               values={{ user: authorName(parent) }}
             />
           </div>
-          <p className="line-clamp-3 text-sm leading-relaxed text-white/70">{parent.content}</p>
+          <p className="line-clamp-3 text-sm leading-relaxed wrap-break-word text-white/70">
+            {autolink(parent.content)}
+          </p>
         </div>
       ) : null}
 
-      <p className="text-sm leading-relaxed text-white/85">{comment.content}</p>
+      <p className="text-sm leading-relaxed wrap-break-word text-white/85">{autolink(comment.content)}</p>
     </>
   )
 }

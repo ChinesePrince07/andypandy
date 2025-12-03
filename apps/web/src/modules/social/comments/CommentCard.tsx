@@ -64,9 +64,9 @@ export const CommentItem = memo(({ comment, reacted, locale }: CommentItemProps)
         // isNew && 'animate-highlight-new',
       )}
     >
-      <div className="relative z-10 flex gap-3">
+      <div className="relative z-10 flex min-w-0 flex-row gap-3">
         <UserAvatar image={userImage} name={userName ?? comment.userId} fallback="?" size={36} />
-        <div className="flex-1 space-y-2">
+        <div className="flex min-w-0 flex-1 flex-col space-y-2">
           <CommentHeader comment={comment} author={authorName(comment)} locale={locale} />
           <CommentContent comment={comment} parentId={comment.parentId} authorName={authorName} />
           <CommentActionBar reacted={reacted} reactionCount={comment.reactionCounts.like ?? 0} comment={comment} />

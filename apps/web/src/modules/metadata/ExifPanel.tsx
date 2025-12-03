@@ -134,7 +134,7 @@ export const ExifPanelContent: FC<ExifPanelContentProps> = ({
   )
 
   return (
-    <ScrollArea rootClassName={rootClassName} viewportClassName={viewportClassName}>
+    <ScrollArea mask rootClassName={rootClassName} viewportClassName={viewportClassName}>
       <div className={`space-y-${isMobile ? '3' : '4'}`}>
         {/* 基本信息和标签 - 合并到一个 section */}
         <div>

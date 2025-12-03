@@ -60,9 +60,9 @@ export const CommentInput = () => {
       )}
 
       {replyTo && !submitError ? (
-        <div className="border-accent/20 bg-accent/5 mb-3 flex items-center justify-between rounded-lg border px-3 py-2 text-xs text-white/80 select-none">
+        <div className="border-accent/20 bg-accent/50 mb-3 flex items-center justify-between rounded-lg border px-3 py-2 text-xs text-white/80 select-none">
           <div className="flex items-center gap-2">
-            <i className="i-lucide-reply text-accent" />
+            <i className="i-lucide-reply opacity-50" />
             <span>
               <Trans
                 i18nKey="comments.replyingTo"
@@ -117,7 +117,6 @@ export const CommentInput = () => {
           )}
         </button>
       </form>
-      <p className="mt-2 text-xs text-white/40">{t('comments.hint')}</p>
     </div>
   )
 }

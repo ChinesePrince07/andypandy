@@ -26,6 +26,7 @@ import { CacheModule } from './infrastructure/cache/cache.module'
 import { DataSyncModule } from './infrastructure/data-sync/data-sync.module'
 import { HealthModule } from './infrastructure/health/health.module'
 import { StaticWebModule } from './infrastructure/static-web/static-web.module'
+import { MailModule } from './mail/mail.module'
 import { AuthModule } from './platform/auth/auth.module'
 import { BillingModule } from './platform/billing/billing.module'
 import { DashboardModule } from './platform/dashboard/dashboard.module'
@@ -49,6 +50,7 @@ function createEventModuleOptions(redis: RedisAccessor) {
       inject: [RedisAccessor],
     }),
     RedisModule,
+    MailModule,
     AuthModule,
     CacheModule,
     HealthModule,
