@@ -9,6 +9,7 @@
   },
   "scripts": {
     "build": "vite build",
+    "build:prod:saas": "SAAS=1 vite build",
     "dev": "vite",
     "format": "prettier --write \"src/**/*.ts\" ",
     "lint": "eslint --fix",
