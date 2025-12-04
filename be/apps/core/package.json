@@ -26,15 +26,15 @@
     "@afilmory/task-queue": "workspace:*",
     "@afilmory/utils": "workspace:*",
     "@aws-crypto/sha256-js": "5.2.0",
-    "@aws-sdk/client-s3": "3.940.0",
-    "@aws-sdk/s3-request-presigner": "3.940.0",
-    "@creem_io/better-auth": "0.0.11",
+    "@aws-sdk/client-s3": "3.943.0",
+    "@aws-sdk/s3-request-presigner": "3.943.0",
+    "@creem_io/better-auth": "0.0.12",
     "@hono/node-server": "^1.19.6",
     "@resvg/resvg-js": "2.6.2",
     "@types/busboy": "1.5.4",
-    "better-auth": "1.4.2",
+    "better-auth": "1.4.5",
     "busboy": "1.6.0",
-    "drizzle-orm": "^0.44.7",
+    "drizzle-orm": "^0.45.0",
     "ejs": "3.1.10",
     "hono": "4.10.7",
     "linkedom": "0.18.12",
@@ -54,10 +54,10 @@
     "@types/pg": "8.15.6",
     "nodemon": "3.1.11",
     "unplugin-swc": "1.5.9",
-    "vite": "7.2.4",
+    "vite": "7.2.6",
     "vite-bundle-analyzer": "1.2.3",
     "vite-node": "5.2.0",
     "vite-tsconfig-paths": "5.1.4",
-    "vitest": "4.0.14"
+    "vitest": "4.0.15"
   }
 }
