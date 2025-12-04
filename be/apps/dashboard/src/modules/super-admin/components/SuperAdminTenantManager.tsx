@@ -256,8 +256,6 @@ export function SuperAdminTenantManager() {
               </div>
               <div className="flex items-center gap-2">
                 <Button
-                  variant="outline"
-                  size="icon"
                   className="size-8"
                   disabled={page <= 1 || tenantsQuery.isFetching}
                   onClick={() => setPage((p) => p - 1)}
@@ -268,8 +266,6 @@ export function SuperAdminTenantManager() {
                   {page} / {totalPages || 1}
                 </div>
                 <Button
-                  variant="outline"
-                  size="icon"
                   className="size-8"
                   disabled={page >= totalPages || tenantsQuery.isFetching}
                   onClick={() => setPage((p) => p + 1)}
@@ -346,13 +342,7 @@ function StatusBadge({ status, banned }: { status: SuperAdminTenantSummary['stat
       </span>
     )
   }
-  if (status === 'pending') {
-    return (
-      <span className="bg-blue-500/10 text-blue-400 rounded-full px-2 py-0.5 text-xs">
-        {t('superadmin.tenants.status.pending')}
-      </span>
-    )
-  }
+
   return (
     <span className="bg-slate-500/10 text-slate-400 rounded-full px-2 py-0.5 text-xs">
       {t('superadmin.tenants.status.inactive')}

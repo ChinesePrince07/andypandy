@@ -212,7 +212,6 @@ export class AuthProvider implements OnModuleInit {
       options.socialProviders,
       options.oauthGatewayUrl,
     )
-    const cookiePrefix = this.buildCookiePrefix(tenantSlug)
 
     // Use tenant-aware adapter for multi-tenant user/account isolation
     // This ensures that user lookups (by email) and account lookups (by provider)
@@ -312,7 +311,6 @@ export class AuthProvider implements OnModuleInit {
         },
       },
       advanced: {
-        cookiePrefix,
         database: {
           generateId: () => generateId(),
         },
@@ -379,21 +377,8 @@ export class AuthProvider implements OnModuleInit {
     const requestedHost = (endpoint.host ?? fallbackHost).trim().toLowerCase()
     const tenantSlugFromContext = this.resolveTenantSlugFromContext()
     const tenantSlug = tenantSlugFromContext ?? extractTenantSlugFromHost(requestedHost, options.baseDomain)
-    const host = this.applyTenantSlugToHost(requestedHost || fallbackHost, fallbackHost, tenantSlug)
-    const protocol = this.determineProtocol(host, endpoint.protocol)
-
-    const optionSignature = this.computeOptionsSignature(options)
-    const cacheKey = `${protocol}://${host}::${tenantSlug}::${optionSignature}`
-
-    if (!this.instances.has(cacheKey)) {
-      const instancePromise = this.createAuthForEndpoint(tenantSlug, options).then((instance) => {
-        logger.info(`Better Auth initialized for ${cacheKey}`)
-        return instance
-      })
-      this.instances.set(cacheKey, instancePromise)
-    }
-
-    return await this.instances.get(cacheKey)!
+    const instancePromise = this.createAuthForEndpoint(tenantSlug, options)
+    return await instancePromise
   }
 
   private computeOptionsSignature(options: AuthModuleOptions): string {
