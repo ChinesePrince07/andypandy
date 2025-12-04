@@ -10,6 +10,7 @@ import {
 } from './api'
 import type {
   SuperAdminSettingsResponse,
+  SuperAdminTenantListParams,
   SuperAdminTenantListResponse,
   SuperAdminTenantPhotosResponse,
   UpdateSuperAdminSettingsPayload,
@@ -28,10 +29,11 @@ export function useSuperAdminSettingsQuery() {
   })
 }
 
-export function useSuperAdminTenantsQuery() {
+export function useSuperAdminTenantsQuery(params?: SuperAdminTenantListParams) {
   return useQuery<SuperAdminTenantListResponse>({
-    queryKey: SUPER_ADMIN_TENANTS_QUERY_KEY,
-    queryFn: fetchSuperAdminTenants,
+    queryKey: [...SUPER_ADMIN_TENANTS_QUERY_KEY, params],
+    queryFn: () => fetchSuperAdminTenants(params),
+    placeholderData: (previousData) => previousData,
   })
 }
 

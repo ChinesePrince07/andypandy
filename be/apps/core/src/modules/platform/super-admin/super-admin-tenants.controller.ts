@@ -41,11 +41,25 @@ export class SuperAdminTenantController {
   }
 
   @Get('/')
-  async listTenants() {
-    const [tenantAggregates, plans] = await Promise.all([
-      this.tenantService.listTenants(),
+  async listTenants(
+    @Query('page') page = '1',
+    @Query('limit') limit = '20',
+    @Query('status') status?: string,
+    @Query('sortBy') sortBy?: 'createdAt' | 'name',
+    @Query('sortDir') sortDir?: 'asc' | 'desc',
+  ) {
+    const [tenantResult, plans] = await Promise.all([
+      this.tenantService.listTenants({
+        page: Number(page),
+        limit: Number(limit),
+        status: status as any,
+        sortBy,
+        sortDir,
+      }),
       Promise.resolve(this.billingPlanService.getPlanDefinitions()),
     ])
+
+    const { items: tenantAggregates, total } = tenantResult
 
     const tenantIds = tenantAggregates.map((aggregate) => aggregate.tenant.id)
     const usageTotalsMap = await this.billingUsageService.getUsageTotalsForTenants(tenantIds)
@@ -56,6 +70,7 @@ export class SuperAdminTenantController {
         usageTotals: usageTotalsMap[aggregate.tenant.id] ?? [],
       })),
       plans,
+      total,
     }
   }
 

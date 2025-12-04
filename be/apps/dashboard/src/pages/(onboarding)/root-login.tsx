@@ -13,6 +13,10 @@ export function Component() {
   const [isRedirecting, setIsRedirecting] = useState(false)
   const { login, isLoading, error, clearError } = useLogin()
 
+  useEffect(() => {
+    console.error('error', error)
+  }, [error])
+
   const tenantSlug = useMemo(() => {
     return getTenantSlugFromHost(window.location.hostname)
   }, [])

@@ -99,6 +99,7 @@ export function useLogin() {
           }
         }
       } else {
+        console.error('error', error)
         setErrorMessage('An unexpected error occurred. Please try again')
       }
     },

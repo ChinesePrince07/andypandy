@@ -7,6 +7,7 @@ import type {
   BuilderDebugProgressEvent,
   BuilderDebugResult,
   SuperAdminSettingsResponse,
+  SuperAdminTenantListParams,
   SuperAdminTenantListResponse,
   SuperAdminTenantPhotosResponse,
   UpdateSuperAdminSettingsPayload,
@@ -39,8 +40,22 @@ export async function updateSuperAdminSettings(payload: UpdateSuperAdminSettings
   })
 }
 
-export async function fetchSuperAdminTenants(): Promise<SuperAdminTenantListResponse> {
-  const response = await coreApi<SuperAdminTenantListResponse>(`${SUPER_ADMIN_TENANTS_ENDPOINT}`, {
+export async function fetchSuperAdminTenants(
+  params?: SuperAdminTenantListParams,
+): Promise<SuperAdminTenantListResponse> {
+  const query = new URLSearchParams()
+  if (params) {
+    if (params.page) query.set('page', String(params.page))
+    if (params.limit) query.set('limit', String(params.limit))
+    if (params.status) query.set('status', params.status)
+    if (params.sortBy) query.set('sortBy', params.sortBy)
+    if (params.sortDir) query.set('sortDir', params.sortDir)
+  }
+
+  const queryString = query.toString()
+  const url = queryString ? `${SUPER_ADMIN_TENANTS_ENDPOINT}?${queryString}` : SUPER_ADMIN_TENANTS_ENDPOINT
+
+  const response = await coreApi<SuperAdminTenantListResponse>(url, {
     method: 'GET',
   })
   return camelCaseKeys<SuperAdminTenantListResponse>(response)

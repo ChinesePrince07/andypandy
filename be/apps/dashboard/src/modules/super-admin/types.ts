@@ -112,6 +112,15 @@ export interface SuperAdminTenantSummary {
 export interface SuperAdminTenantListResponse {
   tenants: SuperAdminTenantSummary[]
   plans: BillingPlanDefinition[]
+  total: number
+}
+
+export interface SuperAdminTenantListParams {
+  page: number
+  limit: number
+  status?: string
+  sortBy?: string
+  sortDir?: 'asc' | 'desc'
 }
 
 export interface UpdateTenantPlanPayload {
