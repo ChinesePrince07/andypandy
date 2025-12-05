@@ -34,8 +34,8 @@ export interface UserViewModel {
   website?: string | null
 }
 
-interface ViewerContext {
-  userId: string | null
+interface AuthUser {
+  id?: string
   role?: string
 }
 
@@ -43,6 +43,13 @@ interface CommentResponseItem extends CommentViewModel {
   reactionCounts: Record<string, number>
   viewerReactions: string[]
 }
+
+type AuthContextValue =
+  | {
+      user?: AuthUser
+      session?: unknown
+    }
+  | undefined
 
 @injectable()
 export class CommentService {
@@ -62,7 +69,11 @@ export class CommentService {
     users: Record<string, UserViewModel>
   }> {
     const tenant = requireTenantContext()
-    const auth = this.requireAuth()
+    const authUser = this.getAuthUser()
+    const userId = authUser?.id
+    if (!userId) {
+      throw new BizException(ErrorCode.AUTH_UNAUTHORIZED)
+    }
     const db = this.dbAccessor.get()
 
     await this.ensurePhotoExists(tenant.tenant.id, dto.photoId)
@@ -70,7 +81,7 @@ export class CommentService {
 
     const moderationInput: CommentModerationHookInput = {
       tenantId: tenant.tenant.id,
-      userId: auth.userId,
+      userId,
       photoId: dto.photoId,
       parentId: parent?.id,
       content: dto.content.trim(),
@@ -93,7 +104,7 @@ export class CommentService {
         tenantId: tenant.tenant.id,
         photoId: dto.photoId,
         parentId: parent?.id ?? null,
-        userId: auth.userId,
+        userId,
         content: dto.content.trim(),
         status,
         userAgent: moderationInput.userAgent ?? null,
@@ -126,7 +137,7 @@ export class CommentService {
         .limit(1)
 
       if (fullParent) {
-        const parentReactions = await this.fetchReactionAggregations(tenant.tenant.id, [parent.id], auth.userId)
+        const parentReactions = await this.fetchReactionAggregations(tenant.tenant.id, [parent.id], userId)
         relations[parent.id] = this.toResponse({
           ...fullParent,
           reactionCounts: parentReactions.counts.get(parent.id) ?? {},
@@ -136,7 +147,7 @@ export class CommentService {
     }
 
     // Fetch user info
-    const userIds = [auth.userId, ...Object.values(relations).map((r) => r.userId)].filter(Boolean)
+    const userIds = [userId, ...Object.values(relations).map((r) => r.userId)].filter(Boolean)
     const users = await this.fetchUsersWithProfiles(userIds)
 
     // Emit event asynchronously
@@ -147,7 +158,7 @@ export class CommentService {
           record.id,
           tenant.tenant.id,
           dto.photoId,
-          auth.userId,
+          userId,
           parent?.id ?? null,
           dto.content.trim(),
           record.createdAt,
@@ -167,7 +178,10 @@ export class CommentService {
     nextCursor: string | null
   }> {
     const tenant = requireTenantContext()
-    const viewer = this.getViewer()
+    const authUser = this.getAuthUser()
+    const viewerUserId = authUser?.id ?? null
+    const role = authUser?.role
+    const isAdmin = role === 'admin' || role === 'superadmin'
     const db = this.dbAccessor.get()
 
     const filters = [
@@ -177,12 +191,12 @@ export class CommentService {
     ]
 
     let statusCondition
-    if (viewer.isAdmin) {
+    if (isAdmin) {
       statusCondition = inArray(comments.status, ['approved', 'pending'])
-    } else if (viewer.userId) {
+    } else if (viewerUserId) {
       statusCondition = or(
         eq(comments.status, 'approved'),
-        and(eq(comments.status, 'pending'), eq(comments.userId, viewer.userId)),
+        and(eq(comments.status, 'pending'), eq(comments.userId, viewerUserId)),
       )
     } else {
       statusCondition = eq(comments.status, 'approved')
@@ -220,7 +234,7 @@ export class CommentService {
     const items = rows.slice(0, query.limit)
     const commentIds = items.map((item) => item.id)
 
-    const reactions = await this.fetchReactionAggregations(tenant.tenant.id, commentIds, viewer.userId)
+    const reactions = await this.fetchReactionAggregations(tenant.tenant.id, commentIds, viewerUserId)
 
     const nextCursor = hasMore && items.length > 0 ? items.at(-1)!.id : null
 
@@ -256,7 +270,7 @@ export class CommentService {
       const parentReactions = await this.fetchReactionAggregations(
         tenant.tenant.id,
         parentRows.map((p) => p.id),
-        viewer.userId,
+        viewerUserId,
       )
 
       for (const parent of parentRows) {
@@ -290,13 +304,9 @@ export class CommentService {
     nextCursor: string | null
   }> {
     const tenant = requireTenantContext()
-    const viewer = this.getViewer()
+    const authUser = this.getAuthUser()
+    const viewerUserId = authUser?.id ?? null
     const db = this.dbAccessor.get()
-
-    // Only admin can access this endpoint
-    if (!viewer.isAdmin) {
-      throw new BizException(ErrorCode.COMMON_FORBIDDEN, { message: '仅管理员可以访问' })
-    }
 
     const filters = [eq(comments.tenantId, tenant.tenant.id), isNull(comments.deletedAt)]
 
@@ -341,7 +351,7 @@ export class CommentService {
     const items = rows.slice(0, query.limit)
     const commentIds = items.map((item) => item.id)
 
-    const reactions = await this.fetchReactionAggregations(tenant.tenant.id, commentIds, viewer.userId)
+    const reactions = await this.fetchReactionAggregations(tenant.tenant.id, commentIds, viewerUserId)
 
     const nextCursor = hasMore && items.length > 0 ? items.at(-1)!.id : null
 
@@ -377,7 +387,7 @@ export class CommentService {
       const parentReactions = await this.fetchReactionAggregations(
         tenant.tenant.id,
         parentRows.map((p) => p.id),
-        viewer.userId,
+        viewerUserId,
       )
 
       for (const parent of parentRows) {
@@ -406,7 +416,11 @@ export class CommentService {
 
   async toggleReaction(commentId: string, body: CommentReactionDto): Promise<{ item: CommentResponseItem }> {
     const tenant = requireTenantContext()
-    const auth = this.requireAuth()
+    const authUser = this.getAuthUser()
+    const userId = authUser?.id
+    if (!userId) {
+      throw new BizException(ErrorCode.AUTH_UNAUTHORIZED)
+    }
     const db = this.dbAccessor.get()
 
     const comment = await this.getCommentById(commentId, tenant.tenant.id)
@@ -418,7 +432,7 @@ export class CommentService {
         and(
           eq(commentReactions.tenantId, tenant.tenant.id),
           eq(commentReactions.commentId, comment.id),
-          eq(commentReactions.userId, auth.userId),
+          eq(commentReactions.userId, userId),
           eq(commentReactions.reaction, body.reaction),
         ),
       )
@@ -430,12 +444,12 @@ export class CommentService {
       await db.insert(commentReactions).values({
         tenantId: tenant.tenant.id,
         commentId: comment.id,
-        userId: auth.userId,
+        userId,
         reaction: body.reaction,
       })
     }
 
-    const aggregation = await this.fetchReactionAggregations(tenant.tenant.id, [comment.id], auth.userId)
+    const aggregation = await this.fetchReactionAggregations(tenant.tenant.id, [comment.id], userId)
     const item = this.toResponse({
       ...comment,
       reactionCounts: aggregation.counts.get(comment.id) ?? {},
@@ -446,7 +460,13 @@ export class CommentService {
 
   async softDelete(commentId: string): Promise<void> {
     const tenant = requireTenantContext()
-    const auth = this.requireAuth()
+    const authUser = this.getAuthUser()
+    const userId = authUser?.id
+    if (!userId) {
+      throw new BizException(ErrorCode.AUTH_UNAUTHORIZED)
+    }
+    const { role } = authUser!
+    const isAdmin = role === 'admin' || role === 'superadmin'
     const db = this.dbAccessor.get()
 
     const [record] = await db
@@ -463,8 +483,8 @@ export class CommentService {
       throw new BizException(ErrorCode.COMMON_NOT_FOUND, { message: '评论不存在' })
     }
 
-    const isAdmin = auth.role === 'admin' || auth.role === 'superadmin'
-    const isOwner = auth.userId === record.userId
+    const { userId: authorId } = record
+    const isOwner = userId === authorId
 
     if (!isAdmin && !isOwner) {
       throw new BizException(ErrorCode.COMMON_FORBIDDEN, { message: '无权删除该评论' })
@@ -479,28 +499,44 @@ export class CommentService {
       .where(eq(comments.id, record.id))
   }
 
-  private requireAuth(): { userId: string; role?: string } {
-    const authContext = HttpContext.getValue('auth') as
-      | { user?: { id?: string; role?: string }; session?: unknown }
-      | undefined
-    if (!authContext?.user || !authContext.session) {
-      throw new BizException(ErrorCode.AUTH_UNAUTHORIZED)
+  async getCommentCount(query: { photoId: string }): Promise<{ count: number }> {
+    const tenant = requireTenantContext()
+    const authUser = this.getAuthUser()
+    const viewerUserId = authUser?.id ?? null
+    const role = authUser?.role
+    const isAdmin = role === 'admin' || role === 'superadmin'
+    const db = this.dbAccessor.get()
+
+    const filters = [
+      eq(comments.tenantId, tenant.tenant.id),
+      eq(comments.photoId, query.photoId),
+      isNull(comments.deletedAt),
+    ]
+
+    let statusCondition
+    if (isAdmin) {
+      statusCondition = inArray(comments.status, ['approved', 'pending'])
+    } else if (viewerUserId) {
+      statusCondition = or(
+        eq(comments.status, 'approved'),
+        and(eq(comments.status, 'pending'), eq(comments.userId, viewerUserId)),
+      )
+    } else {
+      statusCondition = eq(comments.status, 'approved')
     }
-    const userId = (authContext.user as { id?: string }).id
-    if (!userId) {
-      throw new BizException(ErrorCode.AUTH_UNAUTHORIZED)
-    }
-    return { userId, role: (authContext.user as { role?: string }).role }
+    filters.push(statusCondition)
+
+    const [result] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(comments)
+      .where(and(...filters))
+
+    return { count: Number(result?.count ?? 0) }
   }
 
-  private getViewer(): ViewerContext & { isAdmin: boolean } {
-    const authContext = HttpContext.getValue('auth') as
-      | { user?: { id?: string; role?: string }; session?: unknown }
-      | undefined
-    const userId = authContext?.user?.id ?? null
-    const role = authContext?.user?.role
-    const isAdmin = role === 'admin' || role === 'superadmin'
-    return { userId, role, isAdmin }
+  private getAuthUser(): AuthUser | undefined {
+    const authContext = HttpContext.getValue('auth') as AuthContextValue
+    return authContext?.user
   }
 
   private async ensurePhotoExists(tenantId: string, photoId: string): Promise<void> {

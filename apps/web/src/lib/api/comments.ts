@@ -136,6 +136,11 @@ export const commentsApi = {
     }
   },
 
+  async count(photoId: string): Promise<{ count: number }> {
+    const params = new URLSearchParams({ photoId })
+    return apiFetch<{ count: number }>(`/api/comments/count?${params.toString()}`)
+  },
+
   async toggleReaction(input: ToggleReactionInput): Promise<Comment> {
     const data = await apiFetch<{ item: CommentDto }>(`/api/comments/${input.commentId}/reactions`, {
       method: 'POST',

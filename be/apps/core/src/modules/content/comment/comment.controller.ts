@@ -2,7 +2,13 @@ import { Body, ContextParam, Controller, Delete, Get, Param, Post, Query } from 
 import { Roles } from 'core/guards/roles.decorator'
 import type { Context } from 'hono'
 
-import { CommentReactionDto, CreateCommentDto, ListAllCommentsQueryDto, ListCommentsQueryDto } from './comment.dto'
+import {
+  CommentReactionDto,
+  CreateCommentDto,
+  GetCommentCountQueryDto,
+  ListAllCommentsQueryDto,
+  ListCommentsQueryDto,
+} from './comment.dto'
 import { CommentService } from './comment.service'
 
 @Controller('comments')
@@ -13,6 +19,11 @@ export class CommentController {
   @Roles('user')
   async createComment(@ContextParam() context: Context, @Body() body: CreateCommentDto) {
     return await this.commentService.createComment(body, context)
+  }
+
+  @Get('/count')
+  async getCommentCount(@Query() query: GetCommentCountQueryDto) {
+    return await this.commentService.getCommentCount(query)
   }
 
   @Get('/')

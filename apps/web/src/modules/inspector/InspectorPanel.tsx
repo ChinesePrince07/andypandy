@@ -1,6 +1,8 @@
 import type { PickedExif } from '@afilmory/builder'
 import { MobileTabGroup, MobileTabItem, SegmentGroup, SegmentItem } from '@afilmory/ui'
 import { Spring } from '@afilmory/utils'
+import { useQuery } from '@tanstack/react-query'
+import clsx from 'clsx'
 import { m } from 'motion/react'
 import type { FC } from 'react'
 import { useState } from 'react'
@@ -8,6 +10,7 @@ import { useTranslation } from 'react-i18next'
 
 import { injectConfig } from '~/config'
 import { useMobile } from '~/hooks/useMobile'
+import { commentsApi } from '~/lib/api/comments'
 import { ExifPanelContent } from '~/modules/metadata/ExifPanel'
 import { CommentsPanel } from '~/modules/social/comments'
 import type { PhotoManifest } from '~/types/photo'
@@ -25,6 +28,13 @@ export const InspectorPanel: FC<{
   const [activeTab, setActiveTab] = useState<Tab>('info')
 
   const showSocialFeatures = injectConfig.useCloud
+  const { data: commentCount } = useQuery({
+    queryKey: ['comment-count', currentPhoto.id],
+    queryFn: () => commentsApi.count(currentPhoto.id),
+    enabled: showSocialFeatures,
+  })
+
+  const hasComments = (commentCount?.count ?? 0) > 0
 
   return (
     <m.div
@@ -85,6 +95,7 @@ export const InspectorPanel: FC<{
                     <div className="flex items-center">
                       <i className="i-mingcute-comment-line mr-1.5 text-base" />
                       {t('inspector.tab.comments')}
+                      {hasComments && <div className="bg-accent ml-1.5 size-1.5 rounded-full" />}
                     </div>
                   }
                 />
@@ -126,9 +137,10 @@ export const InspectorPanel: FC<{
                   activeBgClassName="bg-accent/20"
                   className="text-white/60 hover:text-white/80 data-[state=active]:text-white"
                   label={
-                    <div className="flex items-center">
+                    <div className={clsx('flex items-center', hasComments && 'pr-0.5')}>
                       <i className="i-mingcute-comment-line mr-1.5" />
                       {t('inspector.tab.comments')}
+                      {hasComments && <div className="bg-accent absolute top-1 right-1 size-1.5 rounded-full" />}
                     </div>
                   }
                 />

@@ -31,3 +31,9 @@ export const CommentReactionSchema = z.object({
 })
 
 export class CommentReactionDto extends createZodSchemaDto(CommentReactionSchema) {}
+
+export const GetCommentCountQuerySchema = z.object({
+  photoId: z.string().trim().min(1, 'photoId is required'),
+})
+
+export class GetCommentCountQueryDto extends createZodSchemaDto(GetCommentCountQuerySchema) {}
