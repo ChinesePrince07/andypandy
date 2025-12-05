@@ -1,7 +1,7 @@
 import { FormError, Input, Label } from '@afilmory/ui'
 import { useStore } from '@tanstack/react-form'
 import type { FC, MutableRefObject } from 'react'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type { useRegistrationForm } from '~/modules/auth/hooks/useRegistrationForm'
@@ -34,14 +34,20 @@ export const WorkspaceStep: FC<WorkspaceStepProps> = ({
   const { t } = useTranslation()
   const slugValue = useStore(form.store, (state) => state.values.tenantSlug)
   const tenantNameValue = useStore(form.store, (state) => state.values.tenantName)
+  const tenantNameAutofilledRef = useRef(false)
 
   useEffect(() => {
-    if (tenantNameValue || !slugValue) {
+    if (tenantNameAutofilledRef.current || !slugValue) {
+      return
+    }
+    if (tenantNameValue) {
+      tenantNameAutofilledRef.current = true
       return
     }
     const derivedName = titleCaseFromSlug(slugValue)
     if (derivedName) {
       form.setFieldValue('tenantName', () => derivedName)
+      tenantNameAutofilledRef.current = true
     }
   }, [form, slugValue, tenantNameValue])
 

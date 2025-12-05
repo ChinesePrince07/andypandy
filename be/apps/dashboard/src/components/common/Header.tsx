@@ -52,13 +52,20 @@ export function Header() {
         {/* Right side - User Menu */}
         {user && (
           <div className="border-fill-tertiary/50 ml-2 sm:ml-auto flex items-center gap-3 border-l pl-2 sm:pl-4">
-            <PlanBadge
-              label={planLabel}
-              isLoading={planQuery.isLoading}
-              onClick={() => navigate('/plan')}
-              labelKey="header.plan.badge"
+            <div className="hidden md:block">
+              <PlanBadge
+                label={planLabel}
+                isLoading={planQuery.isLoading}
+                onClick={() => navigate('/plan')}
+                labelKey="header.plan.badge"
+              />
+            </div>
+            <UserMenu
+              user={user}
+              planLabel={planLabel}
+              planLabelKey="header.plan.badge"
+              planLoading={planQuery.isLoading}
             />
-            <UserMenu user={user} />
           </div>
         )}
       </div>
