@@ -1,4 +1,5 @@
 import { ContextParam, Controller, createZodSchemaDto, Get, Param, Query } from '@afilmory/framework'
+import { AllowPlaceholderTenant } from 'core/decorators/allow-placeholder.decorator'
 import { SkipTenantGuard } from 'core/decorators/skip-tenant.decorator'
 import type { Context } from 'hono'
 import z from 'zod'
@@ -23,16 +24,15 @@ export class StaticWebController extends StaticBaseController {
   @Get('/')
   @Get('/explory')
   @SkipTenantGuard()
+  @AllowPlaceholderTenant()
   async getStaticWebIndex(@ContextParam() context: Context, @Query() query: StaticWebDto) {
     if (query.dev) {
       return await this.serveDev(context, query.dev.toString())
     }
 
-    if (StaticControllerUtils.isReservedTenant({ root: true })) {
-      return await StaticControllerUtils.renderTenantRestrictedPage(this.staticDashboardService)
-    }
-    if (StaticControllerUtils.shouldRenderTenantMissingPage()) {
-      return await StaticControllerUtils.renderTenantMissingPage(this.staticDashboardService)
+    const tenantStateResponse = await StaticControllerUtils.ensureTenantAvailable(this.staticDashboardService)
+    if (tenantStateResponse) {
+      return tenantStateResponse
     }
 
     const response = await this.serve(context, this.staticWebService, false)
@@ -44,11 +44,9 @@ export class StaticWebController extends StaticBaseController {
 
   @Get('/photos/:photoId')
   async getStaticPhotoPage(@ContextParam() context: Context, @Param('photoId') photoId: string) {
-    if (StaticControllerUtils.isReservedTenant({ root: true })) {
-      return await StaticControllerUtils.renderTenantRestrictedPage(this.staticDashboardService)
-    }
-    if (StaticControllerUtils.shouldRenderTenantMissingPage()) {
-      return await StaticControllerUtils.renderTenantMissingPage(this.staticDashboardService)
+    const tenantStateResponse = await StaticControllerUtils.ensureTenantAvailable(this.staticDashboardService)
+    if (tenantStateResponse) {
+      return tenantStateResponse
     }
     const response = await this.serve(context, this.staticWebService, false)
     if (response.status === 404) {

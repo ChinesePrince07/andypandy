@@ -1,5 +1,5 @@
 import { photoAssets } from '@afilmory/db'
-import { Body, Controller, Get, Param, Patch, Query } from '@afilmory/framework'
+import { Body, Controller, Delete, Get, Param, Patch, Query } from '@afilmory/framework'
 import { DbAccessor } from 'core/database/database.provider'
 import { Roles } from 'core/guards/roles.decorator'
 import { BypassResponseTransform } from 'core/interceptors/response-transform.decorator'
@@ -9,6 +9,7 @@ import { TenantService } from 'core/modules/platform/tenant/tenant.service'
 import { desc, eq } from 'drizzle-orm'
 
 import type { BillingPlanId } from '../billing/billing-plan.types'
+import { DataManagementService } from '../data-management/data-management.service'
 import { UpdateTenantBanDto, UpdateTenantPlanDto } from './super-admin.dto'
 
 @Controller('super-admin/tenants')
@@ -17,6 +18,7 @@ import { UpdateTenantBanDto, UpdateTenantPlanDto } from './super-admin.dto'
 export class SuperAdminTenantController {
   constructor(
     private readonly tenantService: TenantService,
+    private readonly dataManagementService: DataManagementService,
     private readonly billingPlanService: BillingPlanService,
     private readonly billingUsageService: BillingUsageService,
     private readonly db: DbAccessor,
@@ -84,5 +86,10 @@ export class SuperAdminTenantController {
   async updateTenantBan(@Param('tenantId') tenantId: string, @Body() dto: UpdateTenantBanDto) {
     await this.tenantService.setBanned(tenantId, dto.banned)
     return { updated: true }
+  }
+
+  @Delete('/:tenantId')
+  async deleteTenant(@Param('tenantId') tenantId: string) {
+    return await this.dataManagementService.deleteTenantAccountById(tenantId)
   }
 }

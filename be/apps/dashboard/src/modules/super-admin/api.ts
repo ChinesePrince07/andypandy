@@ -75,6 +75,12 @@ export async function updateSuperAdminTenantBan(payload: UpdateTenantBanPayload)
   })
 }
 
+export async function deleteSuperAdminTenant(tenantId: string): Promise<void> {
+  await coreApi(`${SUPER_ADMIN_TENANTS_ENDPOINT}/${tenantId}`, {
+    method: 'DELETE',
+  })
+}
+
 export async function runBuilderDebugTest(file: File, options?: RunBuilderDebugOptions): Promise<BuilderDebugResult> {
   const formData = new FormData()
   formData.append('file', file)

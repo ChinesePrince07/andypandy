@@ -1,4 +1,4 @@
-import { Button, Modal, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@afilmory/ui'
+import { Button, Modal, Prompt, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@afilmory/ui'
 import { Spring } from '@afilmory/utils'
 import { ArrowDownIcon, ArrowUpIcon, ChevronLeftIcon, ChevronRightIcon, RefreshCcwIcon } from 'lucide-react'
 import { m } from 'motion/react'
@@ -7,8 +7,14 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
 import { LinearBorderPanel } from '~/components/common/LinearBorderPanel'
+import { getRequestErrorMessage } from '~/lib/errors'
 
-import { useSuperAdminTenantsQuery, useUpdateTenantBanMutation, useUpdateTenantPlanMutation } from '../hooks'
+import {
+  useDeleteTenantMutation,
+  useSuperAdminTenantsQuery,
+  useUpdateTenantBanMutation,
+  useUpdateTenantPlanMutation,
+} from '../hooks'
 import type { BillingPlanDefinition, SuperAdminTenantSummary } from '../types'
 import { TenantDetailModal } from './TenantDetailModal'
 import { TenantUsageCell } from './TenantUsageCell'
@@ -34,6 +40,7 @@ export function SuperAdminTenantManager() {
   })
   const updatePlanMutation = useUpdateTenantPlanMutation()
   const updateBanMutation = useUpdateTenantBanMutation()
+  const deleteTenantMutation = useDeleteTenantMutation()
   const { t } = useTranslation()
 
   const { isLoading } = tenantsQuery
@@ -99,6 +106,40 @@ export function SuperAdminTenantManager() {
 
   const isBanUpdating = (tenantId: string) =>
     updateBanMutation.isPending && updateBanMutation.variables?.tenantId === tenantId
+
+  const isDeleting = (tenantId: string) => deleteTenantMutation.isPending && deleteTenantMutation.variables === tenantId
+
+  const handleDeleteTenant = (tenant: SuperAdminTenantSummary) => {
+    const requiredSlug = tenant.slug.trim()
+
+    Prompt.input({
+      title: t('superadmin.tenants.prompt.delete.title'),
+      description: t('superadmin.tenants.prompt.delete.description', { name: tenant.name }),
+      placeholder: t('superadmin.tenants.prompt.delete.placeholder', { slug: requiredSlug }),
+      variant: 'danger',
+      onConfirmText: t('superadmin.tenants.prompt.delete.confirm'),
+      onCancelText: t('superadmin.tenants.prompt.delete.cancel'),
+      onConfirm: (input) => {
+        const normalized = input.trim()
+        if (normalized !== requiredSlug) {
+          toast.error(t('superadmin.tenants.prompt.delete.mismatch'), {
+            description: t('superadmin.tenants.prompt.delete.placeholder', { slug: requiredSlug }),
+          })
+          return
+        }
+
+        deleteTenantMutation.mutate(tenant.id, {
+          onSuccess: () => {
+            toast.success(t('superadmin.tenants.toast.delete-success', { name: tenant.name }))
+          },
+          onError: (error) => {
+            const description = getRequestErrorMessage(error, t('common.retry-later'))
+            toast.error(t('superadmin.tenants.toast.delete-error'), { description })
+          },
+        })
+      },
+    })
+  }
 
   if (isError) {
     return (
@@ -187,6 +228,7 @@ export function SuperAdminTenantManager() {
                       <SortIcon field="createdAt" />
                     </div>
                   </th>
+                  <th className="px-3 py-2 text-right">{t('superadmin.tenants.table.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/20">
@@ -240,6 +282,19 @@ export function SuperAdminTenantManager() {
                     </td>
                     <td className="px-3 py-3 align-top text-text-secondary text-xs">
                       {formatDateLabel(tenant.createdAt)}
+                    </td>
+                    <td className="px-3 py-2 align-top text-right">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="destructive"
+                        disabled={isDeleting(tenant.id)}
+                        onClick={() => handleDeleteTenant(tenant)}
+                      >
+                        {isDeleting(tenant.id)
+                          ? t('superadmin.tenants.button.processing')
+                          : t('superadmin.tenants.button.delete')}
+                      </Button>
                     </td>
                   </tr>
                 ))}

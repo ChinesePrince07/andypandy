@@ -89,6 +89,7 @@ export default defineConfig({
         main: resolve(ROOT, 'index.html'),
         'tenant-missing': resolve(ROOT, 'tenant-missing.html'),
         'tenant-restricted': resolve(ROOT, 'tenant-restricted.html'),
+        'tenant-suspended': resolve(ROOT, 'tenant-suspended.html'),
       },
     },
   },

@@ -8,6 +8,7 @@ import { STATIC_DASHBOARD_BASENAME } from './static-dashboard.service'
 
 const TENANT_MISSING_ENTRY_PATH = `${STATIC_DASHBOARD_BASENAME}/tenant-missing.html`
 const TENANT_RESTRICTED_ENTRY_PATH = `${STATIC_DASHBOARD_BASENAME}/tenant-restricted.html`
+const TENANT_SUSPENDED_ENTRY_PATH = `${STATIC_DASHBOARD_BASENAME}/tenant-suspended.html`
 
 export const StaticControllerUtils = {
   cloneResponseWithStatus(response: Response, status: number): Response {
@@ -46,9 +47,29 @@ export const StaticControllerUtils = {
     return isTenantSlugReserved(tenantSlug)
   },
 
+  shouldRenderTenantRestrictedPage(): boolean {
+    return StaticControllerUtils.isReservedTenant({ root: true })
+  },
+
+  shouldRenderTenantSuspendedPage(): boolean {
+    const tenantContext = getTenantContext()
+    if (!tenantContext) {
+      return false
+    }
+    return tenantContext.tenant.banned || tenantContext.tenant.status === 'suspended'
+  },
+
   shouldRenderTenantMissingPage(): boolean {
     const tenantContext = getTenantContext()
-    return !tenantContext || isPlaceholderTenantContext(tenantContext)
+    if (!tenantContext) {
+      return true
+    }
+
+    if (tenantContext.tenant.banned || tenantContext.tenant.status === 'suspended') {
+      return false
+    }
+
+    return isPlaceholderTenantContext(tenantContext)
   },
 
   async renderTenantMissingPage(dashboardService: StaticDashboardService): Promise<Response> {
@@ -71,5 +92,29 @@ export const StaticControllerUtils = {
     throw new BizException(ErrorCode.COMMON_FORBIDDEN, {
       message: 'Workspace access restricted',
     })
+  },
+
+  async renderTenantSuspendedPage(dashboardService: StaticDashboardService): Promise<Response> {
+    const response = await dashboardService.handleRequest(TENANT_SUSPENDED_ENTRY_PATH, false)
+    if (response) {
+      return StaticControllerUtils.cloneResponseWithStatus(response, 403)
+    }
+
+    throw new BizException(ErrorCode.COMMON_FORBIDDEN, {
+      message: 'Workspace suspended',
+    })
+  },
+
+  async ensureTenantAvailable(dashboardService: StaticDashboardService): Promise<Response | null> {
+    if (StaticControllerUtils.shouldRenderTenantRestrictedPage()) {
+      return await StaticControllerUtils.renderTenantRestrictedPage(dashboardService)
+    }
+    if (StaticControllerUtils.shouldRenderTenantSuspendedPage()) {
+      return await StaticControllerUtils.renderTenantSuspendedPage(dashboardService)
+    }
+    if (StaticControllerUtils.shouldRenderTenantMissingPage()) {
+      return await StaticControllerUtils.renderTenantMissingPage(dashboardService)
+    }
+    return null
   },
 }

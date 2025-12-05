@@ -142,7 +142,11 @@ export class TenantService {
     }
 
     const existing = await this.repository.findBySlug(normalized)
-    return existing === null
+    if (!existing) {
+      return true
+    }
+
+    return existing.tenant.status === 'pending'
   }
 
   ensureTenantIsActive(tenant: TenantAggregate['tenant'], options?: { allowPending?: boolean }): void {

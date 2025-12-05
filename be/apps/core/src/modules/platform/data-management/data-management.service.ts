@@ -62,44 +62,31 @@ export class DataManagementService {
   async deleteTenantAccount(): Promise<{ deletedTenantId: string }> {
     const tenant = requireTenantContext()
     const tenantId = tenant.tenant.id
-    const tenantSlug = tenant.tenant.slug
 
-    await this.deleteManagedStorageSpace(tenantId)
-
-    if (!tenantSlug) {
-      throw new BizException(ErrorCode.COMMON_BAD_REQUEST, {
-        message: '当前租户缺少 slug，无法删除账户。',
-      })
-    }
-
-    if (tenantSlug === ROOT_TENANT_SLUG || tenant.tenant.status === 'pending') {
-      throw new BizException(ErrorCode.AUTH_FORBIDDEN, {
-        message: '系统租户或未完成初始化的工作区无法通过此操作删除。',
-      })
-    }
-
-    await this.deleteManagedStorageSpace(tenantId)
-
-    const db = this.dbAccessor.get()
-
-    await db.transaction(async (tx) => {
-      await tx.delete(photoAssets).where(eq(photoAssets.tenantId, tenantId))
-      await tx.delete(reactions).where(eq(reactions.tenantId, tenantId))
-      await tx.delete(settings).where(eq(settings.tenantId, tenantId))
-      await tx.delete(tenantDomains).where(eq(tenantDomains.tenantId, tenantId))
-
-      await tx.delete(comments).where(eq(comments.tenantId, tenantId))
-      await tx.delete(commentReactions).where(eq(commentReactions.tenantId, tenantId))
-
-      await tx.delete(authSessions).where(eq(authSessions.tenantId, tenantId))
-      // await tx.delete(authAccounts).where(eq(authAccounts.tenantId, tenantId))
-      await tx.delete(authUsers).where(eq(authUsers.tenantId, tenantId))
-      await tx.delete(tenants).where(eq(tenants.id, tenantId))
+    await this.deleteTenantWithMetadata({
+      tenantId,
+      tenantSlug: tenant.tenant.slug,
+      status: tenant.tenant.status,
     })
 
-    return {
-      deletedTenantId: tenantId,
+    return { deletedTenantId: tenantId }
+  }
+
+  async deleteTenantAccountById(tenantId: string): Promise<{ deletedTenantId: string }> {
+    const db = this.dbAccessor.get()
+    const [record] = await db.select().from(tenants).where(eq(tenants.id, tenantId)).limit(1)
+
+    if (!record) {
+      throw new BizException(ErrorCode.TENANT_NOT_FOUND)
     }
+
+    await this.deleteTenantWithMetadata({
+      tenantId,
+      tenantSlug: record.slug,
+      status: record.status,
+    })
+
+    return { deletedTenantId: tenantId }
   }
 
   private async deleteManagedStorageSpace(tenantId: string): Promise<void> {
@@ -128,5 +115,41 @@ export class DataManagementService {
       basePrefix: null,
       upstream: upstream as RemoteStorageConfig,
     }
+  }
+
+  private assertTenantDeletable(tenantSlug: string | null, status: string): void {
+    if (!tenantSlug) {
+      throw new BizException(ErrorCode.COMMON_BAD_REQUEST, {
+        message: '当前租户缺少 slug，无法删除账户。',
+      })
+    }
+
+    if (tenantSlug === ROOT_TENANT_SLUG || status === 'pending') {
+      throw new BizException(ErrorCode.AUTH_FORBIDDEN, {
+        message: '系统租户或未完成初始化的工作区无法通过此操作删除。',
+      })
+    }
+  }
+
+  private async deleteTenantWithMetadata(options: { tenantId: string; tenantSlug: string | null; status: string }) {
+    this.assertTenantDeletable(options.tenantSlug, options.status)
+
+    await this.deleteManagedStorageSpace(options.tenantId)
+
+    const db = this.dbAccessor.get()
+
+    await db.transaction(async (tx) => {
+      await tx.delete(photoAssets).where(eq(photoAssets.tenantId, options.tenantId))
+      await tx.delete(reactions).where(eq(reactions.tenantId, options.tenantId))
+      await tx.delete(settings).where(eq(settings.tenantId, options.tenantId))
+      await tx.delete(tenantDomains).where(eq(tenantDomains.tenantId, options.tenantId))
+
+      await tx.delete(comments).where(eq(comments.tenantId, options.tenantId))
+      await tx.delete(commentReactions).where(eq(commentReactions.tenantId, options.tenantId))
+
+      await tx.delete(authSessions).where(eq(authSessions.tenantId, options.tenantId))
+      await tx.delete(authUsers).where(eq(authUsers.tenantId, options.tenantId))
+      await tx.delete(tenants).where(eq(tenants.id, options.tenantId))
+    })
   }
 }

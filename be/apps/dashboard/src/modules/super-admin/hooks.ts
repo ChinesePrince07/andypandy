@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import {
+  deleteSuperAdminTenant,
   fetchSuperAdminSettings,
   fetchSuperAdminTenantPhotos,
   fetchSuperAdminTenants,
@@ -72,6 +73,19 @@ export function useUpdateTenantBanMutation() {
   return useMutation({
     mutationFn: async (payload: UpdateTenantBanPayload) => {
       await updateSuperAdminTenantBan(payload)
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: SUPER_ADMIN_TENANTS_QUERY_KEY })
+    },
+  })
+}
+
+export function useDeleteTenantMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (tenantId: string) => {
+      await deleteSuperAdminTenant(tenantId)
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: SUPER_ADMIN_TENANTS_QUERY_KEY })
