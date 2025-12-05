@@ -5,6 +5,7 @@ import { env } from '@afilmory/env'
 import { createLogger } from '@afilmory/framework'
 import { DbAccessor } from 'core/database/database.provider'
 import { STATIC_DASHBOARD_BASENAME } from 'core/modules/infrastructure/static-web/static-dashboard.service'
+import { ROOT_TENANT_SLUG } from 'core/modules/platform/tenant/tenant.constants'
 import { eq } from 'drizzle-orm'
 import { injectable } from 'tsyringe'
 
@@ -59,7 +60,7 @@ export class RootAccountProvisioner {
     const password = randomBytes(16).toString('base64url')
 
     try {
-      const auth = await this.authProvider.getAuth()
+      const auth = await this.authProvider.getAuthForTenant({ id: rootTenantId, slug: ROOT_TENANT_SLUG })
       const result = await auth.api.signUpEmail({
         body: {
           email,

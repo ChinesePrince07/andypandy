@@ -24,4 +24,6 @@ catalog:
 
 onlyBuiltDependencies:
   - esbuild
+  - libpq
   - puppeteer
+  - simple-git-hooks

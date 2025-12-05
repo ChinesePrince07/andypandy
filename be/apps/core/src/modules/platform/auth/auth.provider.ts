@@ -158,6 +158,7 @@ export class AuthProvider implements OnModuleInit {
   private async createAuthForEndpoint(
     tenantSlug: string | null,
     options: AuthModuleOptions,
+    explicitTenantId?: string | null,
   ): Promise<BetterAuthInstance> {
     const db = this.drizzleProvider.getDb()
     const socialProviders = this.buildBetterAuthProvidersForHost(options.socialProviders, options.oauthGatewayUrl)
@@ -166,7 +167,12 @@ export class AuthProvider implements OnModuleInit {
     // This ensures that user lookups (by email) and account lookups (by provider)
     // are scoped to the current tenant, allowing the same email/social account
     // to exist as different users in different tenants
-    const ensureTenantId = async () => await this.resolveTenantIdOrProvision(tenantSlug)
+    const ensureTenantId = async () => {
+      if (explicitTenantId) {
+        return explicitTenantId
+      }
+      return await this.resolveTenantIdOrProvision(tenantSlug)
+    }
 
     return betterAuth({
       database: tenantAwareDrizzleAdapter(
@@ -209,7 +215,7 @@ export class AuthProvider implements OnModuleInit {
         user: {
           create: {
             before: async (user) => {
-              const tenantId = await ensureTenantId()
+              const tenantId = explicitTenantId ?? (await ensureTenantId())
               if (!tenantId) {
                 throw new APIError('BAD_REQUEST', {
                   message: 'Missing tenant context during account creation.',
@@ -229,7 +235,7 @@ export class AuthProvider implements OnModuleInit {
         session: {
           create: {
             before: async (session) => {
-              const tenantId = this.resolveTenantIdFromContext()
+              const tenantId = explicitTenantId ?? this.resolveTenantIdFromContext()
               const fallbackTenantId = tenantId ?? session.tenantId ?? (await ensureTenantId())
               return {
                 data: {
@@ -243,7 +249,7 @@ export class AuthProvider implements OnModuleInit {
         account: {
           create: {
             before: async (account) => {
-              const tenantId = this.resolveTenantIdFromContext()
+              const tenantId = explicitTenantId ?? this.resolveTenantIdFromContext()
               const resolvedTenantId = tenantId ?? (await ensureTenantId())
               if (!resolvedTenantId) {
                 return { data: account }
@@ -332,6 +338,12 @@ export class AuthProvider implements OnModuleInit {
     const tenantSlug = tenantSlugFromContext ?? extractTenantSlugFromHost(requestedHost, options.baseDomain)
     const instancePromise = this.createAuthForEndpoint(tenantSlug, options)
     return await instancePromise
+  }
+
+  async getAuthForTenant(tenant: { id: string; slug?: string | null }): Promise<BetterAuthInstance> {
+    const options = await this.config.getOptions()
+    const tenantSlug = tenant.slug ?? null
+    return await this.createAuthForEndpoint(tenantSlug, options, tenant.id)
   }
 
   private computeOptionsSignature(options: AuthModuleOptions): string {
