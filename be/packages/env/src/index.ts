@@ -25,8 +25,8 @@ export const env = createEnv({
     AUTH_GATEWAY_STATE_SECRET: z.string().min(1).optional(),
 
     // Payment
-    CREEM_API_KEY: z.string().min(1),
-    CREEM_WEBHOOK_SECRET: z.string().min(1),
+    CREEM_API_KEY: z.string().min(1).optional(),
+    CREEM_WEBHOOK_SECRET: z.string().min(1).optional(),
 
     // Mail
     RESEND_API_KEY: z.string().min(1).optional(),

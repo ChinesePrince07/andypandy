@@ -270,32 +270,36 @@ export class AuthProvider implements OnModuleInit {
           defaultRole: 'user',
           defaultBanReason: 'Spamming',
         }),
-        creem({
-          apiKey: env.CREEM_API_KEY,
-          webhookSecret: env.CREEM_WEBHOOK_SECRET,
-          persistSubscriptions: true,
-          testMode: env.NODE_ENV !== 'production',
-          onCheckoutCompleted: async (data) => {
-            await this.handleCreemWebhook({
-              event: data.webhookEventType,
-              metadata: this.mergeMetadata(data.metadata, data.subscription?.metadata),
-              status: data.subscription?.status ?? null,
-              defaultGrant: true,
-            })
-          },
-          // onRefundCreated: async (data: FlatRefundCreated) => {
-          //   await this.handleCreemRefundCreated(data)
-          // },
-          onSubscriptionCanceled: async (data) => {
-            await this.handleCreemSubscriptionEvent(data, true)
-          },
-          onSubscriptionExpired: async (data) => {
-            await this.handleCreemSubscriptionEvent(data, true)
-          },
-          onSubscriptionUpdate: async (data) => {
-            await this.handleCreemSubscriptionEvent(data, false)
-          },
-        }),
+        ...(env.CREEM_API_KEY && env.CREEM_WEBHOOK_SECRET
+          ? [
+              creem({
+                apiKey: env.CREEM_API_KEY,
+                webhookSecret: env.CREEM_WEBHOOK_SECRET,
+                persistSubscriptions: true,
+                testMode: env.NODE_ENV !== 'production',
+                onCheckoutCompleted: async (data) => {
+                  await this.handleCreemWebhook({
+                    event: data.webhookEventType,
+                    metadata: this.mergeMetadata(data.metadata, data.subscription?.metadata),
+                    status: data.subscription?.status ?? null,
+                    defaultGrant: true,
+                  })
+                },
+                // onRefundCreated: async (data: FlatRefundCreated) => {
+                //   await this.handleCreemRefundCreated(data)
+                // },
+                onSubscriptionCanceled: async (data) => {
+                  await this.handleCreemSubscriptionEvent(data, true)
+                },
+                onSubscriptionExpired: async (data) => {
+                  await this.handleCreemSubscriptionEvent(data, true)
+                },
+                onSubscriptionUpdate: async (data) => {
+                  await this.handleCreemSubscriptionEvent(data, false)
+                },
+              }),
+            ]
+          : []),
       ],
       hooks: {
         before: createAuthMiddleware(async (ctx) => {
