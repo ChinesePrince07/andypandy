@@ -280,12 +280,12 @@ const enUiSchema = {
         },
         plans: {
           free: {
-            title: 'Free Plan (free)',
+            title: 'Free Plan (hobby)',
             description: 'Default starter tier for individuals and trials.',
           },
           pro: {
             title: 'Pro Plan (pro)',
-            description: 'Professional tier reserved for the upcoming subscription release.',
+            description: 'Professional plan.',
           },
           friend: {
             title: 'Friend Plan (friend)',

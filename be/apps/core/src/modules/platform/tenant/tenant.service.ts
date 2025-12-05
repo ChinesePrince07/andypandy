@@ -137,6 +137,10 @@ export class TenantService {
     await this.repository.updateBanned(id, banned)
   }
 
+  async updateStoragePlan(id: string, storagePlanId: string | null): Promise<void> {
+    await this.repository.updateStoragePlan(id, storagePlanId)
+  }
+
   async isSlugAvailable(slug: string): Promise<boolean> {
     const normalized = this.normalizeSlug(slug)
     if (!normalized) {

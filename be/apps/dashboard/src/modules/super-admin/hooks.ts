@@ -8,6 +8,7 @@ import {
   updateSuperAdminSettings,
   updateSuperAdminTenantBan,
   updateSuperAdminTenantPlan,
+  updateSuperAdminTenantStoragePlan,
 } from './api'
 import type {
   SuperAdminSettingsResponse,
@@ -17,6 +18,7 @@ import type {
   UpdateSuperAdminSettingsPayload,
   UpdateTenantBanPayload,
   UpdateTenantPlanPayload,
+  UpdateTenantStoragePlanPayload,
 } from './types'
 
 export const SUPER_ADMIN_SETTINGS_QUERY_KEY = ['super-admin', 'settings'] as const
@@ -60,6 +62,19 @@ export function useUpdateTenantPlanMutation() {
   return useMutation({
     mutationFn: async (payload: UpdateTenantPlanPayload) => {
       await updateSuperAdminTenantPlan(payload)
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: SUPER_ADMIN_TENANTS_QUERY_KEY })
+    },
+  })
+}
+
+export function useUpdateTenantStoragePlanMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (payload: UpdateTenantStoragePlanPayload) => {
+      await updateSuperAdminTenantStoragePlan(payload)
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: SUPER_ADMIN_TENANTS_QUERY_KEY })

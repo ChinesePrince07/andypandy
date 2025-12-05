@@ -278,12 +278,12 @@ const zhCnUiSchema = {
         },
         plans: {
           free: {
-            title: 'Free 计划（free）',
+            title: 'Free 计划（hobby）',
             description: '默认入门方案，适用于个人与试用场景。',
           },
           pro: {
             title: 'Pro 计划（pro）',
-            description: '专业方案，预留给即将上线的订阅。',
+            description: '专业方案',
           },
           friend: {
             title: 'Friend 计划（friend）',

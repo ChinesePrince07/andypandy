@@ -71,6 +71,11 @@ export class TenantRepository {
     await db.update(tenants).set({ planId, updatedAt: new Date().toISOString() }).where(eq(tenants.id, id))
   }
 
+  async updateStoragePlan(id: string, storagePlanId: string | null): Promise<void> {
+    const db = this.dbAccessor.get()
+    await db.update(tenants).set({ storagePlanId, updatedAt: new Date().toISOString() }).where(eq(tenants.id, id))
+  }
+
   async updateBanned(id: string, banned: boolean): Promise<void> {
     const db = this.dbAccessor.get()
     await db.update(tenants).set({ banned, updatedAt: new Date().toISOString() }).where(eq(tenants.id, id))

@@ -91,6 +91,12 @@ const updateTenantPlanSchema = z.object({
 
 export class UpdateTenantPlanDto extends createZodDto(updateTenantPlanSchema) {}
 
+const updateTenantStoragePlanSchema = z.object({
+  storagePlanId: z.string().trim().min(1).nullable(),
+})
+
+export class UpdateTenantStoragePlanDto extends createZodDto(updateTenantStoragePlanSchema) {}
+
 const updateTenantBanSchema = z.object({
   banned: z.boolean(),
 })

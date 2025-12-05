@@ -97,11 +97,19 @@ export interface BillingPlanDefinition {
   quotas: BillingPlanQuota
 }
 
+export interface StoragePlanDefinition {
+  id: string
+  name: string
+  description?: string | null
+  capacityBytes?: number | null
+}
+
 export interface SuperAdminTenantSummary {
   id: string
   name: string
   slug: string
   planId: string
+  storagePlanId?: string | null
   status: 'active' | 'inactive' | 'suspended'
   banned: boolean
   createdAt: string
@@ -112,6 +120,7 @@ export interface SuperAdminTenantSummary {
 export interface SuperAdminTenantListResponse {
   tenants: SuperAdminTenantSummary[]
   plans: BillingPlanDefinition[]
+  storagePlans: StoragePlanDefinition[]
   total: number
 }
 
@@ -127,6 +136,11 @@ export interface SuperAdminTenantListParams {
 export interface UpdateTenantPlanPayload {
   tenantId: string
   planId: string
+}
+
+export interface UpdateTenantStoragePlanPayload {
+  tenantId: string
+  storagePlanId: string | null
 }
 
 export interface UpdateTenantBanPayload {

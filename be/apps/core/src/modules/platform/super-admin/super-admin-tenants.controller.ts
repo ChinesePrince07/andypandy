@@ -3,6 +3,7 @@ import { Body, Controller, Delete, Get, Param, Patch, Query } from '@afilmory/fr
 import { DbAccessor } from 'core/database/database.provider'
 import { Roles } from 'core/guards/roles.decorator'
 import { BypassResponseTransform } from 'core/interceptors/response-transform.decorator'
+import { SystemSettingService } from 'core/modules/configuration/system-setting/system-setting.service'
 import { BillingPlanService } from 'core/modules/platform/billing/billing-plan.service'
 import { BillingUsageService } from 'core/modules/platform/billing/billing-usage.service'
 import { TenantService } from 'core/modules/platform/tenant/tenant.service'
@@ -16,6 +17,7 @@ import {
   TenantPhotosQueryDto,
   UpdateTenantBanDto,
   UpdateTenantPlanDto,
+  UpdateTenantStoragePlanDto,
 } from './super-admin.dto'
 
 @Controller('super-admin/tenants')
@@ -27,6 +29,7 @@ export class SuperAdminTenantController {
     private readonly dataManagementService: DataManagementService,
     private readonly billingPlanService: BillingPlanService,
     private readonly billingUsageService: BillingUsageService,
+    private readonly systemSettings: SystemSettingService,
     private readonly db: DbAccessor,
   ) {}
 
@@ -50,7 +53,7 @@ export class SuperAdminTenantController {
 
   @Get('/')
   async listTenants(@Query() query: ListTenantsQueryDto) {
-    const [tenantResult, plans] = await Promise.all([
+    const [tenantResult, plans, storagePlanCatalog] = await Promise.all([
       this.tenantService.listTenants({
         page: query.page,
         limit: query.limit,
@@ -60,6 +63,7 @@ export class SuperAdminTenantController {
         sortDir: query.sortDir,
       }),
       Promise.resolve(this.billingPlanService.getPlanDefinitions()),
+      this.systemSettings.getStoragePlanCatalog(),
     ])
 
     const { items: tenantAggregates, total } = tenantResult
@@ -73,6 +77,10 @@ export class SuperAdminTenantController {
         usageTotals: usageTotalsMap[aggregate.tenant.id] ?? [],
       })),
       plans,
+      storagePlans: Object.entries(storagePlanCatalog).map(([id, def]) => ({
+        id,
+        ...def,
+      })),
       total,
     }
   }
@@ -80,6 +88,12 @@ export class SuperAdminTenantController {
   @Patch('/:tenantId/plan')
   async updateTenantPlan(@Param() params: TenantIdParamDto, @Body() dto: UpdateTenantPlanDto) {
     await this.billingPlanService.updateTenantPlan(params.tenantId, dto.planId as BillingPlanId)
+    return { updated: true }
+  }
+
+  @Patch('/:tenantId/storage-plan')
+  async updateTenantStoragePlan(@Param() params: TenantIdParamDto, @Body() dto: UpdateTenantStoragePlanDto) {
+    await this.tenantService.updateStoragePlan(params.tenantId, dto.storagePlanId)
     return { updated: true }
   }
 

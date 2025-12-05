@@ -1,6 +1,4 @@
 import { Button, Input, Label, LinearBorderContainer } from '@afilmory/ui'
-import { Spring } from '@afilmory/utils'
-import { m } from 'motion/react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
 
@@ -114,18 +112,12 @@ export function Component() {
               </header>
 
               {error && (
-                <m.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={Spring.presets.snappy}
-                  className="border-red/60 bg-red/10 rounded-lg border px-4 py-3.5"
-                >
+                <div className="border-red/60 bg-red/10 rounded-lg border px-4 py-3.5">
                   <div className="flex items-start gap-3">
                     <i className="i-lucide-circle-alert text-red mt-0.5 text-base" />
                     <p className="text-red flex-1 text-sm">{error}</p>
                   </div>
-                </m.div>
+                </div>
               )}
 
               <div className="space-y-2">
