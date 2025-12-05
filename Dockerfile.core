@@ -37,6 +37,10 @@ WORKDIR /app
 # - perl-image-exiftool: provides the exiftool binary
 # - vips: runtime library for sharp
 # - libheif: enable HEIF/HEIC support in libvips when available
+# Build deps for native modules (pg-native/libpq):
+# - python3, make, g++: required to build native Node.js modules
+# - postgresql-dev: provides libpq headers and runtime library for pg-native
+# - postgresql-libs: runtime library for libpq (kept after build)
 RUN apk add --no-cache \
   curl \
   perl \
@@ -46,6 +50,12 @@ RUN apk add --no-cache \
   libheif \
   libc6-compat \
   gcompat \
+  postgresql-libs \
+  && apk add --no-cache --virtual .build-deps \
+  python3 \
+  make \
+  g++ \
+  postgresql-dev \
   && EXIFTOOL_BIN="$(command -v exiftool)" \
   && echo "Using exiftool binary at ${EXIFTOOL_BIN}" \
   && "${EXIFTOOL_BIN}" -ver \
@@ -63,6 +73,9 @@ RUN if [ -f dist/package.json ]; then \
   cd dist && \
   npm install --omit=dev --no-audit --no-fund; \
   fi
+
+# Remove build tools after native modules are built to reduce image size
+RUN apk del .build-deps
 
 EXPOSE 1841
 
