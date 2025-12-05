@@ -224,11 +224,38 @@ function StoragePlanEditor() {
 
   if (query.isLoading) {
     return (
-      <LinearBorderPanel className="space-y-3 p-6">
-        <div className="bg-fill/40 h-6 w-32 animate-pulse rounded-full" />
-        <div className="space-y-3">
+      <LinearBorderPanel className="space-y-4 p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div className="bg-fill/40 h-6 w-48 animate-pulse rounded-md" />
+            <div className="bg-fill/30 mt-2 h-4 w-64 animate-pulse rounded-md" />
+          </div>
+          <div className="flex items-center gap-2 mb-4 ml-auto">
+            <div className="bg-fill/30 h-9 w-20 animate-pulse rounded-lg" />
+            <div className="bg-fill/30 h-9 w-20 animate-pulse rounded-lg" />
+          </div>
+        </div>
+
+        <div className="space-y-4">
           {[1, 2].map((key) => (
-            <div key={key} className="bg-fill/30 h-24 animate-pulse rounded-xl" />
+            <div key={key} className="border-fill/60 bg-fill/5 rounded-xl border p-4">
+              <div className="flex-1 space-y-3">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <div className="bg-fill/30 h-3 w-16 animate-pulse rounded-md" />
+                    <div className="bg-fill/30 h-9 w-full animate-pulse rounded-lg" />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="bg-fill/30 h-3 w-24 animate-pulse rounded-md" />
+                    <div className="bg-fill/30 h-9 w-full animate-pulse rounded-lg" />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <div className="bg-fill/30 h-3 w-32 animate-pulse rounded-md" />
+                  <div className="bg-fill/30 h-16 w-full animate-pulse rounded-lg" />
+                </div>
+              </div>
+            </div>
           ))}
         </div>
       </LinearBorderPanel>
