@@ -21,7 +21,7 @@ interface FeaturedGallery {
   author: FeaturedGalleryAuthor | null
   photoCount: number
   tags: string[]
-  createdAt: string
+  lastUpload: string
 }
 
 interface FeaturedGalleriesResponse {
@@ -241,7 +241,7 @@ export const GalleryShowcase = () => {
                 {/* Footer */}
                 <div className="flex items-center justify-between">
                   <div className="text-xs text-white/40">
-                    {formatDate(gallery.createdAt)}
+                    {t('lastUpload')} {formatDate(gallery.lastUpload)}
                   </div>
                   <div className="text-white/30 transition group-hover:text-white/60">
                     <i className="i-lucide-external-link size-4" />

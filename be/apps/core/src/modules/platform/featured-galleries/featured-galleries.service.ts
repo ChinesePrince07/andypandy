@@ -108,7 +108,7 @@ export class FeaturedGalleriesService {
     const finalTenantIds = validTenants.map((t) => t.id)
 
     // Step 3: Fetch all related data in parallel
-    const [siteSettings, authors, domains] = await Promise.all([
+    const [siteSettings, authors, domains, lastUpdatedRows] = await Promise.all([
       // Site settings
       db
         .select()
@@ -137,6 +137,17 @@ export class FeaturedGalleriesService {
         })
         .from(tenantDomains)
         .where(and(inArray(tenantDomains.tenantId, finalTenantIds), eq(tenantDomains.status, 'verified'))),
+      // Last photo library update time per tenant
+      db
+        .select({
+          tenantId: photoAssets.tenantId,
+          lastUpdatedAt: sql<Date>`max(${photoAssets.updatedAt})`,
+        })
+        .from(photoAssets)
+        .where(
+          and(inArray(photoAssets.tenantId, finalTenantIds), inArray(photoAssets.syncStatus, ['synced', 'conflict'])),
+        )
+        .groupBy(photoAssets.tenantId),
     ])
 
     // Step 4: Fetch popular tags for top tenants (batch query)
@@ -188,10 +199,15 @@ export class FeaturedGalleriesService {
     }
 
     const domainMap = new Map<string, string>()
+    const lastUpdatedMap = new Map<string, Date | null>()
     for (const domain of domains) {
       if (!domainMap.has(domain.tenantId)) {
         domainMap.set(domain.tenantId, domain.domain)
       }
+    }
+
+    for (const row of lastUpdatedRows) {
+      lastUpdatedMap.set(row.tenantId, row.lastUpdatedAt)
     }
 
     // Step 6: Build response sorted by quality score
@@ -217,7 +233,11 @@ export class FeaturedGalleriesService {
             : null,
           photoCount: score?.photoCount ?? 0,
           tags,
-          createdAt: normalizeDate(tenant.createdAt) ?? tenant.createdAt,
+          createdAt: normalizeDate(tenant.createdAt),
+          lastUpload:
+            normalizeDate(lastUpdatedMap.get(tenant.id) ?? undefined) ??
+            lastUpdatedMap.get(tenant.id) ??
+            normalizeDate(tenant.createdAt),
         }
       })
       .filter((gallery) => gallery.photoCount > 0)
