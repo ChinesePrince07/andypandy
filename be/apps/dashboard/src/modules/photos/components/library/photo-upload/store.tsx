@@ -56,7 +56,8 @@ const PhotoUploadStoreContext = createContext<PhotoUploadStore | null>(null)
 const computeUploadedBytes = (entries: FileProgressEntry[]) => calculateUploadedBytes(entries)
 const MAX_PROCESSING_LOGS = 200
 let processingLogSequence = 0
-const UPLOAD_REQUEST_TIMEOUT_MS = 120_000
+// Extend upload request timeout to tolerate larger batches / slower networks (10 minutes).
+const UPLOAD_REQUEST_TIMEOUT_MS = 600_000
 
 export function createPhotoUploadStore(params: PhotoUploadStoreParams): PhotoUploadStore {
   const { files: initialFiles, availableTags, onUpload, onClose } = params
