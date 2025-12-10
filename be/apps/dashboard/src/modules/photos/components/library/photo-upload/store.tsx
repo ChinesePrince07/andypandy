@@ -4,6 +4,8 @@ import type { StoreApi } from 'zustand'
 import { useStore } from 'zustand'
 import { createStore } from 'zustand/vanilla'
 
+import { presentBillingUpgradeModal, resolveBillingUpgradeCategory } from '~/modules/billing/upgrade-prompts'
+
 import type { PhotoSyncProgressEvent } from '../../../types'
 import type { PhotoUploadRequestOptions } from '../upload.types'
 import type { FileProgressEntry, ProcessingLogEntry, ProcessingState, WorkflowPhase } from './types'
@@ -319,6 +321,10 @@ export function createPhotoUploadStore(params: PhotoUploadStoreParams): PhotoUpl
             const currentFiles = get().files
             updateEntries(() => createFileEntries(currentFiles))
           } else {
+            const upgradeCategory = resolveBillingUpgradeCategory(error)
+            if (upgradeCategory) {
+              presentBillingUpgradeModal(upgradeCategory)
+            }
             const message = getErrorMessage(error, '上传失败，请稍后再试。')
             set({
               uploadError: message,

@@ -1828,7 +1828,7 @@ export class PhotoAssetService {
         totalBytes: usage.totalBytes,
         fileCount: usage.fileCount,
       })
-      throw new BizException(ErrorCode.BILLING_QUOTA_EXCEEDED, {
+      throw new BizException(ErrorCode.BILLING_STORAGE_QUOTA_EXCEEDED, {
         message: `托管存储空间已超出套餐上限：当前已用 ${formatBytesForDisplay(
           usage.totalBytes,
         )}，套餐上限 ${formatBytesForDisplay(capacity)}。请清理空间或升级存储方案后再试。`,
@@ -1843,7 +1843,7 @@ export class PhotoAssetService {
         totalBytes: usage.totalBytes,
         fileCount: usage.fileCount,
       })
-      throw new BizException(ErrorCode.BILLING_QUOTA_EXCEEDED, {
+      throw new BizException(ErrorCode.BILLING_STORAGE_QUOTA_EXCEEDED, {
         message: `托管存储空间不足：当前已用 ${formatBytesForDisplay(
           usage.totalBytes,
         )}，上传后预计 ${formatBytesForDisplay(projectedBytes)}，已超过套餐上限 ${formatBytesForDisplay(

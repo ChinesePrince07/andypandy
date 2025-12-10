@@ -137,7 +137,7 @@ export class BillingPlanService {
 
     if (used + incomingItems > quota.monthlyAssetProcessLimit) {
       const remaining = Math.max(quota.monthlyAssetProcessLimit - used, 0)
-      throw new BizException(ErrorCode.BILLING_QUOTA_EXCEEDED, {
+      throw new BizException(ErrorCode.BILLING_PLAN_QUOTA_EXCEEDED, {
         message: `当月新增照片额度不足，可用剩余：${remaining}，请求新增：${incomingItems}。升级订阅后即可提升限额。`,
       })
     }

@@ -26,7 +26,8 @@ export enum ErrorCode {
   PHOTO_MANIFEST_GENERATION_FAILED = 31,
 
   // Billing / Subscription
-  BILLING_QUOTA_EXCEEDED = 40,
+  BILLING_PLAN_QUOTA_EXCEEDED = 40,
+  BILLING_STORAGE_QUOTA_EXCEEDED = 41,
 }
 
 export interface ErrorDescriptor {
@@ -108,8 +109,12 @@ export const ERROR_CODE_DESCRIPTORS: Record<ErrorCode, ErrorDescriptor> = {
     httpStatus: 500,
     message: 'Photo manifest generation failed',
   },
-  [ErrorCode.BILLING_QUOTA_EXCEEDED]: {
+  [ErrorCode.BILLING_PLAN_QUOTA_EXCEEDED]: {
     httpStatus: 402,
     message: 'Usage quota exceeded',
+  },
+  [ErrorCode.BILLING_STORAGE_QUOTA_EXCEEDED]: {
+    httpStatus: 402,
+    message: 'Storage quota exceeded',
   },
 }
