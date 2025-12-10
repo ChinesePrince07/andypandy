@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { LinearBorderPanel } from '~/components/common/LinearBorderPanel'
 import { buildTenantUrl } from '~/modules/auth/utils/domain'
 
-import { useSuperAdminTenantsQuery } from '../hooks'
+import { useSuperAdminStorageTenantsQuery } from '../hooks'
 import type { StoragePlanDefinition } from '../types'
 import { formatBytes } from './TenantUsageCell'
 
@@ -27,7 +27,7 @@ export function TenantStoragePanel() {
     return () => clearTimeout(timer)
   }, [search])
 
-  const tenantsQuery = useSuperAdminTenantsQuery({
+  const tenantsQuery = useSuperAdminStorageTenantsQuery({
     page,
     limit,
     search: debouncedSearch,

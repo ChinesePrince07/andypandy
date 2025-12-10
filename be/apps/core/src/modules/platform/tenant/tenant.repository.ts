@@ -3,7 +3,7 @@ import { RESERVED_TENANT_SLUGS } from '@afilmory/utils'
 import { DbAccessor } from 'core/database/database.provider'
 import { BizException, ErrorCode } from 'core/errors'
 import type { BillingPlanId } from 'core/modules/platform/billing/billing-plan.types'
-import { and, asc, count, desc, eq, ilike, notInArray, or } from 'drizzle-orm'
+import { and, asc, count, desc, eq, ilike, isNotNull, notInArray, or } from 'drizzle-orm'
 import { injectable } from 'tsyringe'
 
 import type { TenantAggregate, TenantRecord } from './tenant.types'
@@ -88,6 +88,7 @@ export class TenantRepository {
     status?: TenantRecord['status']
     sortBy?: 'createdAt' | 'name'
     sortDir?: 'asc' | 'desc'
+    requireStoragePlan?: boolean
   }): Promise<{ items: TenantAggregate[]; total: number }> {
     const db = this.dbAccessor.get()
     const { page, limit, search, status, sortBy = 'createdAt', sortDir = 'desc' } = options
@@ -96,6 +97,10 @@ export class TenantRepository {
 
     if (status) {
       conditions.push(eq(tenants.status, status))
+    }
+
+    if (options.requireStoragePlan) {
+      conditions.push(isNotNull(tenants.storagePlanId))
     }
 
     if (search) {

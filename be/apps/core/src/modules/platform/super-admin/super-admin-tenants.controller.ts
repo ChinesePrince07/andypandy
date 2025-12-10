@@ -93,6 +93,44 @@ export class SuperAdminTenantController {
     }
   }
 
+  @Get('/storage')
+  async listStorageTenants(@Query() query: ListTenantsQueryDto) {
+    const [tenantResult, storagePlanCatalog, managedProviderKey] = await Promise.all([
+      this.tenantService.listTenants({
+        page: query.page,
+        limit: query.limit,
+        search: query.search,
+        status: query.status,
+        sortBy: query.sortBy,
+        sortDir: query.sortDir,
+        requireStoragePlan: true,
+      }),
+      this.systemSettings.getStoragePlanCatalog(),
+      this.systemSettings.getManagedStorageProviderKey(),
+    ])
+
+    const { items: tenantAggregates, total } = tenantResult
+    const tenantIds = tenantAggregates.map((aggregate) => aggregate.tenant.id)
+
+    const storageUsageMap =
+      managedProviderKey && tenantIds.length > 0
+        ? await this.managedStorageService.getUsageTotalsForTenants(managedProviderKey, tenantIds)
+        : {}
+
+    return {
+      tenants: tenantAggregates.map((aggregate) => ({
+        ...aggregate.tenant,
+        storageUsage: storageUsageMap[aggregate.tenant.id] ?? null,
+      })),
+      plans: [],
+      storagePlans: Object.entries(storagePlanCatalog).map(([id, def]) => ({
+        id,
+        ...def,
+      })),
+      total,
+    }
+  }
+
   @Patch('/:tenantId/plan')
   async updateTenantPlan(@Param() params: TenantIdParamDto, @Body() dto: UpdateTenantPlanDto) {
     await this.billingPlanService.updateTenantPlan(params.tenantId, dto.planId as BillingPlanId)

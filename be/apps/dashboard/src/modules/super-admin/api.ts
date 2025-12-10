@@ -18,6 +18,7 @@ import type {
 
 const SUPER_ADMIN_SETTINGS_ENDPOINT = '/super-admin/settings'
 const SUPER_ADMIN_TENANTS_ENDPOINT = '/super-admin/tenants'
+const SUPER_ADMIN_STORAGE_TENANTS_ENDPOINT = '/super-admin/tenants/storage'
 const STABLE_NEWLINE = /\r?\n/
 
 type RunBuilderDebugOptions = {
@@ -60,6 +61,30 @@ export async function fetchSuperAdminTenants(
   const response = await coreApi<SuperAdminTenantListResponse>(url, {
     method: 'GET',
   })
+  return camelCaseKeys<SuperAdminTenantListResponse>(response)
+}
+
+export async function fetchSuperAdminStorageTenants(
+  params?: SuperAdminTenantListParams,
+): Promise<SuperAdminTenantListResponse> {
+  const query = new URLSearchParams()
+  if (params) {
+    if (params.page) query.set('page', String(params.page))
+    if (params.limit) query.set('limit', String(params.limit))
+    if (params.search) query.set('search', params.search)
+    if (params.sortBy) query.set('sortBy', params.sortBy)
+    if (params.sortDir) query.set('sortDir', params.sortDir)
+  }
+
+  const queryString = query.toString()
+  const url = queryString
+    ? `${SUPER_ADMIN_STORAGE_TENANTS_ENDPOINT}?${queryString}`
+    : SUPER_ADMIN_STORAGE_TENANTS_ENDPOINT
+
+  const response = await coreApi<SuperAdminTenantListResponse>(url, {
+    method: 'GET',
+  })
+
   return camelCaseKeys<SuperAdminTenantListResponse>(response)
 }
 

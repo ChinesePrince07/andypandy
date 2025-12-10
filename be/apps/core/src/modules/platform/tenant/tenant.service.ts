@@ -122,6 +122,7 @@ export class TenantService {
     status?: TenantRecord['status']
     sortBy?: 'createdAt' | 'name'
     sortDir?: 'asc' | 'desc'
+    requireStoragePlan?: boolean
   }): Promise<{ items: TenantAggregate[]; total: number }> {
     return await this.repository.listTenants({
       page: options?.page ?? 1,
@@ -130,6 +131,7 @@ export class TenantService {
       status: options?.status,
       sortBy: options?.sortBy,
       sortDir: options?.sortDir,
+      requireStoragePlan: options?.requireStoragePlan,
     })
   }
 
