@@ -18,7 +18,7 @@
     "prettier": "3.7.4"
   },
   "devDependencies": {
-    "eslint": "9.39.1",
+    "eslint": "9.39.2",
     "eslint-config-hyoban": "4.0.10",
     "jiti": "2.6.1",
     "lint-staged": "16.2.7",

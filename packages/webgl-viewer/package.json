@@ -20,8 +20,8 @@
   "devDependencies": {
     "@types/react": "19.2.7",
     "nbump": "2.1.8",
-    "react": "19.2.1",
-    "tsdown": "0.17.0",
+    "react": "19.2.3",
+    "tsdown": "0.18.0",
     "unplugin-dts": "1.0.0-beta.6",
     "vite": "8.0.0-beta.0"
   },

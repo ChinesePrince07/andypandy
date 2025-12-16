@@ -8,19 +8,19 @@ packages:
 
 catalog:
   '@egoist/tailwindcss-icons': 1.9.0
-  '@iconify-json/mingcute': 1.2.5
-  '@t3-oss/env-core': 0.13.8
-  '@tailwindcss/postcss': 4.1.17
+  '@iconify-json/mingcute': 1.2.6
+  '@t3-oss/env-core': 0.13.10
+  '@tailwindcss/postcss': 4.1.18
   '@tailwindcss/typography': 0.5.19
   dotenv-expand: 12.0.3
   tailwind-scrollbar: 4.0.2
   tailwind-variants: 3.2.2
-  tailwindcss: 4.1.17
+  tailwindcss: 4.1.18
   tailwindcss-animate: 1.0.7
   tailwindcss-safe-area: 1.2.0
   tailwindcss-uikit-colors: 1.0.0
   typescript: 5.9.3
-  zod: 4.1.13
+  zod: 4.2.1
 
 onlyBuiltDependencies:
   - esbuild
