@@ -1,6 +1,6 @@
 # Afilmory – Terms of Service
 
-_Last Updated: 2025-11-16_
+_Last Updated: 2026-01-06_
 
 Welcome to **Afilmory** (“the Service”, “we”, “us”). Afilmory is a personally operated SaaS platform for image upload, hosting, processing, and management.  
 By accessing or using the Service, you agree to the following Terms of Service.
@@ -201,13 +201,16 @@ We store data in regions that provide GDPR-equivalent protection (e.g., via SCCs
 
 ## 9. Service Modifications & Termination
 
-Afilmory may change or discontinue features at any time.  
+Afilmory may change or discontinue features at any time.
 We may suspend or terminate your account if:
 
 - You violate this ToS or AUP
 - You fail to pay required fees
 - Your usage creates security or operational risks
 - We are required by law to do so
+- Your account remains inactive for an extended period
+
+**Inactive Account Deletion Policy**: We reserve the right to delete accounts that have been inactive for 1 month or more. Inactivity is defined as accounts with no content uploaded. We may send reminders before deletion, but are not obligated to do so.
 
 You may stop using the Service at any time.
 
