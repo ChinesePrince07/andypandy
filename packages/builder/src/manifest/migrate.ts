@@ -2,11 +2,10 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 
 import { workdir } from '@afilmory/builder/path.js'
+import type { AfilmoryManifest, ManifestVersion } from '@afilmory/typing'
 
 import { logger } from '../logger/index.js'
-import type { AfilmoryManifest } from '../types/manifest.js'
 import { MIGRATION_STEPS } from './migrations/index.js'
-import type { ManifestVersion } from './version.js'
 import { CURRENT_MANIFEST_VERSION } from './version.js'
 
 const manifestPath = path.join(workdir, 'src/data/photos-manifest.json')

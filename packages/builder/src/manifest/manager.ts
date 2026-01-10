@@ -2,10 +2,9 @@ import fs from 'node:fs/promises'
 import path, { basename } from 'node:path'
 
 import { workdir } from '@afilmory/builder/path.js'
+import type { AfilmoryManifest, CameraInfo, LensInfo, PhotoManifestItem  } from '@afilmory/typing'
 
 import { logger } from '../logger/index.js'
-import type { AfilmoryManifest, CameraInfo, LensInfo } from '../types/manifest.js'
-import type { PhotoManifestItem } from '../types/photo.js'
 import type { S3ObjectLike } from '../types/s3.js'
 import { migrateManifestFileIfNeeded } from './migrate.js'
 import { CURRENT_MANIFEST_VERSION } from './version.js'

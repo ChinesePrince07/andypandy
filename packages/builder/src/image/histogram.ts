@@ -1,4 +1,4 @@
-import type { HistogramData, ToneAnalysis, ToneType } from '@afilmory/builder/types/photo.js'
+import type { HistogramData, ToneAnalysis, ToneType } from '@afilmory/typing'
 import type sharp from 'sharp'
 
 import { getGlobalLoggers } from '../photo'

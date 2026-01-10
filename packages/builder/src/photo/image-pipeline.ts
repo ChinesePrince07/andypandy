@@ -1,6 +1,7 @@
 import crypto from 'node:crypto'
 import path from 'node:path'
 
+import type { PhotoManifestItem, ProcessPhotoResult } from '@afilmory/typing'
 import { compressUint8Array } from '@afilmory/utils'
 import sharp from 'sharp'
 
@@ -13,7 +14,6 @@ import {
 } from '../image/processor.js'
 import type { PluginRunState } from '../plugins/manager.js'
 import { THUMBNAIL_PLUGIN_DATA_KEY } from '../plugins/thumbnail-storage/shared.js'
-import type { PhotoManifestItem, ProcessPhotoResult } from '../types/photo.js'
 import type { S3ObjectLike } from '../types/s3.js'
 import { shouldProcessPhoto } from './cache-manager.js'
 import { processExifData, processThumbnailAndBlurhash, processToneAnalysis } from './data-processors.js'

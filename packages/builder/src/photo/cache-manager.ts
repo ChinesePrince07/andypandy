@@ -1,5 +1,6 @@
+import type { PhotoManifestItem } from '@afilmory/typing'
+
 import { thumbnailExists } from '../image/thumbnail.js'
-import type { PhotoManifestItem } from '../types/photo.js'
 import type { PhotoProcessorOptions } from './processor.js'
 
 export interface CacheableData {

@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@afilmory/og-renderer": "workspace:*",
+    "@afilmory/typing": "workspace:*",
     "@resvg/resvg-js": "2.6.2",
     "@vingle/bmp-js": "^0.2.5",
     "blurhash": "2.0.5",

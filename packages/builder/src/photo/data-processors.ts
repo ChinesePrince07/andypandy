@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 
+import type { PhotoManifestItem, PickedExif, ToneAnalysis } from '@afilmory/typing'
 import { decompressUint8Array } from '@afilmory/utils'
 import type sharp from 'sharp'
 
@@ -9,7 +10,6 @@ import { extractExifData } from '../image/exif.js'
 import { calculateHistogramAndAnalyzeTone } from '../image/histogram.js'
 import { generateThumbnailAndBlurhash, thumbnailExists } from '../image/thumbnail.js'
 import { workdir } from '../path.js'
-import type { PhotoManifestItem, PickedExif, ToneAnalysis } from '../types/photo.js'
 import { getGlobalLoggers } from './logger-adapter.js'
 import type { PhotoProcessorOptions } from './processor.js'
 

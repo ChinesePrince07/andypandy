@@ -2,10 +2,10 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 
 import { workdir } from '@afilmory/builder/path.js'
+import type { ThumbnailResult } from '@afilmory/typing'
 import sharp from 'sharp'
 
 import { getGlobalLoggers } from '../photo/logger-adapter.js'
-import type { ThumbnailResult } from '../types/photo.js'
 import { generateBlurhash } from './blurhash.js'
 
 // 常量定义

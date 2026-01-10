@@ -1,7 +1,7 @@
 // exif.GPSAltitudeRef === 'Below Sea Level' => 1
 // exif.GPSAltitudeRef === 'Above Sea Level' => 0
 
-import type { AfilmoryManifest } from '@afilmory/builder/types/manifest.js'
+import type { AfilmoryManifest } from '@afilmory/typing'
 
 import type { ManifestMigrator, MigrationContext } from '../migrate'
 

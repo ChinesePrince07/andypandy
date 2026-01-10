@@ -83,6 +83,12 @@ export interface ProcessPhotoResult {
   pluginData?: Record<string, unknown>
 }
 
+export interface ThumbnailResult {
+  thumbnailUrl: string | null
+  thumbnailBuffer: Buffer | null
+  thumbHash: Uint8Array | null
+}
+
 export interface PickedExif {
   // 时区和时间相关
   zone?: string
@@ -182,12 +188,6 @@ export interface PickedExif {
   MicroVideoVersion?: Tags['MicroVideoVersion']
   MicroVideoOffset?: Tags['MicroVideoOffset']
   MicroVideoPresentationTimestampUs?: Tags['MicroVideoPresentationTimestampUs']
-}
-
-export interface ThumbnailResult {
-  thumbnailUrl: string | null
-  thumbnailBuffer: Buffer | null
-  thumbHash: Uint8Array | null
 }
 
 export type FujiRecipe = {

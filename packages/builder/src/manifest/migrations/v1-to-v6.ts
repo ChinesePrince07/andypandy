@@ -1,5 +1,6 @@
+import type { AfilmoryManifest } from '@afilmory/typing'
+
 import { logger } from '../../logger/index.js'
-import type { AfilmoryManifest } from '../../types/manifest.js'
 import type { ManifestMigrator, MigrationContext } from '../migrate.js'
 
 /**

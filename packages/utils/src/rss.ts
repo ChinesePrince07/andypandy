@@ -1,4 +1,4 @@
-import type { PhotoManifestItem } from '@afilmory/builder'
+import type { PhotoManifestItem } from '@afilmory/typing'
 
 const GENERATOR_NAME = 'Afilmory Feed Generator'
 const EXIF_NAMESPACE = 'https://afilmory.art/rss/exif'

@@ -1,5 +1,7 @@
 import path from 'node:path'
 
+import type { AfilmoryManifest, CameraInfo, LensInfo, PhotoManifestItem, ProcessPhotoResult } from '@afilmory/typing'
+
 import { thumbnailExists } from '../image/thumbnail.js'
 import { logger } from '../logger/index.js'
 import { handleDeletedPhotos, loadExistingManifest, needsUpdate, saveManifest } from '../manifest/manager.js'
@@ -17,8 +19,6 @@ import type { StorageProviderFactory, StorageProviderRegistrationOptions } from 
 import type { StorageConfig } from '../storage/index.js'
 import { StorageFactory, StorageManager } from '../storage/index.js'
 import type { BuilderConfig, UserBuilderSettings } from '../types/config.js'
-import type { AfilmoryManifest, CameraInfo, LensInfo } from '../types/manifest.js'
-import type { PhotoManifestItem, ProcessPhotoResult } from '../types/photo.js'
 import { ClusterPool } from '../worker/cluster-pool.js'
 import type { TaskCompletedPayload } from '../worker/pool.js'
 import { WorkerPool } from '../worker/pool.js'

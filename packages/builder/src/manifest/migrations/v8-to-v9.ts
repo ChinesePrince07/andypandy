@@ -1,6 +1,7 @@
 import path from 'node:path'
 
-import type { AfilmoryManifest } from '../../types/manifest.js'
+import type { AfilmoryManifest } from '@afilmory/typing'
+
 import type { ManifestMigrator, MigrationContext } from '../migrate.js'
 
 /**

@@ -1,12 +1,12 @@
 import { mkdir, unlink, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 
+import type { PickedExif } from '@afilmory/typing'
 import { isNil, noop } from 'es-toolkit'
 import type { ExifDateTime, Tags } from 'exiftool-vendored'
 import { ExifTool } from 'exiftool-vendored'
 
 import { getGlobalLoggers } from '../photo/logger-adapter.js'
-import type { PickedExif } from '../types/photo.js'
 
 const exiftool = new ExifTool({
   ...(process.env.EXIFTOOL_PATH ? { exiftoolPath: process.env.EXIFTOOL_PATH } : {}),

@@ -1,5 +1,6 @@
-import type { ManifestVersion } from '../manifest/version'
 import type { PhotoManifestItem } from './photo'
+
+export type ManifestVersion = `v${number}`
 
 export interface CameraInfo {
   make: string // e.g., "Canon", "Sony", "Fujifilm"

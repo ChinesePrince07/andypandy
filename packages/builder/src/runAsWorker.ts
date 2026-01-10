@@ -1,12 +1,13 @@
 import process from 'node:process'
 import { deserialize } from 'node:v8'
 
+import type { PhotoManifestItem } from '@afilmory/typing'
+
 import type { BuilderOptions } from './builder/builder.js'
 import { AfilmoryBuilder } from './builder/builder.js'
 import type { PluginRunState } from './plugins/manager.js'
 import type { StorageObject } from './storage/interfaces'
 import type { BuilderConfig } from './types/config.js'
-import type { PhotoManifestItem } from './types/photo'
 import type { BatchTaskMessage, BatchTaskResult, TaskMessage, TaskResult } from './worker/cluster-pool'
 
 // 新增接口定义
