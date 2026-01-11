@@ -51,10 +51,7 @@ const ReactCompilerConfig = {
 }
 
 const ROOT = fileURLToPath(new URL('./', import.meta.url))
-const staticWebBuildPlugins: PluginOption[] = [
-  manifestInjectPlugin(),
-  siteConfigInjectPlugin(),
-  photosStaticPlugin(),
+const routeGenPlugins: PluginOption[] = [
   routeBuilderPlugin({
     pagePattern: `${resolve(ROOT, './src/pages')}/**/*.tsx`,
     outputPath: `${resolve(ROOT, './src/generated-routes.ts')}`,
@@ -62,6 +59,11 @@ const staticWebBuildPlugins: PluginOption[] = [
 
     segmentGroupOrder: ['main'],
   }),
+]
+const staticWebBuildPlugins: PluginOption[] = [
+  manifestInjectPlugin(),
+  siteConfigInjectPlugin(),
+  photosStaticPlugin(),
   VitePWA({
     base: '/',
     scope: '/',
@@ -202,6 +204,7 @@ export default defineConfig(() => {
         root: __dirname,
       }),
 
+      ...routeGenPlugins,
       createDependencyChunksPlugin([
         ['heic-to'],
         ['react', 'react-dom'],
