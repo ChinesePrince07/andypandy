@@ -20,7 +20,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     }
     if (exception instanceof BizException) {
       const response = exception.toResponse()
-      return Response.json(response, {
+      return new Response(JSON.stringify(response), {
         status: exception.getHttpStatus(),
         headers: {
           'content-type': 'application/json',
@@ -29,7 +29,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     }
 
     if (exception instanceof HttpException) {
-      return Response.json(exception.getResponse(), {
+      return new Response(JSON.stringify(exception.getResponse()), {
         status: exception.getStatus(),
         headers: {
           'content-type': 'application/json',
@@ -38,7 +38,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     }
 
     if (typeof exception === 'object' && exception !== null && 'statusCode' in exception) {
-      return Response.json(exception, {
+      return new Response(JSON.stringify(exception), {
         status: exception.statusCode as number,
         headers: {
           'content-type': 'application/json',
@@ -46,11 +46,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
       })
     }
 
-    return Response.json(
-      {
+    return new Response(
+      JSON.stringify({
         statusCode: 500,
         message: 'Internal server error',
-      },
+      }),
       {
         status: 500,
         headers: {

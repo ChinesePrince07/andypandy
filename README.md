@@ -116,7 +116,6 @@ afilmory/
 │   ├── web/              # React SPA (Vite + React Router 7)
 │   ├── ssr/              # Next.js SSR wrapper for SEO/OG
 │   ├── docs/             # Documentation site (VitePress)
-│   └── landing/          # Marketing landing page
 ├── be/                   # Backend services (Hono-based)
 │   ├── apps/
 │   │   ├── core/         # Core API server

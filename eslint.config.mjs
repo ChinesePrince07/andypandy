@@ -20,7 +20,6 @@ const hyobanConfig = await defineConfig(
     lessOpinionated: true,
     preferESM: false,
     react: true,
-    tailwindCSS: true,
   },
 
   {
@@ -41,6 +40,7 @@ const hyobanConfig = await defineConfig(
       },
     },
     rules: {
+      'unicorn/prefer-response-static-json': 0,
       'unicorn/no-abusive-eslint-disable': 0,
       '@typescript-eslint/triple-slash-reference': 0,
       'unicorn/prefer-math-trunc': 'off',
