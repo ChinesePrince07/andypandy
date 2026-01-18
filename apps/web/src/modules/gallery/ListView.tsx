@@ -1,10 +1,11 @@
 import { useScrollViewElement } from '@afilmory/ui'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { useRef } from 'react'
+import { useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useMobile } from '~/hooks/useMobile'
 import { useContextPhotos, usePhotoViewer } from '~/hooks/usePhotoViewer'
+import { formatExifData } from '~/modules/metadata'
 import type { PhotoManifest } from '~/types/photo'
 
 interface ListViewProps {
@@ -99,81 +100,15 @@ const PhotoCard = ({ photo }: { photo: PhotoManifest }) => {
     })
   }
 
-  // 格式化 EXIF 数据
-  const formatExifData = () => {
-    if (!photo.exif) {
-      return {
-        camera: null,
-        lens: null,
-        iso: null,
-        aperture: null,
-        shutterSpeed: null,
-        focalLength: null,
-        exposureCompensation: null,
-      }
-    }
+  // 使用共享的 EXIF 格式化函数
+  const exifData = useMemo(() => formatExifData(photo.exif ?? null), [photo.exif])
 
-    const { exif } = photo
-
-    // 相机信息
-    const camera = exif.Make && exif.Model ? `${exif.Make} ${exif.Model}` : exif.Model || exif.Make || null
-
-    // 镜头信息
-    const lens = exif.LensMake && exif.LensModel ? `${exif.LensMake} ${exif.LensModel}` : exif.LensModel || null
-
-    // ISO
-    const iso = exif.ISO || null
-
-    // 光圈
-    const aperture = exif.FNumber ? `f/${exif.FNumber}` : null
-
-    // 快门速度
-    const exposureTime = exif.ExposureTime
-    let shutterSpeed: string | null = null
-    if (exposureTime) {
-      if (typeof exposureTime === 'number') {
-        if (exposureTime >= 1) {
-          shutterSpeed = `${exposureTime}s`
-        } else {
-          shutterSpeed = `1/${Math.round(1 / exposureTime)}s`
-        }
-      } else {
-        shutterSpeed = `${exposureTime}s`
-      }
-    } else if (exif.ShutterSpeedValue) {
-      const speed =
-        typeof exif.ShutterSpeedValue === 'number'
-          ? exif.ShutterSpeedValue
-          : Number.parseFloat(String(exif.ShutterSpeedValue))
-      if (speed >= 1) {
-        shutterSpeed = `${speed}s`
-      } else {
-        shutterSpeed = `1/${Math.round(1 / speed)}s`
-      }
-    }
-
-    // 焦距 (优先使用 35mm 等效焦距)
-    const focalLength = exif.FocalLengthIn35mmFormat
-      ? `${Number.parseInt(exif.FocalLengthIn35mmFormat)}mm`
-      : exif.FocalLength
-        ? `${Number.parseInt(exif.FocalLength)}mm`
-        : null
-
-    // 曝光补偿
-    const exposureCompensation = exif.ExposureCompensation ? `${exif.ExposureCompensation} EV` : null
-
-    return {
-      camera,
-      lens,
-      iso,
-      aperture,
-      shutterSpeed,
-      focalLength,
-      exposureCompensation,
-    }
-  }
-
-  const exifData = formatExifData()
+  // 从完整的 exifData 中获取焦距显示格式
+  const focalLengthDisplay = exifData?.focalLength35mm
+    ? `${exifData.focalLength35mm}mm`
+    : exifData?.focalLength
+      ? `${exifData.focalLength}mm`
+      : null
 
   return (
     <div
@@ -245,7 +180,7 @@ const PhotoCard = ({ photo }: { photo: PhotoManifest }) => {
             </div>
 
             {/* 相机 */}
-            {exifData.camera && (
+            {exifData?.camera && (
               <div className="flex items-center gap-1">
                 <i className="i-lucide-camera text-[10px]" />
                 <span className="truncate">{exifData.camera}</span>
@@ -253,7 +188,7 @@ const PhotoCard = ({ photo }: { photo: PhotoManifest }) => {
             )}
 
             {/* 镜头 */}
-            {exifData.lens && (
+            {exifData?.lens && (
               <div className="flex items-center gap-1">
                 <i className="i-lucide-aperture text-[10px]" />
                 <span className="truncate">{exifData.lens}</span>
@@ -270,10 +205,10 @@ const PhotoCard = ({ photo }: { photo: PhotoManifest }) => {
           </div>
 
           {/* 摄影三要素 + 焦距 - 简洁样式 */}
-          {(exifData.iso || exifData.aperture || exifData.shutterSpeed || exifData.focalLength) && (
+          {(exifData?.iso || exifData?.aperture || exifData?.shutterSpeed || focalLengthDisplay) && (
             <div className="mt-2 flex flex-wrap items-center gap-1.5 border-t border-white/10 pt-2">
               {/* ISO */}
-              {exifData.iso && (
+              {exifData?.iso && (
                 <div className="flex items-center gap-1 rounded-md bg-white/10 px-2 py-1 backdrop-blur-md">
                   <i className="i-lucide-gauge text-[10px] text-white/70" />
                   <span className="text-[11px] text-white/90">ISO {exifData.iso}</span>
@@ -281,7 +216,7 @@ const PhotoCard = ({ photo }: { photo: PhotoManifest }) => {
               )}
 
               {/* 光圈 */}
-              {exifData.aperture && (
+              {exifData?.aperture && (
                 <div className="flex items-center gap-1 rounded-md bg-white/10 px-2 py-1 backdrop-blur-md">
                   <i className="i-lucide-circle-dot text-[10px] text-white/70" />
                   <span className="text-[11px] text-white/90">{exifData.aperture}</span>
@@ -289,7 +224,7 @@ const PhotoCard = ({ photo }: { photo: PhotoManifest }) => {
               )}
 
               {/* 快门速度 */}
-              {exifData.shutterSpeed && (
+              {exifData?.shutterSpeed && (
                 <div className="flex items-center gap-1 rounded-md bg-white/10 px-2 py-1 backdrop-blur-md">
                   <i className="i-lucide-timer text-[10px] text-white/70" />
                   <span className="text-[11px] text-white/90">{exifData.shutterSpeed}</span>
@@ -297,18 +232,18 @@ const PhotoCard = ({ photo }: { photo: PhotoManifest }) => {
               )}
 
               {/* 焦距 */}
-              {exifData.focalLength && (
+              {focalLengthDisplay && (
                 <div className="flex items-center gap-1 rounded-md bg-white/10 px-2 py-1 backdrop-blur-md">
                   <i className="i-lucide-maximize-2 text-[10px] text-white/70" />
-                  <span className="text-[11px] text-white/90">{exifData.focalLength}</span>
+                  <span className="text-[11px] text-white/90">{focalLengthDisplay}</span>
                 </div>
               )}
 
               {/* 曝光补偿 - 次要显示 */}
-              {exifData.exposureCompensation && (
+              {exifData?.exposureBias && (
                 <div className="flex items-center gap-1 rounded-md bg-white/5 px-1.5 py-0.5">
                   <i className="i-lucide-sliders-horizontal text-[10px] text-white/60" />
-                  <span className="text-[11px] text-white/70">{exifData.exposureCompensation}</span>
+                  <span className="text-[11px] text-white/70">{exifData.exposureBias}</span>
                 </div>
               )}
             </div>

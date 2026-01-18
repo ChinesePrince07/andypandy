@@ -82,6 +82,8 @@ export const CommentInput = () => {
 
         <div className="flex-1">
           <textarea
+            name="comment"
+            autoComplete="off"
             value={newComment}
             onChange={handleInputChange}
             placeholder={t('comments.placeholder')}

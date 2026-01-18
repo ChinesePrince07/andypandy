@@ -26,13 +26,14 @@ export const ActionButton = ({
     <Button
       variant="ghost"
       size="sm"
-      className="relative h-10 w-10 rounded-full border-0 bg-white/10 text-white/60 transition-all duration-200 hover:bg-white/20 hover:text-white"
+      className="relative h-10 w-10 rounded-full border-0 bg-white/10 text-white/60 transition-colors duration-200 hover:bg-white/20 hover:text-white"
       title={title}
+      aria-label={title}
       onClick={onClick}
       ref={ref}
       {...props}
     >
-      <i className={clsxm(icon, 'text-lg')} />
+      <i className={clsxm(icon, 'text-lg')} aria-hidden="true" />
       {badge && (
         <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-xs font-medium text-white shadow-sm">
           {badge}

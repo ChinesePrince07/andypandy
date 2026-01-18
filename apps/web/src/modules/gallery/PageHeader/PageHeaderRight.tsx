@@ -110,9 +110,10 @@ const MoreActionMenu = () => {
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="relative flex size-7 items-center justify-center rounded text-white/60 transition-all duration-200 hover:bg-white/10 hover:text-white lg:hidden"
+          className="relative flex size-7 items-center justify-center rounded text-white/60 transition-colors duration-200 hover:bg-white/10 hover:text-white lg:hidden"
+          aria-label="More options"
         >
-          <i className="i-mingcute-more-2-line text-lg" />
+          <i className="i-mingcute-more-2-line text-lg" aria-hidden="true" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-[180px]">
@@ -186,10 +187,11 @@ const DesktopViewButton = ({
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="relative flex size-7 items-center justify-center rounded-full text-white/60 transition-all duration-200 hover:bg-white/10 hover:text-white lg:size-8"
+          className="relative flex size-7 items-center justify-center rounded-full text-white/60 transition-colors duration-200 hover:bg-white/10 hover:text-white lg:size-8"
           title={title}
+          aria-label={title}
         >
-          <i className={`${icon} text-sm lg:text-base`} />
+          <i className={`${icon} text-sm lg:text-base`} aria-hidden="true" />
           {badge && (
             <span className="absolute -top-0.5 -right-0.5 flex size-2 items-center justify-center rounded-full bg-blue-500 lg:size-2.5">
               <span className="sr-only">{badge}</span>
@@ -219,11 +221,12 @@ const MobileViewButton = ({
     <>
       <button
         type="button"
-        className="relative flex size-7 items-center justify-center rounded text-white/60 transition-all duration-200 hover:bg-white/10 hover:text-white lg:size-8"
+        className="relative flex size-7 items-center justify-center rounded text-white/60 transition-colors duration-200 hover:bg-white/10 hover:text-white lg:size-8"
         title={title}
+        aria-label={title}
         onClick={() => setOpen(!open)}
       >
-        <i className={`${icon} text-sm lg:text-base`} />
+        <i className={`${icon} text-sm lg:text-base`} aria-hidden="true" />
         {badge && (
           <span className="absolute -top-0.5 -right-0.5 flex size-2 items-center justify-center rounded-full bg-blue-500 lg:size-2.5">
             <span className="sr-only">{badge}</span>
@@ -267,10 +270,11 @@ const LoginButton = () => {
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="relative flex size-7 items-center justify-center rounded text-white/60 transition-all duration-200 hover:bg-white/10 hover:text-white lg:size-8"
+          className="relative flex size-7 items-center justify-center rounded text-white/60 transition-colors duration-200 hover:bg-white/10 hover:text-white lg:size-8"
           title={t('action.login')}
+          aria-label={t('action.login')}
         >
-          <i className="i-lucide-log-in text-sm lg:text-base" />
+          <i className="i-lucide-log-in text-sm lg:text-base" aria-hidden="true" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-[200px]">
@@ -355,8 +359,9 @@ const UserMenuButton = ({
     return (
       <button
         type="button"
-        className="relative flex size-7 items-center justify-center rounded text-white/60 transition-all duration-200 hover:bg-white/10 hover:text-white lg:size-8"
+        className="relative flex size-7 items-center justify-center rounded text-white/60 transition-colors duration-200 hover:bg-white/10 hover:text-white lg:size-8"
         title={t('action.dashboard')}
+        aria-label={t('action.dashboard')}
         onClick={() => (window.location.href = '/platform')}
       >
         <UserAvatar image={user.image} name={user.name || user.id} fallback="?" size={28} className="lg:size-8" />
@@ -370,8 +375,9 @@ const UserMenuButton = ({
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="relative flex size-7 items-center justify-center rounded text-white/60 transition-all duration-200 hover:bg-white/10 hover:text-white lg:size-8"
+          className="relative flex size-7 items-center justify-center rounded text-white/60 transition-colors duration-200 hover:bg-white/10 hover:text-white lg:size-8"
           title={user.name || user.id}
+          aria-label={`User menu: ${user.name || user.id}`}
         >
           <UserAvatar image={user.image} name={user.name || user.id} fallback="?" size={28} className="lg:size-8" />
         </button>

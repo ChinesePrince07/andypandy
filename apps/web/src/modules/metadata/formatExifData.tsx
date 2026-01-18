@@ -180,9 +180,30 @@ export const formatExifData = (exif: PickedExif | null) => {
   // ISO
   const iso = exif.ISO
 
-  // 快门速度
-  const exposureTime = exif.ExposureTime
-  const shutterSpeed = exposureTime ? `${exposureTime}s` : exif.ShutterSpeedValue ? `${exif.ShutterSpeedValue}s` : null
+  // 快门速度 - 使用分数格式更友好
+  const shutterSpeed = (() => {
+    const exposureTime = exif.ExposureTime
+    if (exposureTime) {
+      if (typeof exposureTime === 'number') {
+        if (exposureTime >= 1) {
+          return `${exposureTime}s`
+        }
+        return `1/${Math.round(1 / exposureTime)}s`
+      }
+      return `${exposureTime}s`
+    }
+    if (exif.ShutterSpeedValue) {
+      const speed =
+        typeof exif.ShutterSpeedValue === 'number'
+          ? exif.ShutterSpeedValue
+          : Number.parseFloat(String(exif.ShutterSpeedValue))
+      if (speed >= 1) {
+        return `${speed}s`
+      }
+      return `1/${Math.round(1 / speed)}s`
+    }
+    return null
+  })()
 
   // 光圈
   const aperture = exif.FNumber ? `f/${exif.FNumber}` : null

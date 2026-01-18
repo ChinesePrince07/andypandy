@@ -416,11 +416,13 @@ export const CommandPalette = ({ isOpen, onClose }: CommandPaletteProps) => {
           <input
             ref={inputRef}
             type="text"
+            name="search"
+            autoComplete="off"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={t('action.search.placeholder')}
-            className="text-text placeholder-text-tertiary flex-1 bg-transparent text-base outline-none"
+            className="text-text placeholder-text-tertiary flex-1 bg-transparent text-base outline-none focus-visible:outline-none"
           />
           <button
             type="button"

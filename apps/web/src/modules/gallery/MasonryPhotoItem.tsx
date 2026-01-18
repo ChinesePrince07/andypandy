@@ -1,7 +1,7 @@
 import { Thumbhash } from '@afilmory/ui'
 import clsx from 'clsx'
 import { m } from 'motion/react'
-import { Fragment, memo, useCallback, useEffect, useRef, useState } from 'react'
+import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useContextPhotos, usePhotoViewer } from '~/hooks/usePhotoViewer'
@@ -13,6 +13,7 @@ import {
 } from '~/icons'
 import { isMobileDevice } from '~/lib/device-viewport'
 import { ImageLoaderManager } from '~/lib/image-loader-manager'
+import { formatExifData } from '~/modules/metadata'
 import type { PhotoManifest } from '~/types/photo'
 
 export const MasonryPhotoItem = memo(({ data, width }: { data: PhotoManifest; width: number }) => {
@@ -54,46 +55,8 @@ export const MasonryPhotoItem = memo(({ data, width }: { data: PhotoManifest; wi
   // 计算基于宽度的高度
   const calculatedHeight = width / data.aspectRatio
 
-  // 格式化 EXIF 数据
-  const formatExifData = () => {
-    const { exif } = data
-
-    // 安全处理：如果 exif 不存在或为空，则返回空对象
-    if (!exif) {
-      return {
-        focalLength35mm: null,
-        iso: null,
-        shutterSpeed: null,
-        aperture: null,
-      }
-    }
-
-    // 等效焦距 (35mm)
-    const focalLength35mm = exif.FocalLengthIn35mmFormat
-      ? Number.parseInt(exif.FocalLengthIn35mmFormat)
-      : exif.FocalLength
-        ? Number.parseInt(exif.FocalLength)
-        : null
-
-    // ISO
-    const iso = exif.ISO
-
-    // 快门速度
-    const exposureTime = exif.ExposureTime
-    const shutterSpeed = exposureTime ? `${exposureTime}s` : null
-
-    // 光圈
-    const aperture = exif.FNumber ? `f/${exif.FNumber}` : null
-
-    return {
-      focalLength35mm,
-      iso,
-      shutterSpeed,
-      aperture,
-    }
-  }
-
-  const exifData = formatExifData()
+  // 使用共享的 EXIF 格式化函数
+  const exifData = useMemo(() => formatExifData(data.exif ?? null), [data.exif])
 
   // 检查是否有视频内容（Live Photo 或 Motion Photo）
   const hasVideo = data.video !== undefined
@@ -333,7 +296,7 @@ export const MasonryPhotoItem = memo(({ data, width }: { data: PhotoManifest; wi
             </div>
 
             {/* EXIF 信息网格 */}
-            {calculatedHeight >= 200 && (
+            {calculatedHeight >= 200 && exifData && (
               <div className="grid grid-cols-2 gap-2 pb-4 text-xs">
                 {exifData.focalLength35mm && (
                   <div className="flex items-center gap-1.5 rounded-md bg-white/10 px-2 py-1 opacity-0 backdrop-blur-md transition-opacity duration-300 group-hover:opacity-100">

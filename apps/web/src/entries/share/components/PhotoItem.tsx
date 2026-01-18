@@ -1,5 +1,6 @@
 import type { PhotoManifestItem } from '@afilmory/builder'
 import { clsxm as cn } from '@afilmory/utils'
+import { useMemo } from 'react'
 import { thumbHashToDataURL } from 'thumbhash'
 
 import {
@@ -8,6 +9,7 @@ import {
   StreamlineImageAccessoriesLensesPhotosCameraShutterPicturePhotographyPicturesPhotoLens,
   TablerAperture,
 } from '~/icons'
+import { formatExifData } from '~/modules/metadata'
 
 const decompressUint8Array = (compressed: string) => {
   return Uint8Array.from(compressed.match(/.{1,2}/g)!.map((byte) => Number.parseInt(byte, 16)))
@@ -24,51 +26,14 @@ export function PhotoItem({ photo, className }: PhotoItemProps) {
 
   const ratio = photo.aspectRatio
 
-  // 格式化 EXIF 数据
-  const formatExifData = () => {
-    const { exif } = photo
-
-    // 安全处理：如果 exif 不存在或为空，则返回空对象
-    if (!exif) {
-      return {
-        focalLength35mm: null,
-        iso: null,
-        shutterSpeed: null,
-        aperture: null,
-      }
-    }
-
-    // 等效焦距 (35mm)
-    const focalLength35mm = exif.FocalLengthIn35mmFormat
-      ? Number.parseInt(exif.FocalLengthIn35mmFormat)
-      : exif.FocalLength
-        ? Number.parseInt(exif.FocalLength)
-        : null
-
-    // ISO
-    const iso = exif.ISO
-
-    // 快门速度
-    const exposureTime = exif.ExposureTime
-    const shutterSpeed = exposureTime ? `${exposureTime}s` : null
-
-    // 光圈
-    const aperture = exif.FNumber ? `f/${exif.FNumber}` : null
-
-    return {
-      focalLength35mm,
-      iso,
-      shutterSpeed,
-      aperture,
-    }
-  }
-
-  const exifData = formatExifData()
+  // 使用共享的 EXIF 格式化函数
+  const exifData = useMemo(() => formatExifData(photo.exif ?? null), [photo.exif])
 
   return (
     <button
       type="button"
       role="link"
+      aria-label={`View photo: ${photo.title}`}
       onClick={() => {
         const siteUrl = window.__SITE_CONFIG__?.url || ''
         if (siteUrl) {
@@ -146,35 +111,37 @@ export function PhotoItem({ photo, className }: PhotoItemProps) {
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-2 pb-4 text-xs @[600px]:grid-cols-4">
-            {exifData.focalLength35mm && (
-              <div className="flex items-center gap-1.5 rounded-md bg-white/10 px-2 py-1 opacity-0 backdrop-blur-md transition-opacity duration-300 group-hover:opacity-100">
-                <StreamlineImageAccessoriesLensesPhotosCameraShutterPicturePhotographyPicturesPhotoLens className="text-white/70" />
-                <span className="text-white/90">{exifData.focalLength35mm}mm</span>
-              </div>
-            )}
+          {exifData && (
+            <div className="grid grid-cols-2 gap-2 pb-4 text-xs @[600px]:grid-cols-4">
+              {exifData.focalLength35mm && (
+                <div className="flex items-center gap-1.5 rounded-md bg-white/10 px-2 py-1 opacity-0 backdrop-blur-md transition-opacity duration-300 group-hover:opacity-100">
+                  <StreamlineImageAccessoriesLensesPhotosCameraShutterPicturePhotographyPicturesPhotoLens className="text-white/70" />
+                  <span className="text-white/90">{exifData.focalLength35mm}mm</span>
+                </div>
+              )}
 
-            {exifData.aperture && (
-              <div className="flex items-center gap-1.5 rounded-md bg-white/10 px-2 py-1 opacity-0 backdrop-blur-md transition-opacity duration-300 group-hover:opacity-100">
-                <TablerAperture className="text-white/70" />
-                <span className="text-white/90">{exifData.aperture}</span>
-              </div>
-            )}
+              {exifData.aperture && (
+                <div className="flex items-center gap-1.5 rounded-md bg-white/10 px-2 py-1 opacity-0 backdrop-blur-md transition-opacity duration-300 group-hover:opacity-100">
+                  <TablerAperture className="text-white/70" />
+                  <span className="text-white/90">{exifData.aperture}</span>
+                </div>
+              )}
 
-            {exifData.shutterSpeed && (
-              <div className="flex items-center gap-1.5 rounded-md bg-white/10 px-2 py-1 opacity-0 backdrop-blur-md transition-opacity duration-300 group-hover:opacity-100">
-                <MaterialSymbolsShutterSpeed className="text-white/70" />
-                <span className="text-white/90">{exifData.shutterSpeed}</span>
-              </div>
-            )}
+              {exifData.shutterSpeed && (
+                <div className="flex items-center gap-1.5 rounded-md bg-white/10 px-2 py-1 opacity-0 backdrop-blur-md transition-opacity duration-300 group-hover:opacity-100">
+                  <MaterialSymbolsShutterSpeed className="text-white/70" />
+                  <span className="text-white/90">{exifData.shutterSpeed}</span>
+                </div>
+              )}
 
-            {exifData.iso && (
-              <div className="flex items-center gap-1.5 rounded-md bg-white/10 px-2 py-1 opacity-0 backdrop-blur-md transition-opacity duration-300 group-hover:opacity-100">
-                <CarbonIsoOutline className="text-white/70" />
-                <span className="text-white/90">ISO {exifData.iso}</span>
-              </div>
-            )}
-          </div>
+              {exifData.iso && (
+                <div className="flex items-center gap-1.5 rounded-md bg-white/10 px-2 py-1 opacity-0 backdrop-blur-md transition-opacity duration-300 group-hover:opacity-100">
+                  <CarbonIsoOutline className="text-white/70" />
+                  <span className="text-white/90">ISO {exifData.iso}</span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </button>
