@@ -536,7 +536,7 @@ export class B2StorageProvider implements StorageProvider {
         const ext = path.extname(file.key).toLowerCase()
         if (SUPPORTED_FORMATS.has(ext)) {
           imageFile = file
-        } else if (ext === '.mov') {
+        } else if (ext === '.mov' || ext === '.mp4') {
           videoFile = file
         }
       }

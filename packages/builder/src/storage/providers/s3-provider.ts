@@ -287,8 +287,8 @@ export class S3StorageProvider implements StorageProvider {
         if (SUPPORTED_FORMATS.has(ext)) {
           imageFile = file
         }
-        // 检查是否为 .mov 视频文件
-        else if (ext === '.mov') {
+        // 检查是否为 .mov 或 .mp4 视频文件
+        else if (ext === '.mov' || ext === '.mp4') {
           videoFile = file
         }
       }
