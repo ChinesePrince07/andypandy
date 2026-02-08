@@ -7,6 +7,7 @@ import { chatgpt } from "./routes/chatgpt.mjs";
 import { images } from "./routes/images.mjs";
 import { chat } from "./routes/chat.mjs";
 import { programs } from "./routes/programs.mjs";
+import { math } from "./routes/math.mjs";
 dot.config();
 
 async function main() {
@@ -41,6 +42,9 @@ async function main() {
 
   // Images
   app.use("/image", images());
+
+  // Math (Newton API)
+  app.use("/math", math());
 
   app.listen(port, () => {
     console.log(`listening on ${port}`);

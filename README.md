@@ -19,6 +19,7 @@ The original concept came from ChromaLock, who made a [video about it](https://w
 ## Features
 
 - ChatGPT integration - ask questions directly from your calculator, with **loop mode** to keep asking without returning to menu
+- **Calculus solver** - derivatives and integrals via Newton API
 - Wi-Fi connectivity via ESP32 with **captive portal configuration**
 - Program downloads over the air
 - Image display support (96x63 monochrome)
@@ -118,6 +119,8 @@ If you need to change WiFi settings:
 | 13 | program_list | List available programs |
 | 14 | fetch_program | Download program |
 | 15 | setup_wifi | Broadcast captive portal for WiFi config |
+| 16 | derivative | Calculate derivative using Newton API |
+| 17 | integrate | Calculate integral using Newton API |
 
 ## Using GPT
 
@@ -130,6 +133,22 @@ The GPT mode loops so you can have a continuous conversation without navigating 
 
 **Note:** Use plain text for math questions (e.g., "integrate x squared from 0 to 1") rather than calculator symbols like ∫(. The TI-84's special math tokens aren't fully decoded yet.
 
+## Using Math (Derivatives & Integrals)
+
+1. From the main menu, select **MATH**
+2. Choose **DERIVATIVE** or **INTEGRAL**
+3. Enter your function using X as the variable:
+   - `X^2` for x squared
+   - `sin(X)` for sine of x
+   - `X^3+2X` for polynomials
+4. The result appears instantly (powered by Newton API)
+5. Press **any key** for another calculation, **CLEAR** to go back
+
+**Examples:**
+- Derivative of `X^3` → `3 X^2`
+- Integral of `X^2` → `1/3 X^3 + C`
+- Derivative of `sin(X)` → `cos(X)`
+
 ## Troubleshooting
 
 - **ESP32 not responding:** Check your TIP/RING connections. They might be swapped.
@@ -139,7 +158,6 @@ The GPT mode loops so you can have a continuous conversation without navigating 
 
 ## Planned Features
 
-- **Math token decoder** - read integrals, derivatives, and other math symbols
 - Multi-page GPT responses
 - Chat history
 - Basic web browsing

@@ -3,6 +3,7 @@
 // Date:    2025
 
 #include "./launcher.h"
+#include "./ti_tokens.h"
 #include <TICL.h>
 #include <CBL2.h>
 #include <TIVar.h>
@@ -95,6 +96,8 @@ void send_chat();
 void program_list();
 void fetch_program();
 void setup_wifi();
+void derivative();
+void integrate();
 
 struct Command {
   int id;
@@ -119,10 +122,12 @@ struct Command commands[] = {
   { 13, "program_list", 1, program_list, true },
   { 14, "fetch_program", 1, fetch_program, true },
   { 15, "setup_wifi", 0, setup_wifi, false },
+  { 16, "derivative", 1, derivative, true },
+  { 17, "integrate", 1, integrate, true },
 };
 
 constexpr int NUMCOMMANDS = sizeof(commands) / sizeof(struct Command);
-constexpr int MAXCOMMAND = 15;
+constexpr int MAXCOMMAND = 17;
 
 uint8_t header[MAXHDRLEN];
 uint8_t data[MAXDATALEN];
@@ -507,13 +512,20 @@ int onReceived(uint8_t type, enum Endpoint model, int datalen) {
 
   switch (type) {
     case VarTypes82::VarString:
-      Serial.print("len: ");
-      strncpy(strArgs[currentArg++], TIVar::strVarToString8x(data, model).c_str(), MAXSTRARGLEN);
-      fixStrVar(strArgs[currentArg - 1]);
-      Serial.print("Str");
-      Serial.print(currentArg - 1);
-      Serial.print(" ");
-      Serial.println(strArgs[currentArg - 1]);
+      {
+        // Get the token length from the first two bytes
+        int tokenLen = data[0] | (data[1] << 8);
+        Serial.print("token len: ");
+        Serial.println(tokenLen);
+
+        // Decode the tokens to readable text
+        decodeTokenString(data + 2, tokenLen, strArgs[currentArg], MAXSTRARGLEN);
+        Serial.print("Str");
+        Serial.print(currentArg);
+        Serial.print(" (decoded): ");
+        Serial.println(strArgs[currentArg]);
+        currentArg++;
+      }
       break;
     case VarTypes82::VarReal:
       realArgs[currentArg++] = TIVar::realToFloat8x(data, model);
@@ -704,6 +716,44 @@ void gpt() {
   }
 
   Serial.print("response: ");
+  Serial.println(response);
+
+  setSuccess(response);
+}
+
+void derivative() {
+  const char* expr = strArgs[0];
+  Serial.print("derivative of: ");
+  Serial.println(expr);
+
+  auto url = String(SERVER) + String("/math/derive?expr=") + urlEncode(String(expr));
+
+  size_t realsize = 0;
+  if (makeRequest(url, response, MAXHTTPRESPONSELEN, &realsize)) {
+    setError("error making request");
+    return;
+  }
+
+  Serial.print("result: ");
+  Serial.println(response);
+
+  setSuccess(response);
+}
+
+void integrate() {
+  const char* expr = strArgs[0];
+  Serial.print("integrate: ");
+  Serial.println(expr);
+
+  auto url = String(SERVER) + String("/math/integrate?expr=") + urlEncode(String(expr));
+
+  size_t realsize = 0;
+  if (makeRequest(url, response, MAXHTTPRESPONSELEN, &realsize)) {
+    setError("error making request");
+    return;
+  }
+
+  Serial.print("result: ");
   Serial.println(response);
 
   setSuccess(response);
