@@ -159,13 +159,6 @@ The ESP32 firmware can be updated over-the-air without re-flashing via USB:
 3. If available, it will download and install automatically
 4. The device will reboot with the new firmware
 
-**For developers:** To upload new firmware:
-```bash
-# Compile your .bin in Arduino IDE (Sketch → Export Compiled Binary)
-curl -X POST "https://api.andypandy.org/firmware/upload?version=1.0.1" \
-  --data-binary @firmware.bin \
-  -H "Content-Type: application/octet-stream"
-```
 
 ## Troubleshooting
 
