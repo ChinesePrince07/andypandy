@@ -1,22 +1,24 @@
 ClrHome
+ClrDraw
 " "->Str0
 0->S
+0->N
 
-Lbl M1
+Lbl A
 ClrHome
-Menu("ANDYPANDY","ANDYGPT",G0,"SETTINGS",K0,"EXIT",X0)
+Menu("ANDYPANDY","ANDYGPT",G,"SETTINGS",K,"EXIT",X)
 
-Lbl X0
+Lbl X
 ClrHome
 Stop
 
-Lbl K0
-Menu("SETTINGS","CONNECT",C0,"DISCONNECT",D0,"SETUP",W0,"BACK",M1)
+Lbl K
+Menu("SETTINGS","CONNECT",C,"DISCONNECT",D,"SETUP",W,"BACK",A)
 
-Lbl W0
+Lbl W
 ClrHome
-15->C
-Send(C)
+15->N
+Send(N)
 Disp "SETUP STARTED"
 Disp " "
 Disp "1.CONNECT TO WIFI"
@@ -26,35 +28,35 @@ Disp "2.OPEN BROWSER"
 Disp " "
 Disp "3.ENTER WIFI INFO"
 Pause
-Goto K0
+Goto K
 
-Lbl C0
+Lbl C
 ClrHome
-0->C
-Send(C)
+0->N
+Send(N)
 Disp "CONNECTING..."
 Disp " "
 Disp "PLEASE WAIT"
 Pause
-Goto K0
+Goto K
 
-Lbl D0
+Lbl D
 ClrHome
-1->C
-Send(C)
+1->N
+Send(N)
 Disp "DISCONNECTED"
 Pause
-Goto K0
+Goto K
 
-Lbl G0
+Lbl G
 ClrHome
 Output(1,1,"ANDYGPT")
 Output(3,1,">")
 Input "",Str0
 ClrHome
 Disp "THINKING..."
-2->C
-Send(C)
+2->N
+Send(N)
 Send(Str0)
 0->S
 Repeat S
@@ -64,4 +66,4 @@ Get(Str0)
 ClrHome
 Output(1,1,Str0)
 Pause
-Goto G0
+Goto G
