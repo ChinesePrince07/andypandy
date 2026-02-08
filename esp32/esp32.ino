@@ -892,7 +892,9 @@ void ota_update() {
 
   if (serverVersion == FIRMWARE_VERSION) {
     Serial.println("Versions match, no update needed");
-    setSuccess("UP TO DATE");
+    Serial.println("Sending updated launcher program...");
+    queued_action = _sendLauncher;
+    setSuccess("SENDING APP");
     return;
   }
 
