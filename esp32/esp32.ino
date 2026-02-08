@@ -104,6 +104,10 @@ void derivative();
 void integrate();
 void ota_update();
 void get_version();
+void weather();
+void translate();
+void define();
+void units();
 
 struct Command {
   int id;
@@ -132,10 +136,14 @@ struct Command commands[] = {
   { 17, "integrate", 1, integrate, true },
   { 20, "ota_update", 0, ota_update, true },
   { 21, "get_version", 0, get_version, false },
+  { 22, "weather", 1, weather, true },
+  { 23, "translate", 1, translate, true },
+  { 24, "define", 1, define, true },
+  { 25, "units", 1, units, true },
 };
 
 constexpr int NUMCOMMANDS = sizeof(commands) / sizeof(struct Command);
-constexpr int MAXCOMMAND = 21;
+constexpr int MAXCOMMAND = 25;
 
 uint8_t header[MAXHDRLEN];
 uint8_t data[MAXDATALEN];
@@ -785,6 +793,75 @@ void get_version() {
   String versionInfo = "FW: v" + String(FIRMWARE_VERSION);
   Serial.println(versionInfo);
   setSuccess(versionInfo.c_str());
+}
+
+void weather() {
+  const char* city = strArgs[0];
+  Serial.print("weather for: ");
+  Serial.println(city);
+
+  String prompt = "Current weather in " + String(city) + "? Give temp in F and C, conditions. Very brief, max 50 words.";
+  auto url = String(SERVER) + String("/gpt/ask?question=") + urlEncode(prompt);
+
+  size_t realsize = 0;
+  if (makeRequest(url, response, MAXHTTPRESPONSELEN, &realsize)) {
+    setError("REQUEST FAILED");
+    return;
+  }
+
+  setSuccess(response);
+}
+
+void translate() {
+  const char* text = strArgs[0];
+  Serial.print("translate: ");
+  Serial.println(text);
+
+  // Format: "LANG:text" e.g. "SPANISH:hello" or just "text" for auto-detect to English
+  String prompt = "Translate this: " + String(text) + ". Give only the translation, nothing else.";
+  auto url = String(SERVER) + String("/gpt/ask?question=") + urlEncode(prompt);
+
+  size_t realsize = 0;
+  if (makeRequest(url, response, MAXHTTPRESPONSELEN, &realsize)) {
+    setError("REQUEST FAILED");
+    return;
+  }
+
+  setSuccess(response);
+}
+
+void define() {
+  const char* word = strArgs[0];
+  Serial.print("define: ");
+  Serial.println(word);
+
+  String prompt = "Define '" + String(word) + "' in one brief sentence.";
+  auto url = String(SERVER) + String("/gpt/ask?question=") + urlEncode(prompt);
+
+  size_t realsize = 0;
+  if (makeRequest(url, response, MAXHTTPRESPONSELEN, &realsize)) {
+    setError("REQUEST FAILED");
+    return;
+  }
+
+  setSuccess(response);
+}
+
+void units() {
+  const char* conversion = strArgs[0];
+  Serial.print("convert: ");
+  Serial.println(conversion);
+
+  String prompt = "Convert: " + String(conversion) + ". Give only the result with units.";
+  auto url = String(SERVER) + String("/gpt/ask?question=") + urlEncode(prompt);
+
+  size_t realsize = 0;
+  if (makeRequest(url, response, MAXHTTPRESPONSELEN, &realsize)) {
+    setError("REQUEST FAILED");
+    return;
+  }
+
+  setSuccess(response);
 }
 
 void ota_update() {
