@@ -22,7 +22,7 @@
 #define SECURE
 
 // Firmware version (increment this when updating)
-#define FIRMWARE_VERSION "1.0.2"
+#define FIRMWARE_VERSION "1.0.7"
 
 // Captive portal settings
 #define AP_SSID "calc"
@@ -104,6 +104,7 @@ void derivative();
 void integrate();
 void ota_update();
 void get_version();
+void get_newest();
 void weather();
 void translate();
 void define();
@@ -137,6 +138,7 @@ struct Command commands[] = {
   { 17, "integrate", 1, integrate, true },
   { 20, "ota_update", 0, ota_update, true },
   { 21, "get_version", 0, get_version, false },
+  { 26, "get_newest", 0, get_newest, true },
   { 22, "weather", 1, weather, true },
   { 23, "translate", 1, translate, true },
   { 24, "define", 1, define, true },
@@ -144,7 +146,7 @@ struct Command commands[] = {
 };
 
 constexpr int NUMCOMMANDS = sizeof(commands) / sizeof(struct Command);
-constexpr int MAXCOMMAND = 25;
+constexpr int MAXCOMMAND = 26;
 
 uint8_t header[MAXHDRLEN];
 uint8_t data[MAXDATALEN];
@@ -510,13 +512,6 @@ void loop() {
         break;
       }
     }
-    if (!found) {
-      Serial.print("command not found: ");
-      Serial.print(command);
-      Serial.print(" with ");
-      Serial.print(currentArg);
-      Serial.println(" args");
-    }
   }
   cbl.eventLoopTick();
 }
@@ -692,7 +687,9 @@ int makeRequest(String url, char* result, int resultLen, size_t* len) {
   HTTPClient http;
 
   Serial.println(url);
+  client.setTimeout(10000);
   http.begin(client, url.c_str());
+  http.setTimeout(10000);
   http.addHeader("ngrok-skip-browser-warning", "true");
 
   // Send HTTP GET request
@@ -831,9 +828,17 @@ void integrate() {
 }
 
 void get_version() {
-  String versionInfo = "FW: v" + String(FIRMWARE_VERSION);
-  Serial.println(versionInfo);
-  setSuccess(versionInfo.c_str());
+  setSuccess(FIRMWARE_VERSION);
+}
+
+void get_newest() {
+  String versionUrl = String(SERVER) + "/firmware/version";
+  size_t realsize = 0;
+  if (makeRequest(versionUrl, response, MAXHTTPRESPONSELEN, &realsize)) {
+    setError("CHECK FAILED");
+    return;
+  }
+  setSuccess(response);
 }
 
 void weather() {
@@ -905,7 +910,17 @@ void units() {
   setSuccess(response);
 }
 
-void _otaFlashFirmware() {
+char programName[256];
+char programData[4096];
+size_t programLength;
+
+void _resetProgram() {
+  memset(programName, 0, 256);
+  memset(programData, 0, 4096);
+  programLength = 0;
+}
+
+bool _otaFlashFirmware() {
   Serial.println("Downloading ESP32 firmware...");
   String firmwareUrl = String(SERVER) + "/firmware/download";
 
@@ -920,20 +935,22 @@ void _otaFlashFirmware() {
     case HTTP_UPDATE_FAILED:
       Serial.printf("Firmware update failed (%d): %s\n",
         httpUpdate.getLastError(), httpUpdate.getLastErrorString().c_str());
-      break;
+      return false;
     case HTTP_UPDATE_NO_UPDATES:
       Serial.println("No firmware binary on server");
-      break;
+      return false;
     case HTTP_UPDATE_OK:
-      Serial.println("Firmware updated! Rebooting...");
-      delay(1000);
-      ESP.restart();
-      break;
+      Serial.println("Firmware written to flash");
+      return true;
   }
+  return false;
 }
 
 void _otaUpdateSequence() {
-  // Step 1: Push launcher to calculator
+  // Step 1: Flash ESP32 firmware (writes to flash, no reboot yet)
+  bool firmwareOk = _otaFlashFirmware();
+
+  // Step 2: Push launcher to calculator (this is the last thing the user sees)
   Serial.println("Pushing launcher to calculator...");
   int result = sendProgramVariable(programName, (uint8_t*)programData, programLength);
   _resetProgram();
@@ -944,8 +961,12 @@ void _otaUpdateSequence() {
     Serial.println("Launcher pushed successfully");
   }
 
-  // Step 2: Flash ESP32 firmware
-  _otaFlashFirmware();
+  // Step 3: Reboot into new firmware
+  if (firmwareOk) {
+    Serial.println("Rebooting into new firmware...");
+    delay(1000);
+    ESP.restart();
+  }
 }
 
 void ota_update() {
@@ -1143,16 +1164,6 @@ void program_list() {
   setSuccess(response);
 }
 
-
-char programName[256];
-char programData[4096];
-size_t programLength;
-
-void _resetProgram() {
-  memset(programName, 0, 256);
-  memset(programData, 0, 4096);
-  programLength = 0;
-}
 
 void _sendDownloadedProgram() {
   if (sendProgramVariable(programName, (uint8_t*)programData, programLength)) {

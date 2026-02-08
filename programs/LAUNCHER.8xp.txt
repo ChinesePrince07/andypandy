@@ -338,10 +338,23 @@ Repeat S
 Get(S)
 End
 Get(Str1)
+26->C
+Send(C)
+0->S
+Repeat S
+Get(S)
+End
+Get(Str0)
 ClrHome
-Disp "VERSION:"
+Disp "CURRENT:"
 Disp Str1
-Pause Str1
+Disp "NEWEST:"
+Disp Str0
+Output(8,1,"CLEAR=EXIT")
+0->K
+Repeat K
+getKey->K
+End
 Goto Q1
 
 Lbl I0:
