@@ -46,14 +46,8 @@ Lbl W0:
 15->C
 Send(C)
 ClrHome
-Disp "WIFI SETUP"
-Disp ""
-Disp "1)CONNECT TO WIFI"
-Disp "  NAME: CALC"
-Disp ""
-Disp "2)OPEN BROWSER"
-Disp ""
-Disp "3)ENTER WIFI INFO"
+Disp "BROADCASTING"
+Disp "PORTAL..."
 Pause
 Goto Q1
 
@@ -91,8 +85,8 @@ Goto Q1
 
 Lbl G0:
 2->C
-Disp "Enter Question:
-Prompt Str0
+Disp "Enter Question:"
+Input "",Str0
 Send(C)
 Send(Str0)
 0->S
