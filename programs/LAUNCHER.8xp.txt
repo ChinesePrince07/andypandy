@@ -1,5 +1,6 @@
 ClrHome
 " "->Str0
+0->S
 
 Lbl M1
 ClrHome
@@ -10,35 +11,32 @@ ClrHome
 Stop
 
 Lbl K0
-Menu("SETTINGS","CONNECT",C0,"DISCONNECT",D0,"SETUP",W0,"BACK",B0)
-
-Lbl B0
-Goto M1
+Menu("SETTINGS","CONNECT",C0,"DISCONNECT",D0,"SETUP",W0,"BACK",M1)
 
 Lbl W0
 ClrHome
 15->C
 Send(C)
 Disp "SETUP STARTED"
-Disp ""
+Disp " "
 Disp "1.CONNECT TO WIFI"
 Disp "  NAMED: CALC"
-Disp ""
+Disp " "
 Disp "2.OPEN BROWSER"
-Disp ""
+Disp " "
 Disp "3.ENTER WIFI INFO"
 Pause
-Goto M1
+Goto K0
 
 Lbl C0
 ClrHome
 0->C
 Send(C)
 Disp "CONNECTING..."
-Disp ""
+Disp " "
 Disp "PLEASE WAIT"
 Pause
-Goto M1
+Goto K0
 
 Lbl D0
 ClrHome
@@ -46,7 +44,7 @@ ClrHome
 Send(C)
 Disp "DISCONNECTED"
 Pause
-Goto M1
+Goto K0
 
 Lbl G0
 ClrHome
