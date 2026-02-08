@@ -37,7 +37,7 @@ Lbl X0:
 Stop
 
 Lbl K0:
-Menu("SETTINGS","CONNECT",C0,"DISCONNECT",D0,"SETUP",W0,"UPDATE",U0,"BACK",B0)
+Menu("SETTINGS","CONNECT",C0,"DISCONNECT",D0,"SETUP",W0,"UPDATE",U0,"VERSION",V0,"BACK",B0)
 
 Lbl B0:
 Goto Q1
@@ -245,6 +245,20 @@ ClrHome
 Output(1,1,"CHECKING FOR")
 Output(2,1,"UPDATES...")
 20->C
+Send(C)
+0->S
+Repeat S
+Get(S)
+End
+Get(Str1)
+ClrHome
+Disp Str1
+Pause
+Goto Q1
+
+Lbl V0:
+ClrHome
+21->C
 Send(C)
 0->S
 Repeat S

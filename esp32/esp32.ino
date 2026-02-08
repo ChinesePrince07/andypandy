@@ -103,6 +103,7 @@ void setup_wifi();
 void derivative();
 void integrate();
 void ota_update();
+void get_version();
 
 struct Command {
   int id;
@@ -130,10 +131,11 @@ struct Command commands[] = {
   { 16, "derivative", 1, derivative, true },
   { 17, "integrate", 1, integrate, true },
   { 20, "ota_update", 0, ota_update, true },
+  { 21, "get_version", 0, get_version, false },
 };
 
 constexpr int NUMCOMMANDS = sizeof(commands) / sizeof(struct Command);
-constexpr int MAXCOMMAND = 20;
+constexpr int MAXCOMMAND = 21;
 
 uint8_t header[MAXHDRLEN];
 uint8_t data[MAXDATALEN];
@@ -777,6 +779,12 @@ void integrate() {
   Serial.println(response);
 
   setSuccess(response);
+}
+
+void get_version() {
+  String versionInfo = "FW: v" + String(FIRMWARE_VERSION);
+  Serial.println(versionInfo);
+  setSuccess(versionInfo.c_str());
 }
 
 void ota_update() {
