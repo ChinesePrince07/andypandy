@@ -905,6 +905,49 @@ void units() {
   setSuccess(response);
 }
 
+void _otaFlashFirmware() {
+  Serial.println("Downloading ESP32 firmware...");
+  String firmwareUrl = String(SERVER) + "/firmware/download";
+
+  WiFiClientSecure client;
+  client.setInsecure();
+  client.setTimeout(30000);
+
+  httpUpdate.rebootOnUpdate(false);
+  t_httpUpdate_return ret = httpUpdate.update(client, firmwareUrl);
+
+  switch (ret) {
+    case HTTP_UPDATE_FAILED:
+      Serial.printf("Firmware update failed (%d): %s\n",
+        httpUpdate.getLastError(), httpUpdate.getLastErrorString().c_str());
+      break;
+    case HTTP_UPDATE_NO_UPDATES:
+      Serial.println("No firmware binary on server");
+      break;
+    case HTTP_UPDATE_OK:
+      Serial.println("Firmware updated! Rebooting...");
+      delay(1000);
+      ESP.restart();
+      break;
+  }
+}
+
+void _otaUpdateSequence() {
+  // Step 1: Push launcher to calculator
+  Serial.println("Pushing launcher to calculator...");
+  int result = sendProgramVariable(programName, (uint8_t*)programData, programLength);
+  _resetProgram();
+
+  if (result) {
+    Serial.println("Launcher push failed");
+  } else {
+    Serial.println("Launcher pushed successfully");
+  }
+
+  // Step 2: Flash ESP32 firmware
+  _otaFlashFirmware();
+}
+
 void ota_update() {
   Serial.println("Starting OTA update...");
   Serial.print("Current version: ");
@@ -940,8 +983,6 @@ void ota_update() {
   // Download launcher from server
   Serial.println("New version available, downloading launcher...");
   String launcherUrl = String(SERVER) + "/firmware/launcher";
-  Serial.print("Download URL: ");
-  Serial.println(launcherUrl);
 
   _resetProgram();
   if (makeRequest(launcherUrl, programData, 4096, &programLength)) {
@@ -955,7 +996,9 @@ void ota_update() {
   Serial.println(" bytes");
 
   strncpy(programName, "ANDYGPT", 256);
-  queued_action = _sendDownloadedProgram;
+
+  // Queue: push launcher to calc, then flash ESP32 firmware, then reboot
+  queued_action = _otaUpdateSequence;
   queued_action_time = millis() + 3000;
   setSuccess("UPDATING...");
 }
