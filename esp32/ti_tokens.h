@@ -88,18 +88,18 @@ const TokenEntry singleTokens[] = {
   { 0xC0, "log(" },
   { 0xC1, "10^(" },
 
-  // Trig functions (correct TI-84 tokens)
+  // Trig functions (TI-84 tokens - interleaved with inverses)
   { 0xC2, "sin(" },
-  { 0xC3, "cos(" },
-  { 0xC4, "tan(" },
-  { 0xC5, "arcsin(" },  // sin⁻¹(
-  { 0xC6, "arccos(" },  // cos⁻¹(
+  { 0xC3, "arcsin(" },  // sin⁻¹(
+  { 0xC4, "cos(" },
+  { 0xC5, "arccos(" },  // cos⁻¹(
+  { 0xC6, "tan(" },
   { 0xC7, "arctan(" },  // tan⁻¹(
   { 0xC8, "sinh(" },
-  { 0xC9, "cosh(" },
-  { 0xCA, "tanh(" },
-  { 0xCB, "arcsinh(" }, // sinh⁻¹(
-  { 0xCC, "arccosh(" }, // cosh⁻¹(
+  { 0xC9, "arcsinh(" }, // sinh⁻¹(
+  { 0xCA, "cosh(" },
+  { 0xCB, "arccosh(" }, // cosh⁻¹(
+  { 0xCC, "tanh(" },
   { 0xCD, "arctanh(" }, // tanh⁻¹(
 
   // Calculus tokens
