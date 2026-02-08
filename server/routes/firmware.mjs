@@ -1,15 +1,25 @@
 import express from "express";
 import path from "path";
 import fs from "fs";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export function firmware() {
   const router = express.Router();
 
-  const firmwareDir = path.join(process.cwd(), "firmware");
+  // firmware/ is in the server directory (parent of routes/)
+  const firmwareDir = path.join(__dirname, '..', 'firmware');
+
+  console.log("Firmware directory:", firmwareDir);
 
   // Create firmware directory if it doesn't exist
   if (!fs.existsSync(firmwareDir)) {
+    console.log("Creating firmware directory");
     fs.mkdirSync(firmwareDir, { recursive: true });
+  } else {
+    console.log("Firmware directory exists, contents:", fs.readdirSync(firmwareDir));
   }
 
   // Get current firmware version
