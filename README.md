@@ -104,25 +104,6 @@ If you need to change WiFi settings:
 - Go to **Settings → SETUP** in the ANDYGPT program to broadcast the captive portal
 - Or erase ESP32 flash and re-upload the firmware
 
-## Commands
-
-| ID | Command | Description |
-|----|---------|-------------|
-| 0 | connect | Connect to configured WiFi |
-| 1 | disconnect | Disconnect from WiFi |
-| 2 | gpt | Query ChatGPT |
-| 5 | launcher | Transfer launcher program |
-| 9 | image_list | List available images |
-| 10 | fetch_image | Download image to calculator |
-| 11 | fetch_chats | Get chat messages |
-| 12 | send_chat | Send chat message |
-| 13 | program_list | List available programs |
-| 14 | fetch_program | Download program |
-| 15 | setup_wifi | Broadcast captive portal for WiFi config |
-| 16 | derivative | Calculate derivative using Newton API |
-| 17 | integrate | Calculate integral via GPT |
-| 20 | ota_update | Check and install firmware updates OTA |
-
 ## Using GPT
 
 1. From the main menu, select **GPT**
