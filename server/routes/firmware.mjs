@@ -22,6 +22,23 @@ export function firmware() {
     console.log("Firmware directory exists, contents:", fs.readdirSync(firmwareDir));
   }
 
+  // Debug endpoint
+  router.get("/debug", (req, res) => {
+    const versionFile = path.join(firmwareDir, "version.txt");
+    const firmwarePath = path.join(firmwareDir, "firmware.bin");
+    res.json({
+      __dirname,
+      firmwareDir,
+      versionFile,
+      cwd: process.cwd(),
+      dirExists: fs.existsSync(firmwareDir),
+      dirContents: fs.existsSync(firmwareDir) ? fs.readdirSync(firmwareDir) : [],
+      versionExists: fs.existsSync(versionFile),
+      firmwareExists: fs.existsSync(firmwarePath),
+      version: fs.existsSync(versionFile) ? fs.readFileSync(versionFile, "utf-8").trim() : "N/A"
+    });
+  });
+
   // Get current firmware version
   router.get("/version", (req, res) => {
     const versionFile = path.join(firmwareDir, "version.txt");
