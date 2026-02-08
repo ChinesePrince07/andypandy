@@ -16,7 +16,7 @@
 #include <DNSServer.h>
 
 // Default server URL
-#define SERVER "https://ti84-gpt-server-production.up.railway.app"
+#define SERVER "https://api.andypandy.org"
 #define SECURE
 
 // Captive portal settings
