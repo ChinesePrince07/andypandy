@@ -360,10 +360,9 @@ Send(C)
 Repeat S
 Get(S)
 End
-Get(Str1)
 ClrHome
 Disp "VERSION:"
-Disp Str1
+Disp "SEE SERIAL"
 Pause
 Goto Q1
 

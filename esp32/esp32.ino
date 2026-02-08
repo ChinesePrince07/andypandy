@@ -177,13 +177,36 @@ void startCommand(int cmd) {
   strncpy(message, "no command", MAXSTRARGLEN);
 }
 
+// Sanitize string for TI-84 display (uppercase ASCII only)
+void sanitizeForTI(char* dest, const char* src, size_t maxLen) {
+  size_t i = 0;
+  size_t j = 0;
+  while (src[i] && j < maxLen - 1) {
+    char c = src[i];
+    if (c >= 'a' && c <= 'z') {
+      dest[j++] = c - 32;  // Convert to uppercase
+    } else if (c >= 'A' && c <= 'Z') {
+      dest[j++] = c;
+    } else if (c >= '0' && c <= '9') {
+      dest[j++] = c;
+    } else if (c == ' ' || c == '.' || c == ',' || c == '-' || c == ':' || c == '/' || c == '(' || c == ')') {
+      dest[j++] = c;
+    } else if (c == '\n' || c == '\r') {
+      dest[j++] = ' ';  // Replace newlines with space
+    }
+    // Skip other characters
+    i++;
+  }
+  dest[j] = '\0';
+}
+
 void setError(const char* err) {
   Serial.print("ERROR: ");
   Serial.println(err);
   error = 1;
   status = 1;
   command = -1;
-  strncpy(message, err, MAXSTRARGLEN);
+  sanitizeForTI(message, err, MAXSTRARGLEN);
 }
 
 void setSuccess(const char* success) {
@@ -192,7 +215,7 @@ void setSuccess(const char* success) {
   error = 0;
   status = 1;
   command = -1;
-  strncpy(message, success, MAXSTRARGLEN);
+  sanitizeForTI(message, success, MAXSTRARGLEN);
 }
 
 int sendProgramVariable(const char* name, uint8_t* program, size_t variableSize);
@@ -466,16 +489,35 @@ void loop() {
     tmp();
   }
   if (command >= 0 && command <= MAXCOMMAND) {
+    bool found = false;
     for (int i = 0; i < NUMCOMMANDS; ++i) {
       if (commands[i].id == command && commands[i].num_args == currentArg) {
+        found = true;
+        Serial.print("matched command: ");
+        Serial.print(commands[i].name);
+        Serial.print(" (wifi required: ");
+        Serial.print(commands[i].wifi);
+        Serial.print(", connected: ");
+        Serial.print(WiFi.isConnected());
+        Serial.println(")");
         if (commands[i].wifi && !WiFi.isConnected()) {
-          setError("wifi not connected");
+          Serial.println("ERROR: WiFi not connected!");
+          setError("NO WIFI");
         } else {
           Serial.print("processing command: ");
           Serial.println(commands[i].name);
           commands[i].command_fp();
+          Serial.println("command finished");
         }
+        break;
       }
+    }
+    if (!found) {
+      Serial.print("command not found: ");
+      Serial.print(command);
+      Serial.print(" with ");
+      Serial.print(currentArg);
+      Serial.println(" args");
     }
   }
   cbl.eventLoopTick();
