@@ -871,45 +871,58 @@ void ota_update() {
 
   // Check for new version
   String versionUrl = String(SERVER) + "/firmware/version";
+  Serial.print("Checking: ");
+  Serial.println(versionUrl);
+
   size_t realsize = 0;
   if (makeRequest(versionUrl, response, MAXHTTPRESPONSELEN, &realsize)) {
+    Serial.println("Version check failed!");
     setError("CHECK FAILED");
     return;
   }
 
   String serverVersion = String(response);
   serverVersion.trim();
-  Serial.print("Server version: ");
-  Serial.println(serverVersion);
+  Serial.print("Server version: '");
+  Serial.print(serverVersion);
+  Serial.println("'");
+  Serial.print("Local version: '");
+  Serial.print(FIRMWARE_VERSION);
+  Serial.println("'");
 
   if (serverVersion == FIRMWARE_VERSION) {
-    // Use same format as connect() which works
-    setSuccess("CURRENT");
+    Serial.println("Versions match, no update needed");
+    setSuccess("UP TO DATE");
     return;
   }
 
   // Download and flash new firmware
-  Serial.println("Downloading firmware...");
+  Serial.println("Versions differ, downloading firmware...");
+  String firmwareUrl = String(SERVER) + "/firmware/download";
+  Serial.print("Download URL: ");
+  Serial.println(firmwareUrl);
 
   WiFiClientSecure client;
   client.setInsecure();
+  client.setTimeout(30000);  // 30 second timeout
 
-  String firmwareUrl = String(SERVER) + "/firmware/download";
+  httpUpdate.rebootOnUpdate(false);  // Don't auto-reboot, we'll do it manually
 
   t_httpUpdate_return ret = httpUpdate.update(client, firmwareUrl);
 
   switch (ret) {
     case HTTP_UPDATE_FAILED:
-      Serial.printf("Update failed: %s\n", httpUpdate.getLastErrorString().c_str());
-      setError("FAILED");
+      Serial.printf("Update failed (%d): %s\n", httpUpdate.getLastError(), httpUpdate.getLastErrorString().c_str());
+      setError("DL FAILED");
       break;
     case HTTP_UPDATE_NO_UPDATES:
-      setSuccess("CURRENT");
+      Serial.println("No updates available");
+      setSuccess("NO UPDATE");
       break;
     case HTTP_UPDATE_OK:
-      Serial.println("Update OK, rebooting...");
-      setSuccess("DONE");
-      delay(1000);
+      Serial.println("Update OK! Rebooting in 2 seconds...");
+      setSuccess("REBOOTING");
+      delay(2000);
       ESP.restart();
       break;
   }
