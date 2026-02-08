@@ -418,9 +418,8 @@ void setup() {
   memset(data, 0, MAXDATALEN);
   memset(header, 0, 16);
 
-  // Load saved WiFi credentials and try to connect
+  // Load saved WiFi credentials (connect when user selects CONNECT)
   loadSavedCredentials();
-  tryAutoConnect();
 
   Serial.println("[ready]");
 }
