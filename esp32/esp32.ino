@@ -15,10 +15,14 @@
 #include <Preferences.h>
 #include <WebServer.h>
 #include <DNSServer.h>
+#include <HTTPUpdate.h>
 
 // Default server URL
 #define SERVER "https://api.andypandy.org"
 #define SECURE
+
+// Firmware version (increment this when updating)
+#define FIRMWARE_VERSION "1.0.0"
 
 // Captive portal settings
 #define AP_SSID "calc"
@@ -98,6 +102,7 @@ void fetch_program();
 void setup_wifi();
 void derivative();
 void integrate();
+void ota_update();
 
 struct Command {
   int id;
@@ -124,10 +129,11 @@ struct Command commands[] = {
   { 15, "setup_wifi", 0, setup_wifi, false },
   { 16, "derivative", 1, derivative, true },
   { 17, "integrate", 1, integrate, true },
+  { 20, "ota_update", 0, ota_update, true },
 };
 
 constexpr int NUMCOMMANDS = sizeof(commands) / sizeof(struct Command);
-constexpr int MAXCOMMAND = 17;
+constexpr int MAXCOMMAND = 20;
 
 uint8_t header[MAXHDRLEN];
 uint8_t data[MAXDATALEN];
@@ -771,6 +777,57 @@ void integrate() {
   Serial.println(response);
 
   setSuccess(response);
+}
+
+void ota_update() {
+  Serial.println("Starting OTA update...");
+  Serial.print("Current version: ");
+  Serial.println(FIRMWARE_VERSION);
+
+  // Check for new version
+  String versionUrl = String(SERVER) + "/firmware/version";
+  size_t realsize = 0;
+  if (makeRequest(versionUrl, response, MAXHTTPRESPONSELEN, &realsize)) {
+    setError("failed to check version");
+    return;
+  }
+
+  String serverVersion = String(response);
+  serverVersion.trim();
+  Serial.print("Server version: ");
+  Serial.println(serverVersion);
+
+  if (serverVersion == FIRMWARE_VERSION) {
+    setSuccess("already up to date");
+    return;
+  }
+
+  // Download and flash new firmware
+  Serial.println("Downloading firmware...");
+
+  WiFiClientSecure client;
+  client.setInsecure();
+
+  String firmwareUrl = String(SERVER) + "/firmware/download";
+
+  httpUpdate.setLedPin(LED_BUILTIN, LOW);
+  t_httpUpdate_return ret = httpUpdate.update(client, firmwareUrl);
+
+  switch (ret) {
+    case HTTP_UPDATE_FAILED:
+      Serial.printf("Update failed: %s\n", httpUpdate.getLastErrorString().c_str());
+      setError("update failed");
+      break;
+    case HTTP_UPDATE_NO_UPDATES:
+      setSuccess("no updates");
+      break;
+    case HTTP_UPDATE_OK:
+      Serial.println("Update OK, rebooting...");
+      setSuccess("update complete");
+      delay(1000);
+      ESP.restart();
+      break;
+  }
 }
 
 void send() {

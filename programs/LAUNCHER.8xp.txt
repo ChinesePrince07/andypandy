@@ -242,11 +242,19 @@ End
 
 Lbl U0:
 ClrHome
-Output(1,1,"update started")
-5->C
+Output(1,1,"CHECKING FOR")
+Output(2,1,"UPDATES...")
+20->C
 Send(C)
+0->S
+Repeat S
+Get(S)
+End
+Get(Str1)
 ClrHome
-Stop
+Disp Str1
+Pause
+Goto Q1
 
 Lbl I0:
 GridOff

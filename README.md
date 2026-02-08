@@ -120,7 +120,8 @@ If you need to change WiFi settings:
 | 14 | fetch_program | Download program |
 | 15 | setup_wifi | Broadcast captive portal for WiFi config |
 | 16 | derivative | Calculate derivative using Newton API |
-| 17 | integrate | Calculate integral using Newton API |
+| 17 | integrate | Calculate integral via GPT |
+| 20 | ota_update | Check and install firmware updates OTA |
 
 ## Using GPT
 
@@ -148,6 +149,23 @@ The GPT mode loops so you can have a continuous conversation without navigating 
 - Derivative of `X^3` → `3 X^2`
 - Integral of `X^2` → `1/3 X^3 + C`
 - Derivative of `sin(X)` → `cos(X)`
+
+## OTA Firmware Updates
+
+The ESP32 firmware can be updated over-the-air without re-flashing via USB:
+
+1. Go to **Settings → UPDATE** on your calculator
+2. The ESP32 will check the server for new firmware
+3. If available, it will download and install automatically
+4. The device will reboot with the new firmware
+
+**For developers:** To upload new firmware:
+```bash
+# Compile your .bin in Arduino IDE (Sketch → Export Compiled Binary)
+curl -X POST "https://api.andypandy.org/firmware/upload?version=1.0.1" \
+  --data-binary @firmware.bin \
+  -H "Content-Type: application/octet-stream"
+```
 
 ## Troubleshooting
 
