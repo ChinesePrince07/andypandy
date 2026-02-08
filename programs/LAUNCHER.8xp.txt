@@ -241,9 +241,6 @@ Stop
 End
 
 Lbl U0:
-ClrHome
-Output(1,1,"CHECKING FOR")
-Output(2,1,"UPDATES...")
 20->C
 Send(C)
 0->S
