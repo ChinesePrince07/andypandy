@@ -7,7 +7,7 @@ ClrDraw
 0->S
 0->E
 ""->Str0
-Menu("OPERATION","SETTINGS",K0,"IMAGES",I0,"APPS",S0,"UTILS",Y0,"GPT",G0,"MATH",M0,"EXIT",X0)
+Menu("OPERATION","SETTINGS",K0,"IMAGES",I0,"UTILS",Y0,"GPT",G0,"MATH",M0,"PHYSICS",P0,"EXIT",X0)
 
 Lbl C9:
 7->C
@@ -116,7 +116,7 @@ End
 Goto G0
 
 Lbl M0:
-Menu("MATH","DERIVATIVE",M1,"INTEGRAL",M2,"BACK",B0)
+Menu("MATH","DERIVATIVE",M1,"INTEGRAL",M2,"SERIES",M3,"BACK",B0)
 
 Lbl M1:
 ClrHome
@@ -168,8 +168,33 @@ Goto M0
 End
 Goto M2
 
+Lbl M3:
+ClrHome
+29->C
+Disp "f(N)="
+Input "",Str0
+Send(C)
+Send(Str0)
+0->S
+Repeat S
+Get(S)
+End
+Get(Str0)
+ClrHome
+ClrDraw
+Output(1,1,Str0)
+Output(8,1,"CLEAR=EXIT")
+0->K
+Repeat K
+getKey->K
+End
+If K=45:Then
+Goto M0
+End
+Goto M3
+
 Lbl Y0:
-Menu("UTILS","TRANSLATE",Y2,"DEFINE",Y3,"UNITS",Y4,"BACK",B0)
+Menu("UTILS","TRANSLATE",Y2,"DEFINE",Y3,"BACK",B0)
 
 Lbl Y2:
 ClrHome
@@ -221,10 +246,13 @@ Goto Y0
 End
 Goto Y3
 
-Lbl Y4:
+Lbl P0:
+Menu("PHYSICS","ELASTIC",P1,"INELASTIC",P2,"BACK",B0)
+
+Lbl P1:
 ClrHome
-25->C
-Disp "CONVERT:"
+27->C
+Disp "M1,V1,M2,V2:"
 Input "",Str0
 Send(C)
 Send(Str0)
@@ -242,79 +270,34 @@ Repeat K
 getKey->K
 End
 If K=45:Then
-Goto Y0
+Goto P0
 End
-Goto Y4
+Goto P1
 
-Lbl S0:
-GridOff
-AxesOff
-
-0->P
-~1->I
+Lbl P2:
 ClrHome
-Repeat I>~1
-
-Lbl S1:
-ClrHome
-0->S
-13->C
+28->C
+Disp "M1,V1,M2,V2:"
+Input "",Str0
 Send(C)
-Send(P)
+Send(Str0)
+0->S
 Repeat S
 Get(S)
 End
-Get(S)
-Get(Str1)
-
-Output(1,1,Str1)
-Output(6,1,"PAGE ")
-Output(6,6,P)
-Output(7,1,"L/R=NAV")
-Output(8,1,"0,1,2,3 TO SEL")
-
+Get(Str0)
+ClrHome
+ClrDraw
+Output(1,1,Str0)
+Output(8,1,"CLEAR=EXIT")
 0->K
-Repeat max(K={24,26,102,92,93,94,45})
+Repeat K
 getKey->K
 End
-
 If K=45:Then
-Goto Q1
+Goto P0
 End
-If K=24:Then
-max(P-1,0)->P
-Goto S1
-End
-If K=26:Then
-P+1->P
-Goto S1
-End
-
-If K=102:Then
-0->I
-End
-If K=92:Then
-1->I
-End
-If K=93:Then
-2->I
-End
-If K=94:Then
-3->I
-End
-
-ClrHome
-Output(4,4,"loading...")
-ClrHome
-14->C
-(I+(P*4))->D
-Send(C)
-Send(D)
-0->S
-~1->I
-0->D
-Stop
-End
+Goto P2
 
 Lbl U0:
 20->C
@@ -326,8 +309,11 @@ End
 Get(Str1)
 ClrHome
 Disp Str1
-Disp "RERUN ANDYGPT"
-Disp "AFTER UPDATE"
+Disp ""
+Disp "DO NOT TURN OFF"
+Disp "CALC WILL RECEIVE"
+Disp "NEW PROGRAM WHEN"
+Disp "BOTH ARE DONE"
 Stop
 
 Lbl V0:

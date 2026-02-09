@@ -22,7 +22,7 @@
 #define SECURE
 
 // Firmware version (increment this when updating)
-#define FIRMWARE_VERSION "1.0.7"
+#define FIRMWARE_VERSION "1.1.4"
 
 // Captive portal settings
 #define AP_SSID "calc"
@@ -102,9 +102,12 @@ void fetch_program();
 void setup_wifi();
 void derivative();
 void integrate();
+void series();
 void ota_update();
 void get_version();
 void get_newest();
+void elastic();
+void inelastic();
 void weather();
 void translate();
 void define();
@@ -139,6 +142,9 @@ struct Command commands[] = {
   { 20, "ota_update", 0, ota_update, true },
   { 21, "get_version", 0, get_version, false },
   { 26, "get_newest", 0, get_newest, true },
+  { 27, "elastic", 1, elastic, true },
+  { 28, "inelastic", 1, inelastic, true },
+  { 29, "series", 1, series, true },
   { 22, "weather", 1, weather, true },
   { 23, "translate", 1, translate, true },
   { 24, "define", 1, define, true },
@@ -146,7 +152,7 @@ struct Command commands[] = {
 };
 
 constexpr int NUMCOMMANDS = sizeof(commands) / sizeof(struct Command);
-constexpr int MAXCOMMAND = 26;
+constexpr int MAXCOMMAND = 29;
 
 uint8_t header[MAXHDRLEN];
 uint8_t data[MAXDATALEN];
@@ -464,6 +470,20 @@ void setup() {
   delay(100);
   memset(data, 0, MAXDATALEN);
   memset(header, 0, 16);
+
+  // Check if we need to push launcher after OTA reboot
+  prefs.begin("ccalc", false);
+  bool pushLauncher = prefs.getBool("push_launcher", false);
+  if (pushLauncher) {
+    prefs.putBool("push_launcher", false);
+    prefs.end();
+    Serial.println("[pushing launcher after OTA]");
+    delay(2000);  // Give calculator time to be ready
+    sendProgramVariable("ANDYGPT", __launcher_var, __launcher_var_len);
+    Serial.println("[launcher pushed]");
+  } else {
+    prefs.end();
+  }
 
   // Load saved WiFi credentials (connect when user selects CONNECT)
   loadSavedCredentials();
@@ -827,6 +847,57 @@ void integrate() {
   setSuccess(response);
 }
 
+void elastic() {
+  const char* values = strArgs[0];
+  Serial.print("elastic collision: ");
+  Serial.println(values);
+
+  String prompt = "Solve elastic collision: values are m1,v1,m2,v2 = " + String(values) + ". Find final velocities v1' and v2'. Give only the numerical answers, very brief.";
+  auto url = String(SERVER) + String("/gpt/ask?question=") + urlEncode(prompt);
+
+  size_t realsize = 0;
+  if (makeRequest(url, response, MAXHTTPRESPONSELEN, &realsize)) {
+    setError("error making request");
+    return;
+  }
+
+  setSuccess(response);
+}
+
+void inelastic() {
+  const char* values = strArgs[0];
+  Serial.print("inelastic collision: ");
+  Serial.println(values);
+
+  String prompt = "Solve perfectly inelastic collision: values are m1,v1,m2,v2 = " + String(values) + ". Find the final velocity. Reply ONLY in this exact format: THE FINAL VELOCITY IS: x (where x is the number).";
+  auto url = String(SERVER) + String("/gpt/ask?question=") + urlEncode(prompt);
+
+  size_t realsize = 0;
+  if (makeRequest(url, response, MAXHTTPRESPONSELEN, &realsize)) {
+    setError("error making request");
+    return;
+  }
+
+  setSuccess(response);
+}
+
+void series() {
+  const char* expr = strArgs[0];
+  Serial.print("series convergence: ");
+  Serial.println(expr);
+
+  String prompt = "Does the infinite series sum from n=0 to infinity of f(n) = " + String(expr) + " converge or diverge? State CONVERGES or DIVERGES, the test used, and if it converges give the sum if possible. Very brief.";
+  auto url = String(SERVER) + String("/gpt/ask?question=") + urlEncode(prompt);
+
+  size_t realsize = 0;
+  if (makeRequest(url, response, MAXHTTPRESPONSELEN, &realsize)) {
+    setError("error making request");
+    return;
+  }
+
+  setSuccess(response);
+}
+
 void get_version() {
   setSuccess(FIRMWARE_VERSION);
 }
@@ -950,22 +1021,18 @@ void _otaUpdateSequence() {
   // Step 1: Flash ESP32 firmware (writes to flash, no reboot yet)
   bool firmwareOk = _otaFlashFirmware();
 
-  // Step 2: Push launcher to calculator (this is the last thing the user sees)
-  Serial.println("Pushing launcher to calculator...");
-  int result = sendProgramVariable(programName, (uint8_t*)programData, programLength);
-  _resetProgram();
-
-  if (result) {
-    Serial.println("Launcher push failed");
-  } else {
-    Serial.println("Launcher pushed successfully");
-  }
-
-  // Step 3: Reboot into new firmware
   if (firmwareOk) {
-    Serial.println("Rebooting into new firmware...");
-    delay(1000);
+    // Step 2: Set flag so launcher is pushed after reboot on new firmware
+    prefs.begin("ccalc", false);
+    prefs.putBool("push_launcher", true);
+    prefs.end();
+    Serial.println("Firmware flashed, rebooting...");
+    delay(500);
     ESP.restart();
+  } else {
+    Serial.println("Firmware flash failed, pushing launcher anyway");
+    int result = sendProgramVariable(programName, (uint8_t*)programData, programLength);
+    _resetProgram();
   }
 }
 
@@ -1021,7 +1088,7 @@ void ota_update() {
   // Queue: push launcher to calc, then flash ESP32 firmware, then reboot
   queued_action = _otaUpdateSequence;
   queued_action_time = millis() + 3000;
-  setSuccess("UPDATING...");
+  setSuccess("FLASHING FW+LAUNCHER");
 }
 
 void send() {
