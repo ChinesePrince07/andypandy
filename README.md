@@ -37,20 +37,11 @@ When your calculator sends a variable (like a command number), the ESP32 interce
 
 The TI-BASIC launcher program on your calculator provides the UI - it sends commands to the ESP32, waits for responses, and displays the results. From the calculator's perspective, it's just talking to another calculator. It has no idea there's WiFi involved.
 
-## Hardware Required
+## Building One
 
-- TI-84 Plus Silver Edition or TI-84 Plus C Silver Edition
-- Seeeduino XIAO ESP32-C3 (or ESP32-S3 Sense for camera support)
-- Custom PCB (gerber files in `/pcb/0.1/`)
-- 4x 1kΩ resistors
-- 2x N-channel MOSFETs (MMBF170 or similar)
-- Magnet wire (30-34 AWG recommended)
-- Soldering iron with fine tip
-- Patience
+I'm intentionally leaving out a detailed hardware tutorial. If you know enough to build one, you probably don't need step-by-step instructions. If you don't, this isn't the project to learn on. This also keeps people from easily mass-producing these to cheat on exams.
 
-## Hardware Assembly
-
-Order the PCB from `/pcb/0.1/`, solder the components, wire TIP/RING/5V/GND to your calculator's link port and battery terminals. Check the schematic if you get stuck. If you fry something, that's on you.
+The schematic and PCB files are in the repo if you want to figure it out yourself.
 
 ## Software Setup
 
