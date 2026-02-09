@@ -19,8 +19,9 @@ The original concept came from ChromaLock, who made a [video about it](https://w
 ## Features
 
 - ChatGPT integration - ask questions directly from your calculator, with **loop mode** to keep asking without returning to menu
-- **Calculus solver** - derivatives and integrals via Newton API
-- **Utilities** - translate text, define words, and convert units
+- **Calculus solver** - derivatives, integrals, and infinite series convergence
+- **Physics solver** - elastic and inelastic collision calculations
+- **Utilities** - translate text and define words
 - Wi-Fi connectivity via ESP32 with **captive portal configuration**
 - Program downloads over the air
 - Image display support (96x63 monochrome)
@@ -117,21 +118,28 @@ The GPT mode loops so you can have a continuous conversation without navigating 
 
 **Note:** Use plain text for math questions (e.g., "integrate x squared from 0 to 1") rather than calculator symbols like ∫(. The TI-84's special math tokens aren't fully decoded yet.
 
-## Using Math (Derivatives & Integrals)
+## Using Math
 
 1. From the main menu, select **MATH**
-2. Choose **DERIVATIVE** or **INTEGRAL**
-3. Enter your function using X as the variable:
-   - `X^2` for x squared
-   - `sin(X)` for sine of x
-   - `X^3+2X` for polynomials
-4. The result appears instantly (powered by Newton API)
+2. Choose **DERIVATIVE**, **INTEGRAL**, or **SERIES**
+3. Enter your function:
+   - For derivatives/integrals: use X as the variable (e.g., `X^2`, `sin(X)`)
+   - For series: use N as the variable (e.g., `1/N^2`, `1/2^N`)
+4. The result appears instantly
 5. Press **any key** for another calculation, **CLEAR** to go back
 
 **Examples:**
 - Derivative of `X^3` → `3 X^2`
 - Integral of `X^2` → `1/3 X^3 + C`
-- Derivative of `sin(X)` → `cos(X)`
+- Series `1/N^2` → converges (pi^2/6)
+
+## Using Physics
+
+1. From the main menu, select **PHYSICS**
+2. Choose **ELASTIC** or **INELASTIC**
+3. Enter values as: `M1,V1,M2,V2` (masses and velocities)
+4. The result shows the final velocities
+5. Press **any key** for another calculation, **CLEAR** to go back
 
 ## OTA Updates
 
@@ -139,8 +147,8 @@ Both the ESP32 firmware and the calculator launcher program can be updated over-
 
 1. Go to **Settings → UPDATE** on your calculator
 2. The ESP32 checks the server for a new version
-3. If available, it downloads and flashes the new ESP32 firmware, then pushes the updated launcher to your calculator
-4. The ESP32 reboots with the new firmware
+3. If available, it flashes the new ESP32 firmware and reboots
+4. After reboot, the updated launcher program is automatically pushed to your calculator
 
 To check your current version and the latest available, go to **Settings → VERSION**.
 
@@ -162,7 +170,6 @@ To check your current version and the latest available, go to **Settings → VER
 ## Known Issues
 
 - Images don't work consistently
-- App transfer occasionally fails
 - **Complex math expressions** (integrals, derivatives, summations) use TI tokens that aren't decoded yet - type questions as plain text instead of using math symbols
 
 ## Credits
