@@ -7,7 +7,7 @@ import { chatgpt } from "./routes/chatgpt.mjs";
 import { images } from "./routes/images.mjs";
 import { chat } from "./routes/chat.mjs";
 import { programs } from "./routes/programs.mjs";
-import { math } from "./routes/math.mjs";
+
 import { firmware } from "./routes/firmware.mjs";
 dot.config();
 
@@ -43,9 +43,6 @@ async function main() {
 
   // Images
   app.use("/image", images());
-
-  // Math (Newton API)
-  app.use("/math", math());
 
   // Firmware OTA updates
   app.use("/firmware", firmware());
