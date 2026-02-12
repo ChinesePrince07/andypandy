@@ -2,9 +2,9 @@
   "name": "@afilmory/builder",
   "version": "0.2.2",
   "description": "Afilmory Builder",
-  "type": "module",
   "license": "MIT",
   "author": "Innei",
+  "type": "module",
   "exports": {
     ".": "./src/index.ts",
     "./*": "./src/*"

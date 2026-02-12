@@ -1,10 +1,12 @@
 {
   "name": "@afilmory/web",
   "version": "0.0.1",
+  "description": "Photo gallery SPA",
   "repository": {
     "type": "git",
     "url": "https://github.com/Afilmory/Afilmory"
   },
+  "license": "SEE LICENSE IN LICENSE.md",
   "type": "module",
   "scripts": {
     "analyze": "analyzer=1 vite build",
@@ -50,9 +52,9 @@
     "i18next-browser-languagedetector": "8.2.0",
     "immer": "11.1.3",
     "jotai": "2.16.1",
-    "maplibre-gl": "^5.15.0",
+    "maplibre-gl": "^5.18.0",
     "masonic": "4.1.0",
-    "motion": "12.25.0",
+    "motion": "catalog:",
     "ofetch": "1.5.1",
     "react": "19.2.3",
     "react-blurhash": "0.3.0",
@@ -90,9 +92,9 @@
     "@tailwindcss/typography": "catalog:",
     "@tailwindcss/vite": "4.1.18",
     "@types/node": "24.10.1",
-    "@types/react": "19.2.8",
-    "@types/react-dom": "19.2.3",
-    "@vitejs/plugin-react": "^5.1.2",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-react": "^5.1.4",
     "ast-kit": "2.2.0",
     "babel-plugin-react-compiler": "1.0.0",
     "code-inspector-plugin": "1.3.4",
@@ -115,5 +117,5 @@
     "vite-plugin-pwa": "1.2.0",
     "vite-plugin-route-builder": "0.5.0-alpha.1"
   },
-  "packageManager": "pnpm@10.26.2"
+  "packageManager": "pnpm@10.29.3"
 }

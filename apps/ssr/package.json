@@ -1,7 +1,8 @@
 {
   "name": "@afilmory/ssr",
   "version": "1.0.0",
-  "description": "",
+  "description": "Next.js SSR host and SEO for the gallery",
+  "license": "SEE LICENSE IN LICENSE.md",
   "author": "Innei",
   "type": "module",
   "main": "index.js",
@@ -46,8 +47,8 @@
     "@tailwindcss/typography": "catalog:",
     "@types/node": "24.10.1",
     "@types/pg": "8.16.0",
-    "@types/react": "19.2.8",
-    "@types/react-dom": "19.2.3",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
     "concurrently": "9.2.1",
     "cross-env": "10.1.0",
     "dotenv-expand": "catalog:",
@@ -60,5 +61,5 @@
     "tailwindcss-safe-area": "catalog:",
     "tailwindcss-uikit-colors": "catalog:"
   },
-  "packageManager": "pnpm@10.26.2"
+  "packageManager": "pnpm@10.29.3"
 }
