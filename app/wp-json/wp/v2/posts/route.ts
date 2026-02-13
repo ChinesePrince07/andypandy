@@ -139,21 +139,37 @@ ${content.trim()}
       );
     }
 
-    // Return WP-style post response
+    // Return full WP-style post response
     const postId = Date.now();
-    return NextResponse.json(
-      {
-        id: postId,
-        date: new Date().toISOString(),
-        slug,
-        status: "publish",
-        title: { raw: postTitle, rendered: postTitle },
-        content: { raw: content, rendered: content },
-        excerpt: { raw: description, rendered: description },
-        link: `${SITE_URL}/blog/${slug}`,
-      },
-      { status: 201 }
-    );
+    const now = new Date().toISOString();
+    const postResponse = {
+      id: postId,
+      date: now,
+      date_gmt: now,
+      modified: now,
+      modified_gmt: now,
+      guid: { rendered: `${SITE_URL}/blog/${slug}`, raw: `${SITE_URL}/blog/${slug}` },
+      slug,
+      status: body.status || "publish",
+      type: "post",
+      link: `${SITE_URL}/blog/${slug}`,
+      title: { raw: postTitle, rendered: postTitle },
+      content: { raw: content, rendered: `<p>${content}</p>`, protected: false },
+      excerpt: { raw: description, rendered: `<p>${description}</p>`, protected: false },
+      author: 1,
+      featured_media: 0,
+      comment_status: "closed",
+      ping_status: "closed",
+      sticky: false,
+      template: "",
+      format: "standard",
+      meta: {},
+      categories: [],
+      tags: [],
+      permalink_template: `${SITE_URL}/blog/${slug}`,
+      generated_slug: slug,
+    };
+    return NextResponse.json(postResponse, { status: 201 });
   } catch (err) {
     return NextResponse.json(
       { code: "internal_error", message: String(err) },
