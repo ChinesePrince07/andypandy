@@ -46,9 +46,9 @@ if (process.env.CI) {
 }
 const DEV_NEXT_JS = process.env.DEV_NEXT_JS === 'true'
 
-const ReactCompilerConfig = {
-  /* ... */
-}
+// const ReactCompilerConfig = {
+//   /* ... */
+// }
 
 const ROOT = fileURLToPath(new URL('./', import.meta.url))
 const routeGenPlugins: PluginOption[] = [
@@ -191,9 +191,9 @@ export default defineConfig(() => {
         hotKeys: ['altKey'],
       }),
       react({
-        babel: {
-          plugins: [['babel-plugin-react-compiler', ReactCompilerConfig]],
-        },
+        // babel: {
+        //   plugins: [['babel-plugin-react-compiler', ReactCompilerConfig]],
+        // },
       }),
 
       astPlugin,
