@@ -7,41 +7,68 @@ export const metadata: Metadata = {
 
 const projects = [
   {
-    name: "TI-32",
+    name: "TI-84 GPT Hack",
     description:
-      "An ESP32-powered add-on for the TI-84 calculator that adds AI capabilities, WiFi, and more.",
-    url: "https://github.com/andypandy/Ti-84-yeet",
-    tags: ["ESP32", "C++", "Hardware"],
+      "A mod that gives your TI-84 Wi-Fi, ChatGPT, and the ability to disappoint your math teacher in ways never thought possible.",
+    url: "https://github.com/ChinesePrince07/TI-84-GPT-HACK",
+    tags: ["C", "ESP32", "Hardware"],
     emoji: "🧮",
-  },
-  {
-    name: "Cloud Drive",
-    description: "A self-hosted cloud storage solution.",
-    url: "https://github.com/andypandy/cloud-drive",
-    tags: ["Web", "Storage"],
-    emoji: "☁️",
   },
   {
     name: "Desmos Bezier Renderer",
     description:
-      "Render images as Bezier curves in Desmos graphing calculator.",
-    url: "https://github.com/andypandy/DesmosBezierRenderer-mac",
-    tags: ["Python", "Math"],
+      "Transform any image into mathematical art on Desmos. Uses Canny edge detection and Potrace to convert images into parametric Bezier curve equations.",
+    url: "https://github.com/ChinesePrince07/DesmosBezierRenderer-mac",
+    tags: ["HTML", "Math", "macOS"],
     emoji: "📐",
   },
   {
-    name: "Prank Trading Site",
-    description: "A fake stock trading platform for pranking friends.",
-    url: "https://github.com/andypandy/prank-trading-site",
-    tags: ["Web", "Fun"],
-    emoji: "📈",
+    name: "Suffield Drive",
+    description:
+      "A shared drive for Suffield students to access and share school resources.",
+    url: "https://github.com/ChinesePrince07/Suffield-Drive",
+    tags: ["TypeScript", "Web"],
+    emoji: "☁️",
   },
   {
-    name: "Photo Blog",
-    description: "An EXIF-powered photography portfolio and blog.",
-    url: "https://github.com/andypandy/exif-photo-blog",
-    tags: ["Next.js", "Photography"],
+    name: "EXIF Photo Blog",
+    description:
+      "A photography blog that reports camera details like aperture, shutter speed, and ISO for each image.",
+    url: "https://github.com/ChinesePrince07/exif-photo-blog-real",
+    tags: ["TypeScript", "Next.js", "Photography"],
     emoji: "📷",
+  },
+  {
+    name: "Taylor Series Visualizer",
+    description:
+      "An interactive visualization of Taylor series approximations for Calc BC.",
+    url: "https://github.com/ChinesePrince07/taylorseries-CALCBC",
+    tags: ["HTML", "Math"],
+    emoji: "📊",
+  },
+  {
+    name: "Music Landing Page",
+    description:
+      "A commissioned landing page for a music artist.",
+    url: "https://github.com/ChinesePrince07/music-landing-page-commissioned",
+    tags: ["HTML", "Design"],
+    emoji: "🎵",
+  },
+  {
+    name: "Stroke Prediction",
+    description:
+      "ML model that predicts stroke likelihood based on patient data like age, BMI, glucose level, and smoking status.",
+    url: "https://github.com/ChinesePrince07/Stroke-Prediction",
+    tags: ["Python", "ML", "Jupyter"],
+    emoji: "🧠",
+  },
+  {
+    name: "Chatbot UI",
+    description:
+      "A chat interface for interacting with AI models.",
+    url: "https://github.com/ChinesePrince07/chatbot-ui",
+    tags: ["TypeScript", "AI"],
+    emoji: "💬",
   },
 ];
 
