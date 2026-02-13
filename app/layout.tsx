@@ -19,6 +19,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <link rel="https://api.w.org/" href="/wp-json/" />
         <link rel="micropub" href="/api/micropub" />
         <link rel="authorization_endpoint" href="/api/auth" />
         <link rel="token_endpoint" href="/api/token" />
