@@ -20,6 +20,8 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <link rel="micropub" href="/api/micropub" />
+        <link rel="authorization_endpoint" href="/api/auth" />
+        <link rel="token_endpoint" href="/api/token" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"
