@@ -25,9 +25,3 @@ catalog:
   tailwindcss-uikit-colors: 1.0.0
   typescript: 5.9.3
   zod: 4.3.5
-
-onlyBuiltDependencies:
-  - esbuild
-  - libpq
-  - puppeteer
-  - simple-git-hooks
