@@ -42,13 +42,13 @@ ${content}
   const path = `content/blog/${slug}.md`;
   const body = {
     message: `blog: ${title}`,
-    content: Buffer.from(markdown).toString("base64"),
+    content: btoa(unescape(encodeURIComponent(markdown))),
   };
 
   // Check if file already exists (need its sha to update)
   const existing = await fetch(
     `https://api.github.com/repos/${REPO}/contents/${path}`,
-    { headers: { Authorization: `token ${GITHUB_TOKEN}` } }
+    { headers: { Authorization: `token ${GITHUB_TOKEN}`, "User-Agent": "personal-site" } }
   );
   if (existing.ok) {
     const data = await existing.json();
@@ -62,6 +62,7 @@ ${content}
       headers: {
         Authorization: `token ${GITHUB_TOKEN}`,
         "Content-Type": "application/json",
+        "User-Agent": "personal-site",
       },
       body: JSON.stringify(body),
     }

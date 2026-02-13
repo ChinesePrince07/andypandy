@@ -17,15 +17,24 @@ function verifyToken(req: NextRequest): boolean {
   return auth === `Bearer ${PUBLISH_SECRET}`;
 }
 
+function toBase64(str: string): string {
+  return btoa(unescape(encodeURIComponent(str)));
+}
+
 async function commitFile(path: string, content: string, message: string) {
   const body: Record<string, string> = {
     message,
-    content: Buffer.from(content).toString("base64"),
+    content: toBase64(content),
   };
 
   const existing = await fetch(
     `https://api.github.com/repos/${REPO}/contents/${path}`,
-    { headers: { Authorization: `token ${GITHUB_TOKEN}` } }
+    {
+      headers: {
+        Authorization: `token ${GITHUB_TOKEN}`,
+        "User-Agent": "personal-site",
+      },
+    }
   );
   if (existing.ok) {
     const data = await existing.json();
@@ -39,13 +48,15 @@ async function commitFile(path: string, content: string, message: string) {
       headers: {
         Authorization: `token ${GITHUB_TOKEN}`,
         "Content-Type": "application/json",
+        "User-Agent": "personal-site",
       },
       body: JSON.stringify(body),
     }
   );
 
   if (!res.ok) {
-    throw new Error(`GitHub API error: ${await res.text()}`);
+    const err = await res.text();
+    throw new Error(`GitHub API ${res.status}: ${err}`);
   }
 }
 
@@ -72,54 +83,53 @@ export async function GET(req: NextRequest) {
 
 // Micropub create (POST) — handles both form-encoded and JSON
 export async function POST(req: NextRequest) {
-  if (!verifyToken(req)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  let title = "";
-  let content = "";
-  let summary = "";
-
-  const contentType = req.headers.get("content-type") || "";
-
-  if (contentType.includes("application/json")) {
-    const json = await req.json();
-    const props = json.properties || {};
-    title = Array.isArray(props.name) ? props.name[0] : props.name || "";
-    content = Array.isArray(props.content)
-      ? props.content[0]
-      : props.content || "";
-    summary = Array.isArray(props.summary)
-      ? props.summary[0]
-      : props.summary || "";
-    // Handle content objects (e.g. { html: "..." })
-    if (typeof content === "object" && content !== null) {
-      content = (content as Record<string, string>).text ||
-        (content as Record<string, string>).html || "";
+  try {
+    if (!verifyToken(req)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-  } else {
-    const form = await req.formData();
-    title = (form.get("name") as string) || "";
-    content = (form.get("content") as string) || "";
-    summary = (form.get("summary") as string) || "";
-  }
 
-  if (!title && !content) {
-    return NextResponse.json(
-      { error: "name or content is required" },
-      { status: 400 }
-    );
-  }
+    let title = "";
+    let content = "";
+    let summary = "";
 
-  if (!title) {
-    // Generate title from first line of content
-    title = content.split("\n")[0].replace(/^#*\s*/, "").slice(0, 60);
-  }
+    const contentType = req.headers.get("content-type") || "";
 
-  const slug = slugify(title);
-  const date = new Date().toISOString().split("T")[0];
+    if (contentType.includes("application/json")) {
+      const json = await req.json();
+      const props = json.properties || {};
+      title = Array.isArray(props.name) ? props.name[0] : props.name || "";
+      content = Array.isArray(props.content)
+        ? props.content[0]
+        : props.content || "";
+      summary = Array.isArray(props.summary)
+        ? props.summary[0]
+        : props.summary || "";
+      if (typeof content === "object" && content !== null) {
+        content = (content as Record<string, string>).text ||
+          (content as Record<string, string>).html || "";
+      }
+    } else {
+      const form = await req.formData();
+      title = (form.get("name") as string) || "";
+      content = (form.get("content") as string) || "";
+      summary = (form.get("summary") as string) || "";
+    }
 
-  const markdown = `---
+    if (!title && !content) {
+      return NextResponse.json(
+        { error: "name or content is required" },
+        { status: 400 }
+      );
+    }
+
+    if (!title) {
+      title = content.split("\n")[0].replace(/^#*\s*/, "").slice(0, 60);
+    }
+
+    const slug = slugify(title);
+    const date = new Date().toISOString().split("T")[0];
+
+    const markdown = `---
 title: "${title.replace(/"/g, '\\"')}"
 date: "${date}"
 description: "${summary.replace(/"/g, '\\"')}"
@@ -128,22 +138,17 @@ description: "${summary.replace(/"/g, '\\"')}"
 ${content}
 `;
 
-  const path = `content/blog/${slug}.md`;
-
-  try {
+    const path = `content/blog/${slug}.md`;
     await commitFile(path, markdown, `blog: ${title}`);
+
+    return new NextResponse(null, {
+      status: 201,
+      headers: { Location: `${SITE_URL}/blog/${slug}` },
+    });
   } catch (err) {
     return NextResponse.json(
       { error: String(err) },
-      { status: 502 }
+      { status: 500 }
     );
   }
-
-  // Micropub spec: return 201 with Location header
-  return new NextResponse(null, {
-    status: 201,
-    headers: {
-      Location: `${SITE_URL}/blog/${slug}`,
-    },
-  });
 }
