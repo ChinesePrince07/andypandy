@@ -16,8 +16,7 @@ export default function Header() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-50 flex items-center justify-between px-4 pt-4">
-      <div className="flex-1" />
+    <header className="sticky top-0 z-50 flex justify-center px-4 pt-4">
       <nav className="flex items-center gap-6 rounded-full border border-gray-200/60 bg-white/70 px-6 py-2.5 shadow-sm backdrop-blur-xl dark:border-gray-800/60 dark:bg-gray-950/70">
         <Link
           href="/"
@@ -39,12 +38,11 @@ export default function Header() {
               {link.label}
             </Link>
           ))}
+          <div className="h-4 w-px bg-gray-200 dark:bg-gray-700" />
+          <LiveClock />
           <ThemeToggle />
         </div>
       </nav>
-      <div className="flex-1 flex justify-end">
-        <LiveClock />
-      </div>
     </header>
   );
 }

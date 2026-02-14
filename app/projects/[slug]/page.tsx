@@ -30,6 +30,15 @@ async function getReadmeHtml(repo: string): Promise<string | null> {
   // Remove GitHub heading anchor links (octicon SVG permalink icons)
   html = html.replace(/<a[^>]*class="anchor"[^>]*>[\s\S]*?<\/a>/g, "");
 
+  // Unwrap markdown-heading divs (GitHub wraps headings in <div class="markdown-heading">)
+  html = html.replace(/<div[^>]*class="markdown-heading"[^>]*>\s*/g, "");
+  html = html.replace(/\s*<\/div>\s*(?=<h[1-6]|$)/g, "");
+
+  // Remove outer GitHub wrapper elements
+  html = html.replace(/<article[^>]*class="markdown-body[^"]*"[^>]*>/g, "");
+  html = html.replace(/<\/article>/g, "");
+  html = html.replace(/<div[^>]*id="readme"[^>]*>/g, "");
+
   // Unwrap images from link wrappers (GitHub wraps <img> in <a> pointing to the file)
   html = html.replace(
     /<a[^>]*href="[^"]*"[^>]*>\s*(<img[^>]*>)\s*<\/a>/g,
