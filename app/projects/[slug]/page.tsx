@@ -71,7 +71,7 @@ export default async function ProjectPage({
     <div className="animate-fade-in">
       <Link
         href="/projects"
-        className="inline-flex items-center gap-1.5 text-sm text-gray-400 transition-colors hover:text-gray-600"
+        className="inline-flex items-center gap-1.5 text-sm text-gray-400 transition-colors hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
       >
         <svg
           className="h-3.5 w-3.5"
@@ -100,7 +100,7 @@ export default async function ProjectPage({
           {project.tags.map((tag) => (
             <span
               key={tag}
-              className="rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500"
+              className="rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500 dark:bg-gray-800 dark:text-gray-400"
             >
               {tag}
             </span>
@@ -109,7 +109,7 @@ export default async function ProjectPage({
             href={`https://github.com/${project.repo}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="ml-2 inline-flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600"
+            className="ml-2 inline-flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
           >
             Source
             <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 24 24">
@@ -121,7 +121,7 @@ export default async function ProjectPage({
               href={project.demo}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600"
+              className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
             >
               Live Demo
               <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -140,7 +140,7 @@ export default async function ProjectPage({
           dangerouslySetInnerHTML={{ __html: htmlContent }}
         />
       ) : (
-        <p className="text-gray-400">No README found for this project.</p>
+        <p className="text-gray-400 dark:text-gray-500">No README found for this project.</p>
       )}
     </div>
   );

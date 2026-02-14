@@ -1,26 +1,28 @@
 "use client";
 
-import { useRef, useCallback, useState } from "react";
+import { useRef, useCallback, useState, useEffect } from "react";
 
-const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%&*";
 
 export default function ScrambleText({
   text,
   className,
+  interval = 0,
 }: {
   text: string;
   className?: string;
+  interval?: number;
 }) {
   const ref = useRef<HTMLSpanElement>(null);
   const [isScrambling, setIsScrambling] = useState(false);
 
-  const onHover = useCallback(() => {
+  const scramble = useCallback(() => {
     if (isScrambling) return;
     const el = ref.current;
     if (!el) return;
     setIsScrambling(true);
     let iteration = 0;
-    const interval = setInterval(() => {
+    const timer = setInterval(() => {
       el.innerText = text
         .split("")
         .map((char, i) => {
@@ -30,15 +32,21 @@ export default function ScrambleText({
         })
         .join("");
       if (iteration >= text.length) {
-        clearInterval(interval);
+        clearInterval(timer);
         setIsScrambling(false);
       }
       iteration += 1 / 2;
     }, 30);
   }, [text, isScrambling]);
 
+  useEffect(() => {
+    if (!interval || interval <= 0) return;
+    const id = setInterval(scramble, interval);
+    return () => clearInterval(id);
+  }, [interval, scramble]);
+
   return (
-    <span ref={ref} onMouseEnter={onHover} className={className}>
+    <span ref={ref} onMouseEnter={scramble} className={className}>
       {text}
     </span>
   );

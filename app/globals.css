@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
@@ -14,12 +16,19 @@ html {
   background: #111;
   color: #fff;
 }
+.dark ::selection {
+  background: #e5e7eb;
+  color: #111;
+}
 
 /* Focus */
 :focus-visible {
   outline: 2px solid #111;
   outline-offset: 3px;
   border-radius: 4px;
+}
+.dark :focus-visible {
+  outline-color: #e5e7eb;
 }
 
 /* Custom scrollbar */
@@ -31,6 +40,12 @@ html {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 0, 0, 0.3);
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 /* Active press feedback */
@@ -92,6 +107,14 @@ a:active, button:active {
   background-clip: text;
   animation: shimmer 8s linear infinite;
 }
+.dark .gradient-text {
+  background: linear-gradient(135deg, #f3f4f6, #9ca3af, #f3f4f6, #d1d5db);
+  background-size: 300% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 8s linear infinite;
+}
 
 /* Card hover lift */
 .card-hover {
@@ -101,6 +124,10 @@ a:active, button:active {
   transform: translateY(-3px);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
   border-color: rgba(0, 0, 0, 0.15);
+}
+.dark .card-hover:hover {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 /* Nav link underline — directional reveal */
@@ -140,6 +167,9 @@ a:active, button:active {
   background-repeat: repeat;
   background-size: 256px 256px;
 }
+.dark.noise::before {
+  opacity: 0.04;
+}
 
 /* Divider shimmer */
 @keyframes divider-shimmer {
@@ -151,6 +181,10 @@ a:active, button:active {
   background: linear-gradient(90deg, transparent, rgba(0,0,0,0.06), rgba(0,0,0,0.12), rgba(0,0,0,0.06), transparent);
   background-size: 200% 100%;
   animation: divider-shimmer 12s linear infinite;
+}
+.dark .divider {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), rgba(255,255,255,0.12), rgba(255,255,255,0.06), transparent);
+  background-size: 200% 100%;
 }
 
 /* Monospace accent */
@@ -173,8 +207,33 @@ a:active, button:active {
   animation: grow-progress linear;
   animation-timeline: scroll();
 }
+.dark .reading-progress {
+  background: #e5e7eb;
+}
 @keyframes grow-progress {
   to { transform: scaleX(1); }
+}
+
+/* Pinned badge */
+.pinned-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #111;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  line-height: 1.4;
+}
+.dark .pinned-badge {
+  color: #e5e7eb;
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.12);
 }
 
 /* Reduced motion */
@@ -324,3 +383,24 @@ a:active, button:active {
   font-weight: 600;
   color: #111;
 }
+
+/* Dark mode prose */
+.dark .prose h1,
+.dark .prose h2,
+.dark .prose h3 { color: #f3f4f6; }
+.dark .prose p,
+.dark .prose ul,
+.dark .prose ol { color: #9ca3af; }
+.dark .prose strong { color: #f3f4f6; }
+.dark .prose a { color: #e5e7eb; text-decoration-color: rgba(255,255,255,0.2); }
+.dark .prose a:hover { text-decoration-color: #e5e7eb; }
+.dark .prose code { background: rgba(255,255,255,0.08); color: #e5e7eb; }
+.dark .prose pre { background: #0a0a0a; border: 1px solid rgba(255,255,255,0.08); }
+.dark .prose blockquote { border-left-color: #4b5563; color: #9ca3af; }
+.dark .prose hr { border-color: #374151; }
+.dark .prose mark { background: #854d0e; color: #fef08a; }
+.dark .prose del { color: #6b7280; }
+.dark .prose sup a { color: #e5e7eb; }
+.dark .prose .footnotes { border-top-color: #374151; color: #9ca3af; }
+.dark .prose th, .dark .prose td { border-color: #374151; }
+.dark .prose th { background: rgba(255,255,255,0.04); color: #f3f4f6; }

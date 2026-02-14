@@ -34,7 +34,7 @@ export default async function BlogPostPage({
       <div className="flex items-center justify-between">
         <Link
           href="/blog"
-          className="inline-flex items-center gap-1.5 text-sm text-gray-400 transition-colors hover:text-gray-600"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-400 transition-colors hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
         >
           <svg
             className="h-3.5 w-3.5"
@@ -54,7 +54,7 @@ export default async function BlogPostPage({
         {admin && (
           <Link
             href={`/admin/edit/${slug}`}
-            className="text-sm text-gray-400 hover:text-gray-600"
+            className="text-sm text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
           >
             Edit
           </Link>
@@ -63,7 +63,7 @@ export default async function BlogPostPage({
 
       {/* Header */}
       <header className="mt-8 space-y-3">
-        <time className="text-sm text-gray-400 tabular-nums font-mono tracking-wide">
+        <time className="text-sm text-gray-400 tabular-nums font-mono tracking-wide dark:text-gray-500">
           {(() => {
             const d = new Date(post.date);
             const dateStr = d.toLocaleDateString("en-US", {
@@ -86,7 +86,7 @@ export default async function BlogPostPage({
           {post.title}
         </h1>
         {post.description && (
-          <p className="text-lg text-gray-500">{post.description}</p>
+          <p className="text-lg text-gray-500 dark:text-gray-400">{post.description}</p>
         )}
       </header>
 
