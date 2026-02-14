@@ -1,51 +1,303 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getAllPosts } from "@/lib/blog";
 
 const PUBLISH_SECRET = process.env.PUBLISH_SECRET!;
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN!;
+const REPO = "ChinesePrince07/personal-site";
+const SITE_URL =
+  process.env.SITE_URL || "https://personal-site-andy-zhangs-projects.vercel.app";
 
-// Minimal XML-RPC responder — enough for iA Writer to verify the connection
-export async function POST(req: NextRequest) {
-  const body = await req.text();
+function xml(body: string) {
+  return new NextResponse(`<?xml version="1.0"?>\n${body}`, {
+    headers: { "Content-Type": "text/xml" },
+  });
+}
 
-  // wp.getUsersBlogs — iA Writer calls this to verify credentials
-  if (body.includes("wp.getUsersBlogs")) {
-    const passwordMatch = body.match(/<string>([^<]+)<\/string>/g);
-    const password = passwordMatch?.[1]?.replace(/<\/?string>/g, "") || "";
+function fault(code: number, message: string) {
+  return xml(
+    `<methodResponse><fault><value><struct>
+<member><name>faultCode</name><value><int>${code}</int></value></member>
+<member><name>faultString</name><value><string>${message}</string></value></member>
+</struct></value></fault></methodResponse>`
+  );
+}
 
-    if (password !== PUBLISH_SECRET) {
-      return new NextResponse(
-        `<?xml version="1.0"?>
-<methodResponse><fault><value><struct>
-<member><name>faultCode</name><value><int>403</int></value></member>
-<member><name>faultString</name><value><string>Incorrect password.</string></value></member>
-</struct></value></fault></methodResponse>`,
-        { headers: { "Content-Type": "text/xml" } }
-      );
+function verifyAuth(body: string): boolean {
+  const strings = [...body.matchAll(/<string>([^<]*)<\/string>/g)].map(
+    (m) => m[1]
+  );
+  // Password is at index 1 for wp.getUsersBlogs(user, pass)
+  // or index 2 for wp.*(blog_id, user, pass, ...) / metaWeblog.*(blog_id, user, pass, ...)
+  return strings[1] === PUBLISH_SECRET || strings[2] === PUBLISH_SECRET;
+}
+
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function escXml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function postToXmlRpc(post: {
+  slug: string;
+  title: string;
+  date: string;
+  description: string;
+  content: string;
+}) {
+  const d = post.date || new Date().toISOString().split("T")[0];
+  const iso = d.replace(/-/g, "") + "T00:00:00";
+  return `<value><struct>
+<member><name>post_id</name><value><string>${escXml(post.slug)}</string></value></member>
+<member><name>post_title</name><value><string>${escXml(post.title)}</string></value></member>
+<member><name>post_date</name><value><dateTime.iso8601>${iso}</dateTime.iso8601></value></member>
+<member><name>post_date_gmt</name><value><dateTime.iso8601>${iso}</dateTime.iso8601></value></member>
+<member><name>post_status</name><value><string>publish</string></value></member>
+<member><name>post_type</name><value><string>post</string></value></member>
+<member><name>post_content</name><value><string>${escXml(post.content)}</string></value></member>
+<member><name>post_excerpt</name><value><string>${escXml(post.description)}</string></value></member>
+<member><name>post_name</name><value><string>${escXml(post.slug)}</string></value></member>
+<member><name>link</name><value><string>${SITE_URL}/blog/${post.slug}</string></value></member>
+<member><name>terms</name><value><array><data></data></array></value></member>
+<member><name>custom_fields</name><value><array><data></data></array></value></member>
+</struct></value>`;
+}
+
+async function commitFile(
+  path: string,
+  content: string,
+  message: string
+): Promise<boolean> {
+  const commitBody: Record<string, string> = {
+    message,
+    content: btoa(unescape(encodeURIComponent(content))),
+  };
+
+  const existing = await fetch(
+    `https://api.github.com/repos/${REPO}/contents/${path}`,
+    {
+      headers: {
+        Authorization: `token ${GITHUB_TOKEN}`,
+        "User-Agent": "personal-site",
+      },
     }
+  );
+  if (existing.ok) {
+    const data = await existing.json();
+    commitBody.sha = data.sha;
+  }
 
-    const siteUrl = process.env.SITE_URL || "https://personal-site-andy-zhangs-projects.vercel.app";
+  const res = await fetch(
+    `https://api.github.com/repos/${REPO}/contents/${path}`,
+    {
+      method: "PUT",
+      headers: {
+        Authorization: `token ${GITHUB_TOKEN}`,
+        "Content-Type": "application/json",
+        "User-Agent": "personal-site",
+      },
+      body: JSON.stringify(commitBody),
+    }
+  );
+
+  return res.ok;
+}
+
+function getMethod(body: string): string {
+  const match = body.match(/<methodName>([^<]+)<\/methodName>/);
+  return match?.[1] || "";
+}
+
+// GET — RSD discovery
+export async function GET(req: NextRequest) {
+  const rsd = req.nextUrl.searchParams.has("rsd");
+  if (rsd) {
     return new NextResponse(
-      `<?xml version="1.0"?>
-<methodResponse><params><param><value><array><data><value><struct>
-<member><name>isAdmin</name><value><boolean>1</boolean></value></member>
-<member><name>url</name><value><string>${siteUrl}</string></value></member>
-<member><name>blogid</name><value><string>1</string></value></member>
-<member><name>blogName</name><value><string>Andy</string></value></member>
-<member><name>xmlrpc</name><value><string>${siteUrl}/xmlrpc.php</string></value></member>
-</struct></value></data></array></value></param></params></methodResponse>`,
-      { headers: { "Content-Type": "text/xml" } }
+      `<?xml version="1.0" encoding="UTF-8"?>
+<rsd version="1.0" xmlns="http://archipelago.phrasewise.com/rsd">
+  <service>
+    <engineName>WordPress</engineName>
+    <engineLink>https://wordpress.org/</engineLink>
+    <homePageLink>${SITE_URL}</homePageLink>
+    <apis>
+      <api name="WordPress" blogID="1" preferred="true" apiLink="${SITE_URL}/xmlrpc.php" />
+      <api name="MetaWeblog" blogID="1" preferred="false" apiLink="${SITE_URL}/xmlrpc.php" />
+    </apis>
+  </service>
+</rsd>`,
+      { headers: { "Content-Type": "application/rsd+xml" } }
     );
   }
 
-  // wp.newPost / metaWeblog.newPost — create a post
-  if (body.includes("wp.newPost") || body.includes("metaWeblog.newPost")) {
-    const titleMatch = body.match(/<name>title<\/name>\s*<value>(?:<string>)?([^<]+)/);
-    const contentMatch = body.match(/<name>description<\/name>\s*<value>(?:<string>)?([^<]+)/) ||
-      body.match(/<name>post_content<\/name>\s*<value>(?:<string>)?([^<]+)/);
+  return new NextResponse("XML-RPC server accepts POST requests only.", {
+    status: 405,
+  });
+}
+
+// POST — XML-RPC handler
+export async function POST(req: NextRequest) {
+  const body = await req.text();
+  const method = getMethod(body);
+
+  // --- system.listMethods ---
+  if (method === "system.listMethods") {
+    const methods = [
+      "system.listMethods",
+      "wp.getUsersBlogs",
+      "wp.getPosts",
+      "wp.getPost",
+      "wp.newPost",
+      "wp.editPost",
+      "wp.getOptions",
+      "wp.getCategories",
+      "wp.getTerms",
+      "metaWeblog.newPost",
+      "metaWeblog.editPost",
+      "metaWeblog.getPost",
+      "metaWeblog.getRecentPosts",
+      "metaWeblog.newMediaObject",
+    ];
+    return xml(
+      `<methodResponse><params><param><value><array><data>
+${methods.map((m) => `<value><string>${m}</string></value>`).join("\n")}
+</data></array></value></param></params></methodResponse>`
+    );
+  }
+
+  // --- wp.getUsersBlogs ---
+  if (method === "wp.getUsersBlogs") {
+    if (!verifyAuth(body)) return fault(403, "Incorrect password.");
+    return xml(
+      `<methodResponse><params><param><value><array><data><value><struct>
+<member><name>isAdmin</name><value><boolean>1</boolean></value></member>
+<member><name>url</name><value><string>${SITE_URL}</string></value></member>
+<member><name>blogid</name><value><string>1</string></value></member>
+<member><name>blogName</name><value><string>Andy</string></value></member>
+<member><name>xmlrpc</name><value><string>${SITE_URL}/xmlrpc.php</string></value></member>
+</struct></value></data></array></value></param></params></methodResponse>`
+    );
+  }
+
+  // --- wp.getOptions ---
+  if (method === "wp.getOptions") {
+    if (!verifyAuth(body)) return fault(403, "Incorrect password.");
+    return xml(
+      `<methodResponse><params><param><value><struct>
+<member><name>software_name</name><value><struct>
+  <member><name>value</name><value><string>WordPress</string></value></member>
+</struct></value></member>
+<member><name>software_version</name><value><struct>
+  <member><name>value</name><value><string>6.4</string></value></member>
+</struct></value></member>
+<member><name>blog_url</name><value><struct>
+  <member><name>value</name><value><string>${SITE_URL}</string></value></member>
+</struct></value></member>
+<member><name>blog_title</name><value><struct>
+  <member><name>value</name><value><string>Andy</string></value></member>
+</struct></value></member>
+<member><name>blog_tagline</name><value><struct>
+  <member><name>value</name><value><string>Personal site &amp; blog</string></value></member>
+</struct></value></member>
+</struct></value></param></params></methodResponse>`
+    );
+  }
+
+  // --- wp.getCategories / wp.getTerms ---
+  if (
+    method === "wp.getCategories" ||
+    method === "wp.getTerms"
+  ) {
+    if (!verifyAuth(body)) return fault(403, "Incorrect password.");
+    return xml(
+      `<methodResponse><params><param><value><array><data>
+<value><struct>
+<member><name>categoryId</name><value><string>1</string></value></member>
+<member><name>categoryName</name><value><string>Uncategorized</string></value></member>
+<member><name>term_id</name><value><string>1</string></value></member>
+<member><name>name</name><value><string>Uncategorized</string></value></member>
+<member><name>slug</name><value><string>uncategorized</string></value></member>
+<member><name>taxonomy</name><value><string>category</string></value></member>
+</struct></value>
+</data></array></value></param></params></methodResponse>`
+    );
+  }
+
+  // --- wp.getPosts / metaWeblog.getRecentPosts ---
+  if (method === "wp.getPosts" || method === "metaWeblog.getRecentPosts") {
+    if (!verifyAuth(body)) return fault(403, "Incorrect password.");
+    try {
+      const posts = getAllPosts();
+      const items = posts.map((p) => postToXmlRpc(p)).join("\n");
+      return xml(
+        `<methodResponse><params><param><value><array><data>
+${items}
+</data></array></value></param></params></methodResponse>`
+      );
+    } catch {
+      return xml(
+        `<methodResponse><params><param><value><array><data></data></array></value></param></params></methodResponse>`
+      );
+    }
+  }
+
+  // --- wp.getPost / metaWeblog.getPost ---
+  if (method === "wp.getPost" || method === "metaWeblog.getPost") {
+    if (!verifyAuth(body)) return fault(403, "Incorrect password.");
+    // Extract post_id (slug) — it's the string after the password
+    const strings = [...body.matchAll(/<string>([^<]*)<\/string>/g)].map(
+      (m) => m[1]
+    );
+    // For wp.getPost(blog_id, user, pass, post_id) — post_id could be after the auth strings
+    // Find the slug by looking for it in our posts
+    const posts = getAllPosts();
+    const slug = strings.find((s) => posts.some((p) => p.slug === s));
+    const post = slug ? posts.find((p) => p.slug === slug) : posts[0];
+    if (!post) return fault(404, "Post not found.");
+    return xml(
+      `<methodResponse><params><param>${postToXmlRpc(post)}</param></params></methodResponse>`
+    );
+  }
+
+  // --- wp.newPost / metaWeblog.newPost ---
+  if (method === "wp.newPost" || method === "metaWeblog.newPost") {
+    if (!verifyAuth(body)) return fault(403, "Incorrect password.");
+
+    const titleMatch = body.match(
+      /<name>title<\/name>\s*<value>(?:<string>)?([^<]+)/
+    );
+    const contentMatch =
+      body.match(
+        /<name>description<\/name>\s*<value>(?:<string>)?([^<]+)/
+      ) ||
+      body.match(
+        /<name>post_content<\/name>\s*<value>(?:<string>)?([^<]+)/
+      );
 
     const title = titleMatch?.[1] || "Untitled";
-    const content = contentMatch?.[1] || "";
-    const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    let content = contentMatch?.[1] || "";
+    const slug = slugify(title);
     const date = new Date().toISOString().split("T")[0];
+
+    // Strip HTML if present
+    if (content.includes("<p>") || content.includes("<br")) {
+      content = content
+        .replace(/<br\s*\/?>/gi, "\n")
+        .replace(/<\/p>\s*<p>/gi, "\n\n")
+        .replace(/<[^>]*>/g, "");
+    }
+
+    // Unescape XML entities
+    content = content
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&amp;/g, "&");
 
     const markdown = `---
 title: "${title.replace(/"/g, '\\"')}"
@@ -53,20 +305,111 @@ date: "${date}"
 description: ""
 ---
 
-${content}
+${content.trim()}
 `;
 
-    const GITHUB_TOKEN = process.env.GITHUB_TOKEN!;
-    const REPO = "ChinesePrince07/personal-site";
-    const path = `content/blog/${slug}.md`;
+    const ok = await commitFile(`content/blog/${slug}.md`, markdown, `blog: ${title}`);
+    if (!ok) return fault(500, "Failed to publish.");
+
+    return xml(
+      `<methodResponse><params><param><value><string>${slug}</string></value></param></params></methodResponse>`
+    );
+  }
+
+  // --- wp.editPost / metaWeblog.editPost ---
+  if (method === "wp.editPost" || method === "metaWeblog.editPost") {
+    if (!verifyAuth(body)) return fault(403, "Incorrect password.");
+
+    // Extract post_id (slug)
+    const strings = [...body.matchAll(/<string>([^<]*)<\/string>/g)].map(
+      (m) => m[1]
+    );
+    const posts = getAllPosts();
+    const slug = strings.find((s) => posts.some((p) => p.slug === s));
+    if (!slug) return fault(404, "Post not found.");
+
+    const existing = posts.find((p) => p.slug === slug)!;
+
+    const titleMatch = body.match(
+      /<name>(?:title|post_title)<\/name>\s*<value>(?:<string>)?([^<]+)/
+    );
+    const contentMatch =
+      body.match(
+        /<name>description<\/name>\s*<value>(?:<string>)?([^<]+)/
+      ) ||
+      body.match(
+        /<name>post_content<\/name>\s*<value>(?:<string>)?([^<]+)/
+      );
+
+    const title = titleMatch?.[1] || existing.title;
+    let content = contentMatch?.[1] || existing.content;
+
+    if (content.includes("<p>") || content.includes("<br")) {
+      content = content
+        .replace(/<br\s*\/?>/gi, "\n")
+        .replace(/<\/p>\s*<p>/gi, "\n\n")
+        .replace(/<[^>]*>/g, "");
+    }
+
+    content = content
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&amp;/g, "&");
+
+    const markdown = `---
+title: "${title.replace(/"/g, '\\"')}"
+date: "${existing.date}"
+description: "${existing.description.replace(/"/g, '\\"')}"
+---
+
+${content.trim()}
+`;
+
+    const ok = await commitFile(
+      `content/blog/${slug}.md`,
+      markdown,
+      `blog: ${title}`
+    );
+    if (!ok) return fault(500, "Failed to update.");
+
+    return xml(
+      `<methodResponse><params><param><value><boolean>1</boolean></value></param></params></methodResponse>`
+    );
+  }
+
+  // --- metaWeblog.newMediaObject / wp.uploadFile ---
+  if (method === "metaWeblog.newMediaObject" || method === "wp.uploadFile") {
+    if (!verifyAuth(body)) return fault(403, "Incorrect password.");
+
+    const nameMatch = body.match(
+      /<name>name<\/name>\s*<value>(?:<string>)?([^<]+)/
+    );
+    const bitsMatch = body.match(
+      /<name>bits<\/name>\s*<value>\s*<base64>([^<]+)<\/base64>/
+    );
+
+    const fileName = nameMatch?.[1] || `upload-${Date.now()}`;
+    const bits = bitsMatch?.[1] || "";
+
+    if (!bits) return fault(400, "No file data.");
+
+    const safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, "-");
+    const path = `public/uploads/${safeName}`;
+
     const commitBody: Record<string, string> = {
-      message: `blog: ${title}`,
-      content: btoa(unescape(encodeURIComponent(markdown))),
+      message: `upload: ${safeName}`,
+      content: bits, // already base64
     };
 
+    // Check if file exists
     const existing = await fetch(
       `https://api.github.com/repos/${REPO}/contents/${path}`,
-      { headers: { Authorization: `token ${GITHUB_TOKEN}`, "User-Agent": "personal-site" } }
+      {
+        headers: {
+          Authorization: `token ${GITHUB_TOKEN}`,
+          "User-Agent": "personal-site",
+        },
+      }
     );
     if (existing.ok) {
       const data = await existing.json();
@@ -86,32 +429,36 @@ ${content}
       }
     );
 
-    if (!res.ok) {
-      return new NextResponse(
-        `<?xml version="1.0"?>
-<methodResponse><fault><value><struct>
-<member><name>faultCode</name><value><int>500</int></value></member>
-<member><name>faultString</name><value><string>Failed to publish</string></value></member>
-</struct></value></fault></methodResponse>`,
-        { headers: { "Content-Type": "text/xml" } }
-      );
-    }
+    if (!res.ok) return fault(500, "Failed to upload.");
 
-    return new NextResponse(
-      `<?xml version="1.0"?>
-<methodResponse><params><param><value><string>${Date.now()}</string></value></param></params></methodResponse>`,
-      { headers: { "Content-Type": "text/xml" } }
+    const url = `${SITE_URL}/uploads/${safeName}`;
+    return xml(
+      `<methodResponse><params><param><value><struct>
+<member><name>id</name><value><string>${Date.now()}</string></value></member>
+<member><name>file</name><value><string>${safeName}</string></value></member>
+<member><name>url</name><value><string>${url}</string></value></member>
+<member><name>type</name><value><string>image/jpeg</string></value></member>
+</struct></value></param></params></methodResponse>`
     );
   }
 
-  // Default: list supported methods
-  return new NextResponse(
-    `<?xml version="1.0"?>
-<methodResponse><params><param><value><array><data>
+  // Unknown method — return supported methods
+  return xml(
+    `<methodResponse><params><param><value><array><data>
+<value><string>system.listMethods</string></value>
 <value><string>wp.getUsersBlogs</string></value>
+<value><string>wp.getPosts</string></value>
+<value><string>wp.getPost</string></value>
 <value><string>wp.newPost</string></value>
+<value><string>wp.editPost</string></value>
+<value><string>wp.getOptions</string></value>
+<value><string>wp.getCategories</string></value>
+<value><string>wp.getTerms</string></value>
 <value><string>metaWeblog.newPost</string></value>
-</data></array></value></param></params></methodResponse>`,
-    { headers: { "Content-Type": "text/xml" } }
+<value><string>metaWeblog.editPost</string></value>
+<value><string>metaWeblog.getPost</string></value>
+<value><string>metaWeblog.getRecentPosts</string></value>
+<value><string>metaWeblog.newMediaObject</string></value>
+</data></array></value></param></params></methodResponse>`
   );
 }

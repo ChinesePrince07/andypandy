@@ -19,6 +19,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <link rel="EditURI" type="application/rsd+xml" title="RSD" href="/xmlrpc.php?rsd" />
         <link rel="https://api.w.org/" href="/wp-json/" />
         <link rel="micropub" href="/api/micropub" />
         <link rel="authorization_endpoint" href="/api/auth" />

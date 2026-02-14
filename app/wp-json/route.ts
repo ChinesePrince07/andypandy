@@ -14,7 +14,7 @@ export async function GET() {
     authentication: {
       "application-passwords": {
         endpoints: {
-          authorization: `${SITE_URL}/wp-json/wp/v2`,
+          authorization: `${SITE_URL}/wp-admin/authorize-application.php`,
         },
       },
     },
