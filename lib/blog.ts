@@ -1,5 +1,6 @@
 import matter from "gray-matter";
 import { remark } from "remark";
+import remarkGfm from "remark-gfm";
 import html from "remark-html";
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN!;
@@ -61,7 +62,7 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
 
   const decoded = Buffer.from(fileData.content, "base64").toString("utf8");
   const { data, content } = matter(decoded);
-  const processed = await remark().use(html).process(content);
+  const processed = await remark().use(remarkGfm).use(html, { sanitize: false }).process(content);
   return {
     slug,
     title: data.title || slug,

@@ -169,3 +169,58 @@ html {
   border-color: #e5e7eb;
   margin: 2rem 0;
 }
+.prose mark {
+  background: #fef08a;
+  padding: 0.1em 0.25em;
+  border-radius: 0.15em;
+  color: inherit;
+}
+.prose del {
+  text-decoration: line-through;
+  color: #9ca3af;
+}
+.prose img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  margin: 1.5rem 0;
+}
+.prose video, .prose iframe {
+  max-width: 100%;
+  border-radius: 0.5rem;
+  margin: 1.5rem 0;
+}
+.prose sup {
+  font-size: 0.75em;
+  vertical-align: super;
+  line-height: 0;
+}
+.prose sup a {
+  text-decoration: none;
+  color: #0f3460;
+}
+.prose .footnotes {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+.prose .footnotes ol {
+  padding-left: 1.25rem;
+}
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.5rem;
+}
+.prose th, .prose td {
+  border: 1px solid #e5e7eb;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+.prose th {
+  background: #f9fafb;
+  font-weight: 600;
+  color: #111827;
+}
