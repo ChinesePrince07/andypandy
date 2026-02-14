@@ -17,30 +17,39 @@ const projects = [
 ];
 
 async function getReadmeHtml(repo: string): Promise<string | null> {
+  const headers = {
+    Authorization: `token ${GITHUB_TOKEN}`,
+    "User-Agent": "personal-site",
+  };
+
+  // Get default branch
+  const repoRes = await fetch(`https://api.github.com/repos/${repo}`, {
+    headers: { ...headers, Accept: "application/vnd.github.v3+json" },
+    next: { revalidate: 86400 },
+  });
+  const branch = repoRes.ok ? (await repoRes.json()).default_branch : "main";
+
   // Get rendered HTML directly from GitHub API
-  const res = await fetch(
-    `https://api.github.com/repos/${repo}/readme`,
-    {
-      headers: {
-        Authorization: `token ${GITHUB_TOKEN}`,
-        "User-Agent": "personal-site",
-        Accept: "application/vnd.github.v3.html",
-      },
-      next: { revalidate: 3600 },
-    }
-  );
+  const res = await fetch(`https://api.github.com/repos/${repo}/readme`, {
+    headers: { ...headers, Accept: "application/vnd.github.v3.html" },
+    next: { revalidate: 3600 },
+  });
   if (!res.ok) return null;
   let html = await res.text();
 
-  // Rewrite relative image src to raw GitHub URLs
+  // Remove GitHub heading anchor links (octicon SVG permalink icons)
+  html = html.replace(/<a[^>]*class="anchor"[^>]*>[\s\S]*?<\/a>/g, "");
+
+  // Unwrap images from link wrappers (GitHub wraps <img> in <a> pointing to the file)
   html = html.replace(
-    /src="(?!https?:\/\/)(?:\.\/)?([^"]+)"/g,
-    `src="https://raw.githubusercontent.com/${repo}/main/$1"`
+    /<a[^>]*href="[^"]*"[^>]*>\s*(<img[^>]*>)\s*<\/a>/g,
+    "$1"
   );
-  // Rewrite relative href to GitHub URLs (for linking to repo files)
+
+  // Rewrite relative image src to raw GitHub URLs (handle ./ and / prefixes)
   html = html.replace(
-    /href="(?!https?:\/\/|#|mailto:)(?:\.\/)?([^"]+)"/g,
-    `href="https://github.com/${repo}/blob/main/$1"`
+    /src="(?!https?:\/\/)(?:\.\/)?\/?([^"]+)"/g,
+    `src="https://raw.githubusercontent.com/${repo}/${branch}/$1"`
   );
 
   return html;
