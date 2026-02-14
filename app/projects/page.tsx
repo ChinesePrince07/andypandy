@@ -8,65 +8,65 @@ export const metadata: Metadata = {
 const projects = [
   {
     name: "TI-84 GPT Hack",
+    slug: "ti-84-gpt-hack",
     description:
       "A mod that gives your TI-84 Wi-Fi, ChatGPT, and the ability to disappoint your math teacher in ways never thought possible.",
-    url: "https://github.com/ChinesePrince07/TI-84-GPT-HACK",
     tags: ["C", "ESP32", "Hardware"],
     emoji: "🧮",
   },
   {
     name: "Desmos Bezier Renderer",
+    slug: "desmos-bezier-renderer",
     description:
       "Transform any image into mathematical art on Desmos. Uses Canny edge detection and Potrace to convert images into parametric Bezier curve equations.",
-    url: "https://github.com/ChinesePrince07/DesmosBezierRenderer-mac",
     tags: ["HTML", "Math", "macOS"],
     emoji: "📐",
   },
   {
     name: "Suffield Drive",
+    slug: "suffield-drive",
     description:
       "A shared drive for Suffield students to access and share school resources.",
-    url: "https://github.com/ChinesePrince07/Suffield-Drive",
     tags: ["TypeScript", "Web"],
     emoji: "☁️",
   },
   {
     name: "EXIF Photo Blog",
+    slug: "exif-photo-blog",
     description:
       "A photography blog that reports camera details like aperture, shutter speed, and ISO for each image.",
-    url: "https://github.com/ChinesePrince07/exif-photo-blog-real",
     tags: ["TypeScript", "Next.js", "Photography"],
     emoji: "📷",
   },
   {
     name: "Taylor Series Visualizer",
+    slug: "taylor-series",
     description:
       "An interactive visualization of Taylor series approximations for Calc BC.",
-    url: "https://github.com/ChinesePrince07/taylorseries-CALCBC",
     tags: ["HTML", "Math"],
     emoji: "📊",
   },
   {
     name: "Music Landing Page",
+    slug: "music-landing-page",
     description:
       "A commissioned landing page for a music artist.",
-    url: "https://github.com/ChinesePrince07/music-landing-page-commissioned",
     tags: ["HTML", "Design"],
     emoji: "🎵",
   },
   {
     name: "Stroke Prediction",
+    slug: "stroke-prediction",
     description:
       "ML model that predicts stroke likelihood based on patient data like age, BMI, glucose level, and smoking status.",
-    url: "https://github.com/ChinesePrince07/Stroke-Prediction",
     tags: ["Python", "ML", "Jupyter"],
     emoji: "🧠",
   },
   {
     name: "Chatbot UI",
+    slug: "chatbot-ui",
     description:
       "A chat interface for interacting with AI models.",
-    url: "https://github.com/ChinesePrince07/chatbot-ui",
     tags: ["TypeScript", "AI"],
     emoji: "💬",
   },
@@ -88,9 +88,7 @@ export default function ProjectsPage() {
         {projects.map((project) => (
           <Link
             key={project.name}
-            href={project.url}
-            target="_blank"
-            rel="noopener noreferrer"
+            href={`/projects/${project.slug}`}
             className="card-hover group block rounded-xl border border-gray-200/80 bg-white p-5 shadow-sm"
           >
             <div className="flex items-start gap-4">
@@ -112,7 +110,7 @@ export default function ProjectsPage() {
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"
+                      d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
                     />
                   </svg>
                 </div>
