@@ -1,8 +1,10 @@
-import { verifyGhostAuth, ghostError } from "@/lib/ghost";
 import { NextRequest } from "next/server";
 
 export async function GET(req: NextRequest) {
-  if (!verifyGhostAuth(req)) return ghostError("Unauthorized", 401);
+  console.log("GHOST /users/me/ HIT", {
+    auth: req.headers.get("authorization")?.slice(0, 30),
+    accept: req.headers.get("accept-version"),
+  });
 
   return Response.json({
     users: [

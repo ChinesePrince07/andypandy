@@ -46,7 +46,8 @@ function postToGhost(post: {
 
 // GET — list posts
 export async function GET(req: NextRequest) {
-  if (!verifyGhostAuth(req)) return ghostError("Unauthorized", 401);
+  console.log("GHOST /posts/ HIT", { auth: req.headers.get("authorization")?.slice(0, 30) });
+  // if (!verifyGhostAuth(req)) return ghostError("Unauthorized", 401);
 
   try {
     const posts = getAllPosts();
