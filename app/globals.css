@@ -193,16 +193,18 @@ a:active, button:active {
   letter-spacing: 0.02em;
 }
 
-/* Reading progress bar for blog posts — vertical on left side */
+/* Reading progress bar for blog posts — vertical on left edge */
 .reading-progress {
   position: fixed;
   top: 0;
-  left: 0;
-  width: 2px;
+  left: 2px;
+  width: 3px;
   height: 100%;
   background: #111;
+  border-radius: 0 3px 3px 0;
   transform-origin: top;
   transform: scaleY(0);
+  opacity: 0;
   z-index: 100;
   animation: grow-progress linear;
   animation-timeline: scroll();
@@ -211,7 +213,8 @@ a:active, button:active {
   background: #e5e7eb;
 }
 @keyframes grow-progress {
-  to { transform: scaleY(1); }
+  1% { opacity: 1; }
+  100% { opacity: 1; transform: scaleY(1); }
 }
 
 /* Pinned badge */
