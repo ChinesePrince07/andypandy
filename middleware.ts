@@ -20,5 +20,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: "/((?!_next|api|wp-json|wp-admin|xmlrpc|favicon.ico).*)",
+  matcher: "/((?!_next|api|wp-json|wp-admin|xmlrpc|ghost|favicon.ico).*)",
 };
