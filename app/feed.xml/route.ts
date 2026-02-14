@@ -4,7 +4,7 @@ import { getAllPosts } from "@/lib/blog";
 const SITE_URL = "https://andypandy.org";
 
 export async function GET() {
-  const posts = getAllPosts();
+  const posts = await getAllPosts();
 
   const feed = new RSS({
     title: "Andy's Blog",

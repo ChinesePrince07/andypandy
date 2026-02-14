@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { revalidateTag } from "next/cache";
 import { getAllPosts } from "@/lib/blog";
 
 export const dynamic = "force-dynamic";
@@ -65,7 +66,7 @@ export async function GET(req: NextRequest) {
   console.log("GHOST /posts/ HIT", { auth: req.headers.get("authorization")?.slice(0, 30) });
 
   try {
-    const posts = getAllPosts();
+    const posts = await getAllPosts();
     return Response.json(
       {
         posts: posts.map(postToGhost),
@@ -162,6 +163,9 @@ ${markdown.trim()}
       const err = await res.text();
       return ghostError(`GitHub error: ${err}`, 502);
     }
+
+    // Bust the blog cache so the new post appears immediately
+    revalidateTag("posts");
 
     const now = new Date().toISOString();
     const ghostPost = {

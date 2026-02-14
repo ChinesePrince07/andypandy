@@ -233,7 +233,7 @@ ${methods.map((m) => `<value><string>${m}</string></value>`).join("\n")}
   if (method === "wp.getPosts" || method === "metaWeblog.getRecentPosts") {
     if (!verifyAuth(body)) return fault(403, "Incorrect password.");
     try {
-      const posts = getAllPosts();
+      const posts = await getAllPosts();
       const items = posts.map((p) => postToXmlRpc(p)).join("\n");
       return xml(
         `<methodResponse><params><param><value><array><data>
@@ -256,7 +256,7 @@ ${items}
     );
     // For wp.getPost(blog_id, user, pass, post_id) — post_id could be after the auth strings
     // Find the slug by looking for it in our posts
-    const posts = getAllPosts();
+    const posts = await getAllPosts();
     const slug = strings.find((s) => posts.some((p) => p.slug === s));
     const post = slug ? posts.find((p) => p.slug === slug) : posts[0];
     if (!post) return fault(404, "Post not found.");
@@ -324,7 +324,7 @@ ${content.trim()}
     const strings = [...body.matchAll(/<string>([^<]*)<\/string>/g)].map(
       (m) => m[1]
     );
-    const posts = getAllPosts();
+    const posts = await getAllPosts();
     const slug = strings.find((s) => posts.some((p) => p.slug === s));
     if (!slug) return fault(404, "Post not found.");
 

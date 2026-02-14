@@ -1,10 +1,8 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getAllPosts, getPostBySlug } from "@/lib/blog";
+import { getPostBySlug } from "@/lib/blog";
 
-export function generateStaticParams() {
-  return getAllPosts().map((post) => ({ slug: post.slug }));
-}
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,

@@ -1,10 +1,10 @@
-import fs from "fs";
-import path from "path";
 import matter from "gray-matter";
 import { remark } from "remark";
 import html from "remark-html";
 
-const postsDirectory = path.join(process.cwd(), "content/blog");
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN!;
+const REPO = "ChinesePrince07/personal-site";
+const BLOG_PATH = "content/blog";
 
 export interface Post {
   slug: string;
@@ -14,30 +14,53 @@ export interface Post {
   content: string;
 }
 
-export function getAllPosts(): Post[] {
-  if (!fs.existsSync(postsDirectory)) return [];
-  const filenames = fs.readdirSync(postsDirectory).filter((f) => f.endsWith(".md"));
-  const posts = filenames.map((filename) => {
-    const slug = filename.replace(/\.md$/, "");
-    const filePath = path.join(postsDirectory, filename);
-    const fileContents = fs.readFileSync(filePath, "utf8");
-    const { data, content } = matter(fileContents);
-    return {
+async function githubFetch(path: string) {
+  const res = await fetch(
+    `https://api.github.com/repos/${REPO}/contents/${path}`,
+    {
+      headers: {
+        Authorization: `token ${GITHUB_TOKEN}`,
+        "User-Agent": "personal-site",
+        Accept: "application/vnd.github.v3+json",
+      },
+      next: { tags: ["posts"], revalidate: 60 },
+    }
+  );
+  if (!res.ok) return null;
+  return res.json();
+}
+
+export async function getAllPosts(): Promise<Post[]> {
+  const files = await githubFetch(BLOG_PATH);
+  if (!Array.isArray(files)) return [];
+
+  const posts: Post[] = [];
+  for (const file of files) {
+    if (!file.name.endsWith(".md")) continue;
+    const slug = file.name.replace(/\.md$/, "");
+    const fileData = await githubFetch(`${BLOG_PATH}/${file.name}`);
+    if (!fileData?.content) continue;
+
+    const decoded = Buffer.from(fileData.content, "base64").toString("utf8");
+    const { data, content } = matter(decoded);
+    posts.push({
       slug,
       title: data.title || slug,
       date: data.date || "",
       description: data.description || "",
       content,
-    };
-  });
+    });
+  }
+
   return posts.sort((a, b) => (a.date > b.date ? -1 : 1));
 }
 
 export async function getPostBySlug(slug: string): Promise<Post | null> {
-  const filePath = path.join(postsDirectory, `${slug}.md`);
-  if (!fs.existsSync(filePath)) return null;
-  const fileContents = fs.readFileSync(filePath, "utf8");
-  const { data, content } = matter(fileContents);
+  const fileData = await githubFetch(`${BLOG_PATH}/${slug}.md`);
+  if (!fileData?.content) return null;
+
+  const decoded = Buffer.from(fileData.content, "base64").toString("utf8");
+  const { data, content } = matter(decoded);
   const processed = await remark().use(html).process(content);
   return {
     slug,

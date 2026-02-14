@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { revalidateTag } from "next/cache";
 import { getAllPosts } from "@/lib/blog";
 
 export const dynamic = "force-dynamic";
@@ -28,7 +29,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const posts = getAllPosts();
+  const posts = await getAllPosts();
   const post = posts.find((p) => p.slug === id);
   if (!post) return ghostError("Post not found", 404);
 
@@ -68,7 +69,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const posts = getAllPosts();
+  const posts = await getAllPosts();
   const existing = posts.find((p) => p.slug === id);
   if (!existing) return ghostError("Post not found", 404);
 
@@ -132,6 +133,8 @@ ${markdown.trim()}
     );
 
     if (!res.ok) return ghostError("Failed to update", 502);
+
+    revalidateTag("posts");
 
     const now = new Date().toISOString();
     return Response.json(
