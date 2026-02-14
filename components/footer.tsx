@@ -20,6 +20,12 @@ export default function Footer() {
           >
             RSS
           </Link>
+          <Link
+            href="/admin"
+            className="hover:text-gray-700 transition-colors"
+          >
+            Admin
+          </Link>
         </div>
       </div>
     </footer>

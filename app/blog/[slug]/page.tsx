@@ -63,12 +63,22 @@ export default async function BlogPostPage({
       {/* Header */}
       <header className="mt-8 space-y-3">
         <time className="text-sm text-gray-400 tabular-nums">
-          {new Date(post.date).toLocaleDateString("en-US", {
-            weekday: "long",
-            month: "long",
-            day: "numeric",
-            year: "numeric",
-          })}
+          {(() => {
+            const d = new Date(post.date);
+            const dateStr = d.toLocaleDateString("en-US", {
+              weekday: "long",
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            });
+            const hasTime = post.date.includes("T") || post.date.includes(":");
+            if (!hasTime) return dateStr;
+            const timeStr = d.toLocaleTimeString("en-US", {
+              hour: "numeric",
+              minute: "2-digit",
+            });
+            return `${dateStr} at ${timeStr}`;
+          })()}
         </time>
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
           {post.title}

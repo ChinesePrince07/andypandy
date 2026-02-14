@@ -12,6 +12,24 @@ interface Props {
   initialContent: string;
 }
 
+function parseDate(dateStr: string) {
+  if (!dateStr) return { date: "", time: "" };
+  if (dateStr.includes("T")) {
+    const [d, rest] = dateStr.split("T");
+    return { date: d, time: rest?.replace(/Z$/, "").slice(0, 5) || "" };
+  }
+  if (dateStr.includes(" ") && dateStr.includes(":")) {
+    const [d, t] = dateStr.split(" ");
+    return { date: d, time: t.slice(0, 5) };
+  }
+  return { date: dateStr.slice(0, 10), time: "" };
+}
+
+function combineDateTime(date: string, time: string) {
+  if (!time) return date;
+  return `${date}T${time}`;
+}
+
 export default function EditForm({
   slug,
   initialTitle,
@@ -19,8 +37,10 @@ export default function EditForm({
   initialDescription,
   initialContent,
 }: Props) {
+  const parsed = parseDate(initialDate);
   const [title, setTitle] = useState(initialTitle);
-  const [date, setDate] = useState(initialDate);
+  const [date, setDate] = useState(parsed.date);
+  const [time, setTime] = useState(parsed.time);
   const [description, setDescription] = useState(initialDescription);
   const [content, setContent] = useState(initialContent);
   const [saving, setSaving] = useState(false);
@@ -35,7 +55,12 @@ export default function EditForm({
     const res = await fetch(`/api/admin/posts/${slug}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, date, description, content }),
+      body: JSON.stringify({
+        title,
+        date: combineDateTime(date, time),
+        description,
+        content,
+      }),
     });
 
     if (res.ok) {
@@ -72,7 +97,7 @@ export default function EditForm({
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1">
               Date
@@ -81,6 +106,17 @@ export default function EditForm({
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">
+              Time
+            </label>
+            <input
+              type="time"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none"
             />
           </div>

@@ -105,10 +105,11 @@ export async function POST(req: NextRequest) {
     const title = post.title || "Untitled";
     let content = post.html || post.mobiledoc || post.plaintext || "";
     const slug = post.slug || slugify(title);
+    const now = new Date().toISOString();
     const date =
-      post.published_at?.split("T")[0] ||
-      post.created_at?.split("T")[0] ||
-      new Date().toISOString().split("T")[0];
+      post.published_at?.slice(0, 16) ||
+      post.created_at?.slice(0, 16) ||
+      now.slice(0, 16);
     const status = post.status || "draft";
 
     // Convert HTML to markdown
@@ -165,7 +166,6 @@ ${markdown.trim()}
     // Bust the blog cache so the new post appears immediately
     revalidateTag("posts");
 
-    const now = new Date().toISOString();
     const ghostPost = {
       id: slug,
       uuid: slug,

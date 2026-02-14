@@ -21,14 +21,7 @@ export default async function BlogPage() {
             href="/feed.xml"
             className="text-gray-400 underline underline-offset-2 transition-colors hover:text-gray-600"
           >
-            RSS
-          </Link>
-          {" / "}
-          <Link
-            href="/admin"
-            className="text-gray-400 underline underline-offset-2 transition-colors hover:text-gray-600"
-          >
-            Admin
+            Subscribe via RSS
           </Link>
         </p>
       </div>
@@ -50,11 +43,21 @@ export default async function BlogPage() {
                   {post.title}
                 </h2>
                 <time className="shrink-0 text-xs tabular-nums text-gray-300">
-                  {new Date(post.date).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
+                  {(() => {
+                    const d = new Date(post.date);
+                    const dateStr = d.toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    });
+                    const hasTime = post.date.includes("T") || post.date.includes(":");
+                    if (!hasTime) return dateStr;
+                    const timeStr = d.toLocaleTimeString("en-US", {
+                      hour: "numeric",
+                      minute: "2-digit",
+                    });
+                    return `${dateStr}, ${timeStr}`;
+                  })()}
                 </time>
               </div>
               {post.description && (
