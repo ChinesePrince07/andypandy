@@ -1,5 +1,5 @@
 ---
-title: "Mommy, what’s a focus?"
+title: "oof"
 date: "2026-02-14"
 description: ""
 ---
@@ -21,6 +21,9 @@ Write more.
 Shuffle.
 
 Repeat.
+
+![](https://personal-site-andy-zhangs-projects.vercel.app/api/uploads/built.png)**
+
 
 If you have pressing questions, you can always contact us via email. You can also consult our online Help, where we provide guides and FAQ and such. We even set up a community, where you can connect with fellow users and—more importantly—fellow writers. It’s called The Draft. We found that fitting.
 
