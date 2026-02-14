@@ -110,9 +110,15 @@ export async function POST(req: NextRequest) {
       new Date().toISOString().split("T")[0];
     const status = post.status || "draft";
 
-    // Strip HTML for markdown storage
+    // Convert HTML to markdown
     let markdown = content;
-    if (markdown.includes("<p>") || markdown.includes("<br")) {
+    if (markdown.includes("<p>") || markdown.includes("<br") || markdown.includes("<img")) {
+      // Convert images to markdown before stripping tags
+      markdown = markdown.replace(/<img[^>]+src="([^"]*)"[^>]*alt="([^"]*)"[^>]*\/?>/gi, "![$2]($1)");
+      markdown = markdown.replace(/<img[^>]+src="([^"]*)"[^>]*\/?>/gi, "![]($1)");
+      // Convert figure/figcaption
+      markdown = markdown.replace(/<figure[^>]*>([\s\S]*?)<\/figure>/gi, "$1\n");
+      markdown = markdown.replace(/<figcaption[^>]*>([\s\S]*?)<\/figcaption>/gi, "*$1*\n");
       markdown = markdown
         .replace(/<br\s*\/?>/gi, "\n")
         .replace(/<\/p>\s*<p>/gi, "\n\n")

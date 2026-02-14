@@ -87,9 +87,13 @@ export async function PUT(
       update.created_at?.split("T")[0] ||
       existing.date;
 
-    // Strip HTML for markdown
+    // Convert HTML to markdown
     let markdown = content;
-    if (markdown.includes("<p>") || markdown.includes("<br")) {
+    if (markdown.includes("<p>") || markdown.includes("<br") || markdown.includes("<img")) {
+      markdown = markdown.replace(/<img[^>]+src="([^"]*)"[^>]*alt="([^"]*)"[^>]*\/?>/gi, "![$2]($1)");
+      markdown = markdown.replace(/<img[^>]+src="([^"]*)"[^>]*\/?>/gi, "![]($1)");
+      markdown = markdown.replace(/<figure[^>]*>([\s\S]*?)<\/figure>/gi, "$1\n");
+      markdown = markdown.replace(/<figcaption[^>]*>([\s\S]*?)<\/figcaption>/gi, "*$1*\n");
       markdown = markdown
         .replace(/<br\s*\/?>/gi, "\n")
         .replace(/<\/p>\s*<p>/gi, "\n\n")

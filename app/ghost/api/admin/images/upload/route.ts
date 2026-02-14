@@ -62,8 +62,9 @@ export async function POST(req: NextRequest) {
 
     if (!res.ok) return ghostError("Failed to upload", 502);
 
-    // Use GitHub raw URL — immediately available, no redeploy needed
-    const imageUrl = `https://raw.githubusercontent.com/${REPO}/main/${path}`;
+    // Proxy through our API (repo is private, raw.githubusercontent.com won't work)
+    const siteUrl = process.env.SITE_URL || "https://personal-site-andy-zhangs-projects.vercel.app";
+    const imageUrl = `${siteUrl}/api/uploads/${safeName}`;
 
     return Response.json(
       {
