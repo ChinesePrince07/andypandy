@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { revalidateTag } from "next/cache";
 import { getAllPosts } from "@/lib/blog";
+import { htmlToMarkdown } from "@/lib/html-to-md";
 
 export const dynamic = "force-dynamic";
 
@@ -111,19 +112,7 @@ export async function POST(req: NextRequest) {
     const status = post.status || "draft";
 
     // Convert HTML to markdown
-    let markdown = content;
-    if (markdown.includes("<p>") || markdown.includes("<br") || markdown.includes("<img")) {
-      // Convert images to markdown before stripping tags
-      markdown = markdown.replace(/<img[^>]+src="([^"]*)"[^>]*alt="([^"]*)"[^>]*\/?>/gi, "![$2]($1)");
-      markdown = markdown.replace(/<img[^>]+src="([^"]*)"[^>]*\/?>/gi, "![]($1)");
-      // Convert figure/figcaption
-      markdown = markdown.replace(/<figure[^>]*>([\s\S]*?)<\/figure>/gi, "$1\n");
-      markdown = markdown.replace(/<figcaption[^>]*>([\s\S]*?)<\/figcaption>/gi, "*$1*\n");
-      markdown = markdown
-        .replace(/<br\s*\/?>/gi, "\n")
-        .replace(/<\/p>\s*<p>/gi, "\n\n")
-        .replace(/<[^>]*>/g, "");
-    }
+    let markdown = htmlToMarkdown(content);
 
     const fileContent = `---
 title: "${title.replace(/"/g, '\\"')}"

@@ -21,7 +21,14 @@ export default async function BlogPage() {
             href="/feed.xml"
             className="text-gray-400 underline underline-offset-2 transition-colors hover:text-gray-600"
           >
-            Subscribe via RSS
+            RSS
+          </Link>
+          {" / "}
+          <Link
+            href="/admin"
+            className="text-gray-400 underline underline-offset-2 transition-colors hover:text-gray-600"
+          >
+            Admin
           </Link>
         </p>
       </div>
