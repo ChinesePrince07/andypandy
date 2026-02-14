@@ -27,6 +27,11 @@ export default async function BlogPostPage({
 
   const admin = await isAdmin();
 
+  // Word count from stripped HTML
+  const plainText = post.content.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  const wordCount = plainText ? plainText.split(/\s+/).length : 0;
+  const readTime = Math.max(1, Math.round(wordCount / 230));
+
   return (
     <article className="animate-fade-in">
       <div className="reading-progress" />
@@ -85,6 +90,9 @@ export default async function BlogPostPage({
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
           {post.title}
         </h1>
+        <p className="text-xs text-gray-400 font-mono dark:text-gray-500">
+          {wordCount.toLocaleString()} words &middot; {readTime} min read
+        </p>
         {post.description && (
           <p className="text-lg text-gray-500 dark:text-gray-400">{post.description}</p>
         )}
