@@ -143,8 +143,8 @@ def create_8xp(name, token_data):
 def main():
     import os
 
-    source_file = '/Users/master/Downloads/TI-32-main 5/programs/LAUNCHER.8xp.txt'
-    output_header = '/Users/master/Downloads/TI-32-main 5/esp32/launcher.h'
+    source_file = '/Users/master/Desktop/GitHub/TI-84 GPT Hacks/programs/LAUNCHER.8xp.txt'
+    output_header = '/Users/master/Desktop/GitHub/TI-84 GPT Hacks/esp32/launcher.h'
 
     # Read the existing launcher.h to get the actual compiled bytes
     # Since proper tokenization is complex, we'll use tivars if available

@@ -23,7 +23,7 @@
 #define SECURE
 
 // Firmware version (increment this when updating)
-#define FIRMWARE_VERSION "1.1.7"
+#define FIRMWARE_VERSION "1.1.8"
 
 // Captive portal settings
 #define AP_SSID "calc"
@@ -40,6 +40,7 @@ bool portalActive = false;
 // Stored WiFi credentials
 String storedSSID = "";
 String storedPass = "";
+char sessionId[16] = "";
 
 // #define CAMERA
 
@@ -94,6 +95,9 @@ uint8_t frame[PICVARSIZE] = { PICSIZE & 0xff, PICSIZE >> 8 };
 void connect();
 void disconnect();
 void gpt();
+void gpt_chat();
+void gpt_history();
+void gpt_new();
 void send();
 void launcher();
 void snap();
@@ -129,12 +133,15 @@ struct Command commands[] = {
   { 0, "connect", 0, connect, false },
   { 1, "disconnect", 0, disconnect, false },
   { 2, "gpt", 1, gpt, true },
+  { 3, "gpt_chat", 1, gpt_chat, true },
   { 4, "send", 2, send, true },
   { 5, "launcher", 0, launcher, false },
+  { 6, "gpt_history", 1, gpt_history, true },
   { 7, "snap", 0, snap, false },
   { 8, "solve", 1, solve, true },
   { 9, "image_list", 1, image_list, true },
   { 10, "fetch_image", 1, fetch_image, true },
+  { 11, "gpt_new", 0, gpt_new, false },
   { 13, "program_list", 1, program_list, true },
   { 14, "fetch_program", 1, fetch_program, true },
   { 15, "setup_wifi", 0, setup_wifi, false },
@@ -829,6 +836,49 @@ void gpt() {
   Serial.println(response);
 
   setSuccess(response);
+}
+
+void gpt_chat() {
+  const char* prompt = strArgs[0];
+  String url = String(SERVER) + "/gpt/ask?question=" + urlEncode(String(prompt)) + "&sid=" + urlEncode(String(sessionId));
+
+  size_t realsize = 0;
+  if (makeRequest(url, response, MAXHTTPRESPONSELEN, &realsize)) {
+    setError("REQUEST FAILED");
+    return;
+  }
+
+  // Parse "sid|answer"
+  char* delim = strchr(response, '|');
+  if (delim) {
+    *delim = '\0';
+    strncpy(sessionId, response, sizeof(sessionId) - 1);
+    sessionId[sizeof(sessionId) - 1] = '\0';
+    setSuccess(delim + 1);
+  } else {
+    setSuccess(response);
+  }
+}
+
+void gpt_history() {
+  int page = (int)realArgs[0];
+  if (strlen(sessionId) == 0) {
+    setError("NO SESSION");
+    return;
+  }
+  String url = String(SERVER) + "/gpt/history?sid=" + urlEncode(String(sessionId)) + "&p=" + String(page);
+
+  size_t realsize = 0;
+  if (makeRequest(url, response, MAXHTTPRESPONSELEN, &realsize)) {
+    setError("REQUEST FAILED");
+    return;
+  }
+  setSuccess(response);
+}
+
+void gpt_new() {
+  sessionId[0] = '\0';
+  setSuccess("NEW CHAT");
 }
 
 void derivative() {

@@ -2,13 +2,17 @@ import express from "express";
 import openai from "openai";
 import i264 from "image-to-base64";
 import jimp from "jimp";
+import { JSONFilePreset } from "lowdb/node";
+import crypto from "crypto";
+
+const db = await JSONFilePreset("db.json", { conversations: {} });
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 export async function chatgpt() {
   const routes = express.Router();
 
   const gpt = new openai.OpenAI();
 
-  // simply answer a question
   routes.get("/ask", async (req, res) => {
     const question = req.query.question ?? "";
     if (Array.isArray(question)) {
@@ -16,24 +20,100 @@ export async function chatgpt() {
       return;
     }
 
+    const hasSid = "sid" in req.query;
+
     try {
+      // Stateless mode (derivative, translate, etc.)
+      if (!hasSid) {
+        const result = await gpt.chat.completions.create({
+          messages: [
+            {
+              role: "system",
+              content:
+                "You are answering questions for students. Keep responses under 100 characters and only answer using uppercase letters.",
+            },
+            { role: "user", content: question },
+          ],
+          model: "gpt-4o-mini",
+        });
+        res.send(result.choices[0]?.message?.content ?? "no response");
+        return;
+      }
+
+      // Chat mode with session
+      await db.read();
+
+      // Cleanup old conversations
+      const now = Date.now();
+      for (const [id, conv] of Object.entries(db.data.conversations)) {
+        if (now - conv.created > DAY_MS) delete db.data.conversations[id];
+      }
+
+      let sessionId = req.query.sid;
+      let history = [];
+
+      if (sessionId && db.data.conversations[sessionId]) {
+        history = db.data.conversations[sessionId].messages;
+      } else {
+        sessionId = crypto.randomBytes(4).toString("hex");
+        db.data.conversations[sessionId] = { created: now, messages: [] };
+      }
+
+      const messages = [
+        {
+          role: "system",
+          content:
+            "You are answering questions for students. Keep responses under 100 characters and only answer using uppercase letters.",
+        },
+        ...history.slice(-10),
+        { role: "user", content: question },
+      ];
+
       const result = await gpt.chat.completions.create({
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are answering questions for students. Keep responses under 100 characters and only answer using uppercase letters.",
-          },
-          { role: "user", content: question },
-        ],
+        messages,
         model: "gpt-4o-mini",
       });
 
-      res.send(result.choices[0]?.message?.content ?? "no response");
+      const answer = result.choices[0]?.message?.content ?? "NO RESPONSE";
+
+      db.data.conversations[sessionId].messages.push(
+        { role: "user", content: question },
+        { role: "assistant", content: answer }
+      );
+      await db.write();
+
+      res.send(`${sessionId}|${answer}`);
     } catch (e) {
       console.error(e);
       res.sendStatus(500);
     }
+  });
+
+  routes.get("/history", async (req, res) => {
+    const sid = req.query.sid ?? "";
+    const page = parseInt(req.query.p ?? "0");
+
+    if (!sid) {
+      res.status(400).send("NO SESSION");
+      return;
+    }
+
+    await db.read();
+    const conv = db.data.conversations[sid];
+    if (!conv) {
+      res.send("0/0|NO HISTORY");
+      return;
+    }
+
+    const totalPairs = Math.floor(conv.messages.length / 2);
+    if (page < 0 || page >= totalPairs) {
+      res.send(`${page}/${totalPairs}|NO MORE`);
+      return;
+    }
+
+    const q = conv.messages[page * 2].content.substring(0, 80);
+    const a = conv.messages[page * 2 + 1].content.substring(0, 150);
+    res.send(`${page}/${totalPairs}|Q:${q} A:${a}`);
   });
 
   // solve a math equation from an image.
