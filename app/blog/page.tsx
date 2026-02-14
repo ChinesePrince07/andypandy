@@ -42,7 +42,7 @@ export default async function BlogPage() {
                 <h2 className="font-semibold text-gray-900 group-hover:gradient-text transition-colors">
                   {post.title}
                 </h2>
-                <time className="shrink-0 text-xs tabular-nums text-gray-300">
+                <time className="shrink-0 text-xs tabular-nums text-gray-300 font-mono">
                   {(() => {
                     const d = new Date(post.date);
                     const dateStr = d.toLocaleDateString("en-US", {
@@ -55,6 +55,7 @@ export default async function BlogPage() {
                     const timeStr = d.toLocaleTimeString("en-US", {
                       hour: "numeric",
                       minute: "2-digit",
+                      second: "2-digit",
                     });
                     return `${dateStr}, ${timeStr}`;
                   })()}

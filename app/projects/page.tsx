@@ -29,6 +29,7 @@ const projects = [
       "A shared drive for Suffield students to access and share school resources.",
     tags: ["TypeScript", "Web"],
     emoji: "☁️",
+    demo: "https://suffield-drive.vercel.app",
   },
   {
     name: "EXIF Photo Blog",
@@ -37,6 +38,7 @@ const projects = [
       "A photography blog that reports camera details like aperture, shutter speed, and ISO for each image.",
     tags: ["TypeScript", "Next.js", "Photography"],
     emoji: "📷",
+    demo: "https://exif-photo-blog-real.vercel.app",
   },
   {
     name: "Taylor Series Visualizer",
@@ -45,6 +47,7 @@ const projects = [
       "An interactive visualization of Taylor series approximations for Calc BC.",
     tags: ["HTML", "Math"],
     emoji: "📊",
+    demo: "https://taylorseries-calcbc.vercel.app",
   },
   {
     name: "Music Landing Page",
@@ -53,6 +56,7 @@ const projects = [
       "A commissioned landing page for a music artist.",
     tags: ["HTML", "Design"],
     emoji: "🎵",
+    demo: "https://music-landing-page-commissioned.vercel.app",
   },
   {
     name: "Stroke Prediction",
@@ -69,6 +73,7 @@ const projects = [
       "A chat interface for interacting with AI models.",
     tags: ["TypeScript", "AI"],
     emoji: "💬",
+    demo: "https://chatbot-ui-phi-one-74.vercel.app",
   },
 ];
 
@@ -117,7 +122,7 @@ export default function ProjectsPage() {
                 <p className="mt-1 text-sm text-gray-500 leading-relaxed">
                   {project.description}
                 </p>
-                <div className="mt-3 flex flex-wrap gap-1.5">
+                <div className="mt-3 flex flex-wrap items-center gap-1.5">
                   {project.tags.map((tag) => (
                     <span
                       key={tag}
@@ -126,6 +131,19 @@ export default function ProjectsPage() {
                       {tag}
                     </span>
                   ))}
+                  {project.demo && (
+                    <a
+                      href={project.demo}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ml-1 inline-flex items-center gap-1 rounded-md border border-gray-200 px-2 py-0.5 text-xs font-medium text-gray-400 transition-colors hover:border-gray-300 hover:text-gray-600"
+                    >
+                      Live Demo
+                      <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
+                      </svg>
+                    </a>
+                  )}
                 </div>
               </div>
             </div>

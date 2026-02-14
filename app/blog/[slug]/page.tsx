@@ -62,7 +62,7 @@ export default async function BlogPostPage({
 
       {/* Header */}
       <header className="mt-8 space-y-3">
-        <time className="text-sm text-gray-400 tabular-nums">
+        <time className="text-sm text-gray-400 tabular-nums font-mono tracking-wide">
           {(() => {
             const d = new Date(post.date);
             const dateStr = d.toLocaleDateString("en-US", {
@@ -76,6 +76,7 @@ export default async function BlogPostPage({
             const timeStr = d.toLocaleTimeString("en-US", {
               hour: "numeric",
               minute: "2-digit",
+              second: "2-digit",
             });
             return `${dateStr} at ${timeStr}`;
           })()}
@@ -89,7 +90,7 @@ export default async function BlogPostPage({
       </header>
 
       {/* Divider */}
-      <div className="my-8 h-px bg-gradient-to-r from-gray-200 via-gray-300 to-transparent" />
+      <div className="my-8 divider" />
 
       {/* Content */}
       <div

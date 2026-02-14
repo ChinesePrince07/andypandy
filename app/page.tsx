@@ -25,7 +25,7 @@ export default function AboutPage() {
       </div>
 
       {/* Divider */}
-      <div className="h-px bg-gradient-to-r from-gray-200 via-gray-300 to-transparent" />
+      <div className="divider" />
 
       {/* Bio */}
       <div
@@ -49,7 +49,7 @@ export default function AboutPage() {
         style={{ animationDelay: "400ms" }}
       >
         <a
-          href="https://github.com/andypandy"
+          href="https://github.com/ChinesePrince07"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-600 shadow-sm transition-all hover:border-gray-300 hover:shadow-md hover:-translate-y-0.5"
