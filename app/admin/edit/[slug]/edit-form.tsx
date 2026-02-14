@@ -10,6 +10,7 @@ interface Props {
   initialDate: string;
   initialDescription: string;
   initialContent: string;
+  initialPinned: boolean;
 }
 
 function parseDate(dateStr: string) {
@@ -36,6 +37,7 @@ export default function EditForm({
   initialDate,
   initialDescription,
   initialContent,
+  initialPinned,
 }: Props) {
   const parsed = parseDate(initialDate);
   const [title, setTitle] = useState(initialTitle);
@@ -43,6 +45,7 @@ export default function EditForm({
   const [time, setTime] = useState(parsed.time);
   const [description, setDescription] = useState(initialDescription);
   const [content, setContent] = useState(initialContent);
+  const [pinned, setPinned] = useState(initialPinned);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const router = useRouter();
@@ -60,6 +63,7 @@ export default function EditForm({
         date: combineDateTime(date, time),
         description,
         content,
+        pinned,
       }),
     });
 
@@ -97,7 +101,7 @@ export default function EditForm({
           />
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-4 gap-4">
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1">
               Date
@@ -130,6 +134,22 @@ export default function EditForm({
               disabled
               className="w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-400"
             />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">
+              Pin
+            </label>
+            <button
+              type="button"
+              onClick={() => setPinned(!pinned)}
+              className={`w-full rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors ${
+                pinned
+                  ? "border-gray-900 bg-gray-900 text-white"
+                  : "border-gray-300 bg-white text-gray-400 hover:border-gray-400"
+              }`}
+            >
+              {pinned ? "Pinned" : "Not pinned"}
+            </button>
           </div>
         </div>
 

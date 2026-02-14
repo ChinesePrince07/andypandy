@@ -26,6 +26,7 @@ export default async function EditPostPage({
       initialDate={post.date}
       initialDescription={post.description}
       initialContent={post.content}
+      initialPinned={post.pinned || false}
     />
   );
 }

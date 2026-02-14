@@ -7,7 +7,7 @@ const GITHUB_TOKEN = process.env.GITHUB_TOKEN!;
 
 const projects = [
   { slug: "ti-84-gpt-hack", repo: "ChinesePrince07/TI-84-GPT-HACK", name: "TI-84 GPT Hack", tags: ["C", "ESP32", "Hardware"], emoji: "🧮" },
-  { slug: "desmos-bezier-renderer", repo: "ChinesePrince07/DesmosBezierRenderer-mac", name: "Desmos Bezier Renderer", tags: ["HTML", "Math", "macOS"], emoji: "📐" },
+  { slug: "desmos-bezier-renderer", repo: "ChinesePrince07/DesmosBezierRenderer-mac", name: "Desmos Bezier Renderer", tags: ["HTML", "Math", "macOS"], emoji: "📐", demo: "https://desmos.andypandy.org/calculator" },
   { slug: "suffield-drive", repo: "ChinesePrince07/Suffield-Drive", name: "Suffield Drive", tags: ["TypeScript", "Web"], emoji: "☁️", demo: "https://suffield-drive.vercel.app" },
   { slug: "exif-photo-blog", repo: "ChinesePrince07/exif-photo-blog-real", name: "EXIF Photo Blog", tags: ["TypeScript", "Next.js", "Photography"], emoji: "📷", demo: "https://exif-photo-blog-real.vercel.app" },
   { slug: "taylor-series", repo: "ChinesePrince07/taylorseries-CALCBC", name: "Taylor Series Visualizer", tags: ["HTML", "Math"], emoji: "📊", demo: "https://taylorseries-calcbc.vercel.app" },

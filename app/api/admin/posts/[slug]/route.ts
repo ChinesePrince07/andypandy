@@ -30,13 +30,14 @@ export async function PUT(
   }
 
   const { slug } = await params;
-  const { title, date, description, content } = await req.json();
+  const { title, date, description, content, pinned } = await req.json();
   const path = `content/blog/${slug}.md`;
 
+  const pinnedLine = pinned ? "\npinned: true" : "";
   const fileContent = `---
 title: "${(title || "").replace(/"/g, '\\"')}"
 date: "${date || new Date().toISOString().split("T")[0]}"
-description: "${(description || "").replace(/"/g, '\\"')}"
+description: "${(description || "").replace(/"/g, '\\"')}"${pinnedLine}
 ---
 
 ${(content || "").trim()}

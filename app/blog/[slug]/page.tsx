@@ -29,6 +29,7 @@ export default async function BlogPostPage({
 
   return (
     <article className="animate-fade-in">
+      <div className="reading-progress" />
       {/* Back link */}
       <div className="flex items-center justify-between">
         <Link

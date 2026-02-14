@@ -11,6 +11,7 @@ export interface Post {
   date: string;
   description: string;
   content: string;
+  pinned?: boolean;
 }
 
 async function githubFetch(path: string) {
@@ -48,10 +49,15 @@ export async function getAllPosts(): Promise<Post[]> {
       date: data.date || "",
       description: data.description || "",
       content,
+      pinned: data.pinned === true,
     });
   }
 
-  return posts.sort((a, b) => (a.date > b.date ? -1 : 1));
+  return posts.sort((a, b) => {
+    if (a.pinned && !b.pinned) return -1;
+    if (!a.pinned && b.pinned) return 1;
+    return a.date > b.date ? -1 : 1;
+  });
 }
 
 export async function getPostBySlug(slug: string): Promise<Post | null> {

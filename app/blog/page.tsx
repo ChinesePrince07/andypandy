@@ -40,6 +40,11 @@ export default async function BlogPage() {
             >
               <div className="flex items-baseline justify-between gap-4">
                 <h2 className="font-semibold text-gray-900 group-hover:gradient-text transition-colors">
+                  {post.pinned && (
+                    <span className="mr-1.5 text-gray-300" title="Pinned">
+                      &bull;
+                    </span>
+                  )}
                   {post.title}
                 </h2>
                 <time className="shrink-0 text-xs tabular-nums text-gray-300 font-mono">

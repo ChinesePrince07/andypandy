@@ -21,6 +21,7 @@ const projects = [
       "Transform any image into mathematical art on Desmos. Uses Canny edge detection and Potrace to convert images into parametric Bezier curve equations.",
     tags: ["HTML", "Math", "macOS"],
     emoji: "📐",
+    demo: "https://desmos.andypandy.org/calculator",
   },
   {
     name: "Suffield Drive",
