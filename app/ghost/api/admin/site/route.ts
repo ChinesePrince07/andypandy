@@ -1,9 +1,7 @@
-import { verifyGhostAuth, ghostError, getSiteUrl } from "@/lib/ghost";
-import { NextRequest } from "next/server";
+import { getSiteUrl } from "@/lib/ghost";
 
-export async function GET(req: NextRequest) {
-  if (!verifyGhostAuth(req)) return ghostError("Unauthorized", 401);
-
+// Public endpoint — Ghost clients check this to verify it's a Ghost blog
+export async function GET() {
   return Response.json({
     site: {
       title: "Andy",
@@ -11,6 +9,7 @@ export async function GET(req: NextRequest) {
       logo: null,
       icon: null,
       accent_color: "#000000",
+      locale: "en",
       url: getSiteUrl(),
       version: "5.80.0",
     },
