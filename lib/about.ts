@@ -8,6 +8,7 @@ export interface AboutData {
     school: string;
     location: string;
     year: string;
+    logo?: string;
   };
   skills: { category: string; items: string[] }[];
   timeline: { year: string; title: string; description: string }[];

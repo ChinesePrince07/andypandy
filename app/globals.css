@@ -236,38 +236,6 @@ a:active, button:active {
   border-color: rgba(255,255,255,0.12);
 }
 
-/* Liquid glass nav */
-.liquid-glass {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.6),
-    rgba(255, 255, 255, 0.25),
-    rgba(255, 255, 255, 0.5)
-  );
-  backdrop-filter: blur(20px) saturate(1.8);
-  -webkit-backdrop-filter: blur(20px) saturate(1.8);
-  border: 1px solid rgba(255, 255, 255, 0.45);
-  box-shadow:
-    0 4px 24px rgba(0, 0, 0, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.7),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.2);
-}
-.dark .liquid-glass {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.08),
-    rgba(255, 255, 255, 0.02),
-    rgba(255, 255, 255, 0.06)
-  );
-  backdrop-filter: blur(20px) saturate(1.6);
-  -webkit-backdrop-filter: blur(20px) saturate(1.6);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow:
-    0 4px 24px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.03);
-}
-
 /* Timeline */
 .timeline-line {
   position: absolute;

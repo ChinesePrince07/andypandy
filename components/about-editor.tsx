@@ -144,6 +144,15 @@ export default function AboutEditor({ data }: { data: AboutData }) {
                     className={inputClass}
                   />
                 </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-500">Logo URL (optional)</label>
+                  <input
+                    value={draft.education.logo || ""}
+                    onChange={(e) => setDraft({ ...draft, education: { ...draft.education, logo: e.target.value || undefined } })}
+                    placeholder="https://example.com/logo.png"
+                    className={inputClass}
+                  />
+                </div>
               </div>
             )}
 
@@ -191,55 +200,69 @@ export default function AboutEditor({ data }: { data: AboutData }) {
             )}
 
             {editing === "timeline" && (
-              <div className="space-y-4">
+              <div className="space-y-2">
                 {draft.timeline.map((entry, i) => (
-                  <div key={i} className="rounded-lg border border-gray-100 p-3 dark:border-gray-800">
-                    <div className="mb-2 flex items-center gap-2">
-                      <input
-                        value={entry.year}
-                        onChange={(e) => {
-                          const timeline = [...draft.timeline];
-                          timeline[i] = { ...timeline[i], year: e.target.value };
-                          setDraft({ ...draft, timeline });
-                        }}
-                        placeholder="Year"
-                        className="w-28 rounded border border-gray-200 bg-gray-50 px-2 py-1 text-xs font-mono dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
-                      />
-                      <input
-                        value={entry.title}
-                        onChange={(e) => {
-                          const timeline = [...draft.timeline];
-                          timeline[i] = { ...timeline[i], title: e.target.value };
-                          setDraft({ ...draft, timeline });
-                        }}
-                        placeholder="Title"
-                        className="flex-1 rounded border border-gray-200 bg-gray-50 px-2 py-1 text-xs dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
-                      />
-                      <button
-                        onClick={() => setDraft({ ...draft, timeline: draft.timeline.filter((_, j) => j !== i) })}
-                        className="text-xs text-red-400 hover:text-red-600"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                    <textarea
-                      rows={2}
-                      value={entry.description}
-                      onChange={(e) => {
+                  <div key={i}>
+                    {/* Insert above button */}
+                    <button
+                      onClick={() => {
                         const timeline = [...draft.timeline];
-                        timeline[i] = { ...timeline[i], description: e.target.value };
+                        timeline.splice(i, 0, { year: "", title: "", description: "" });
                         setDraft({ ...draft, timeline });
                       }}
-                      placeholder="Description"
-                      className="w-full rounded border border-gray-200 bg-gray-50 px-2 py-1 text-xs dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
-                    />
+                      className="mb-1 flex w-full items-center justify-center gap-1 rounded border border-dashed border-gray-200 py-1 text-[10px] text-gray-400 hover:border-gray-400 hover:text-gray-600 dark:border-gray-700 dark:hover:border-gray-500 dark:hover:text-gray-300"
+                    >
+                      + Insert here
+                    </button>
+                    <div className="rounded-lg border border-gray-100 p-3 dark:border-gray-800">
+                      <div className="mb-2 flex items-center gap-2">
+                        <input
+                          value={entry.year}
+                          onChange={(e) => {
+                            const timeline = [...draft.timeline];
+                            timeline[i] = { ...timeline[i], year: e.target.value };
+                            setDraft({ ...draft, timeline });
+                          }}
+                          placeholder="Year"
+                          className="w-28 rounded border border-gray-200 bg-gray-50 px-2 py-1 text-xs font-mono dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+                        />
+                        <input
+                          value={entry.title}
+                          onChange={(e) => {
+                            const timeline = [...draft.timeline];
+                            timeline[i] = { ...timeline[i], title: e.target.value };
+                            setDraft({ ...draft, timeline });
+                          }}
+                          placeholder="Title"
+                          className="flex-1 rounded border border-gray-200 bg-gray-50 px-2 py-1 text-xs dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+                        />
+                        <button
+                          onClick={() => setDraft({ ...draft, timeline: draft.timeline.filter((_, j) => j !== i) })}
+                          className="text-xs text-red-400 hover:text-red-600"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                      <textarea
+                        rows={2}
+                        value={entry.description}
+                        onChange={(e) => {
+                          const timeline = [...draft.timeline];
+                          timeline[i] = { ...timeline[i], description: e.target.value };
+                          setDraft({ ...draft, timeline });
+                        }}
+                        placeholder="Description"
+                        className="w-full rounded border border-gray-200 bg-gray-50 px-2 py-1 text-xs dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+                      />
+                    </div>
                   </div>
                 ))}
+                {/* Insert at end */}
                 <button
                   onClick={() => setDraft({ ...draft, timeline: [...draft.timeline, { year: "", title: "", description: "" }] })}
-                  className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  className="flex w-full items-center justify-center gap-1 rounded border border-dashed border-gray-200 py-1.5 text-[10px] text-gray-400 hover:border-gray-400 hover:text-gray-600 dark:border-gray-700 dark:hover:border-gray-500 dark:hover:text-gray-300"
                 >
-                  + Add entry
+                  + Insert at end
                 </button>
               </div>
             )}
