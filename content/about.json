@@ -60,6 +60,11 @@
     },
     {
       "year": "2024",
+      "title": "Summer - Uchicago",
+      "description": "Philosophy"
+    },
+    {
+      "year": "2024",
       "title": "Junior Year — Suffield Academy",
       "description": "Deep dive into IoT, embedded systems with ESP32, and calculator hacking."
     },
@@ -72,11 +77,6 @@
       "year": "Summer 2023",
       "title": "Getting Started",
       "description": "First steps into programming — Python scripting, HTML/CSS, and hardware tinkering."
-    },
-    {
-      "year": "Summer 2025",
-      "title": "UChicago ",
-      "description": "Philosophy "
     }
   ]
 }
