@@ -104,7 +104,10 @@ export async function POST(req: NextRequest) {
     const title = post.title || "Untitled";
     let content = post.html || post.mobiledoc || post.plaintext || "";
     const slug = post.slug || slugify(title);
-    const date = new Date().toISOString().split("T")[0];
+    const date =
+      post.published_at?.split("T")[0] ||
+      post.created_at?.split("T")[0] ||
+      new Date().toISOString().split("T")[0];
     const status = post.status || "draft";
 
     // Strip HTML for markdown storage

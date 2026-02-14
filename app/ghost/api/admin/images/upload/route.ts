@@ -2,10 +2,6 @@ import { NextRequest } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-const SITE_URL =
-  process.env.SITE_URL ||
-  "https://personal-site-andy-zhangs-projects.vercel.app";
-
 const GHOST_HEADERS = {
   "Content-Version": "v5.80",
   "X-Ghost-Version": "5.80.0",
@@ -66,9 +62,12 @@ export async function POST(req: NextRequest) {
 
     if (!res.ok) return ghostError("Failed to upload", 502);
 
+    // Use GitHub raw URL — immediately available, no redeploy needed
+    const imageUrl = `https://raw.githubusercontent.com/${REPO}/main/${path}`;
+
     return Response.json(
       {
-        images: [{ url: `${SITE_URL}/uploads/${safeName}`, ref: null }],
+        images: [{ url: imageUrl, ref: null }],
       },
       { headers: GHOST_HEADERS }
     );

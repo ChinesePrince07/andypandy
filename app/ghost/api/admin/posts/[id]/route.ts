@@ -63,7 +63,7 @@ export async function GET(
   );
 }
 
-// PUT — update post
+// PUT — update post (title, content, date, description)
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -81,6 +81,12 @@ export async function PUT(
     const title = update.title || existing.title;
     let content = update.html || update.plaintext || existing.content;
 
+    // Allow date editing via published_at or created_at
+    const date =
+      update.published_at?.split("T")[0] ||
+      update.created_at?.split("T")[0] ||
+      existing.date;
+
     // Strip HTML for markdown
     let markdown = content;
     if (markdown.includes("<p>") || markdown.includes("<br")) {
@@ -92,7 +98,7 @@ export async function PUT(
 
     const fileContent = `---
 title: "${title.replace(/"/g, '\\"')}"
-date: "${existing.date}"
+date: "${date}"
 description: "${(update.custom_excerpt || existing.description || "").replace(/"/g, '\\"')}"
 ---
 
@@ -101,7 +107,7 @@ ${markdown.trim()}
 
     const path = `content/blog/${id}.md`;
     const commitBody: Record<string, string> = {
-      message: `blog: ${title}`,
+      message: `blog: update ${title}`,
       content: btoa(unescape(encodeURIComponent(fileContent))),
     };
 
@@ -149,9 +155,9 @@ ${markdown.trim()}
             plaintext: markdown,
             status: update.status || "published",
             visibility: "public",
-            created_at: existing.date,
+            created_at: date,
             updated_at: now,
-            published_at: existing.date,
+            published_at: date,
             custom_excerpt: update.custom_excerpt || existing.description || null,
             url: `${SITE_URL}/blog/${id}`,
             authors: [{ id: "1", name: "Andy", slug: "andy" }],
@@ -163,6 +169,54 @@ ${markdown.trim()}
       },
       { headers: GHOST_HEADERS }
     );
+  } catch (err) {
+    return ghostError(String(err), 500);
+  }
+}
+
+// DELETE — delete post
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const path = `content/blog/${id}.md`;
+
+  try {
+    // Get file SHA (required for deletion)
+    const ghFile = await fetch(
+      `https://api.github.com/repos/${REPO}/contents/${path}`,
+      {
+        headers: {
+          Authorization: `token ${GITHUB_TOKEN}`,
+          "User-Agent": "personal-site",
+        },
+      }
+    );
+    if (!ghFile.ok) return ghostError("Post not found", 404);
+    const data = await ghFile.json();
+
+    const res = await fetch(
+      `https://api.github.com/repos/${REPO}/contents/${path}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `token ${GITHUB_TOKEN}`,
+          "Content-Type": "application/json",
+          "User-Agent": "personal-site",
+        },
+        body: JSON.stringify({
+          message: `blog: delete ${id}`,
+          sha: data.sha,
+        }),
+      }
+    );
+
+    if (!res.ok) return ghostError("Failed to delete", 502);
+
+    revalidateTag("posts");
+
+    return new Response(null, { status: 204, headers: GHOST_HEADERS });
   } catch (err) {
     return ghostError(String(err), 500);
   }
