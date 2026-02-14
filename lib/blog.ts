@@ -1,7 +1,5 @@
 import matter from "gray-matter";
-import { remark } from "remark";
-import remarkGfm from "remark-gfm";
-import html from "remark-html";
+import { marked } from "marked";
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN!;
 const REPO = "ChinesePrince07/personal-site";
@@ -62,12 +60,12 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
 
   const decoded = Buffer.from(fileData.content, "base64").toString("utf8");
   const { data, content } = matter(decoded);
-  const processed = await remark().use(remarkGfm).use(html, { sanitize: false }).process(content);
+  const rendered = await marked(content, { gfm: true, breaks: false });
   return {
     slug,
     title: data.title || slug,
     date: data.date || "",
     description: data.description || "",
-    content: processed.toString(),
+    content: rendered,
   };
 }
