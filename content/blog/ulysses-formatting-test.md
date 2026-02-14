@@ -2,6 +2,7 @@
 title: "Ulysses Formatting Test"
 date: "2026-02-14"
 description: "Testing all Ulysses markup features"
+pinned: true
 ---
 
 ## Heading Test
