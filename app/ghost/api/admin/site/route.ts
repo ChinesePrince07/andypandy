@@ -6,10 +6,14 @@ const SITE_URL =
   process.env.SITE_URL ||
   "https://personal-site-andy-zhangs-projects.vercel.app";
 
-// Public endpoint — Ghost clients check this to verify it's a Ghost blog
+const GHOST_HEADERS = {
+  "Content-Version": "v5.80",
+  "X-Ghost-Version": "5.80.0",
+};
+
 export async function GET(req: NextRequest) {
-  try {
-    return Response.json({
+  return Response.json(
+    {
       site: {
         title: "Andy",
         description: "Personal site & blog",
@@ -20,8 +24,7 @@ export async function GET(req: NextRequest) {
         url: SITE_URL,
         version: "5.80.0",
       },
-    });
-  } catch (err) {
-    return Response.json({ error: String(err) }, { status: 500 });
-  }
+    },
+    { headers: GHOST_HEADERS }
+  );
 }

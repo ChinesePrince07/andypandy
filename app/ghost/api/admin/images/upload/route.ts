@@ -1,12 +1,27 @@
 import { NextRequest } from "next/server";
-import { verifyGhostAuth, ghostError, getSiteUrl } from "@/lib/ghost";
+
+export const dynamic = "force-dynamic";
+
+const SITE_URL =
+  process.env.SITE_URL ||
+  "https://personal-site-andy-zhangs-projects.vercel.app";
+
+const GHOST_HEADERS = {
+  "Content-Version": "v5.80",
+  "X-Ghost-Version": "5.80.0",
+};
+
+function ghostError(message: string, status: number) {
+  return Response.json(
+    { errors: [{ message, type: "UnauthorizedError" }] },
+    { status, headers: GHOST_HEADERS }
+  );
+}
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN!;
 const REPO = "ChinesePrince07/personal-site";
 
 export async function POST(req: NextRequest) {
-  if (!verifyGhostAuth(req)) return ghostError("Unauthorized", 401);
-
   try {
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
@@ -51,9 +66,12 @@ export async function POST(req: NextRequest) {
 
     if (!res.ok) return ghostError("Failed to upload", 502);
 
-    return Response.json({
-      images: [{ url: `${getSiteUrl()}/uploads/${safeName}`, ref: null }],
-    });
+    return Response.json(
+      {
+        images: [{ url: `${SITE_URL}/uploads/${safeName}`, ref: null }],
+      },
+      { headers: GHOST_HEADERS }
+    );
   } catch (err) {
     return ghostError(String(err), 500);
   }

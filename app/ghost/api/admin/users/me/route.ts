@@ -2,11 +2,14 @@ import { NextRequest } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(req: NextRequest) {
-  try {
-    console.log("GHOST /users/me/ auth:", req.headers.get("authorization")?.slice(0, 40));
+const GHOST_HEADERS = {
+  "Content-Version": "v5.80",
+  "X-Ghost-Version": "5.80.0",
+};
 
-    return Response.json({
+export async function GET(req: NextRequest) {
+  return Response.json(
+    {
       users: [
         {
           id: "1",
@@ -29,8 +32,7 @@ export async function GET(req: NextRequest) {
           ],
         },
       ],
-    });
-  } catch (err) {
-    return Response.json({ error: String(err) }, { status: 500 });
-  }
+    },
+    { headers: GHOST_HEADERS }
+  );
 }

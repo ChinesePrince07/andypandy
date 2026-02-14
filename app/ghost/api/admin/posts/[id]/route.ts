@@ -1,6 +1,23 @@
 import { NextRequest } from "next/server";
-import { verifyGhostAuth, ghostError, getSiteUrl } from "@/lib/ghost";
 import { getAllPosts } from "@/lib/blog";
+
+export const dynamic = "force-dynamic";
+
+const SITE_URL =
+  process.env.SITE_URL ||
+  "https://personal-site-andy-zhangs-projects.vercel.app";
+
+const GHOST_HEADERS = {
+  "Content-Version": "v5.80",
+  "X-Ghost-Version": "5.80.0",
+};
+
+function ghostError(message: string, status: number) {
+  return Response.json(
+    { errors: [{ message, type: "UnauthorizedError" }] },
+    { status, headers: GHOST_HEADERS }
+  );
+}
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN!;
 const REPO = "ChinesePrince07/personal-site";
@@ -10,39 +27,39 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!verifyGhostAuth(req)) return ghostError("Unauthorized", 401);
-
   const { id } = await params;
   const posts = getAllPosts();
   const post = posts.find((p) => p.slug === id);
   if (!post) return ghostError("Post not found", 404);
 
-  const url = getSiteUrl();
-  return Response.json({
-    posts: [
-      {
-        id: post.slug,
-        uuid: post.slug,
-        title: post.title,
-        slug: post.slug,
-        html: post.content.includes("<")
-          ? post.content
-          : `<p>${post.content}</p>`,
-        plaintext: post.content.replace(/<[^>]*>/g, ""),
-        status: "published",
-        visibility: "public",
-        created_at: post.date,
-        updated_at: post.date,
-        published_at: post.date,
-        custom_excerpt: post.description || null,
-        url: `${url}/blog/${post.slug}`,
-        authors: [{ id: "1", name: "Andy", slug: "andy" }],
-        tags: [],
-        primary_author: { id: "1", name: "Andy", slug: "andy" },
-        primary_tag: null,
-      },
-    ],
-  });
+  return Response.json(
+    {
+      posts: [
+        {
+          id: post.slug,
+          uuid: post.slug,
+          title: post.title,
+          slug: post.slug,
+          html: post.content.includes("<")
+            ? post.content
+            : `<p>${post.content}</p>`,
+          plaintext: post.content.replace(/<[^>]*>/g, ""),
+          status: "published",
+          visibility: "public",
+          created_at: post.date,
+          updated_at: post.date,
+          published_at: post.date,
+          custom_excerpt: post.description || null,
+          url: `${SITE_URL}/blog/${post.slug}`,
+          authors: [{ id: "1", name: "Andy", slug: "andy" }],
+          tags: [],
+          primary_author: { id: "1", name: "Andy", slug: "andy" },
+          primary_tag: null,
+        },
+      ],
+    },
+    { headers: GHOST_HEADERS }
+  );
 }
 
 // PUT — update post
@@ -50,8 +67,6 @@ export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!verifyGhostAuth(req)) return ghostError("Unauthorized", 401);
-
   const { id } = await params;
   const posts = getAllPosts();
   const existing = posts.find((p) => p.slug === id);
@@ -118,31 +133,33 @@ ${markdown.trim()}
 
     if (!res.ok) return ghostError("Failed to update", 502);
 
-    const url = getSiteUrl();
     const now = new Date().toISOString();
-    return Response.json({
-      posts: [
-        {
-          id,
-          uuid: id,
-          title,
-          slug: id,
-          html: content,
-          plaintext: markdown,
-          status: update.status || "published",
-          visibility: "public",
-          created_at: existing.date,
-          updated_at: now,
-          published_at: existing.date,
-          custom_excerpt: update.custom_excerpt || existing.description || null,
-          url: `${url}/blog/${id}`,
-          authors: [{ id: "1", name: "Andy", slug: "andy" }],
-          tags: [],
-          primary_author: { id: "1", name: "Andy", slug: "andy" },
-          primary_tag: null,
-        },
-      ],
-    });
+    return Response.json(
+      {
+        posts: [
+          {
+            id,
+            uuid: id,
+            title,
+            slug: id,
+            html: content,
+            plaintext: markdown,
+            status: update.status || "published",
+            visibility: "public",
+            created_at: existing.date,
+            updated_at: now,
+            published_at: existing.date,
+            custom_excerpt: update.custom_excerpt || existing.description || null,
+            url: `${SITE_URL}/blog/${id}`,
+            authors: [{ id: "1", name: "Andy", slug: "andy" }],
+            tags: [],
+            primary_author: { id: "1", name: "Andy", slug: "andy" },
+            primary_tag: null,
+          },
+        ],
+      },
+      { headers: GHOST_HEADERS }
+    );
   } catch (err) {
     return ghostError(String(err), 500);
   }

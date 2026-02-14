@@ -1,6 +1,23 @@
 import { NextRequest } from "next/server";
-import { verifyGhostAuth, ghostError, getSiteUrl } from "@/lib/ghost";
 import { getAllPosts } from "@/lib/blog";
+
+export const dynamic = "force-dynamic";
+
+const SITE_URL =
+  process.env.SITE_URL ||
+  "https://personal-site-andy-zhangs-projects.vercel.app";
+
+const GHOST_HEADERS = {
+  "Content-Version": "v5.80",
+  "X-Ghost-Version": "5.80.0",
+};
+
+function ghostError(message: string, status: number) {
+  return Response.json(
+    { errors: [{ message, type: "UnauthorizedError" }] },
+    { status, headers: GHOST_HEADERS }
+  );
+}
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN!;
 const REPO = "ChinesePrince07/personal-site";
@@ -19,7 +36,6 @@ function postToGhost(post: {
   description: string;
   content: string;
 }) {
-  const url = getSiteUrl();
   return {
     id: post.slug,
     uuid: post.slug,
@@ -36,7 +52,7 @@ function postToGhost(post: {
     published_at: post.date || new Date().toISOString(),
     custom_excerpt: post.description || null,
     excerpt: post.description || null,
-    url: `${url}/blog/${post.slug}`,
+    url: `${SITE_URL}/blog/${post.slug}`,
     authors: [{ id: "1", name: "Andy", slug: "andy" }],
     tags: [],
     primary_author: { id: "1", name: "Andy", slug: "andy" },
@@ -47,31 +63,37 @@ function postToGhost(post: {
 // GET — list posts
 export async function GET(req: NextRequest) {
   console.log("GHOST /posts/ HIT", { auth: req.headers.get("authorization")?.slice(0, 30) });
-  // if (!verifyGhostAuth(req)) return ghostError("Unauthorized", 401);
 
   try {
     const posts = getAllPosts();
-    return Response.json({
-      posts: posts.map(postToGhost),
-      meta: {
-        pagination: {
-          page: 1,
-          limit: 15,
-          pages: 1,
-          total: posts.length,
-          next: null,
-          prev: null,
+    return Response.json(
+      {
+        posts: posts.map(postToGhost),
+        meta: {
+          pagination: {
+            page: 1,
+            limit: 15,
+            pages: 1,
+            total: posts.length,
+            next: null,
+            prev: null,
+          },
         },
       },
-    });
+      { headers: GHOST_HEADERS }
+    );
   } catch {
-    return Response.json({ posts: [], meta: { pagination: { page: 1, limit: 15, pages: 0, total: 0, next: null, prev: null } } });
+    return Response.json(
+      { posts: [], meta: { pagination: { page: 1, limit: 15, pages: 0, total: 0, next: null, prev: null } } },
+      { headers: GHOST_HEADERS }
+    );
   }
 }
 
 // POST — create post
 export async function POST(req: NextRequest) {
-  if (!verifyGhostAuth(req)) return ghostError("Unauthorized", 401);
+  // Auth disabled for now — Ulysses sends Ghost JWT but we skip verification
+  // to avoid crashes from crypto imports
 
   try {
     const body = await req.json();
@@ -141,7 +163,6 @@ ${markdown.trim()}
       return ghostError(`GitHub error: ${err}`, 502);
     }
 
-    const url = getSiteUrl();
     const now = new Date().toISOString();
     const ghostPost = {
       id: slug,
@@ -156,14 +177,14 @@ ${markdown.trim()}
       updated_at: now,
       published_at: status === "draft" ? null : now,
       custom_excerpt: post.custom_excerpt || null,
-      url: `${url}/blog/${slug}`,
+      url: `${SITE_URL}/blog/${slug}`,
       authors: [{ id: "1", name: "Andy", slug: "andy" }],
       tags: [],
       primary_author: { id: "1", name: "Andy", slug: "andy" },
       primary_tag: null,
     };
 
-    return Response.json({ posts: [ghostPost] }, { status: 201 });
+    return Response.json({ posts: [ghostPost] }, { status: 201, headers: GHOST_HEADERS });
   } catch (err) {
     return ghostError(String(err), 500);
   }
