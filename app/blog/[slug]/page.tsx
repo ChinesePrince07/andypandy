@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getPostBySlug } from "@/lib/blog";
+import { isAdmin } from "@/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -24,28 +25,40 @@ export default async function BlogPostPage({
   const post = await getPostBySlug(slug);
   if (!post) notFound();
 
+  const admin = await isAdmin();
+
   return (
     <article className="animate-fade-in">
       {/* Back link */}
-      <Link
-        href="/blog"
-        className="inline-flex items-center gap-1.5 text-sm text-gray-400 transition-colors hover:text-gray-600"
-      >
-        <svg
-          className="h-3.5 w-3.5"
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth={2}
-          stroke="currentColor"
+      <div className="flex items-center justify-between">
+        <Link
+          href="/blog"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-400 transition-colors hover:text-gray-600"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
-          />
-        </svg>
-        Back to blog
-      </Link>
+          <svg
+            className="h-3.5 w-3.5"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={2}
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
+            />
+          </svg>
+          Back to blog
+        </Link>
+        {admin && (
+          <Link
+            href={`/admin/edit/${slug}`}
+            className="text-sm text-gray-400 hover:text-gray-600"
+          >
+            Edit
+          </Link>
+        )}
+      </div>
 
       {/* Header */}
       <header className="mt-8 space-y-3">
