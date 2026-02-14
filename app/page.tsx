@@ -2,9 +2,9 @@ import Link from "next/link";
 import ScrambleText from "@/components/scramble-text";
 
 // Update these with your actual URLs
-const LINKEDIN_URL = "https://linkedin.com/in/andy-zhang";
-const INSTAGRAM_URL = "https://instagram.com/andyzhang";
-const EMAIL = "andy@example.com";
+const LINKEDIN_URL = "https://www.linkedin.com/in/andy-zhang-3a280135a/";
+const INSTAGRAM_URL = "https://www.instagram.com/andypandy0527/";
+const EMAIL = "zhangandy4321@gmail.com";
 
 export default function AboutPage() {
   return (

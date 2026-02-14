@@ -1,7 +1,7 @@
 import Link from "next/link";
 
-const LINKEDIN_URL = "https://linkedin.com/in/andy-zhang";
-const EMAIL = "andy@example.com";
+const LINKEDIN_URL = "https://www.linkedin.com/in/andy-zhang-3a280135a/";
+const EMAIL = "zhangandy4321@gmail.com";
 
 export default function Footer() {
   return (
