@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
       users: [
         {
           id: "1",
-          name: "Andy",
+          name: "Andy Zhang",
           slug: "andy",
           email: "admin@example.com",
           profile_image: null,

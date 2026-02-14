@@ -5,8 +5,8 @@ import Footer from "@/components/footer";
 
 export const metadata: Metadata = {
   title: {
-    default: "Andy",
-    template: "%s | Andy",
+    default: "Andy Zhang",
+    template: "%s | Andy Zhang",
   },
   description: "Personal site & blog",
 };

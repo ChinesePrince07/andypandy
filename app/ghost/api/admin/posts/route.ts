@@ -55,9 +55,9 @@ function postToGhost(post: {
     custom_excerpt: post.description || null,
     excerpt: post.description || null,
     url: `${SITE_URL}/blog/${post.slug}`,
-    authors: [{ id: "1", name: "Andy", slug: "andy" }],
+    authors: [{ id: "1", name: "Andy Zhang", slug: "andy" }],
     tags: [],
-    primary_author: { id: "1", name: "Andy", slug: "andy" },
+    primary_author: { id: "1", name: "Andy Zhang", slug: "andy" },
     primary_tag: null,
   };
 }
@@ -180,9 +180,9 @@ ${markdown.trim()}
       published_at: status === "draft" ? null : now,
       custom_excerpt: post.custom_excerpt || null,
       url: `${SITE_URL}/blog/${slug}`,
-      authors: [{ id: "1", name: "Andy", slug: "andy" }],
+      authors: [{ id: "1", name: "Andy Zhang", slug: "andy" }],
       tags: [],
-      primary_author: { id: "1", name: "Andy", slug: "andy" },
+      primary_author: { id: "1", name: "Andy Zhang", slug: "andy" },
       primary_tag: null,
     };
 

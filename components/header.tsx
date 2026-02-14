@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import ScrambleText from "./scramble-text";
 import ThemeToggle from "./theme-toggle";
+import LiveClock from "./live-clock";
 
 const links = [
   { href: "/", label: "About" },
@@ -15,8 +16,9 @@ export default function Header() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-50 flex justify-center px-4 pt-4">
-      <nav className="flex items-center gap-6 rounded-full border border-gray-200/60 bg-white/70 px-6 py-2.5 shadow-sm backdrop-blur-xl dark:border-gray-800/60 dark:bg-gray-950/70">
+    <header className="sticky top-0 z-50 flex items-center justify-between px-4 pt-4">
+      <div className="flex-1" />
+      <nav className="liquid-glass flex items-center gap-6 rounded-full px-6 py-2.5">
         <Link
           href="/"
           className="text-lg font-bold tracking-tight gradient-text transition-opacity hover:opacity-80"
@@ -40,6 +42,9 @@ export default function Header() {
           <ThemeToggle />
         </div>
       </nav>
+      <div className="flex-1 flex justify-end">
+        <LiveClock />
+      </div>
     </header>
   );
 }

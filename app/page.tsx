@@ -1,14 +1,44 @@
 import Link from "next/link";
 import ScrambleText from "@/components/scramble-text";
 
-// Update these with your actual URLs
 const LINKEDIN_URL = "https://www.linkedin.com/in/andy-zhang-3a280135a/";
 const INSTAGRAM_URL = "https://www.instagram.com/andypandy0527/";
 const EMAIL = "zhangandy4321@gmail.com";
 
+const skills = [
+  { category: "Languages", items: ["TypeScript", "Python", "C", "JavaScript", "HTML/CSS"] },
+  { category: "Frontend", items: ["React", "Next.js", "Tailwind CSS"] },
+  { category: "Backend", items: ["Node.js", "REST APIs"] },
+  { category: "Hardware", items: ["ESP32", "Arduino", "IoT"] },
+  { category: "Tools", items: ["Git", "Linux", "VS Code", "Vercel"] },
+];
+
+const timeline = [
+  {
+    year: "2025",
+    title: "Senior Year — Suffield Academy",
+    description: "Full-stack web development, personal projects, and college prep.",
+  },
+  {
+    year: "2024",
+    title: "Junior Year — Suffield Academy",
+    description: "Deep dive into IoT, embedded systems with ESP32, and calculator hacking.",
+  },
+  {
+    year: "Summer 2024",
+    title: "Summer Projects",
+    description: "Built side projects, explored machine learning, and sharpened coding skills.",
+  },
+  {
+    year: "Summer 2023",
+    title: "Getting Started",
+    description: "First steps into programming — Python scripting, HTML/CSS, and hardware tinkering.",
+  },
+];
+
 export default function AboutPage() {
   return (
-    <div className="space-y-10 animate-fade-in">
+    <div className="space-y-12 animate-fade-in">
       {/* Status pill */}
       <div className="animate-fade-in" style={{ animationDelay: "100ms" }}>
         <span className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs text-gray-500 shadow-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
@@ -24,7 +54,7 @@ export default function AboutPage() {
       <div className="space-y-5" style={{ animationDelay: "200ms" }}>
         <h1 className="text-5xl font-bold sm:text-6xl" style={{ letterSpacing: "-0.04em" }}>
           Hey, I&apos;m{" "}
-          <ScrambleText text="Andy" className="gradient-text" interval={5000} />
+          <ScrambleText text="Andy Zhang" className="gradient-text" interval={5000} />
         </h1>
         <p className="text-lg text-gray-500 leading-relaxed max-w-lg dark:text-gray-400">
           Developer, tinkerer, and builder of things — from embedded systems
@@ -53,7 +83,7 @@ export default function AboutPage() {
 
       {/* Links */}
       <div
-        className="flex flex-wrap gap-3 pt-2 animate-fade-in"
+        className="flex flex-wrap gap-3 animate-fade-in"
         style={{ animationDelay: "400ms" }}
       >
         <a
@@ -105,6 +135,97 @@ export default function AboutPage() {
           Read the blog &rarr;
         </Link>
       </div>
+
+      {/* Divider */}
+      <div className="divider" />
+
+      {/* Education */}
+      <section
+        className="space-y-4 animate-fade-in"
+        style={{ animationDelay: "500ms" }}
+      >
+        <h2 className="text-xl font-bold tracking-tight">Education</h2>
+        <div className="rounded-xl border border-gray-200/80 bg-white p-5 shadow-sm dark:border-gray-800/80 dark:bg-gray-900">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                Suffield Academy
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Suffield, Connecticut
+              </p>
+            </div>
+            <span className="shrink-0 text-xs tabular-nums text-gray-400 font-mono dark:text-gray-500">
+              Class of 2025
+            </span>
+          </div>
+        </div>
+      </section>
+
+      {/* Divider */}
+      <div className="divider" />
+
+      {/* Technical Skills */}
+      <section
+        className="space-y-4 animate-fade-in"
+        style={{ animationDelay: "600ms" }}
+      >
+        <h2 className="text-xl font-bold tracking-tight">Technical Skills</h2>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {skills.map((group) => (
+            <div
+              key={group.category}
+              className="rounded-xl border border-gray-200/80 bg-white p-4 shadow-sm dark:border-gray-800/80 dark:bg-gray-900"
+            >
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                {group.category}
+              </h3>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {group.items.map((item) => (
+                  <span
+                    key={item}
+                    className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-0.5 text-xs text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                  >
+                    {item}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Divider */}
+      <div className="divider" />
+
+      {/* Timeline */}
+      <section
+        className="space-y-4 animate-fade-in"
+        style={{ animationDelay: "700ms" }}
+      >
+        <h2 className="text-xl font-bold tracking-tight">Timeline</h2>
+        <div className="relative pl-8">
+          <div className="timeline-line" />
+          <div className="space-y-6">
+            {timeline.map((entry, i) => (
+              <div key={i} className="relative flex gap-4">
+                <div className="timeline-dot absolute -left-8 top-1" />
+                <div>
+                  <span className="text-xs font-mono text-gray-400 dark:text-gray-500">
+                    {entry.year}
+                  </span>
+                  <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                    {entry.title}
+                  </h3>
+                  <p className="text-sm text-gray-500 leading-relaxed dark:text-gray-400">
+                    {entry.description}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     id: 1,
-    name: "Andy",
+    name: "Andy Zhang",
     slug: "andy",
     roles: ["administrator"],
     capabilities: {

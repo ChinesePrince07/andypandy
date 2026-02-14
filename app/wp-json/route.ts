@@ -6,7 +6,7 @@ const SITE_URL =
 // WordPress REST API discovery endpoint
 export async function GET() {
   return NextResponse.json({
-    name: "Andy",
+    name: "Andy Zhang",
     description: "Personal site & blog",
     url: SITE_URL,
     home: SITE_URL,

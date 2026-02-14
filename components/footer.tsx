@@ -8,7 +8,7 @@ export default function Footer() {
     <footer>
       <div className="divider" />
       <div className="mx-auto flex max-w-2xl items-center justify-between px-6 py-8 text-sm text-gray-400 dark:text-gray-500">
-        <p className="mono">&copy; {new Date().getFullYear()} Andy</p>
+        <p className="mono">&copy; {new Date().getFullYear()} Andy Zhang</p>
         <div className="flex items-center gap-4">
           {/* GitHub */}
           <a
