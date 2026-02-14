@@ -1,84 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getProjectsWithPins } from "@/lib/projects";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Projects",
 };
 
-const projects = [
-  {
-    name: "TI-84 GPT Hack",
-    slug: "ti-84-gpt-hack",
-    description:
-      "A mod that gives your TI-84 Wi-Fi, ChatGPT, and the ability to disappoint your math teacher in ways never thought possible.",
-    tags: ["C", "ESP32", "Hardware"],
-    emoji: "🧮",
-  },
-  {
-    name: "Desmos Bezier Renderer",
-    slug: "desmos-bezier-renderer",
-    description:
-      "Transform any image into mathematical art on Desmos. Uses Canny edge detection and Potrace to convert images into parametric Bezier curve equations.",
-    tags: ["HTML", "Math", "macOS"],
-    emoji: "📐",
-    demo: "https://desmos.andypandy.org/calculator",
-  },
-  {
-    name: "Suffield Drive",
-    slug: "suffield-drive",
-    description:
-      "A shared drive for Suffield students to access and share school resources.",
-    tags: ["TypeScript", "Web"],
-    emoji: "☁️",
-    demo: "https://suffield-drive.vercel.app",
-  },
-  {
-    name: "EXIF Photo Blog",
-    slug: "exif-photo-blog",
-    description:
-      "A photography blog that reports camera details like aperture, shutter speed, and ISO for each image.",
-    tags: ["TypeScript", "Next.js", "Photography"],
-    emoji: "📷",
-    demo: "https://exif-photo-blog-real.vercel.app",
-  },
-  {
-    name: "Taylor Series Visualizer",
-    slug: "taylor-series",
-    description:
-      "An interactive visualization of Taylor series approximations for Calc BC.",
-    tags: ["HTML", "Math"],
-    emoji: "📊",
-    demo: "https://taylorseries-calcbc.vercel.app",
-  },
-  {
-    name: "Music Landing Page",
-    slug: "music-landing-page",
-    description:
-      "A commissioned landing page for a music artist.",
-    tags: ["HTML", "Design"],
-    emoji: "🎵",
-    demo: "https://music-landing-page-commissioned.vercel.app",
-  },
-  {
-    name: "Stroke Prediction",
-    slug: "stroke-prediction",
-    description:
-      "ML model that predicts stroke likelihood based on patient data like age, BMI, glucose level, and smoking status.",
-    tags: ["Python", "ML", "Jupyter"],
-    emoji: "🧠",
-  },
-  {
-    name: "Chatbot UI",
-    slug: "chatbot-ui",
-    description:
-      "A chat interface for interacting with AI models.",
-    tags: ["TypeScript", "AI"],
-    emoji: "💬",
-    demo: "https://chatbot-ui-phi-one-74.vercel.app",
-  },
-];
+export default async function ProjectsPage() {
+  const projects = await getProjectsWithPins();
 
-export default function ProjectsPage() {
   return (
     <div className="space-y-10">
       <div className="animate-fade-in">
@@ -103,6 +35,9 @@ export default function ProjectsPage() {
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
+                  {project.pinned && (
+                    <span className="h-1.5 w-1.5 rounded-full bg-gray-900 shrink-0" />
+                  )}
                   <h2 className="font-semibold text-gray-900 group-hover:gradient-text transition-colors">
                     {project.name}
                   </h2>

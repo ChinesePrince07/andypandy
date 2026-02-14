@@ -1,20 +1,10 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { projects } from "@/lib/projects";
 
 export const dynamic = "force-dynamic";
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN!;
-
-const projects = [
-  { slug: "ti-84-gpt-hack", repo: "ChinesePrince07/TI-84-GPT-HACK", name: "TI-84 GPT Hack", tags: ["C", "ESP32", "Hardware"], emoji: "🧮" },
-  { slug: "desmos-bezier-renderer", repo: "ChinesePrince07/DesmosBezierRenderer-mac", name: "Desmos Bezier Renderer", tags: ["HTML", "Math", "macOS"], emoji: "📐", demo: "https://desmos.andypandy.org/calculator" },
-  { slug: "suffield-drive", repo: "ChinesePrince07/Suffield-Drive", name: "Suffield Drive", tags: ["TypeScript", "Web"], emoji: "☁️", demo: "https://suffield-drive.vercel.app" },
-  { slug: "exif-photo-blog", repo: "ChinesePrince07/exif-photo-blog-real", name: "EXIF Photo Blog", tags: ["TypeScript", "Next.js", "Photography"], emoji: "📷", demo: "https://exif-photo-blog-real.vercel.app" },
-  { slug: "taylor-series", repo: "ChinesePrince07/taylorseries-CALCBC", name: "Taylor Series Visualizer", tags: ["HTML", "Math"], emoji: "📊", demo: "https://taylorseries-calcbc.vercel.app" },
-  { slug: "music-landing-page", repo: "ChinesePrince07/music-landing-page-commissioned", name: "Music Landing Page", tags: ["HTML", "Design"], emoji: "🎵", demo: "https://music-landing-page-commissioned.vercel.app" },
-  { slug: "stroke-prediction", repo: "ChinesePrince07/Stroke-Prediction", name: "Stroke Prediction", tags: ["Python", "ML", "Jupyter"], emoji: "🧠" },
-  { slug: "chatbot-ui", repo: "ChinesePrince07/chatbot-ui", name: "Chatbot UI", tags: ["TypeScript", "AI"], emoji: "💬", demo: "https://chatbot-ui-phi-one-74.vercel.app" },
-];
 
 async function getReadmeHtml(repo: string): Promise<string | null> {
   const headers = {
