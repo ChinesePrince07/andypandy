@@ -292,7 +292,7 @@ a:active, button:active {
 }
 .prose ul li { list-style-type: disc; }
 .prose ol li { list-style-type: decimal; }
-.prose strong { color: #111; font-weight: 600; }
+.prose strong { color: #111; font-weight: 700; }
 .prose a {
   color: #111;
   text-decoration: underline;
