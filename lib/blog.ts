@@ -19,7 +19,7 @@ export async function getAllPosts(): Promise<Post[]> {
     if (!blob.pathname.endsWith(".md")) continue;
     const slug = blob.pathname.replace("blog/", "").replace(/\.md$/, "");
 
-    const res = await fetch(blob.url, { cache: "no-store" });
+    const res = await fetch(`${blob.url}?t=${Date.now()}`, { cache: "no-store" });
     if (!res.ok) continue;
     const text = await res.text();
     const { data, content } = matter(text);
@@ -46,7 +46,7 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
   const blob = blobs.find((b) => b.pathname === `blog/${slug}.md`);
   if (!blob) return null;
 
-  const res = await fetch(blob.url, { cache: "no-store" });
+  const res = await fetch(`${blob.url}?t=${Date.now()}`, { cache: "no-store" });
   if (!res.ok) return null;
   const text = await res.text();
   const { data, content } = matter(text);
@@ -89,7 +89,7 @@ export async function getRawPost(slug: string): Promise<{ frontmatter: Record<st
   const blob = blobs.find((b) => b.pathname === `blog/${slug}.md`);
   if (!blob) return null;
 
-  const res = await fetch(blob.url);
+  const res = await fetch(`${blob.url}?t=${Date.now()}`, { cache: "no-store" });
   if (!res.ok) return null;
   const text = await res.text();
   const { data, content } = matter(text);
