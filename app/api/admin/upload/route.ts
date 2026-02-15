@@ -2,6 +2,8 @@ import { NextRequest } from "next/server";
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { isAdmin } from "@/lib/admin-auth";
 
+const SITE_URL = process.env.SITE_URL || "https://andypandy.org";
+
 export async function POST(req: NextRequest) {
   const body = (await req.json()) as HandleUploadBody;
 
@@ -26,6 +28,7 @@ export async function POST(req: NextRequest) {
             "video/ogg",
           ],
           maximumSizeInBytes: 100 * 1024 * 1024, // 100MB
+          callbackUrl: `${SITE_URL}/api/admin/upload/`,
         };
       },
       onUploadCompleted: async () => {

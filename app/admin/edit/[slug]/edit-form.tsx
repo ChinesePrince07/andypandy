@@ -124,8 +124,8 @@ export default function EditForm({
       }
 
       setMessage("Uploaded");
-    } catch {
-      setMessage("Upload failed");
+    } catch (err) {
+      setMessage(`Upload failed: ${err instanceof Error ? err.message : String(err)}`);
     }
     setUploading(false);
   }, [content]);
