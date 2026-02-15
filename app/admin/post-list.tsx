@@ -57,9 +57,12 @@ export default function PostList({
     setTogglingPost(null);
   }
 
-  async function handleToggleProjectPin(slug: string, currentlyPinned: boolean) {
+  async function handleToggleProjectPin(
+    slug: string,
+    currentlyPinned: boolean,
+  ) {
     setTogglingProject(slug);
-    const res = await fetch("/api/admin/projects/pin", {
+    const res = await fetch("/api/admin/projects/pin/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ slug, pinned: !currentlyPinned }),
@@ -71,7 +74,7 @@ export default function PostList({
   }
 
   async function handleLogout() {
-    await fetch("/api/admin/auth", { method: "DELETE" });
+    await fetch("/api/admin/auth/", { method: "DELETE" });
     router.refresh();
   }
 
@@ -121,7 +124,11 @@ export default function PostList({
                     : "border-gray-200 text-gray-400 hover:border-gray-300 hover:text-gray-600"
                 }`}
               >
-                {togglingPost === post.slug ? "..." : post.pinned ? "Pinned" : "Pin"}
+                {togglingPost === post.slug
+                  ? "..."
+                  : post.pinned
+                    ? "Pinned"
+                    : "Pin"}
               </button>
               <Link
                 href={`/admin/edit/${post.slug}`}
@@ -168,7 +175,9 @@ export default function PostList({
             </div>
             <div className="flex items-center gap-2 ml-4 shrink-0">
               <button
-                onClick={() => handleToggleProjectPin(project.slug, project.pinned)}
+                onClick={() =>
+                  handleToggleProjectPin(project.slug, project.pinned)
+                }
                 disabled={togglingProject === project.slug}
                 className={`rounded-md border px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 ${
                   project.pinned
@@ -176,7 +185,11 @@ export default function PostList({
                     : "border-gray-200 text-gray-400 hover:border-gray-300 hover:text-gray-600"
                 }`}
               >
-                {togglingProject === project.slug ? "..." : project.pinned ? "Pinned" : "Pin"}
+                {togglingProject === project.slug
+                  ? "..."
+                  : project.pinned
+                    ? "Pinned"
+                    : "Pin"}
               </button>
             </div>
           </div>

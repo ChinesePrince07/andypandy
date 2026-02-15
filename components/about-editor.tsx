@@ -23,7 +23,7 @@ export default function AboutEditor({ data }: { data: AboutData }) {
   async function save() {
     setSaving(true);
     try {
-      const res = await fetch("/api/admin/about", {
+      const res = await fetch("/api/admin/about/", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(draft),
@@ -45,8 +45,18 @@ export default function AboutEditor({ data }: { data: AboutData }) {
         className="fixed bottom-6 right-6 z-[190] flex h-12 w-12 items-center justify-center rounded-full bg-gray-900 text-white shadow-lg transition-transform hover:scale-105 active:scale-95 dark:bg-gray-100 dark:text-gray-900"
         aria-label="Edit page"
       >
-        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+        <svg
+          className="h-5 w-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth={2}
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
+          />
         </svg>
       </button>
 
@@ -73,12 +83,24 @@ export default function AboutEditor({ data }: { data: AboutData }) {
               onClick={() => setEditing(null)}
               className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             >
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
 
-            <h2 className="mb-4 text-lg font-bold capitalize">Edit {editing}</h2>
+            <h2 className="mb-4 text-lg font-bold capitalize">
+              Edit {editing}
+            </h2>
 
             {editing === "bio" && (
               <div className="space-y-3">
@@ -90,7 +112,12 @@ export default function AboutEditor({ data }: { data: AboutData }) {
                       </label>
                       {draft.bio.length > 1 && (
                         <button
-                          onClick={() => setDraft({ ...draft, bio: draft.bio.filter((_, j) => j !== i) })}
+                          onClick={() =>
+                            setDraft({
+                              ...draft,
+                              bio: draft.bio.filter((_, j) => j !== i),
+                            })
+                          }
                           className="text-xs text-red-400 hover:text-red-600"
                         >
                           Remove
@@ -110,7 +137,9 @@ export default function AboutEditor({ data }: { data: AboutData }) {
                   </div>
                 ))}
                 <button
-                  onClick={() => setDraft({ ...draft, bio: [...draft.bio, ""] })}
+                  onClick={() =>
+                    setDraft({ ...draft, bio: [...draft.bio, ""] })
+                  }
                   className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                 >
                   + Add paragraph
@@ -121,34 +150,71 @@ export default function AboutEditor({ data }: { data: AboutData }) {
             {editing === "education" && (
               <div className="space-y-3">
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-gray-500">School</label>
+                  <label className="mb-1 block text-xs font-medium text-gray-500">
+                    School
+                  </label>
                   <input
                     value={draft.education.school}
-                    onChange={(e) => setDraft({ ...draft, education: { ...draft.education, school: e.target.value } })}
+                    onChange={(e) =>
+                      setDraft({
+                        ...draft,
+                        education: {
+                          ...draft.education,
+                          school: e.target.value,
+                        },
+                      })
+                    }
                     className={inputClass}
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-gray-500">Location</label>
+                  <label className="mb-1 block text-xs font-medium text-gray-500">
+                    Location
+                  </label>
                   <input
                     value={draft.education.location}
-                    onChange={(e) => setDraft({ ...draft, education: { ...draft.education, location: e.target.value } })}
+                    onChange={(e) =>
+                      setDraft({
+                        ...draft,
+                        education: {
+                          ...draft.education,
+                          location: e.target.value,
+                        },
+                      })
+                    }
                     className={inputClass}
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-gray-500">Year</label>
+                  <label className="mb-1 block text-xs font-medium text-gray-500">
+                    Year
+                  </label>
                   <input
                     value={draft.education.year}
-                    onChange={(e) => setDraft({ ...draft, education: { ...draft.education, year: e.target.value } })}
+                    onChange={(e) =>
+                      setDraft({
+                        ...draft,
+                        education: { ...draft.education, year: e.target.value },
+                      })
+                    }
                     className={inputClass}
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-gray-500">Logo URL (optional)</label>
+                  <label className="mb-1 block text-xs font-medium text-gray-500">
+                    Logo URL (optional)
+                  </label>
                   <input
                     value={draft.education.logo || ""}
-                    onChange={(e) => setDraft({ ...draft, education: { ...draft.education, logo: e.target.value || undefined } })}
+                    onChange={(e) =>
+                      setDraft({
+                        ...draft,
+                        education: {
+                          ...draft.education,
+                          logo: e.target.value || undefined,
+                        },
+                      })
+                    }
                     placeholder="https://example.com/logo.png"
                     className={inputClass}
                   />
@@ -159,19 +225,30 @@ export default function AboutEditor({ data }: { data: AboutData }) {
             {editing === "skills" && (
               <div className="space-y-4">
                 {draft.skills.map((group, gi) => (
-                  <div key={gi} className="rounded-lg border border-gray-100 p-3 dark:border-gray-800">
+                  <div
+                    key={gi}
+                    className="rounded-lg border border-gray-100 p-3 dark:border-gray-800"
+                  >
                     <div className="flex items-center gap-2">
                       <input
                         value={group.category}
                         onChange={(e) => {
                           const skills = [...draft.skills];
-                          skills[gi] = { ...skills[gi], category: e.target.value };
+                          skills[gi] = {
+                            ...skills[gi],
+                            category: e.target.value,
+                          };
                           setDraft({ ...draft, skills });
                         }}
                         className="flex-1 rounded border border-gray-200 bg-gray-50 px-2 py-1 text-xs font-semibold uppercase dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
                       />
                       <button
-                        onClick={() => setDraft({ ...draft, skills: draft.skills.filter((_, i) => i !== gi) })}
+                        onClick={() =>
+                          setDraft({
+                            ...draft,
+                            skills: draft.skills.filter((_, i) => i !== gi),
+                          })
+                        }
                         className="text-xs text-red-400 hover:text-red-600"
                       >
                         Remove
@@ -182,7 +259,13 @@ export default function AboutEditor({ data }: { data: AboutData }) {
                       value={group.items.join(", ")}
                       onChange={(e) => {
                         const skills = [...draft.skills];
-                        skills[gi] = { ...skills[gi], items: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) };
+                        skills[gi] = {
+                          ...skills[gi],
+                          items: e.target.value
+                            .split(",")
+                            .map((s) => s.trim())
+                            .filter(Boolean),
+                        };
                         setDraft({ ...draft, skills });
                       }}
                       placeholder="Comma-separated skills"
@@ -191,7 +274,12 @@ export default function AboutEditor({ data }: { data: AboutData }) {
                   </div>
                 ))}
                 <button
-                  onClick={() => setDraft({ ...draft, skills: [...draft.skills, { category: "New", items: [] }] })}
+                  onClick={() =>
+                    setDraft({
+                      ...draft,
+                      skills: [...draft.skills, { category: "New", items: [] }],
+                    })
+                  }
                   className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                 >
                   + Add category
@@ -207,7 +295,11 @@ export default function AboutEditor({ data }: { data: AboutData }) {
                     <button
                       onClick={() => {
                         const timeline = [...draft.timeline];
-                        timeline.splice(i, 0, { year: "", title: "", description: "" });
+                        timeline.splice(i, 0, {
+                          year: "",
+                          title: "",
+                          description: "",
+                        });
                         setDraft({ ...draft, timeline });
                       }}
                       className="mb-1 flex w-full items-center justify-center gap-1 rounded border border-dashed border-gray-200 py-1 text-[10px] text-gray-400 hover:border-gray-400 hover:text-gray-600 dark:border-gray-700 dark:hover:border-gray-500 dark:hover:text-gray-300"
@@ -220,7 +312,10 @@ export default function AboutEditor({ data }: { data: AboutData }) {
                           value={entry.year}
                           onChange={(e) => {
                             const timeline = [...draft.timeline];
-                            timeline[i] = { ...timeline[i], year: e.target.value };
+                            timeline[i] = {
+                              ...timeline[i],
+                              year: e.target.value,
+                            };
                             setDraft({ ...draft, timeline });
                           }}
                           placeholder="Year"
@@ -230,14 +325,24 @@ export default function AboutEditor({ data }: { data: AboutData }) {
                           value={entry.title}
                           onChange={(e) => {
                             const timeline = [...draft.timeline];
-                            timeline[i] = { ...timeline[i], title: e.target.value };
+                            timeline[i] = {
+                              ...timeline[i],
+                              title: e.target.value,
+                            };
                             setDraft({ ...draft, timeline });
                           }}
                           placeholder="Title"
                           className="flex-1 rounded border border-gray-200 bg-gray-50 px-2 py-1 text-xs dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
                         />
                         <button
-                          onClick={() => setDraft({ ...draft, timeline: draft.timeline.filter((_, j) => j !== i) })}
+                          onClick={() =>
+                            setDraft({
+                              ...draft,
+                              timeline: draft.timeline.filter(
+                                (_, j) => j !== i,
+                              ),
+                            })
+                          }
                           className="text-xs text-red-400 hover:text-red-600"
                         >
                           Remove
@@ -248,7 +353,10 @@ export default function AboutEditor({ data }: { data: AboutData }) {
                         value={entry.description}
                         onChange={(e) => {
                           const timeline = [...draft.timeline];
-                          timeline[i] = { ...timeline[i], description: e.target.value };
+                          timeline[i] = {
+                            ...timeline[i],
+                            description: e.target.value,
+                          };
                           setDraft({ ...draft, timeline });
                         }}
                         placeholder="Description"
@@ -259,7 +367,15 @@ export default function AboutEditor({ data }: { data: AboutData }) {
                 ))}
                 {/* Insert at end */}
                 <button
-                  onClick={() => setDraft({ ...draft, timeline: [...draft.timeline, { year: "", title: "", description: "" }] })}
+                  onClick={() =>
+                    setDraft({
+                      ...draft,
+                      timeline: [
+                        ...draft.timeline,
+                        { year: "", title: "", description: "" },
+                      ],
+                    })
+                  }
                   className="flex w-full items-center justify-center gap-1 rounded border border-dashed border-gray-200 py-1.5 text-[10px] text-gray-400 hover:border-gray-400 hover:text-gray-600 dark:border-gray-700 dark:hover:border-gray-500 dark:hover:text-gray-300"
                 >
                   + Insert at end
