@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { put } from "@vercel/blob";
 
 export const dynamic = "force-dynamic";
 
@@ -14,61 +15,22 @@ function ghostError(message: string, status: number) {
   );
 }
 
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN!;
-const REPO = "ChinesePrince07/personal-site";
-
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
     if (!file) return ghostError("No file uploaded", 422);
 
-    const bytes = await file.arrayBuffer();
-    const base64 = Buffer.from(bytes).toString("base64");
     const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
-    const path = `public/uploads/${safeName}`;
 
-    const commitBody: Record<string, string> = {
-      message: `upload: ${safeName}`,
-      content: base64,
-    };
-
-    const existing = await fetch(
-      `https://api.github.com/repos/${REPO}/contents/${path}`,
-      {
-        headers: {
-          Authorization: `token ${GITHUB_TOKEN}`,
-          "User-Agent": "personal-site",
-        },
-      }
-    );
-    if (existing.ok) {
-      const data = await existing.json();
-      commitBody.sha = data.sha;
-    }
-
-    const res = await fetch(
-      `https://api.github.com/repos/${REPO}/contents/${path}`,
-      {
-        method: "PUT",
-        headers: {
-          Authorization: `token ${GITHUB_TOKEN}`,
-          "Content-Type": "application/json",
-          "User-Agent": "personal-site",
-        },
-        body: JSON.stringify(commitBody),
-      }
-    );
-
-    if (!res.ok) return ghostError("Failed to upload", 502);
-
-    // Proxy through our API (repo is private, raw.githubusercontent.com won't work)
-    const siteUrl = process.env.SITE_URL || "https://personal-site-andy-zhangs-projects.vercel.app";
-    const imageUrl = `${siteUrl}/api/uploads/${safeName}`;
+    const blob = await put(`uploads/${safeName}`, file, {
+      access: "public",
+      addRandomSuffix: false,
+    });
 
     return Response.json(
       {
-        images: [{ url: imageUrl, ref: null }],
+        images: [{ url: blob.url, ref: null }],
       },
       { headers: GHOST_HEADERS }
     );

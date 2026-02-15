@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAllPosts } from "@/lib/blog";
+import { put } from "@vercel/blob";
 
 const PUBLISH_SECRET = process.env.PUBLISH_SECRET!;
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN!;
@@ -394,49 +395,18 @@ ${content.trim()}
     if (!bits) return fault(400, "No file data.");
 
     const safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, "-");
-    const path = `public/uploads/${safeName}`;
+    const buffer = Buffer.from(bits, "base64");
 
-    const commitBody: Record<string, string> = {
-      message: `upload: ${safeName}`,
-      content: bits, // already base64
-    };
+    const blob = await put(`uploads/${safeName}`, buffer, {
+      access: "public",
+      addRandomSuffix: false,
+    });
 
-    // Check if file exists
-    const existing = await fetch(
-      `https://api.github.com/repos/${REPO}/contents/${path}`,
-      {
-        headers: {
-          Authorization: `token ${GITHUB_TOKEN}`,
-          "User-Agent": "personal-site",
-        },
-      }
-    );
-    if (existing.ok) {
-      const data = await existing.json();
-      commitBody.sha = data.sha;
-    }
-
-    const res = await fetch(
-      `https://api.github.com/repos/${REPO}/contents/${path}`,
-      {
-        method: "PUT",
-        headers: {
-          Authorization: `token ${GITHUB_TOKEN}`,
-          "Content-Type": "application/json",
-          "User-Agent": "personal-site",
-        },
-        body: JSON.stringify(commitBody),
-      }
-    );
-
-    if (!res.ok) return fault(500, "Failed to upload.");
-
-    const url = `${SITE_URL}/uploads/${safeName}`;
     return xml(
       `<methodResponse><params><param><value><struct>
 <member><name>id</name><value><string>${Date.now()}</string></value></member>
 <member><name>file</name><value><string>${safeName}</string></value></member>
-<member><name>url</name><value><string>${url}</string></value></member>
+<member><name>url</name><value><string>${blob.url}</string></value></member>
 <member><name>type</name><value><string>image/jpeg</string></value></member>
 </struct></value></param></params></methodResponse>`
     );
