@@ -26,6 +26,7 @@ export async function POST(req: NextRequest) {
     const blob = await put(`uploads/${safeName}`, file, {
       access: "public",
       addRandomSuffix: false,
+      allowOverwrite: true,
     });
 
     return Response.json(

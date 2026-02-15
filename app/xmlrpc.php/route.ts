@@ -363,6 +363,7 @@ ${content.trim()}
     const blob = await put(`uploads/${safeName}`, buffer, {
       access: "public",
       addRandomSuffix: false,
+      allowOverwrite: true,
     });
 
     return xml(

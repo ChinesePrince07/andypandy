@@ -65,6 +65,7 @@ export async function savePost(slug: string, fileContent: string) {
   await put(`blog/${slug}.md`, fileContent, {
     access: "public",
     addRandomSuffix: false,
+    allowOverwrite: true,
     token: process.env.BLOB_READ_WRITE_TOKEN,
   });
 }
