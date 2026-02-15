@@ -15,10 +15,13 @@ export async function POST(req: NextRequest) {
 
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
 
-  const blob = await put(`uploads/${safeName}`, file, {
-    access: "public",
-    addRandomSuffix: false,
-  });
-
-  return Response.json({ url: blob.url, name: safeName });
+  try {
+    const blob = await put(`uploads/${safeName}`, file, {
+      access: "public",
+      addRandomSuffix: false,
+    });
+    return Response.json({ url: blob.url, name: safeName });
+  } catch (err) {
+    return Response.json({ error: String(err) }, { status: 500 });
+  }
 }

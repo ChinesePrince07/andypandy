@@ -25,7 +25,11 @@ description: "${(description || "").replace(/"/g, '\\"')}"${pinnedLine}
 ${(content || "").trim()}
 `;
 
-  await savePost(slug, fileContent);
+  try {
+    await savePost(slug, fileContent);
+  } catch (err) {
+    return Response.json({ error: String(err) }, { status: 500 });
+  }
   revalidateTag("posts");
   return Response.json({ ok: true });
 }
