@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getPostBySlug } from "@/lib/blog";
 import { isAdmin } from "@/lib/admin-auth";
+import Comments from "@/components/comments";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +29,10 @@ export default async function BlogPostPage({
   const admin = await isAdmin();
 
   // Word count from stripped HTML
-  const plainText = post.content.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  const plainText = post.content
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
   const wordCount = plainText ? plainText.split(/\s+/).length : 0;
   const readTime = Math.max(1, Math.round(wordCount / 230));
 
@@ -93,7 +97,9 @@ export default async function BlogPostPage({
           {wordCount.toLocaleString()} words &middot; {readTime} min read
         </p>
         {post.description && (
-          <p className="text-lg text-gray-500 dark:text-gray-400">{post.description}</p>
+          <p className="text-lg text-gray-500 dark:text-gray-400">
+            {post.description}
+          </p>
         )}
       </header>
 
@@ -106,6 +112,9 @@ export default async function BlogPostPage({
         style={{ animationDelay: "200ms" }}
         dangerouslySetInnerHTML={{ __html: post.content }}
       />
+
+      {/* Comments */}
+      <Comments slug={slug} isAdmin={admin} />
     </article>
   );
 }
