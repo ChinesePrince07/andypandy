@@ -24,7 +24,6 @@ Personal portfolio and blog built with Next.js 15. Features an about page, proje
 - Reading time estimates
 - Pinned posts displayed first
 - RSS feed at `/feed.xml`
-- Obsidian vault sync via `scripts/sync-blog.sh` (rsync + auto-commit)
 
 ### Admin
 - Password-protected dashboard at `/admin`
@@ -121,9 +120,6 @@ personal-site/
 │   ├── about.json              # About page content
 │   └── pinned-projects.json    # Pinned project slugs
 │
-├── scripts/
-│   └── sync-blog.sh            # Obsidian vault sync script
-│
 ├── middleware.ts                # Link headers for protocol discovery
 ├── next.config.ts
 ├── package.json
@@ -132,13 +128,7 @@ personal-site/
 
 ## Content Workflow
 
-Blog posts are authored in Obsidian and synced to the repo:
-
-```
-Obsidian vault  -->  sync-blog.sh (rsync)  -->  GitHub  -->  Vercel auto-deploy
-```
-
-The site fetches content from the GitHub API at request time with 60-second ISR revalidation, so updates appear within a minute of pushing.
+Blog posts are written as markdown files in `content/blog/` and pushed to GitHub. The site fetches content from the GitHub API at request time with 60-second ISR revalidation, so updates appear within a minute of pushing.
 
 ## Scripts
 
