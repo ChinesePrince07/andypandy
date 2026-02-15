@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -47,7 +47,11 @@ export default function EditForm({
   const [content, setContent] = useState(initialContent);
   const [pinned, setPinned] = useState(initialPinned);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState("");
+  const [dragOver, setDragOver] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
   async function handleSave(e: React.FormEvent) {
@@ -74,6 +78,87 @@ export default function EditForm({
       setMessage("Failed to save");
     }
     setSaving(false);
+  }
+
+  const uploadFile = useCallback(async (file: File) => {
+    setUploading(true);
+    setMessage("");
+
+    const form = new FormData();
+    form.append("file", file);
+
+    try {
+      const res = await fetch("/api/admin/upload/", { method: "POST", body: form });
+      if (!res.ok) {
+        setMessage("Upload failed");
+        setUploading(false);
+        return;
+      }
+
+      const { url } = await res.json();
+      const isVideo = /\.(mp4|mov|webm|ogg)$/i.test(file.name);
+      const isImage = /\.(jpe?g|png|gif|webp|svg)$/i.test(file.name);
+
+      let markdown: string;
+      if (isVideo) {
+        markdown = `<video src="${url}" controls></video>`;
+      } else if (isImage) {
+        markdown = `![${file.name}](${url})`;
+      } else {
+        markdown = `[${file.name}](${url})`;
+      }
+
+      // Insert at cursor position or append
+      const ta = textareaRef.current;
+      if (ta) {
+        const start = ta.selectionStart;
+        const before = content.slice(0, start);
+        const after = content.slice(ta.selectionEnd);
+        const newContent = before + (before.endsWith("\n") || before === "" ? "" : "\n\n") + markdown + "\n" + after;
+        setContent(newContent);
+        // Restore cursor after inserted text
+        requestAnimationFrame(() => {
+          const pos = (before + (before.endsWith("\n") || before === "" ? "" : "\n\n") + markdown + "\n").length;
+          ta.selectionStart = ta.selectionEnd = pos;
+          ta.focus();
+        });
+      } else {
+        setContent((c) => c + "\n\n" + markdown + "\n");
+      }
+
+      setMessage("Uploaded");
+    } catch {
+      setMessage("Upload failed");
+    }
+    setUploading(false);
+  }, [content]);
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files[0];
+    if (file) uploadFile(file);
+  }
+
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) uploadFile(file);
+    e.target.value = "";
+  }
+
+  // Handle paste with images
+  function handlePaste(e: React.ClipboardEvent) {
+    const items = e.clipboardData.items;
+    for (const item of items) {
+      if (item.type.startsWith("image/") || item.type.startsWith("video/")) {
+        const file = item.getAsFile();
+        if (file) {
+          e.preventDefault();
+          uploadFile(file);
+          return;
+        }
+      }
+    }
   }
 
   return (
@@ -167,15 +252,61 @@ export default function EditForm({
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1">
-            Content (Markdown)
-          </label>
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            rows={20}
-            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm font-mono leading-relaxed focus:border-gray-900 focus:outline-none resize-y"
-          />
+          <div className="flex items-center justify-between mb-1">
+            <label className="block text-xs font-medium text-gray-500">
+              Content (Markdown)
+            </label>
+            <div className="flex items-center gap-2">
+              {uploading && (
+                <span className="text-xs text-gray-400">Uploading...</span>
+              )}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="inline-flex items-center gap-1 rounded-md border border-gray-300 px-2.5 py-1 text-xs font-medium text-gray-500 hover:border-gray-400 hover:text-gray-700 disabled:opacity-50"
+              >
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                </svg>
+                Upload
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,video/*"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+            </div>
+          </div>
+          <div
+            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={handleDrop}
+            className={`relative rounded-lg border transition-colors ${
+              dragOver
+                ? "border-gray-900 bg-gray-50"
+                : "border-gray-300"
+            }`}
+          >
+            {dragOver && (
+              <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-gray-50/90 z-10 pointer-events-none">
+                <span className="text-sm font-medium text-gray-600">Drop to upload</span>
+              </div>
+            )}
+            <textarea
+              ref={textareaRef}
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              onPaste={handlePaste}
+              rows={20}
+              className="w-full rounded-lg px-4 py-3 text-sm font-mono leading-relaxed focus:border-gray-900 focus:outline-none resize-y border-0"
+            />
+          </div>
+          <p className="text-xs text-gray-400 mt-1">
+            Drop or paste images/videos to upload. Supports jpg, png, gif, webp, mp4, mov, webm.
+          </p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -188,7 +319,11 @@ export default function EditForm({
           </button>
           {message && (
             <span
-              className={`text-sm ${message === "Saved" ? "text-green-600" : "text-red-500"}`}
+              className={`text-sm ${
+                message === "Saved" || message === "Uploaded"
+                  ? "text-green-600"
+                  : "text-red-500"
+              }`}
             >
               {message}
             </span>
