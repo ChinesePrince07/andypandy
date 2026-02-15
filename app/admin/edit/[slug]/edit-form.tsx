@@ -55,7 +55,7 @@ export default function EditForm({
     setSaving(true);
     setMessage("");
 
-    const res = await fetch(`/api/admin/posts/${slug}`, {
+    const res = await fetch(`/api/admin/posts/${slug}/`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

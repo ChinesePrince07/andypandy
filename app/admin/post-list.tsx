@@ -35,7 +35,7 @@ export default function PostList({
     if (!confirm(`Delete "${slug}"?`)) return;
     setDeleting(slug);
 
-    const res = await fetch(`/api/admin/posts/${slug}`, { method: "DELETE" });
+    const res = await fetch(`/api/admin/posts/${slug}/`, { method: "DELETE" });
     if (res.ok) {
       router.refresh();
     } else {
@@ -46,7 +46,7 @@ export default function PostList({
 
   async function handleTogglePostPin(slug: string, currentlyPinned: boolean) {
     setTogglingPost(slug);
-    const res = await fetch(`/api/admin/posts/${slug}`, {
+    const res = await fetch(`/api/admin/posts/${slug}/`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ pinned: !currentlyPinned }),
