@@ -28,6 +28,8 @@ export async function POST(req: NextRequest) {
             "video/ogg",
           ],
           maximumSizeInBytes: 100 * 1024 * 1024, // 100MB
+          allowOverwrite: true,
+          addRandomSuffix: false,
           callbackUrl: `${SITE_URL}/api/admin/upload/`,
         };
       },
