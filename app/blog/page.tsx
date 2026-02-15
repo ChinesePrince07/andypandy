@@ -22,7 +22,9 @@ export default async function BlogPage() {
 
       {posts.length === 0 ? (
         <div className="animate-fade-in rounded-xl border border-dashed border-gray-200 p-12 text-center dark:border-gray-800">
-          <p className="text-gray-400 dark:text-gray-500">No posts yet. Check back soon!</p>
+          <p className="text-gray-400 dark:text-gray-500">
+            No posts yet. Check back soon!
+          </p>
         </div>
       ) : (
         <div className="stagger space-y-4">
@@ -36,8 +38,18 @@ export default async function BlogPage() {
                 <div className="flex items-center gap-2 min-w-0">
                   {post.pinned && (
                     <span className="pinned-badge shrink-0">
-                      <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 3.75V16.5L12 14.25 7.5 16.5V3.75m9 0H18A2.25 2.25 0 0120.25 6v12A2.25 2.25 0 0118 20.25H6A2.25 2.25 0 013.75 18V6A2.25 2.25 0 016 3.75h1.5m9 0h-9" />
+                      <svg
+                        className="h-2.5 w-2.5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={2.5}
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M16.5 3.75V16.5L12 14.25 7.5 16.5V3.75m9 0H18A2.25 2.25 0 0120.25 6v12A2.25 2.25 0 0118 20.25H6A2.25 2.25 0 013.75 18V6A2.25 2.25 0 016 3.75h1.5m9 0h-9"
+                        />
                       </svg>
                       Pinned
                     </span>
@@ -47,22 +59,11 @@ export default async function BlogPage() {
                   </h2>
                 </div>
                 <time className="shrink-0 text-xs tabular-nums text-gray-300 font-mono dark:text-gray-600">
-                  {(() => {
-                    const d = new Date(post.date);
-                    const dateStr = d.toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    });
-                    const hasTime = post.date.includes("T") || post.date.includes(":");
-                    if (!hasTime) return dateStr;
-                    const timeStr = d.toLocaleTimeString("en-US", {
-                      hour: "numeric",
-                      minute: "2-digit",
-                      second: "2-digit",
-                    });
-                    return `${dateStr}, ${timeStr}`;
-                  })()}
+                  {new Date(post.date).toLocaleDateString("en-US", {
+                    month: "2-digit",
+                    day: "2-digit",
+                    year: "2-digit",
+                  })}
                 </time>
               </div>
               {post.description && (
