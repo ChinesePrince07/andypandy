@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { revalidateTag } from "next/cache";
-import { getAllPosts } from "@/lib/blog";
+import { getAllPosts, savePost } from "@/lib/blog";
 import { htmlToMarkdown } from "@/lib/html-to-md";
 
 export const dynamic = "force-dynamic";
@@ -20,9 +20,6 @@ function ghostError(message: string, status: number) {
     { status, headers: GHOST_HEADERS }
   );
 }
-
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN!;
-const REPO = "ChinesePrince07/personal-site";
 
 function slugify(text: string): string {
   return text
@@ -94,9 +91,6 @@ export async function GET(req: NextRequest) {
 
 // POST — create post
 export async function POST(req: NextRequest) {
-  // Auth disabled for now — Ulysses sends Ghost JWT but we skip verification
-  // to avoid crashes from crypto imports
-
   try {
     const body = await req.json();
     const post = body.posts?.[0];
@@ -112,7 +106,6 @@ export async function POST(req: NextRequest) {
       now.slice(0, 16);
     const status = post.status || "draft";
 
-    // Convert HTML to markdown
     let markdown = htmlToMarkdown(content);
 
     const fileContent = `---
@@ -124,46 +117,7 @@ description: "${(post.custom_excerpt || "").replace(/"/g, '\\"')}"
 ${markdown.trim()}
 `;
 
-    const path = `content/blog/${slug}.md`;
-    const commitBody: Record<string, string> = {
-      message: `blog: ${title}`,
-      content: btoa(unescape(encodeURIComponent(fileContent))),
-    };
-
-    // Check if file exists (for updates)
-    const existing = await fetch(
-      `https://api.github.com/repos/${REPO}/contents/${path}`,
-      {
-        headers: {
-          Authorization: `token ${GITHUB_TOKEN}`,
-          "User-Agent": "personal-site",
-        },
-      }
-    );
-    if (existing.ok) {
-      const data = await existing.json();
-      commitBody.sha = data.sha;
-    }
-
-    const res = await fetch(
-      `https://api.github.com/repos/${REPO}/contents/${path}`,
-      {
-        method: "PUT",
-        headers: {
-          Authorization: `token ${GITHUB_TOKEN}`,
-          "Content-Type": "application/json",
-          "User-Agent": "personal-site",
-        },
-        body: JSON.stringify(commitBody),
-      }
-    );
-
-    if (!res.ok) {
-      const err = await res.text();
-      return ghostError(`GitHub error: ${err}`, 502);
-    }
-
-    // Bust the blog cache so the new post appears immediately
+    await savePost(slug, fileContent);
     revalidateTag("posts");
 
     const ghostPost = {

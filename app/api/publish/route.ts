@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { savePost } from "@/lib/blog";
 
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN!;
 const PUBLISH_SECRET = process.env.PUBLISH_SECRET!;
-const REPO = "ChinesePrince07/personal-site";
 
 function slugify(title: string): string {
   return title
@@ -39,42 +38,7 @@ description: "${desc.replace(/"/g, '\\"')}"
 ${content}
 `;
 
-  const path = `content/blog/${slug}.md`;
-  const body = {
-    message: `blog: ${title}`,
-    content: btoa(unescape(encodeURIComponent(markdown))),
-  };
-
-  // Check if file already exists (need its sha to update)
-  const existing = await fetch(
-    `https://api.github.com/repos/${REPO}/contents/${path}`,
-    { headers: { Authorization: `token ${GITHUB_TOKEN}`, "User-Agent": "personal-site" } }
-  );
-  if (existing.ok) {
-    const data = await existing.json();
-    (body as Record<string, string>).sha = data.sha;
-  }
-
-  const res = await fetch(
-    `https://api.github.com/repos/${REPO}/contents/${path}`,
-    {
-      method: "PUT",
-      headers: {
-        Authorization: `token ${GITHUB_TOKEN}`,
-        "Content-Type": "application/json",
-        "User-Agent": "personal-site",
-      },
-      body: JSON.stringify(body),
-    }
-  );
-
-  if (!res.ok) {
-    const err = await res.text();
-    return NextResponse.json(
-      { error: "GitHub API error", details: err },
-      { status: 502 }
-    );
-  }
+  await savePost(slug, markdown);
 
   return NextResponse.json({ slug, url: `/blog/${slug}` });
 }

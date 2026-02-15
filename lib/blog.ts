@@ -1,9 +1,6 @@
 import matter from "gray-matter";
 import { marked } from "marked";
-
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN!;
-const REPO = "ChinesePrince07/personal-site";
-const BLOG_PATH = "content/blog";
+import { list, put, del } from "@vercel/blob";
 
 export interface Post {
   slug: string;
@@ -14,35 +11,19 @@ export interface Post {
   pinned?: boolean;
 }
 
-async function githubFetch(path: string) {
-  const res = await fetch(
-    `https://api.github.com/repos/${REPO}/contents/${path}`,
-    {
-      headers: {
-        Authorization: `token ${GITHUB_TOKEN}`,
-        "User-Agent": "personal-site",
-        Accept: "application/vnd.github.v3+json",
-      },
-      next: { tags: ["posts"], revalidate: 60 },
-    }
-  );
-  if (!res.ok) return null;
-  return res.json();
-}
-
 export async function getAllPosts(): Promise<Post[]> {
-  const files = await githubFetch(BLOG_PATH);
-  if (!Array.isArray(files)) return [];
+  const { blobs } = await list({ prefix: "blog/", token: process.env.BLOB_READ_WRITE_TOKEN });
 
   const posts: Post[] = [];
-  for (const file of files) {
-    if (!file.name.endsWith(".md")) continue;
-    const slug = file.name.replace(/\.md$/, "");
-    const fileData = await githubFetch(`${BLOG_PATH}/${file.name}`);
-    if (!fileData?.content) continue;
+  for (const blob of blobs) {
+    if (!blob.pathname.endsWith(".md")) continue;
+    const slug = blob.pathname.replace("blog/", "").replace(/\.md$/, "");
 
-    const decoded = Buffer.from(fileData.content, "base64").toString("utf8");
-    const { data, content } = matter(decoded);
+    const res = await fetch(blob.url, { next: { tags: ["posts"], revalidate: 60 } });
+    if (!res.ok) continue;
+    const text = await res.text();
+    const { data, content } = matter(text);
+
     posts.push({
       slug,
       title: data.title || slug,
@@ -61,12 +42,16 @@ export async function getAllPosts(): Promise<Post[]> {
 }
 
 export async function getPostBySlug(slug: string): Promise<Post | null> {
-  const fileData = await githubFetch(`${BLOG_PATH}/${slug}.md`);
-  if (!fileData?.content) return null;
+  const { blobs } = await list({ prefix: `blog/${slug}.md`, token: process.env.BLOB_READ_WRITE_TOKEN });
+  const blob = blobs.find((b) => b.pathname === `blog/${slug}.md`);
+  if (!blob) return null;
 
-  const decoded = Buffer.from(fileData.content, "base64").toString("utf8");
-  const { data, content } = matter(decoded);
+  const res = await fetch(blob.url, { next: { tags: ["posts"], revalidate: 60 } });
+  if (!res.ok) return null;
+  const text = await res.text();
+  const { data, content } = matter(text);
   const rendered = await marked(content, { gfm: true, breaks: false });
+
   return {
     slug,
     title: data.title || slug,
@@ -74,4 +59,32 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
     description: data.description || "",
     content: rendered,
   };
+}
+
+export async function savePost(slug: string, fileContent: string) {
+  await put(`blog/${slug}.md`, fileContent, {
+    access: "public",
+    addRandomSuffix: false,
+    token: process.env.BLOB_READ_WRITE_TOKEN,
+  });
+}
+
+export async function deletePost(slug: string) {
+  const { blobs } = await list({ prefix: `blog/${slug}.md`, token: process.env.BLOB_READ_WRITE_TOKEN });
+  const blob = blobs.find((b) => b.pathname === `blog/${slug}.md`);
+  if (blob) {
+    await del(blob.url, { token: process.env.BLOB_READ_WRITE_TOKEN });
+  }
+}
+
+export async function getRawPost(slug: string): Promise<{ frontmatter: Record<string, unknown>; content: string } | null> {
+  const { blobs } = await list({ prefix: `blog/${slug}.md`, token: process.env.BLOB_READ_WRITE_TOKEN });
+  const blob = blobs.find((b) => b.pathname === `blog/${slug}.md`);
+  if (!blob) return null;
+
+  const res = await fetch(blob.url);
+  if (!res.ok) return null;
+  const text = await res.text();
+  const { data, content } = matter(text);
+  return { frontmatter: data, content };
 }

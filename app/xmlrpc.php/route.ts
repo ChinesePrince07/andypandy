@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAllPosts } from "@/lib/blog";
+import { getAllPosts, savePost } from "@/lib/blog";
 import { put } from "@vercel/blob";
 
 const PUBLISH_SECRET = process.env.PUBLISH_SECRET!;
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN!;
-const REPO = "ChinesePrince07/personal-site";
 const SITE_URL =
   process.env.SITE_URL || "https://andypandy.org";
 
@@ -71,44 +69,13 @@ function postToXmlRpc(post: {
 </struct></value>`;
 }
 
-async function commitFile(
-  path: string,
-  content: string,
-  message: string
-): Promise<boolean> {
-  const commitBody: Record<string, string> = {
-    message,
-    content: btoa(unescape(encodeURIComponent(content))),
-  };
-
-  const existing = await fetch(
-    `https://api.github.com/repos/${REPO}/contents/${path}`,
-    {
-      headers: {
-        Authorization: `token ${GITHUB_TOKEN}`,
-        "User-Agent": "personal-site",
-      },
-    }
-  );
-  if (existing.ok) {
-    const data = await existing.json();
-    commitBody.sha = data.sha;
+async function saveBlogPost(slug: string, content: string): Promise<boolean> {
+  try {
+    await savePost(slug, content);
+    return true;
+  } catch {
+    return false;
   }
-
-  const res = await fetch(
-    `https://api.github.com/repos/${REPO}/contents/${path}`,
-    {
-      method: "PUT",
-      headers: {
-        Authorization: `token ${GITHUB_TOKEN}`,
-        "Content-Type": "application/json",
-        "User-Agent": "personal-site",
-      },
-      body: JSON.stringify(commitBody),
-    }
-  );
-
-  return res.ok;
 }
 
 function getMethod(body: string): string {
@@ -309,7 +276,7 @@ description: ""
 ${content.trim()}
 `;
 
-    const ok = await commitFile(`content/blog/${slug}.md`, markdown, `blog: ${title}`);
+    const ok = await saveBlogPost(slug, markdown);
     if (!ok) return fault(500, "Failed to publish.");
 
     return xml(
@@ -366,11 +333,7 @@ description: "${existing.description.replace(/"/g, '\\"')}"
 ${content.trim()}
 `;
 
-    const ok = await commitFile(
-      `content/blog/${slug}.md`,
-      markdown,
-      `blog: ${title}`
-    );
+    const ok = await saveBlogPost(slug, markdown);
     if (!ok) return fault(500, "Failed to update.");
 
     return xml(

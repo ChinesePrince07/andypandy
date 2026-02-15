@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { savePost } from "@/lib/blog";
 
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN!;
 const PUBLISH_SECRET = process.env.PUBLISH_SECRET!;
-const REPO = "ChinesePrince07/personal-site";
 const SITE_URL = process.env.SITE_URL || "https://andypandy.org";
 
 function slugify(text: string): string {
@@ -17,50 +16,7 @@ function verifyToken(req: NextRequest): boolean {
   return auth === `Bearer ${PUBLISH_SECRET}`;
 }
 
-function toBase64(str: string): string {
-  return btoa(unescape(encodeURIComponent(str)));
-}
-
-async function commitFile(path: string, content: string, message: string) {
-  const body: Record<string, string> = {
-    message,
-    content: toBase64(content),
-  };
-
-  const existing = await fetch(
-    `https://api.github.com/repos/${REPO}/contents/${path}`,
-    {
-      headers: {
-        Authorization: `token ${GITHUB_TOKEN}`,
-        "User-Agent": "personal-site",
-      },
-    }
-  );
-  if (existing.ok) {
-    const data = await existing.json();
-    body.sha = data.sha;
-  }
-
-  const res = await fetch(
-    `https://api.github.com/repos/${REPO}/contents/${path}`,
-    {
-      method: "PUT",
-      headers: {
-        Authorization: `token ${GITHUB_TOKEN}`,
-        "Content-Type": "application/json",
-        "User-Agent": "personal-site",
-      },
-      body: JSON.stringify(body),
-    }
-  );
-
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`GitHub API ${res.status}: ${err}`);
-  }
-}
-
-// Micropub query (GET) — iA Writer uses this to discover capabilities
+// Micropub query (GET)
 export async function GET(req: NextRequest) {
   if (!verifyToken(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -81,7 +37,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({});
 }
 
-// Micropub create (POST) — handles both form-encoded and JSON
+// Micropub create (POST)
 export async function POST(req: NextRequest) {
   try {
     if (!verifyToken(req)) {
@@ -138,8 +94,7 @@ description: "${summary.replace(/"/g, '\\"')}"
 ${content}
 `;
 
-    const path = `content/blog/${slug}.md`;
-    await commitFile(path, markdown, `blog: ${title}`);
+    await savePost(slug, markdown);
 
     return new NextResponse(null, {
       status: 201,

@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { revalidateTag } from "next/cache";
-import { getAllPosts } from "@/lib/blog";
+import { getAllPosts, savePost, deletePost } from "@/lib/blog";
 import { htmlToMarkdown } from "@/lib/html-to-md";
 
 export const dynamic = "force-dynamic";
@@ -20,9 +20,6 @@ function ghostError(message: string, status: number) {
     { status, headers: GHOST_HEADERS }
   );
 }
-
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN!;
-const REPO = "ChinesePrince07/personal-site";
 
 // GET — read single post
 export async function GET(
@@ -64,7 +61,7 @@ export async function GET(
   );
 }
 
-// PUT — update post (title, content, date, description)
+// PUT — update post
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -82,13 +79,11 @@ export async function PUT(
     const title = update.title || existing.title;
     let content = update.html || update.plaintext || existing.content;
 
-    // Allow date editing via published_at or created_at
     const date =
       update.published_at?.split("T")[0] ||
       update.created_at?.split("T")[0] ||
       existing.date;
 
-    // Convert HTML to markdown
     let markdown = htmlToMarkdown(content);
 
     const fileContent = `---
@@ -100,41 +95,7 @@ description: "${(update.custom_excerpt || existing.description || "").replace(/"
 ${markdown.trim()}
 `;
 
-    const path = `content/blog/${id}.md`;
-    const commitBody: Record<string, string> = {
-      message: `blog: update ${title}`,
-      content: btoa(unescape(encodeURIComponent(fileContent))),
-    };
-
-    const ghFile = await fetch(
-      `https://api.github.com/repos/${REPO}/contents/${path}`,
-      {
-        headers: {
-          Authorization: `token ${GITHUB_TOKEN}`,
-          "User-Agent": "personal-site",
-        },
-      }
-    );
-    if (ghFile.ok) {
-      const data = await ghFile.json();
-      commitBody.sha = data.sha;
-    }
-
-    const res = await fetch(
-      `https://api.github.com/repos/${REPO}/contents/${path}`,
-      {
-        method: "PUT",
-        headers: {
-          Authorization: `token ${GITHUB_TOKEN}`,
-          "Content-Type": "application/json",
-          "User-Agent": "personal-site",
-        },
-        body: JSON.stringify(commitBody),
-      }
-    );
-
-    if (!res.ok) return ghostError("Failed to update", 502);
-
+    await savePost(id, fileContent);
     revalidateTag("posts");
 
     const now = new Date().toISOString();
@@ -175,42 +136,10 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const path = `content/blog/${id}.md`;
 
   try {
-    // Get file SHA (required for deletion)
-    const ghFile = await fetch(
-      `https://api.github.com/repos/${REPO}/contents/${path}`,
-      {
-        headers: {
-          Authorization: `token ${GITHUB_TOKEN}`,
-          "User-Agent": "personal-site",
-        },
-      }
-    );
-    if (!ghFile.ok) return ghostError("Post not found", 404);
-    const data = await ghFile.json();
-
-    const res = await fetch(
-      `https://api.github.com/repos/${REPO}/contents/${path}`,
-      {
-        method: "DELETE",
-        headers: {
-          Authorization: `token ${GITHUB_TOKEN}`,
-          "Content-Type": "application/json",
-          "User-Agent": "personal-site",
-        },
-        body: JSON.stringify({
-          message: `blog: delete ${id}`,
-          sha: data.sha,
-        }),
-      }
-    );
-
-    if (!res.ok) return ghostError("Failed to delete", 502);
-
+    await deletePost(id);
     revalidateTag("posts");
-
     return new Response(null, { status: 204, headers: GHOST_HEADERS });
   } catch (err) {
     return ghostError(String(err), 500);

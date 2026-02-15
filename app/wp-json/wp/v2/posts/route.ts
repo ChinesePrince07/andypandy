@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { savePost } from "@/lib/blog";
 
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN!;
 const PUBLISH_SECRET = process.env.PUBLISH_SECRET!;
-const REPO = "ChinesePrince07/personal-site";
 const SITE_URL =
   process.env.SITE_URL || "https://andypandy.org";
 
@@ -14,7 +13,6 @@ function slugify(text: string): string {
 }
 
 function verifyAuth(req: NextRequest): boolean {
-  // Support Basic auth (username:PUBLISH_SECRET) and Bearer token
   const auth = req.headers.get("authorization") || "";
 
   if (auth.startsWith("Bearer ")) {
@@ -38,7 +36,7 @@ function stripHtml(html: string): string {
   return html.replace(/<[^>]*>/g, "");
 }
 
-// GET — list posts (iA Writer may call this)
+// GET — list posts
 export async function GET(req: NextRequest) {
   if (!verifyAuth(req)) {
     return NextResponse.json(
@@ -80,7 +78,6 @@ export async function POST(req: NextRequest) {
     const date = new Date().toISOString().split("T")[0];
     const description = stripHtml(excerpt);
 
-    // Strip HTML tags from content if it looks like HTML
     if (content.includes("<p>") || content.includes("<br")) {
       content = content
         .replace(/<br\s*\/?>/gi, "\n")
@@ -97,53 +94,11 @@ description: "${description.replace(/"/g, '\\"')}"
 ${content.trim()}
 `;
 
-    const path = `content/blog/${slug}.md`;
-    const commitBody: Record<string, string> = {
-      message: `blog: ${postTitle}`,
-      content: btoa(unescape(encodeURIComponent(markdown))),
-    };
+    await savePost(slug, markdown);
 
-    // Check if file exists
-    const existing = await fetch(
-      `https://api.github.com/repos/${REPO}/contents/${path}`,
-      {
-        headers: {
-          Authorization: `token ${GITHUB_TOKEN}`,
-          "User-Agent": "personal-site",
-        },
-      }
-    );
-    if (existing.ok) {
-      const data = await existing.json();
-      commitBody.sha = data.sha;
-    }
-
-    const res = await fetch(
-      `https://api.github.com/repos/${REPO}/contents/${path}`,
-      {
-        method: "PUT",
-        headers: {
-          Authorization: `token ${GITHUB_TOKEN}`,
-          "Content-Type": "application/json",
-          "User-Agent": "personal-site",
-        },
-        body: JSON.stringify(commitBody),
-      }
-    );
-
-    if (!res.ok) {
-      const err = await res.text();
-      return NextResponse.json(
-        { code: "github_error", message: err },
-        { status: 502 }
-      );
-    }
-
-    // Return full WP-style post response
-    const postId = Date.now();
     const now = new Date().toISOString();
     const postResponse = {
-      id: postId,
+      id: Date.now(),
       date: now,
       date_gmt: now,
       modified: now,
