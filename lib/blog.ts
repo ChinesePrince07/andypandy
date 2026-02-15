@@ -50,7 +50,13 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
   if (!res.ok) return null;
   const text = await res.text();
   const { data, content } = matter(text);
-  const rendered = await marked(content, { gfm: true, breaks: false });
+  const renderer = new marked.Renderer();
+  renderer.image = ({ href, title, text }) => {
+    const alt = text ? ` alt="${text}"` : "";
+    const t = title ? ` title="${title}"` : "";
+    return `<img src="${href}"${alt}${t} style="max-width: 100%; height: auto;" />`;
+  };
+  const rendered = await marked(content, { gfm: true, breaks: false, renderer });
 
   return {
     slug,
