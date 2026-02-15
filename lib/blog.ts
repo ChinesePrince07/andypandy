@@ -19,7 +19,7 @@ export async function getAllPosts(): Promise<Post[]> {
     if (!blob.pathname.endsWith(".md")) continue;
     const slug = blob.pathname.replace("blog/", "").replace(/\.md$/, "");
 
-    const res = await fetch(blob.url, { next: { tags: ["posts"], revalidate: 60 } });
+    const res = await fetch(blob.url, { cache: "no-store" });
     if (!res.ok) continue;
     const text = await res.text();
     const { data, content } = matter(text);
@@ -46,7 +46,7 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
   const blob = blobs.find((b) => b.pathname === `blog/${slug}.md`);
   if (!blob) return null;
 
-  const res = await fetch(blob.url, { next: { tags: ["posts"], revalidate: 60 } });
+  const res = await fetch(blob.url, { cache: "no-store" });
   if (!res.ok) return null;
   const text = await res.text();
   const { data, content } = matter(text);

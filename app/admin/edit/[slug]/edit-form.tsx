@@ -100,7 +100,7 @@ export default function EditForm({
       if (isVideo) {
         markdown = `<video src="${url}" controls style="max-width: 100%; height: auto;"></video>`;
       } else if (isImage) {
-        markdown = `![${file.name}](${url})`;
+        markdown = `<img src="${url}" alt="${file.name}" style="max-width: 100%; height: auto;" />`;
       } else {
         markdown = `[${file.name}](${url})`;
       }
