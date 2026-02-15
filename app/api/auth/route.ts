@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 const PUBLISH_SECRET = process.env.PUBLISH_SECRET!;
 const SITE_URL =
-  process.env.SITE_URL || "https://personal-site-andy-zhangs-projects.vercel.app";
+  process.env.SITE_URL || "https://andypandy.org";
 
 // Store codes temporarily (in-memory, reset on redeploy — fine for personal use)
 const codes = new Map<string, { redirect_uri: string; client_id: string }>();

@@ -4,7 +4,7 @@ import { NextRequest } from "next/server";
 const PUBLISH_SECRET = process.env.PUBLISH_SECRET!;
 const SITE_URL =
   process.env.SITE_URL ||
-  "https://personal-site-andy-zhangs-projects.vercel.app";
+  "https://andypandy.org";
 
 // Derive a deterministic Ghost Admin API key from PUBLISH_SECRET
 const ghostId = crypto

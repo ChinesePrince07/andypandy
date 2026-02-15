@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 const SITE_URL =
-  process.env.SITE_URL || "https://personal-site-andy-zhangs-projects.vercel.app";
+  process.env.SITE_URL || "https://andypandy.org";
 
 // WordPress REST API discovery endpoint
 export async function GET() {

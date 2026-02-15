@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 const PUBLISH_SECRET = process.env.PUBLISH_SECRET!;
 const SITE_URL =
-  process.env.SITE_URL || "https://personal-site-andy-zhangs-projects.vercel.app";
+  process.env.SITE_URL || "https://andypandy.org";
 
 function esc(str: string): string {
   return str

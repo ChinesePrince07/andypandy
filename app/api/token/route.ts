@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
       access_token: PUBLISH_SECRET,
       token_type: "Bearer",
       scope: "create",
-      me: process.env.SITE_URL || "https://personal-site-andy-zhangs-projects.vercel.app",
+      me: process.env.SITE_URL || "https://andypandy.org",
     });
   }
 
@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
   const auth = req.headers.get("authorization");
   if (auth === `Bearer ${PUBLISH_SECRET}`) {
     return NextResponse.json({
-      me: process.env.SITE_URL || "https://personal-site-andy-zhangs-projects.vercel.app",
+      me: process.env.SITE_URL || "https://andypandy.org",
       scope: "create",
     });
   }

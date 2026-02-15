@@ -6,7 +6,7 @@ const PUBLISH_SECRET = process.env.PUBLISH_SECRET!;
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN!;
 const REPO = "ChinesePrince07/personal-site";
 const SITE_URL =
-  process.env.SITE_URL || "https://personal-site-andy-zhangs-projects.vercel.app";
+  process.env.SITE_URL || "https://andypandy.org";
 
 function xml(body: string) {
   return new NextResponse(`<?xml version="1.0"?>\n${body}`, {

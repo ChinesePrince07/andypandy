@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 
 const SITE_URL =
   process.env.SITE_URL ||
-  "https://personal-site-andy-zhangs-projects.vercel.app";
+  "https://andypandy.org";
 
 const GHOST_HEADERS = {
   "Content-Version": "v5.80",
