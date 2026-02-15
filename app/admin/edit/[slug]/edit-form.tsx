@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { upload } from "@vercel/blob/client";
 import Link from "next/link";
 
 interface Props {
@@ -84,18 +85,14 @@ export default function EditForm({
     setUploading(true);
     setMessage("");
 
-    const form = new FormData();
-    form.append("file", file);
-
     try {
-      const res = await fetch("/api/admin/upload/", { method: "POST", body: form });
-      if (!res.ok) {
-        setMessage("Upload failed");
-        setUploading(false);
-        return;
-      }
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
+      const blob = await upload(`uploads/${safeName}`, file, {
+        access: "public",
+        handleUploadUrl: "/api/admin/upload/",
+      });
 
-      const { url } = await res.json();
+      const url = blob.url;
       const isVideo = /\.(mp4|mov|webm|ogg)$/i.test(file.name);
       const isImage = /\.(jpe?g|png|gif|webp|svg)$/i.test(file.name);
 

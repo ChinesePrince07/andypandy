@@ -1,28 +1,40 @@
 import { NextRequest } from "next/server";
-import { put } from "@vercel/blob";
+import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { isAdmin } from "@/lib/admin-auth";
 
 export async function POST(req: NextRequest) {
-  if (!(await isAdmin())) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const formData = await req.formData();
-  const file = formData.get("file") as File | null;
-  if (!file) {
-    return Response.json({ error: "No file" }, { status: 400 });
-  }
-
-  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
+  const body = (await req.json()) as HandleUploadBody;
 
   try {
-    const blob = await put(`uploads/${safeName}`, file, {
-      access: "public",
-      addRandomSuffix: false,
-      allowOverwrite: true,
+    const jsonResponse = await handleUpload({
+      body,
+      request: req,
+      onBeforeGenerateToken: async () => {
+        if (!(await isAdmin())) {
+          throw new Error("Unauthorized");
+        }
+        return {
+          allowedContentTypes: [
+            "image/jpeg",
+            "image/png",
+            "image/gif",
+            "image/webp",
+            "image/svg+xml",
+            "video/mp4",
+            "video/quicktime",
+            "video/webm",
+            "video/ogg",
+          ],
+          maximumSizeInBytes: 100 * 1024 * 1024, // 100MB
+        };
+      },
+      onUploadCompleted: async () => {
+        // nothing needed
+      },
     });
-    return Response.json({ url: blob.url, name: safeName });
+
+    return Response.json(jsonResponse);
   } catch (err) {
-    return Response.json({ error: String(err) }, { status: 500 });
+    return Response.json({ error: String(err) }, { status: 400 });
   }
 }
