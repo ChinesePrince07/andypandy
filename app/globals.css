@@ -345,13 +345,14 @@ a:active, button:active {
   color: #9ca3af;
 }
 .prose img {
-  max-width: 100%;
+  max-width: 50%;
   height: auto;
   border-radius: 0.75rem;
   margin: 1.5rem 0;
 }
 .prose video, .prose iframe {
-  max-width: 100%;
+  max-width: 50%;
+  height: auto;
   border-radius: 0.75rem;
   margin: 1.5rem 0;
 }
