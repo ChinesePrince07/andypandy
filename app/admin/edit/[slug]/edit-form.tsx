@@ -73,12 +73,11 @@ export default function EditForm({
     });
 
     if (res.ok) {
-      setMessage("Saved");
-      router.refresh();
+      router.push(`/blog/${slug}`);
     } else {
       setMessage("Failed to save");
+      setSaving(false);
     }
-    setSaving(false);
   }
 
   const uploadFile = useCallback(async (file: File) => {
