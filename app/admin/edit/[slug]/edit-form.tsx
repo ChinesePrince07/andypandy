@@ -98,7 +98,7 @@ export default function EditForm({
 
       let markdown: string;
       if (isVideo) {
-        markdown = `<video src="${url}" controls></video>`;
+        markdown = `<video src="${url}" controls style="max-width: 100%; height: auto;"></video>`;
       } else if (isImage) {
         markdown = `![${file.name}](${url})`;
       } else {

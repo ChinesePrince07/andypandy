@@ -32,7 +32,7 @@ export default function Header() {
               className={`nav-link text-sm transition-colors ${
                 pathname === link.href
                   ? "nav-link-active text-gray-900 font-medium dark:text-gray-100"
-                  : "text-gray-400 hover:text-gray-700 dark:text-gray-500 dark:hover:text-gray-300"
+                  : "text-gray-900 hover:text-gray-600 dark:text-gray-100 dark:hover:text-gray-300"
               }`}
             >
               {link.label}
