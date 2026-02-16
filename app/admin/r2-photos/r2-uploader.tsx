@@ -2,16 +2,10 @@
 
 import { useState, useCallback, useRef } from "react";
 
-interface UploadResult {
-  name: string;
-  ok: boolean;
-  error?: string;
-}
-
 export default function R2Uploader() {
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
-  const [results, setResults] = useState<UploadResult[]>([]);
+  const [progress, setProgress] = useState("");
   const [message, setMessage] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -21,7 +15,6 @@ export default function R2Uploader() {
       /\.(jpe?g|png|gif|webp|heic|heif|tiff?|bmp)$/i.test(f.name)
     );
     setFiles((prev) => [...prev, ...accepted]);
-    setResults([]);
     setMessage("");
   }, []);
 
@@ -33,35 +26,69 @@ export default function R2Uploader() {
     if (!files.length) return;
     setUploading(true);
     setMessage("");
-    setResults([]);
-
-    const formData = new FormData();
-    for (const file of files) {
-      formData.append("files", file);
-    }
+    setProgress(`0/${files.length}`);
 
     try {
+      // 1. Get presigned URLs from our API
       const res = await fetch("/api/admin/r2-upload/", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          files: files.map((f) => ({ name: f.name, type: f.type })),
+          triggerDeploy: true,
+        }),
       });
-      const data = await res.json();
 
-      if (data.results) {
-        setResults(data.results);
-        const ok = data.results.filter((r: UploadResult) => r.ok).length;
-        const fail = data.results.length - ok;
-        setMessage(
-          `${ok} uploaded${fail ? `, ${fail} failed` : ""}${data.deployTriggered ? " — rebuild triggered" : ""}`
-        );
-        if (fail === 0) setFiles([]);
-      } else {
-        setMessage(data.error || "Upload failed");
+      if (!res.ok) {
+        const data = await res.json();
+        setMessage(data.error || "Failed to get upload URLs");
+        setUploading(false);
+        return;
       }
+
+      const { urls, deployTriggered } = await res.json();
+
+      // 2. Upload each file directly to R2 via presigned URL
+      let ok = 0;
+      let fail = 0;
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const urlEntry = urls.find(
+          (u: { name: string }) => u.name === file.name
+        );
+        if (!urlEntry) {
+          fail++;
+          continue;
+        }
+
+        try {
+          const uploadRes = await fetch(urlEntry.url, {
+            method: "PUT",
+            body: file,
+            headers: { "Content-Type": file.type },
+          });
+          if (uploadRes.ok) {
+            ok++;
+          } else {
+            fail++;
+          }
+        } catch {
+          fail++;
+        }
+
+        setProgress(`${ok + fail}/${files.length}`);
+      }
+
+      setMessage(
+        `${ok} uploaded${fail ? `, ${fail} failed` : ""}${deployTriggered ? " — rebuild triggered" : ""}`
+      );
+      if (fail === 0) setFiles([]);
     } catch (err) {
       setMessage(`Error: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setUploading(false);
+      setProgress("");
     }
   }
 
@@ -71,14 +98,23 @@ export default function R2Uploader() {
       <div
         onDragOver={(e) => {
           e.preventDefault();
-          e.currentTarget.classList.add("border-gray-900", "dark:border-gray-100");
+          e.currentTarget.classList.add(
+            "border-gray-900",
+            "dark:border-gray-100"
+          );
         }}
         onDragLeave={(e) => {
-          e.currentTarget.classList.remove("border-gray-900", "dark:border-gray-100");
+          e.currentTarget.classList.remove(
+            "border-gray-900",
+            "dark:border-gray-100"
+          );
         }}
         onDrop={(e) => {
           e.preventDefault();
-          e.currentTarget.classList.remove("border-gray-900", "dark:border-gray-100");
+          e.currentTarget.classList.remove(
+            "border-gray-900",
+            "dark:border-gray-100"
+          );
           handleFiles(e.dataTransfer.files);
         }}
         onClick={() => inputRef.current?.click()}
@@ -132,29 +168,17 @@ export default function R2Uploader() {
         className="w-full rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
       >
         {uploading
-          ? "Uploading..."
+          ? `Uploading ${progress}...`
           : `Upload ${files.length || ""} photo${files.length !== 1 ? "s" : ""}`}
       </button>
 
-      {/* Results */}
+      {/* Message */}
       {message && (
         <p
-          className={`text-sm ${results.some((r) => !r.ok) ? "text-red-500" : "text-green-600"}`}
+          className={`text-sm ${message.includes("failed") || message.includes("Error") ? "text-red-500" : "text-green-600"}`}
         >
           {message}
         </p>
-      )}
-
-      {results.length > 0 && results.some((r) => !r.ok) && (
-        <div className="space-y-1">
-          {results
-            .filter((r) => !r.ok)
-            .map((r) => (
-              <p key={r.name} className="text-xs text-red-400">
-                {r.name}: {r.error}
-              </p>
-            ))}
-        </div>
       )}
     </div>
   );

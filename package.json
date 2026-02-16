@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.990.0",
+    "@aws-sdk/s3-request-presigner": "^3.990.0",
     "@vercel/blob": "^2.2.0",
     "@vercel/postgres": "^0.10.0",
     "exifr": "^7.1.3",

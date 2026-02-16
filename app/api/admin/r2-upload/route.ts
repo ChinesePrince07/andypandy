@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { isAdmin } from "@/lib/admin-auth";
 
 const s3 = new S3Client({
@@ -14,40 +15,36 @@ const s3 = new S3Client({
 const BUCKET = process.env.R2_BUCKET_NAME || "afilmory-photos";
 const DEPLOY_HOOK = process.env.AFILMORY_DEPLOY_HOOK || "";
 
+// POST with JSON body — returns presigned URLs for each file
 export async function POST(req: NextRequest) {
   if (!(await isAdmin())) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const formData = await req.formData();
-  const files = formData.getAll("files") as File[];
+  const { files, triggerDeploy } = await req.json();
 
-  if (!files.length) {
+  if (!files?.length) {
     return Response.json({ error: "No files" }, { status: 400 });
   }
 
-  const results: { name: string; ok: boolean; error?: string }[] = [];
+  const urls: { name: string; url: string }[] = [];
 
-  for (const file of files) {
-    try {
-      const buffer = Buffer.from(await file.arrayBuffer());
-      await s3.send(
-        new PutObjectCommand({
-          Bucket: BUCKET,
-          Key: file.name,
-          Body: buffer,
-          ContentType: file.type,
-        })
-      );
-      results.push({ name: file.name, ok: true });
-    } catch (err) {
-      results.push({ name: file.name, ok: false, error: String(err) });
-    }
+  for (const file of files as { name: string; type: string }[]) {
+    const url = await getSignedUrl(
+      s3,
+      new PutObjectCommand({
+        Bucket: BUCKET,
+        Key: file.name,
+        ContentType: file.type,
+      }),
+      { expiresIn: 600 }
+    );
+    urls.push({ name: file.name, url });
   }
 
-  // Trigger afilmory rebuild
+  // Trigger afilmory rebuild if requested
   let deployTriggered = false;
-  if (DEPLOY_HOOK) {
+  if (triggerDeploy && DEPLOY_HOOK) {
     try {
       await fetch(DEPLOY_HOOK, { method: "POST" });
       deployTriggered = true;
@@ -56,5 +53,5 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  return Response.json({ results, deployTriggered });
+  return Response.json({ urls, deployTriggered });
 }
