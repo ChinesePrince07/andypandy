@@ -90,6 +90,16 @@ export default function PostList({
         </button>
       </div>
 
+      {/* Quick links */}
+      <div className="flex gap-3 mb-8">
+        <Link
+          href="/admin/r2-photos"
+          className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium hover:bg-gray-50"
+        >
+          Upload Photos
+        </Link>
+      </div>
+
       {/* Posts */}
       <h2 className="text-sm font-medium text-gray-400 uppercase tracking-wider mb-3">
         Posts

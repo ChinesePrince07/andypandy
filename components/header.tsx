@@ -9,7 +9,7 @@ import LiveClock from "./live-clock";
 const links = [
   { href: "/", label: "About" },
   { href: "/projects", label: "Projects" },
-  { href: "/photos", label: "Photos" },
+  { href: "https://pics.andypandy.org", label: "Photos" },
   { href: "/blog", label: "Blog" },
 ];
 
