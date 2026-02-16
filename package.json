@@ -62,6 +62,7 @@
     "fast-glob": "3.3.3",
     "lint-staged": "16.2.7",
     "nbump": "2.1.8",
+    "next": "16.1.6",
     "prettier": "3.8.1",
     "sharp": "0.34.5",
     "simple-git-hooks": "2.13.1",
