@@ -81,6 +81,11 @@
     "overrides": {
       "motion": "12.34.0",
       "motion-dom": "12.34.0"
-    }
+    },
+    "onlyBuiltDependencies": [
+      "sharp",
+      "@swc/core",
+      "esbuild"
+    ]
   }
 }
