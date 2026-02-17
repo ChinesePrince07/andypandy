@@ -22,6 +22,8 @@
     "@afilmory/sdk": "workspace:*",
     "@afilmory/ui": "workspace:*",
     "@afilmory/utils": "workspace:*",
+    "@aws-sdk/client-s3": "^3.0.0",
+    "@aws-sdk/s3-request-presigner": "^3.0.0",
     "@t3-oss/env-nextjs": "0.13.10",
     "clsx": "2.1.1",
     "drizzle-orm": "0.45.1",
