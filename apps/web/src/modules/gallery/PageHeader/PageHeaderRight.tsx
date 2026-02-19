@@ -51,6 +51,9 @@ export const PageHeaderRight = () => {
           badge={filterCount}
         />
 
+        {/* Upload */}
+        <ActionIconButton icon="i-mingcute-upload-2-line" title="Upload" href="/upload" />
+
         {/* Desktop only: Map Link */}
         {!isMobile && (
           <ActionIconButton
