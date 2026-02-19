@@ -17,7 +17,7 @@ export default async function ProjectsPage() {
         <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
           Projects
         </h1>
-        <p className="mt-3 text-purple-400 dark:text-purple-400">
+        <p className="mt-3 text-gray-500 dark:text-gray-400">
           A collection of things I&apos;ve built and worked on.
         </p>
       </div>
@@ -27,10 +27,10 @@ export default async function ProjectsPage() {
           <Link
             key={project.name}
             href={`/projects/${project.slug}`}
-            className="card-hover group block rounded-xl border border-pink-200/80 bg-white p-5 shadow-sm dark:border-purple-800/60 dark:bg-[#1a1030]"
+            className="card-hover group block rounded-xl border border-gray-200/80 bg-white p-5 shadow-sm dark:border-gray-800/80 dark:bg-gray-900"
           >
             <div className="flex items-start gap-4">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-pink-50 text-lg transition-transform group-hover:scale-110 dark:bg-purple-900/50">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-50 text-lg transition-transform group-hover:scale-110 dark:bg-gray-800">
                 {project.emoji}
               </span>
               <div className="min-w-0 flex-1">
@@ -43,11 +43,11 @@ export default async function ProjectsPage() {
                       Pinned
                     </span>
                   )}
-                  <h2 className="font-semibold text-purple-900 group-hover:gradient-text transition-colors dark:text-purple-100">
+                  <h2 className="font-semibold text-gray-900 group-hover:gradient-text transition-colors dark:text-gray-100">
                     {project.name}
                   </h2>
                   <svg
-                    className="h-3.5 w-3.5 text-purple-300 transition-all group-hover:text-pink-500 group-hover:translate-x-0.5 dark:text-purple-600 dark:group-hover:text-pink-400"
+                    className="h-3.5 w-3.5 text-gray-300 transition-all group-hover:text-gray-500 group-hover:translate-x-0.5 dark:text-gray-600 dark:group-hover:text-gray-400"
                     fill="none"
                     viewBox="0 0 24 24"
                     strokeWidth={2}
@@ -60,14 +60,14 @@ export default async function ProjectsPage() {
                     />
                   </svg>
                 </div>
-                <p className="mt-1 text-sm text-purple-400 leading-relaxed dark:text-purple-400">
+                <p className="mt-1 text-sm text-gray-500 leading-relaxed dark:text-gray-400">
                   {project.description}
                 </p>
                 <div className="mt-3 flex flex-wrap items-center gap-1.5">
                   {project.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="rounded-md bg-pink-50 px-2 py-0.5 text-xs font-medium text-purple-500 dark:bg-purple-900/30 dark:text-purple-400"
+                      className="rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500 dark:bg-gray-800 dark:text-gray-400"
                     >
                       {tag}
                     </span>
@@ -77,7 +77,7 @@ export default async function ProjectsPage() {
                       href={project.demo}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="ml-1 inline-flex items-center gap-1 rounded-md border border-pink-200 px-2 py-0.5 text-xs font-medium text-purple-400 transition-colors hover:border-pink-300 hover:text-pink-500 dark:border-purple-700 dark:text-purple-500 dark:hover:border-purple-500 dark:hover:text-pink-400"
+                      className="ml-1 inline-flex items-center gap-1 rounded-md border border-gray-200 px-2 py-0.5 text-xs font-medium text-gray-400 transition-colors hover:border-gray-300 hover:text-gray-600 dark:border-gray-700 dark:text-gray-500 dark:hover:border-gray-600 dark:hover:text-gray-300"
                     >
                       Live Demo
                       <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">

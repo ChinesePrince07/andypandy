@@ -42,7 +42,7 @@ export default async function BlogPostPage({
       <div className="flex items-center justify-between">
         <Link
           href="/blog"
-          className="inline-flex items-center gap-1.5 text-sm text-purple-400 transition-colors hover:text-pink-500 dark:text-purple-500 dark:hover:text-pink-400"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-400 transition-colors hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
         >
           <svg
             className="h-3.5 w-3.5"
@@ -62,7 +62,7 @@ export default async function BlogPostPage({
         {admin && (
           <Link
             href={`/admin/edit/${slug}`}
-            className="text-sm text-purple-400 hover:text-pink-500 dark:text-purple-500 dark:hover:text-pink-400"
+            className="text-sm text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
           >
             Edit
           </Link>
@@ -71,7 +71,7 @@ export default async function BlogPostPage({
 
       {/* Header */}
       <header className="mt-8 space-y-3">
-        <time className="text-sm text-purple-400 tabular-nums font-mono tracking-wide dark:text-purple-500">
+        <time className="text-sm text-gray-400 tabular-nums font-mono tracking-wide dark:text-gray-500">
           {(() => {
             const d = new Date(post.date);
             const dateStr = d.toLocaleDateString("en-US", {
@@ -93,11 +93,11 @@ export default async function BlogPostPage({
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
           {post.title}
         </h1>
-        <p className="text-xs text-purple-400 font-mono dark:text-purple-500">
+        <p className="text-xs text-gray-400 font-mono dark:text-gray-500">
           {wordCount.toLocaleString()} words &middot; {readTime} min read
         </p>
         {post.description && (
-          <p className="text-lg text-purple-400 dark:text-purple-400">
+          <p className="text-lg text-gray-500 dark:text-gray-400">
             {post.description}
           </p>
         )}

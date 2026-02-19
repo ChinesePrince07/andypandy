@@ -13,7 +13,7 @@ export default function LiveClock() {
           minute: "2-digit",
           second: "2-digit",
           hour12: false,
-        }),
+        })
       );
     };
     update();
@@ -24,7 +24,7 @@ export default function LiveClock() {
   if (!time) return null;
 
   return (
-    <span className="mono text-xs tabular-nums text-purple-400 dark:text-purple-500">
+    <span className="mono text-xs tabular-nums text-gray-400 dark:text-gray-500">
       {time}
     </span>
   );

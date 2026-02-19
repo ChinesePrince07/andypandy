@@ -18,7 +18,7 @@ export default function Footer() {
   return (
     <footer>
       <div className="divider" />
-      <div className="mx-auto flex max-w-2xl items-center justify-between px-6 py-8 text-sm text-purple-400 dark:text-purple-500">
+      <div className="mx-auto flex max-w-2xl items-center justify-between px-6 py-8 text-sm text-gray-400 dark:text-gray-500">
         <p className="mono">&copy; {new Date().getFullYear()} Andy Zhang</p>
         <div className="flex items-center gap-4">
           {/* GitHub */}
@@ -26,7 +26,7 @@ export default function Footer() {
             href="https://github.com/ChinesePrince07"
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-pink-500 transition-colors dark:hover:text-pink-400"
+            className="hover:text-gray-700 transition-colors dark:hover:text-gray-300"
             aria-label="GitHub"
           >
             <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
@@ -38,7 +38,7 @@ export default function Footer() {
             href={LINKEDIN_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-pink-500 transition-colors dark:hover:text-pink-400"
+            className="hover:text-gray-700 transition-colors dark:hover:text-gray-300"
             aria-label="LinkedIn"
           >
             <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
@@ -48,11 +48,11 @@ export default function Footer() {
           {/* Email — copy to clipboard */}
           <button
             onClick={copyEmail}
-            className="relative hover:text-pink-500 transition-colors dark:hover:text-pink-400"
+            className="relative hover:text-gray-700 transition-colors dark:hover:text-gray-300"
             aria-label="Copy email"
           >
             {copied ? (
-              <svg className="h-4 w-4 text-pink-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <svg className="h-4 w-4 text-green-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
               </svg>
             ) : (
@@ -64,7 +64,7 @@ export default function Footer() {
           {/* Admin */}
           <Link
             href="/admin"
-            className="hover:text-pink-500 transition-colors dark:hover:text-pink-400"
+            className="hover:text-gray-700 transition-colors dark:hover:text-gray-300"
             aria-label="Admin"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">

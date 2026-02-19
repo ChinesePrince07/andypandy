@@ -28,7 +28,7 @@ export default function ThemeToggle() {
     <button
       onClick={toggle}
       aria-label="Toggle dark mode"
-      className="relative flex h-8 w-8 items-center justify-center rounded-lg border border-pink-200 bg-white text-pink-400 transition-all hover:border-pink-300 hover:text-pink-500 dark:border-purple-700 dark:bg-[#1a1030] dark:text-purple-400 dark:hover:border-purple-500 dark:hover:text-purple-300"
+      className="relative flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 transition-all hover:border-gray-300 hover:text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400 dark:hover:border-gray-600 dark:hover:text-gray-200"
     >
       {/* Sun icon */}
       <svg

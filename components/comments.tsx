@@ -92,7 +92,7 @@ function CommentForm({
         placeholder="Your name"
         maxLength={50}
         required
-        className="w-1/3 rounded-md border border-pink-200 bg-white px-2.5 py-1.5 text-xs focus:border-pink-400 focus:outline-none dark:border-purple-700 dark:bg-[#1a1030] dark:text-purple-100 dark:focus:border-purple-500"
+        className="w-1/3 rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-xs focus:border-gray-400 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-500"
       />
       <input
         type="text"
@@ -101,13 +101,13 @@ function CommentForm({
         placeholder={placeholder || "Write a comment..."}
         maxLength={2000}
         required
-        className="w-full rounded-md border border-pink-200 bg-white px-2.5 py-1.5 text-xs focus:border-pink-400 focus:outline-none dark:border-purple-700 dark:bg-[#1a1030] dark:text-purple-100 dark:focus:border-purple-500"
+        className="w-full rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-xs focus:border-gray-400 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-500"
       />
       <div className="flex items-center gap-2">
         <button
           type="submit"
           disabled={submitting || !name.trim() || !text.trim()}
-          className="rounded-lg bg-gradient-to-r from-pink-500 to-purple-500 px-4 py-1.5 text-xs font-medium text-white hover:from-pink-600 hover:to-purple-600 disabled:opacity-40"
+          className="rounded-lg bg-gray-900 px-4 py-1.5 text-xs font-medium text-white hover:bg-gray-800 disabled:opacity-40 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
         >
           {submitting ? "Posting..." : parentId ? "Reply" : "Comment"}
         </button>
@@ -115,7 +115,7 @@ function CommentForm({
           <button
             type="button"
             onClick={onCancel}
-            className="text-xs text-purple-400 hover:text-pink-500 dark:hover:text-pink-400"
+            className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
           >
             Cancel
           </button>
@@ -160,26 +160,26 @@ function SingleComment({
   return (
     <div className="space-y-3">
       <div className="flex gap-3">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-purple-100 text-xs font-medium text-purple-500 dark:bg-purple-900/50 dark:text-purple-400">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-medium text-gray-500 dark:bg-gray-800 dark:text-gray-400">
           {comment.name.charAt(0).toUpperCase()}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-purple-900 dark:text-purple-100">
+            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
               {comment.name}
             </span>
-            <span className="text-xs text-purple-400 dark:text-purple-500">
+            <span className="text-xs text-gray-400 dark:text-gray-500">
               {timeAgo(comment.date)}
             </span>
           </div>
-          <p className="mt-0.5 text-sm text-purple-600 leading-relaxed dark:text-purple-300 whitespace-pre-wrap break-words">
+          <p className="mt-0.5 text-sm text-gray-600 leading-relaxed dark:text-gray-300 whitespace-pre-wrap break-words">
             {comment.text}
           </p>
           <div className="mt-1 flex items-center gap-3">
             {!comment.parentId && (
               <button
                 onClick={() => setReplying(!replying)}
-                className="text-xs text-purple-400 hover:text-pink-500 dark:hover:text-pink-400"
+                className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
               >
                 Reply
               </button>
@@ -199,7 +199,7 @@ function SingleComment({
 
       {/* Replies */}
       {replies.length > 0 && (
-        <div className="ml-11 space-y-3 border-l-2 border-pink-100 pl-4 dark:border-purple-800">
+        <div className="ml-11 space-y-3 border-l-2 border-gray-100 pl-4 dark:border-gray-800">
           {replies.map((reply) => (
             <SingleComment
               key={reply.id}
@@ -281,9 +281,9 @@ export default function Comments({
 
       {/* Comments list */}
       {loading ? (
-        <p className="text-sm text-purple-400">Loading comments...</p>
+        <p className="text-sm text-gray-400">Loading comments...</p>
       ) : topLevel.length === 0 ? (
-        <p className="text-sm text-purple-400 dark:text-purple-500">
+        <p className="text-sm text-gray-400 dark:text-gray-500">
           No comments yet. Be the first!
         </p>
       ) : (

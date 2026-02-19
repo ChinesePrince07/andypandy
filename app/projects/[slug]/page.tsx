@@ -42,13 +42,13 @@ async function getReadmeHtml(repo: string): Promise<string | null> {
   // Unwrap images from link wrappers (GitHub wraps <img> in <a> pointing to the file)
   html = html.replace(
     /<a[^>]*href="[^"]*"[^>]*>\s*(<img[^>]*>)\s*<\/a>/g,
-    "$1",
+    "$1"
   );
 
   // Rewrite relative image src to raw GitHub URLs (handle ./ and / prefixes)
   html = html.replace(
     /src="(?!https?:\/\/)(?:\.\/)?\/?([^"]+)"/g,
-    `src="https://raw.githubusercontent.com/${repo}/${branch}/$1"`,
+    `src="https://raw.githubusercontent.com/${repo}/${branch}/$1"`
   );
 
   return html;
@@ -80,7 +80,7 @@ export default async function ProjectPage({
     <div className="animate-fade-in">
       <Link
         href="/projects"
-        className="inline-flex items-center gap-1.5 text-sm text-purple-400 transition-colors hover:text-purple-600 dark:text-purple-500 dark:hover:text-purple-300"
+        className="inline-flex items-center gap-1.5 text-sm text-gray-400 transition-colors hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
       >
         <svg
           className="h-3.5 w-3.5"
@@ -109,7 +109,7 @@ export default async function ProjectPage({
           {project.tags.map((tag) => (
             <span
               key={tag}
-              className="rounded-md bg-pink-100 px-2 py-0.5 text-xs font-medium text-purple-500 dark:bg-purple-800 dark:text-purple-400"
+              className="rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500 dark:bg-gray-800 dark:text-gray-400"
             >
               {tag}
             </span>
@@ -118,7 +118,7 @@ export default async function ProjectPage({
             href={`https://github.com/${project.repo}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="ml-2 inline-flex items-center gap-1 text-xs text-purple-400 hover:text-purple-600 dark:text-purple-500 dark:hover:text-purple-300"
+            className="ml-2 inline-flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
           >
             Source
             <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 24 24">
@@ -130,21 +130,11 @@ export default async function ProjectPage({
               href={project.demo}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-xs text-purple-400 hover:text-purple-600 dark:text-purple-500 dark:hover:text-purple-300"
+              className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
             >
               Live Demo
-              <svg
-                className="h-3 w-3"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"
-                />
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
               </svg>
             </a>
           )}
@@ -159,9 +149,7 @@ export default async function ProjectPage({
           dangerouslySetInnerHTML={{ __html: htmlContent }}
         />
       ) : (
-        <p className="text-purple-400 dark:text-purple-500">
-          No README found for this project.
-        </p>
+        <p className="text-gray-400 dark:text-gray-500">No README found for this project.</p>
       )}
     </div>
   );
