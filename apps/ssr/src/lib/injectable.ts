@@ -1,5 +1,5 @@
 import siteConfig from '@config'
-import type { AfilmoryManifest } from '@afilmory/typing/manifest'
+import type { AfilmoryManifest } from '@afilmory/typing'
 import type { DOMParser } from 'linkedom'
 
 type HtmlElement = ReturnType<typeof DOMParser.prototype.parseFromString>

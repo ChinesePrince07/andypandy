@@ -2,8 +2,7 @@ import type { NextRequest } from 'next/server'
 
 import { rgbaToThumbHash } from 'thumbhash'
 
-import type { CameraInfo, LensInfo } from '@afilmory/typing/manifest'
-import type { LocationInfo, PickedExif, PhotoManifestItem } from '@afilmory/typing/photo'
+import type { CameraInfo, LensInfo, LocationInfo, PickedExif, PhotoManifestItem } from '@afilmory/typing'
 
 import { requireAdmin } from '~/lib/admin-auth'
 import { getManifest, saveManifest, uploadToBlob } from '~/lib/blob'
@@ -90,13 +89,28 @@ export async function POST(req: NextRequest) {
     try {
       exifData = await exifr.parse(buffer, {
         pick: [
-          'Make', 'Model', 'LensModel', 'LensMake',
-          'FocalLength', 'FocalLengthIn35mmFormat',
-          'FNumber', 'ISO', 'ExposureTime', 'ExposureCompensation',
-          'WhiteBalance', 'DateTimeOriginal', 'CreateDate',
-          'Flash', 'MeteringMode', 'ColorSpace',
-          'ImageWidth', 'ImageHeight', 'Orientation',
-          'GPSLatitude', 'GPSLongitude', 'GPSAltitude',
+          'Make',
+          'Model',
+          'LensModel',
+          'LensMake',
+          'FocalLength',
+          'FocalLengthIn35mmFormat',
+          'FNumber',
+          'ISO',
+          'ExposureTime',
+          'ExposureCompensation',
+          'WhiteBalance',
+          'DateTimeOriginal',
+          'CreateDate',
+          'Flash',
+          'MeteringMode',
+          'ColorSpace',
+          'ImageWidth',
+          'ImageHeight',
+          'Orientation',
+          'GPSLatitude',
+          'GPSLongitude',
+          'GPSAltitude',
         ],
       })
     } catch {
@@ -105,7 +119,7 @@ export async function POST(req: NextRequest) {
 
     // Build PickedExif
     const pickedExif: PickedExif | null = exifData
-      ? {
+      ? ({
           Make: exifData.Make || undefined,
           Model: exifData.Model || undefined,
           LensModel: exifData.LensModel || undefined,
@@ -129,11 +143,11 @@ export async function POST(req: NextRequest) {
           GPSLongitude: exifData.GPSLongitude || undefined,
           GPSAltitude: exifData.GPSAltitude || undefined,
           DateTimeOriginal: exifData.DateTimeOriginal
-            ? (exifData.DateTimeOriginal instanceof Date
-                ? exifData.DateTimeOriginal.toISOString()
-                : String(exifData.DateTimeOriginal))
+            ? exifData.DateTimeOriginal instanceof Date
+              ? exifData.DateTimeOriginal.toISOString()
+              : String(exifData.DateTimeOriginal)
             : undefined,
-        } as PickedExif
+        } as PickedExif)
       : null
 
     // Extract date taken
@@ -144,10 +158,7 @@ export async function POST(req: NextRequest) {
           ? exifData.DateTimeOriginal.toISOString()
           : String(exifData.DateTimeOriginal)
     } else if (exifData?.CreateDate) {
-      dateTaken =
-        exifData.CreateDate instanceof Date
-          ? exifData.CreateDate.toISOString()
-          : String(exifData.CreateDate)
+      dateTaken = exifData.CreateDate instanceof Date ? exifData.CreateDate.toISOString() : String(exifData.CreateDate)
     }
 
     // Extract GPS location
@@ -161,18 +172,10 @@ export async function POST(req: NextRequest) {
 
     // Upload original to Vercel Blob
     const ext = format || 'jpg'
-    const originalUrl = await uploadToBlob(
-      `photos/original/${id}.${ext}`,
-      buffer,
-      file.type || 'image/jpeg',
-    )
+    const originalUrl = await uploadToBlob(`photos/original/${id}.${ext}`, buffer, file.type || 'image/jpeg')
 
     // Upload thumbnail to Vercel Blob
-    const thumbnailUrl = await uploadToBlob(
-      `photos/thumb/${id}.webp`,
-      thumbnailBuffer,
-      'image/webp',
-    )
+    const thumbnailUrl = await uploadToBlob(`photos/thumb/${id}.webp`, thumbnailBuffer, 'image/webp')
 
     // Build photo manifest item
     const photoItem: PhotoManifestItem = {
@@ -208,9 +211,6 @@ export async function POST(req: NextRequest) {
     return Response.json(photoItem)
   } catch (error) {
     console.error('Upload error:', error)
-    return Response.json(
-      { error: error instanceof Error ? error.message : 'Upload failed' },
-      { status: 500 },
-    )
+    return Response.json({ error: error instanceof Error ? error.message : 'Upload failed' }, { status: 500 })
   }
 }

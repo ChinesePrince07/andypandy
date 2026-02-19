@@ -1,5 +1,4 @@
-import type { PhotoManifestItem } from '@afilmory/typing/photo'
-import type { CameraInfo, LensInfo } from '@afilmory/typing/manifest'
+import type { CameraInfo, LensInfo, PhotoManifestItem } from '@afilmory/typing'
 
 class PhotoLoader {
   private photos: PhotoManifestItem[] = []

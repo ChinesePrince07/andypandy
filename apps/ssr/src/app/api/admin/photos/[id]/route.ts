@@ -1,7 +1,6 @@
 import type { NextRequest } from 'next/server'
 
-import type { CameraInfo, LensInfo } from '@afilmory/typing/manifest'
-import type { PhotoManifestItem } from '@afilmory/typing/photo'
+import type { CameraInfo, LensInfo, PhotoManifestItem } from '@afilmory/typing'
 
 import { requireAdmin } from '~/lib/admin-auth'
 import { deleteFromBlob, getManifest, saveManifest } from '~/lib/blob'
@@ -45,10 +44,7 @@ function rebuildLenses(photos: PhotoManifestItem[]): LensInfo[] {
 }
 
 // GET — Get single photo metadata
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const authResponse = await requireAdmin()
   if (authResponse) return authResponse
 
@@ -64,10 +60,7 @@ export async function GET(
 }
 
 // PATCH — Update photo metadata
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const authResponse = await requireAdmin()
   if (authResponse) return authResponse
 
@@ -123,10 +116,7 @@ export async function PATCH(
 }
 
 // DELETE — Delete a photo
-export async function DELETE(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const authResponse = await requireAdmin()
   if (authResponse) return authResponse
 

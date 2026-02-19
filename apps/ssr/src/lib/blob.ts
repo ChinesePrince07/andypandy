@@ -1,5 +1,5 @@
 import { del, list, put } from '@vercel/blob'
-import type { AfilmoryManifest } from '@afilmory/typing/manifest'
+import type { AfilmoryManifest } from '@afilmory/typing'
 
 const MANIFEST_KEY = 'manifest.json'
 
@@ -31,11 +31,7 @@ export async function saveManifest(manifest: AfilmoryManifest): Promise<void> {
   })
 }
 
-export async function uploadToBlob(
-  filename: string,
-  data: Buffer,
-  contentType: string,
-): Promise<string> {
+export async function uploadToBlob(filename: string, data: Buffer, contentType: string): Promise<string> {
   const { url } = await put(filename, data, {
     access: 'public',
     addRandomSuffix: false,
