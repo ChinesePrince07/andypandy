@@ -41,7 +41,15 @@ export async function PUT(req: NextRequest) {
   return Response.json({ ok: true })
 }
 
-// POST — upload files directly to R2 (server-side proxy)
+function sanitizeKey(name: string): string {
+  const ext = name.lastIndexOf('.') >= 0 ? name.slice(name.lastIndexOf('.')) : ''
+  const base = name.slice(0, name.length - ext.length)
+  // Replace non-ASCII and special chars with underscores, keep alphanumeric, hyphens, dots
+  const safe = base.replace(/[^a-zA-Z0-9_\-]/g, '_').replace(/_+/g, '_')
+  return `${safe || 'photo'}${ext.toLowerCase()}`
+}
+
+// POST — upload a single file to R2
 export async function POST(req: NextRequest) {
   if (!(await isAdmin())) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
@@ -54,32 +62,23 @@ export async function POST(req: NextRequest) {
 
   const bucket = env.S3_BUCKET_NAME || 'afilmory-photos'
   const formData = await req.formData()
-  const files = formData.getAll('files') as File[]
-  if (!files.length) {
-    return Response.json({ error: 'No files' }, { status: 400 })
+  const file = formData.get('file') as File | null
+  if (!file) {
+    return Response.json({ error: 'No file' }, { status: 400 })
   }
 
-  let ok = 0
-  let fail = 0
+  const key = sanitizeKey(file.name)
+  const buffer = Buffer.from(await file.arrayBuffer())
+  await s3.send(
+    new PutObjectCommand({
+      Bucket: bucket,
+      Key: key,
+      Body: buffer,
+      ContentType: file.type || 'application/octet-stream',
+    }),
+  )
 
-  for (const file of files) {
-    try {
-      const buffer = Buffer.from(await file.arrayBuffer())
-      await s3.send(
-        new PutObjectCommand({
-          Bucket: bucket,
-          Key: file.name,
-          Body: buffer,
-          ContentType: file.type || 'application/octet-stream',
-        }),
-      )
-      ok++
-    } catch {
-      fail++
-    }
-  }
-
-  return Response.json({ ok, fail })
+  return Response.json({ ok: true, key })
 }
 
 // PATCH — trigger rebuild

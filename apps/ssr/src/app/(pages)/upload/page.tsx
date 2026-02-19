@@ -45,36 +45,36 @@ export default function UploadPage() {
     if (!files.length) return
     setUploading(true)
     setMessage('')
-    setProgress('Uploading...')
 
-    try {
-      const formData = new FormData()
-      for (const file of files) {
-        formData.append('files', file)
+    let ok = 0
+    let fail = 0
+
+    for (const file of files) {
+      setProgress(`${ok + fail + 1}/${files.length}`)
+      try {
+        const formData = new FormData()
+        formData.append('file', file)
+
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        })
+
+        if (res.ok) {
+          ok++
+        } else {
+          fail++
+        }
+      } catch {
+        fail++
       }
-
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      })
-
-      const data = await res.json()
-
-      if (!res.ok) {
-        setMessage(data.error || 'Upload failed')
-        return
-      }
-
-      const { ok, fail } = data
-      setTotalUploaded((prev) => prev + ok)
-      setMessage(`${ok} uploaded${fail ? `, ${fail} failed` : ''}`)
-      if (fail === 0) setFiles([])
-    } catch (err) {
-      setMessage(`Error: ${err instanceof Error ? err.message : String(err)}`)
-    } finally {
-      setUploading(false)
-      setProgress('')
     }
+
+    setTotalUploaded((prev) => prev + ok)
+    setMessage(`${ok} uploaded${fail ? `, ${fail} failed` : ''}`)
+    if (fail === 0) setFiles([])
+    setUploading(false)
+    setProgress('')
   }
 
   async function handleRebuild() {
@@ -193,7 +193,9 @@ export default function UploadPage() {
             disabled={rebuilding}
             className="w-full rounded-lg border border-neutral-700 px-4 py-2.5 text-sm font-medium text-neutral-300 hover:border-neutral-500 hover:text-white disabled:opacity-50"
           >
-            {rebuilding ? 'Triggering rebuild...' : `Rebuild Gallery (${totalUploaded} new photo${totalUploaded !== 1 ? 's' : ''})`}
+            {rebuilding
+              ? 'Triggering rebuild...'
+              : `Rebuild Gallery (${totalUploaded} new photo${totalUploaded !== 1 ? 's' : ''})`}
           </button>
         )}
 
