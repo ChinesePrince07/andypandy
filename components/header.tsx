@@ -17,20 +17,20 @@ export default function Header() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-50 flex justify-center px-4 pt-4">
-      <nav className="flex items-center gap-6 rounded-full border border-pink-200/60 bg-white/70 px-6 py-2.5 shadow-sm shadow-pink-200/20 backdrop-blur-xl dark:border-purple-500/20 dark:bg-[#1a1030]/80 dark:shadow-purple-900/20">
+    <header className="sticky top-0 z-50 flex justify-center px-2 pt-3 sm:px-4 sm:pt-4">
+      <nav className="flex items-center gap-3 rounded-full border border-pink-200/60 bg-white/70 px-3 py-1.5 shadow-sm shadow-pink-200/20 backdrop-blur-xl sm:gap-6 sm:px-6 sm:py-2.5 dark:border-purple-500/20 dark:bg-[#1a1030]/80 dark:shadow-purple-900/20">
         <Link
           href="/"
-          className="text-lg font-bold tracking-tight gradient-text transition-opacity hover:opacity-80"
+          className="text-base font-bold tracking-tight gradient-text transition-opacity hover:opacity-80 sm:text-lg"
         >
           <ScrambleText text="andy." interval={4000} />
         </Link>
-        <div className="flex items-center gap-5">
+        <div className="flex items-center gap-2.5 sm:gap-5">
           {links.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className={`nav-link text-sm transition-colors ${
+              className={`nav-link text-xs transition-colors sm:text-sm ${
                 pathname === link.href
                   ? "nav-link-active text-purple-900 font-medium dark:text-purple-200"
                   : "text-purple-800 hover:text-pink-500 dark:text-purple-300 dark:hover:text-pink-400"
@@ -39,8 +39,10 @@ export default function Header() {
               {link.label}
             </Link>
           ))}
-          <div className="h-4 w-px bg-pink-200 dark:bg-purple-700" />
-          <LiveClock />
+          <div className="hidden h-4 w-px bg-pink-200 sm:block dark:bg-purple-700" />
+          <div className="hidden sm:block">
+            <LiveClock />
+          </div>
           <ThemeToggle />
         </div>
       </nav>
