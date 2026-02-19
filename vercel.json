@@ -2,5 +2,11 @@
   "buildCommand": "pnpm run build",
   "outputDirectory": "apps/ssr/.next",
   "framework": "nextjs",
-  "installCommand": "pnpm install"
+  "installCommand": "pnpm install",
+  "rewrites": [
+    {
+      "source": "/r2/:path*",
+      "destination": "https://pub-6d332a2be65d4bd2bb00662bba9cb4b0.r2.dev/:path*"
+    }
+  ]
 }
