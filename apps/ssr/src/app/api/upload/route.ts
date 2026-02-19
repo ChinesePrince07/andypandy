@@ -1,5 +1,4 @@
-import { PutObjectCommand,S3Client } from '@aws-sdk/client-s3'
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import { env } from '@env'
 import { cookies } from 'next/headers'
 import type { NextRequest } from 'next/server'
@@ -42,7 +41,7 @@ export async function PUT(req: NextRequest) {
   return Response.json({ ok: true })
 }
 
-// POST — get presigned upload URLs
+// POST — upload files directly to R2 (server-side proxy)
 export async function POST(req: NextRequest) {
   if (!(await isAdmin())) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
@@ -54,29 +53,36 @@ export async function POST(req: NextRequest) {
   }
 
   const bucket = env.S3_BUCKET_NAME || 'afilmory-photos'
-  const { files, triggerDeploy } = await req.json()
+  const formData = await req.formData()
+  const triggerDeploy = formData.get('triggerDeploy') === 'true'
 
-  if (!files?.length) {
+  const files = formData.getAll('files') as File[]
+  if (!files.length) {
     return Response.json({ error: 'No files' }, { status: 400 })
   }
 
-  const urls: { name: string; url: string }[] = []
+  let ok = 0
+  let fail = 0
 
-  for (const file of files as { name: string; type: string }[]) {
-    const url = await getSignedUrl(
-      s3,
-      new PutObjectCommand({
-        Bucket: bucket,
-        Key: file.name,
-        ContentType: file.type,
-      }),
-      { expiresIn: 600 },
-    )
-    urls.push({ name: file.name, url })
+  for (const file of files) {
+    try {
+      const buffer = Buffer.from(await file.arrayBuffer())
+      await s3.send(
+        new PutObjectCommand({
+          Bucket: bucket,
+          Key: file.name,
+          Body: buffer,
+          ContentType: file.type || 'application/octet-stream',
+        }),
+      )
+      ok++
+    } catch {
+      fail++
+    }
   }
 
   let deployTriggered = false
-  if (triggerDeploy && env.DEPLOY_HOOK) {
+  if (triggerDeploy && ok > 0 && env.DEPLOY_HOOK) {
     try {
       await fetch(env.DEPLOY_HOOK, { method: 'POST' })
       deployTriggered = true
@@ -85,5 +91,5 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  return Response.json({ urls, deployTriggered })
+  return Response.json({ ok, fail, deployTriggered })
 }
