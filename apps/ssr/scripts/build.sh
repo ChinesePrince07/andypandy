@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+export NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=7168}"
 cd ../web
 pnpm build
 
