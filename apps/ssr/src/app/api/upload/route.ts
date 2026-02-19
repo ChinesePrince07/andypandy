@@ -54,8 +54,6 @@ export async function POST(req: NextRequest) {
 
   const bucket = env.S3_BUCKET_NAME || 'afilmory-photos'
   const formData = await req.formData()
-  const triggerDeploy = formData.get('triggerDeploy') === 'true'
-
   const files = formData.getAll('files') as File[]
   if (!files.length) {
     return Response.json({ error: 'No files' }, { status: 400 })
@@ -81,15 +79,17 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  let deployTriggered = false
-  if (triggerDeploy && ok > 0 && env.DEPLOY_HOOK) {
-    try {
-      await fetch(env.DEPLOY_HOOK, { method: 'POST' })
-      deployTriggered = true
-    } catch {
-      // non-critical
-    }
-  }
+  return Response.json({ ok, fail })
+}
 
-  return Response.json({ ok, fail, deployTriggered })
+// PATCH — trigger rebuild
+export async function PATCH() {
+  if (!(await isAdmin())) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  if (!env.DEPLOY_HOOK) {
+    return Response.json({ error: 'Deploy hook not configured' }, { status: 500 })
+  }
+  await fetch(env.DEPLOY_HOOK, { method: 'POST' })
+  return Response.json({ ok: true })
 }

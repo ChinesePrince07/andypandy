@@ -9,8 +9,10 @@ export default function UploadPage() {
 
   const [files, setFiles] = useState<File[]>([])
   const [uploading, setUploading] = useState(false)
+  const [rebuilding, setRebuilding] = useState(false)
   const [progress, setProgress] = useState('')
   const [message, setMessage] = useState('')
+  const [totalUploaded, setTotalUploaded] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
 
   async function handleLogin(e: React.FormEvent) {
@@ -50,7 +52,6 @@ export default function UploadPage() {
       for (const file of files) {
         formData.append('files', file)
       }
-      formData.append('triggerDeploy', 'true')
 
       const res = await fetch('/api/upload', {
         method: 'POST',
@@ -64,16 +65,32 @@ export default function UploadPage() {
         return
       }
 
-      const { ok, fail, deployTriggered } = data
-      setMessage(
-        `${ok} uploaded${fail ? `, ${fail} failed` : ''}${deployTriggered ? ' — rebuild triggered' : ''}`,
-      )
+      const { ok, fail } = data
+      setTotalUploaded((prev) => prev + ok)
+      setMessage(`${ok} uploaded${fail ? `, ${fail} failed` : ''}`)
       if (fail === 0) setFiles([])
     } catch (err) {
       setMessage(`Error: ${err instanceof Error ? err.message : String(err)}`)
     } finally {
       setUploading(false)
       setProgress('')
+    }
+  }
+
+  async function handleRebuild() {
+    setRebuilding(true)
+    try {
+      const res = await fetch('/api/upload?action=rebuild', { method: 'PATCH' })
+      if (res.ok) {
+        setMessage('Rebuild triggered — gallery will update in ~2 minutes')
+        setTotalUploaded(0)
+      } else {
+        setMessage('Failed to trigger rebuild')
+      }
+    } catch {
+      setMessage('Failed to trigger rebuild')
+    } finally {
+      setRebuilding(false)
     }
   }
 
@@ -169,10 +186,21 @@ export default function UploadPage() {
             : `Upload ${files.length || ''} photo${files.length !== 1 ? 's' : ''}`}
         </button>
 
+        {/* Rebuild button */}
+        {totalUploaded > 0 && (
+          <button
+            onClick={handleRebuild}
+            disabled={rebuilding}
+            className="w-full rounded-lg border border-neutral-700 px-4 py-2.5 text-sm font-medium text-neutral-300 hover:border-neutral-500 hover:text-white disabled:opacity-50"
+          >
+            {rebuilding ? 'Triggering rebuild...' : `Rebuild Gallery (${totalUploaded} new photo${totalUploaded !== 1 ? 's' : ''})`}
+          </button>
+        )}
+
         {/* Message */}
         {message && (
           <p
-            className={`text-center text-sm ${message.includes('failed') || message.includes('Error') ? 'text-red-400' : 'text-green-400'}`}
+            className={`text-center text-sm ${message.includes('failed') || message.includes('Error') || message.includes('Failed') ? 'text-red-400' : 'text-green-400'}`}
           >
             {message}
           </p>
