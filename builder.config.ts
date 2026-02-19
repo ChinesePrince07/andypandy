@@ -46,8 +46,8 @@ export default defineBuilderConfig(() => ({
       performance: {
         worker: {
           workerCount: 2,
-          timeout: 60_000,
-          useClusterMode: true,
+          timeout: 120_000,
+          useClusterMode: false,
           workerConcurrency: 1,
         },
       },
