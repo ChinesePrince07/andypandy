@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getPhotoBySlug } from "@/lib/photos";
 import { isAdmin } from "@/lib/admin-auth";
 import PhotoMap from "@/components/photo-map";
+import ExifEditor from "@/components/exif-editor";
 
 export const dynamic = "force-dynamic";
 
@@ -15,16 +16,6 @@ export async function generateMetadata({
   const photo = await getPhotoBySlug(slug);
   if (!photo) return {};
   return { title: photo.title || photo.slug };
-}
-
-function ExifRow({ label, value }: { label: string; value: string | number | null | undefined }) {
-  if (!value) return null;
-  return (
-    <div className="flex justify-between text-sm">
-      <span className="text-gray-400 dark:text-gray-500">{label}</span>
-      <span className="text-gray-700 font-mono dark:text-gray-300">{value}</span>
-    </div>
-  );
 }
 
 export default async function PhotoDetailPage({
@@ -61,14 +52,6 @@ export default async function PhotoDetailPage({
           </svg>
           Back to photos
         </Link>
-        {admin && (
-          <Link
-            href={`/admin/photos?edit=${slug}`}
-            className="text-sm text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
-          >
-            Edit
-          </Link>
-        )}
       </div>
 
       {/* Photo */}
@@ -118,23 +101,8 @@ export default async function PhotoDetailPage({
         </div>
       )}
 
-      {/* EXIF detail panel */}
-      <div className="rounded-xl border border-gray-200/80 bg-white p-5 shadow-sm space-y-2 dark:border-gray-800/80 dark:bg-gray-900">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">
-          Details
-        </h3>
-        <ExifRow label="Camera" value={cameraInfo || null} />
-        <ExifRow label="Lens" value={photo.lens} />
-        <ExifRow label="Focal Length" value={photo.focal_length ? `${photo.focal_length}mm` : null} />
-        <ExifRow label="Aperture" value={photo.aperture ? `f/${photo.aperture}` : null} />
-        <ExifRow label="Shutter Speed" value={photo.shutter_speed ? `${photo.shutter_speed}s` : null} />
-        <ExifRow label="ISO" value={photo.iso} />
-        <ExifRow label="Location" value={photo.location_name} />
-        <ExifRow
-          label="Dimensions"
-          value={photo.width && photo.height ? `${photo.width} × ${photo.height}` : null}
-        />
-      </div>
+      {/* EXIF detail panel — inline editing for admins */}
+      <ExifEditor photo={photo} isAdmin={admin} />
 
       {/* Map */}
       {photo.latitude && photo.longitude && (
