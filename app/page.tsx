@@ -11,7 +11,7 @@ const INSTAGRAM_URL = "https://www.instagram.com/andypandy0527/";
 const EMAIL = "zhangandy4321@gmail.com";
 
 const iconBtnClass =
-  "inline-flex items-center justify-center h-10 w-10 rounded-full border border-gray-200 bg-white text-gray-500 shadow-sm transition-all hover:border-gray-300 hover:text-gray-700 hover:shadow-md active:scale-95 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400 dark:hover:border-gray-600 dark:hover:text-gray-300";
+  "inline-flex items-center justify-center h-10 w-10 rounded-full border border-pink-200 bg-white text-purple-400 shadow-sm transition-all hover:border-pink-300 hover:text-pink-500 hover:shadow-md active:scale-95 dark:border-purple-700 dark:bg-[#1a1030] dark:text-purple-400 dark:hover:border-purple-500 dark:hover:text-pink-400";
 
 export default async function AboutPage() {
   const [about, admin] = await Promise.all([getAboutData(), isAdmin()]);
@@ -20,10 +20,10 @@ export default async function AboutPage() {
     <div className="space-y-12 animate-fade-in">
       {/* Status pill */}
       <div className="animate-fade-in" style={{ animationDelay: "100ms" }}>
-        <span className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs text-gray-500 shadow-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
+        <span className="inline-flex items-center gap-2 rounded-full border border-pink-200 bg-white px-3 py-1 text-xs text-purple-500 shadow-sm dark:border-purple-800 dark:bg-[#1a1030] dark:text-purple-400">
           <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-pink-400 opacity-75" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-pink-500" />
           </span>
           Available for projects
         </span>
@@ -42,7 +42,7 @@ export default async function AboutPage() {
             interval={5000}
           />
         </h1>
-        <p className="text-lg text-gray-500 leading-relaxed max-w-lg dark:text-gray-400">
+        <p className="text-lg text-purple-400 leading-relaxed max-w-lg dark:text-purple-400">
           Developer, tinkerer, and builder of things — from embedded systems to
           full-stack web apps.
         </p>
@@ -53,11 +53,11 @@ export default async function AboutPage() {
 
       {/* Bio */}
       <div
-        className="space-y-4 text-gray-500 leading-relaxed animate-fade-in dark:text-gray-400"
+        className="space-y-4 text-purple-500 leading-relaxed animate-fade-in dark:text-purple-400"
         style={{ animationDelay: "300ms" }}
       >
         <div className="flex items-center">
-          <h2 className="text-xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
+          <h2 className="text-xl font-bold tracking-tight text-purple-900 dark:text-purple-100">
             About
           </h2>
         </div>
@@ -121,7 +121,7 @@ export default async function AboutPage() {
         </a>
         <Link
           href="/blog"
-          className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm text-gray-600 shadow-sm transition-all hover:border-gray-300 hover:shadow-md active:scale-95 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-600"
+          className="inline-flex items-center gap-2 rounded-full border border-pink-200 bg-white px-4 py-2 text-sm text-purple-600 shadow-sm transition-all hover:border-pink-300 hover:shadow-md active:scale-95 dark:border-purple-700 dark:bg-[#1a1030] dark:text-purple-300 dark:hover:border-purple-500"
         >
           Read the blog &rarr;
         </Link>
@@ -138,7 +138,7 @@ export default async function AboutPage() {
         <div className="flex items-center">
           <h2 className="text-xl font-bold tracking-tight">Education</h2>
         </div>
-        <div className="rounded-xl border border-gray-200/80 bg-white p-5 shadow-sm dark:border-gray-800/80 dark:bg-gray-900">
+        <div className="rounded-xl border border-pink-200/80 bg-white p-5 shadow-sm dark:border-purple-800/60 dark:bg-[#1a1030]">
           <div className="flex items-center gap-4">
             {about.education.logo ? (
               <img
@@ -147,7 +147,7 @@ export default async function AboutPage() {
                 className="h-10 w-10 rounded-lg object-contain"
               />
             ) : (
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-pink-50 text-pink-400 dark:bg-purple-900/50 dark:text-purple-400">
                 <svg
                   className="h-5 w-5"
                   fill="none"
@@ -164,14 +164,14 @@ export default async function AboutPage() {
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+              <h3 className="font-semibold text-purple-900 dark:text-purple-100">
                 {about.education.school}
               </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-purple-400 dark:text-purple-400">
                 {about.education.location}
               </p>
             </div>
-            <span className="shrink-0 text-xs tabular-nums text-gray-400 font-mono dark:text-gray-500">
+            <span className="shrink-0 text-xs tabular-nums text-purple-300 font-mono dark:text-purple-500">
               {about.education.year}
             </span>
           </div>
@@ -193,16 +193,16 @@ export default async function AboutPage() {
           {about.skills.map((group) => (
             <div
               key={group.category}
-              className="rounded-xl border border-gray-200/80 bg-white p-4 shadow-sm dark:border-gray-800/80 dark:bg-gray-900"
+              className="rounded-xl border border-pink-200/80 bg-white p-4 shadow-sm dark:border-purple-800/60 dark:bg-[#1a1030]"
             >
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-pink-400 dark:text-purple-500">
                 {group.category}
               </h3>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {group.items.map((item) => (
                   <span
                     key={item}
-                    className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-0.5 text-xs text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                    className="rounded-full border border-pink-200 bg-pink-50 px-2.5 py-0.5 text-xs text-purple-600 dark:border-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
                   >
                     {item}
                   </span>

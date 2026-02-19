@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
+import SakuraPetals from "@/components/sakura-petals";
 
 export const metadata: Metadata = {
   title: {
@@ -31,7 +32,7 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
         <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
           rel="stylesheet"
         />
         <script
@@ -40,7 +41,8 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="noise min-h-screen flex flex-col bg-white text-gray-900 antialiased dark:bg-gray-950 dark:text-gray-100 transition-colors duration-300">
+      <body className="noise min-h-screen flex flex-col bg-pink-50/40 text-purple-950 antialiased dark:bg-[#0f0a1a] dark:text-purple-100 transition-colors duration-300">
+        <SakuraPetals />
         <div className="relative flex flex-col min-h-screen">
           <Header />
           <main className="flex-1 mx-auto w-full max-w-2xl px-6 py-16">
