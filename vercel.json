@@ -2,5 +2,5 @@
   "buildCommand": "pnpm run build",
   "outputDirectory": "apps/ssr/.next",
   "framework": "nextjs",
-  "installCommand": "pnpm install"
+  "installCommand": "pnpm install --no-frozen-lockfile"
 }
