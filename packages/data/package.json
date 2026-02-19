@@ -8,6 +8,6 @@
     "./types": "./src/types.ts"
   },
   "dependencies": {
-    "@afilmory/builder": "workspace:*"
+    "@afilmory/typing": "workspace:*"
   }
 }
