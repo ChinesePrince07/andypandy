@@ -38,7 +38,6 @@ export default function UploadPage() {
       if (e.target.files) {
         addFiles(e.target.files)
       }
-      // Reset input so the same file can be selected again
       e.target.value = ''
     },
     [addFiles],
@@ -87,7 +86,6 @@ export default function UploadPage() {
   const handleUploadAll = useCallback(async () => {
     setIsUploading(true)
 
-    // Upload files sequentially (one at a time to avoid server overload)
     for (let i = 0; i < files.length; i++) {
       const uploadFile = files[i]
       if (uploadFile.status === 'done') continue
@@ -117,23 +115,26 @@ export default function UploadPage() {
     setIsUploading(false)
   }, [files, updateFileStatus])
 
+  const clearAll = useCallback(() => {
+    files.forEach((f) => URL.revokeObjectURL(f.previewUrl))
+    setFiles([])
+  }, [files])
+
   const pendingCount = files.filter((f) => f.status === 'pending').length
   const doneCount = files.filter((f) => f.status === 'done').length
   const errorCount = files.filter((f) => f.status === 'error').length
+  const uploadingIndex = files.findIndex((f) => f.status === 'uploading')
   const allDone = files.length > 0 && pendingCount === 0 && !isUploading
+  const progressPercent = files.length > 0 ? Math.round((doneCount / files.length) * 100) : 0
 
   return (
-    <div>
-      <div className="mb-8 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Upload Photos</h1>
-        {allDone && (
-          <Link
-            href="/admin"
-            className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-neutral-200"
-          >
-            Back to Dashboard
-          </Link>
-        )}
+    <div className="mx-auto max-w-4xl">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-white">Upload Photos</h1>
+        <p className="mt-1 text-sm text-neutral-500">
+          Add photos to your gallery. EXIF data will be extracted automatically.
+        </p>
       </div>
 
       {/* Drop zone */}
@@ -142,30 +143,32 @@ export default function UploadPage() {
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
-        className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed py-16 transition-colors ${
+        className={`group relative flex cursor-pointer flex-col items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed transition-all duration-200 ${
           isDragOver
-            ? 'border-white bg-neutral-800/50'
-            : 'border-neutral-600 hover:border-neutral-400'
-        }`}
+            ? 'border-white/40 bg-white/[0.03]'
+            : 'border-neutral-700/60 hover:border-neutral-500/60 hover:bg-white/[0.01]'
+        } ${files.length > 0 ? 'py-10' : 'py-20'}`}
       >
-        <svg
-          className="mb-4 h-12 w-12 text-neutral-500"
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth={1.5}
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
-          />
-        </svg>
-        <p className="mb-1 text-neutral-300">
-          Drop photos here or click to select
+        <div className={`mb-3 rounded-2xl p-4 transition-colors ${isDragOver ? 'bg-white/10' : 'bg-neutral-800/50 group-hover:bg-neutral-800/80'}`}>
+          <svg
+            className={`h-8 w-8 transition-colors ${isDragOver ? 'text-white' : 'text-neutral-500 group-hover:text-neutral-400'}`}
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"
+            />
+          </svg>
+        </div>
+        <p className={`text-sm font-medium transition-colors ${isDragOver ? 'text-white' : 'text-neutral-300'}`}>
+          {isDragOver ? 'Drop to add photos' : 'Drop photos here or click to browse'}
         </p>
-        <p className="text-sm text-neutral-500">
-          Supports JPEG, PNG, WebP, HEIC, and other image formats
+        <p className="mt-1 text-xs text-neutral-600">
+          JPEG, PNG, WebP, HEIC, TIFF
         </p>
         <input
           ref={fileInputRef}
@@ -180,181 +183,210 @@ export default function UploadPage() {
       {/* File list */}
       {files.length > 0 && (
         <div className="mt-8">
-          <div className="mb-4 flex items-center justify-between">
-            <p className="text-sm text-neutral-400">
-              {files.length} file{files.length !== 1 ? 's' : ''} selected
-              {doneCount > 0 && (
-                <span className="ml-2 text-green-400">
+          {/* Stats bar */}
+          <div className="mb-5 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-white">
+                {files.length} photo{files.length !== 1 ? 's' : ''}
+              </span>
+              {isUploading && (
+                <span className="text-xs text-neutral-500">
+                  {doneCount + 1} of {files.length}
+                </span>
+              )}
+              {doneCount > 0 && !isUploading && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-400">
+                  <svg className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
                   {doneCount} uploaded
                 </span>
               )}
               {errorCount > 0 && (
-                <span className="ml-2 text-red-400">
+                <span className="inline-flex items-center gap-1 rounded-full bg-red-500/10 px-2 py-0.5 text-xs font-medium text-red-400">
                   {errorCount} failed
                 </span>
               )}
-            </p>
+            </div>
             {!isUploading && pendingCount > 0 && (
               <button
-                onClick={() => {
-                  files.forEach((f) => URL.revokeObjectURL(f.previewUrl))
-                  setFiles([])
-                }}
-                className="text-sm text-neutral-500 transition-colors hover:text-neutral-300"
+                onClick={clearAll}
+                className="text-xs text-neutral-600 transition-colors hover:text-neutral-400"
               >
                 Clear all
               </button>
             )}
           </div>
 
-          <div className="space-y-3">
+          {/* Progress bar */}
+          {isUploading && (
+            <div className="mb-5">
+              <div className="h-1 w-full overflow-hidden rounded-full bg-neutral-800">
+                <div
+                  className="h-full rounded-full bg-white transition-all duration-500 ease-out"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Photo grid */}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
             {files.map((uploadFile, index) => (
               <div
                 key={`${uploadFile.file.name}-${index}`}
-                className="flex items-center gap-4 rounded-lg border border-neutral-800 bg-neutral-900 p-3"
+                className="group/card relative overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900"
               >
-                {/* Thumbnail preview */}
-                <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-md bg-neutral-800">
+                {/* Image preview */}
+                <div className="relative aspect-square overflow-hidden bg-neutral-800">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={uploadFile.previewUrl}
                     alt={uploadFile.file.name}
-                    className="h-full w-full object-cover"
+                    className={`h-full w-full object-cover transition-all duration-300 ${
+                      uploadFile.status === 'uploading' ? 'scale-105 brightness-75' : ''
+                    } ${uploadFile.status === 'done' ? 'brightness-100' : ''} ${
+                      uploadFile.status === 'error' ? 'brightness-50 saturate-50' : ''
+                    }`}
                   />
+
+                  {/* Status overlay */}
+                  {uploadFile.status === 'uploading' && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                      <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+                    </div>
+                  )}
+                  {uploadFile.status === 'done' && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition-opacity group-hover/card:opacity-100">
+                      <div className="rounded-full bg-emerald-500 p-1.5">
+                        <svg className="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    </div>
+                  )}
+                  {uploadFile.status === 'error' && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                      <div className="rounded-full bg-red-500 p-1.5">
+                        <svg className="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Done badge - always visible */}
+                  {uploadFile.status === 'done' && (
+                    <div className="absolute left-2 top-2">
+                      <div className="rounded-full bg-emerald-500 p-1 shadow-lg shadow-black/20">
+                        <svg className="h-3 w-3 text-white" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Remove button */}
+                  {!isUploading && uploadFile.status !== 'done' && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        removeFile(index)
+                      }}
+                      className="absolute right-2 top-2 rounded-full bg-black/60 p-1 text-white/70 opacity-0 backdrop-blur-sm transition-all hover:bg-black/80 hover:text-white group-hover/card:opacity-100"
+                    >
+                      <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  )}
                 </div>
 
                 {/* File info */}
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-white">
+                <div className="px-3 py-2.5">
+                  <p className="truncate text-xs font-medium text-neutral-300">
                     {uploadFile.file.name}
                   </p>
-                  <p className="text-xs text-neutral-500">
+                  <p className="mt-0.5 text-[11px] text-neutral-600">
                     {(uploadFile.file.size / (1024 * 1024)).toFixed(1)} MB
-                    {uploadFile.error && (
-                      <span className="ml-2 text-red-400">
-                        {uploadFile.error}
-                      </span>
-                    )}
                   </p>
-                </div>
-
-                {/* Status indicator */}
-                <div className="flex-shrink-0">
-                  {uploadFile.status === 'pending' && (
-                    <div className="h-3 w-3 rounded-full bg-neutral-600" />
-                  )}
-                  {uploadFile.status === 'uploading' && (
-                    <svg
-                      className="h-5 w-5 animate-spin text-white"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                      />
-                    </svg>
-                  )}
-                  {uploadFile.status === 'done' && (
-                    <svg
-                      className="h-5 w-5 text-green-400"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  )}
-                  {uploadFile.status === 'error' && (
-                    <svg
-                      className="h-5 w-5 text-red-400"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
+                  {uploadFile.error && (
+                    <p className="mt-1 truncate text-[11px] text-red-400" title={uploadFile.error}>
+                      {uploadFile.error}
+                    </p>
                   )}
                 </div>
-
-                {/* Remove button (only when not uploading) */}
-                {!isUploading && uploadFile.status !== 'done' && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      removeFile(index)
-                    }}
-                    className="flex-shrink-0 text-neutral-600 transition-colors hover:text-neutral-300"
-                  >
-                    <svg
-                      className="h-4 w-4"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </button>
-                )}
               </div>
             ))}
+
+            {/* Add more button */}
+            {!isUploading && (
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="flex aspect-square items-center justify-center rounded-xl border border-dashed border-neutral-800 bg-transparent transition-colors hover:border-neutral-600 hover:bg-neutral-900/50"
+              >
+                <div className="flex flex-col items-center gap-1.5">
+                  <svg className="h-6 w-6 text-neutral-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                  </svg>
+                  <span className="text-xs text-neutral-600">Add more</span>
+                </div>
+              </button>
+            )}
           </div>
 
           {/* Upload button */}
           {pendingCount > 0 && (
-            <button
-              onClick={handleUploadAll}
-              disabled={isUploading}
-              className="mt-6 w-full rounded-lg bg-white px-4 py-3 text-sm font-medium text-black transition-colors hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {isUploading
-                ? `Uploading... (${doneCount}/${files.length})`
-                : `Upload ${pendingCount} Photo${pendingCount !== 1 ? 's' : ''}`}
-            </button>
+            <div className="mt-6">
+              <button
+                onClick={handleUploadAll}
+                disabled={isUploading}
+                className="w-full rounded-xl bg-white py-3 text-sm font-semibold text-black transition-all hover:bg-neutral-200 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {isUploading ? (
+                  <span className="inline-flex items-center gap-2">
+                    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Uploading {doneCount + 1} of {files.length}...
+                  </span>
+                ) : (
+                  `Upload ${pendingCount} Photo${pendingCount !== 1 ? 's' : ''}`
+                )}
+              </button>
+            </div>
           )}
 
-          {/* Results summary */}
+          {/* Completion card */}
           {allDone && (
-            <div className="mt-6 rounded-lg border border-neutral-800 bg-neutral-900 p-6 text-center">
-              <p className="text-lg font-medium text-white">
+            <div className="mt-8 rounded-2xl border border-neutral-800 bg-neutral-900/50 p-8 text-center">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10">
+                <svg className="h-6 w-6 text-emerald-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <p className="text-base font-semibold text-white">
                 Upload Complete
               </p>
-              <p className="mt-1 text-sm text-neutral-400">
-                {doneCount} photo{doneCount !== 1 ? 's' : ''} uploaded
-                successfully
-                {errorCount > 0 && `, ${errorCount} failed`}
+              <p className="mt-1 text-sm text-neutral-500">
+                {doneCount} photo{doneCount !== 1 ? 's' : ''} added to your gallery
+                {errorCount > 0 && (
+                  <span className="text-red-400">
+                    {' '}&middot; {errorCount} failed
+                  </span>
+                )}
               </p>
-              <div className="mt-4 flex justify-center gap-3">
+              <div className="mt-6 flex justify-center gap-3">
                 <Link
                   href="/admin"
-                  className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-neutral-200"
+                  className="rounded-xl bg-white px-5 py-2.5 text-sm font-medium text-black transition-colors hover:bg-neutral-200"
                 >
                   View Dashboard
                 </Link>
                 <button
-                  onClick={() => {
-                    files.forEach((f) => URL.revokeObjectURL(f.previewUrl))
-                    setFiles([])
-                  }}
-                  className="rounded-lg border border-neutral-700 px-4 py-2 text-sm font-medium text-neutral-300 transition-colors hover:border-neutral-500"
+                  onClick={clearAll}
+                  className="rounded-xl border border-neutral-700 px-5 py-2.5 text-sm font-medium text-neutral-300 transition-colors hover:border-neutral-500 hover:text-white"
                 >
                   Upload More
                 </button>
