@@ -50,7 +50,7 @@ public:
 DualPrint out;
 
 // Firmware version (increment this when updating)
-#define FIRMWARE_VERSION "1.4.6"
+#define FIRMWARE_VERSION "1.4.7"
 
 // Captive portal settings
 #define AP_SSID "calc"
@@ -234,16 +234,56 @@ constexpr int MAXCOMMAND = 36;
 uint8_t header[MAXHDRLEN];
 uint8_t data[MAXDATALEN];
 
-// lowercase letters make strings weird,
-// so we have to truncate the string
-void fixStrVar(char* str) {
-  int end = strlen(str);
-  for (int i = 0; i < end; ++i) {
-    if (isLowerCase(str[i])) {
-      --end;
-    }
+// Convert ASCII char to TI-84 token(s). Returns number of bytes written (1 or 2).
+int asciiToTIToken(char c, uint8_t* out) {
+  // A-Z map directly
+  if (c >= 'A' && c <= 'Z') { out[0] = c; return 1; }
+  // 0-9 map directly
+  if (c >= '0' && c <= '9') { out[0] = c; return 1; }
+  // Punctuation and symbols
+  switch (c) {
+    case ' ':  out[0] = 0x29; return 1;
+    case '!':  out[0] = 0x2D; return 1;
+    case '"':  out[0] = 0x2A; return 1;
+    case '\'': out[0] = 0xAE; return 1;
+    case '(':  out[0] = 0x10; return 1;
+    case ')':  out[0] = 0x11; return 1;
+    case '*':  out[0] = 0x82; return 1;
+    case '+':  out[0] = 0x70; return 1;
+    case ',':  out[0] = 0x2B; return 1;
+    case '-':  out[0] = 0x71; return 1;
+    case '.':  out[0] = 0x3A; return 1;
+    case '/':  out[0] = 0x83; return 1;
+    case ':':  out[0] = 0x3E; return 1;
+    case '<':  out[0] = 0x6B; return 1;
+    case '=':  out[0] = 0x6A; return 1;
+    case '>':  out[0] = 0x6C; return 1;
+    case '?':  out[0] = 0xAF; return 1;
+    case '^':  out[0] = 0x84; return 1;  // power operator (NOT 0xF0 which is nDeriv)
+    case '[':  out[0] = 0x06; return 1;
+    case ']':  out[0] = 0x07; return 1;
+    case '{':  out[0] = 0x08; return 1;
+    case '}':  out[0] = 0x09; return 1;
+    default:   out[0] = 0x29; return 1;  // unknown → space
   }
-  str[end] = '\0';
+}
+
+// Build TI-84 string variable from ASCII message. Returns total byte length.
+int asciiToTIString(const char* msg, uint8_t* strVar) {
+  int pos = 2;  // leave room for length word prefix
+  int tokenCount = 0;
+  for (int i = 0; msg[i] && pos < MAXDATALEN - 2; i++) {
+    uint8_t tok[2];
+    int n = asciiToTIToken(msg[i], tok);
+    for (int j = 0; j < n && pos < MAXDATALEN - 2; j++) {
+      strVar[pos++] = tok[j];
+    }
+    tokenCount++;
+  }
+  // Write token length as little-endian 16-bit at start
+  strVar[0] = (pos - 2) & 0xFF;
+  strVar[1] = ((pos - 2) >> 8) & 0xFF;
+  return pos;
 }
 
 int onReceived(uint8_t type, enum Endpoint model, int datalen);
@@ -636,8 +676,26 @@ void setup() {
     out.println("MAC set to 24:FD:FA:0B:80:BF");
   }
 
-  // Load saved WiFi credentials (connect when user selects CONNECT)
+  // Load saved WiFi credentials
   loadSavedCredentials();
+
+  // Auto-connect to Suffield Gear on boot
+  out.println("[auto-connecting to Suffield Gear]");
+  WiFi.begin("Suffield Gear", "suffield");
+  int attempts = 0;
+  while (WiFi.status() != WL_CONNECTED && attempts < 20) {
+    delay(500);
+    attempts++;
+    out.print(".");
+  }
+  out.println();
+  if (WiFi.status() == WL_CONNECTED) {
+    out.print("[connected! IP: ");
+    out.print(WiFi.localIP());
+    out.println("]");
+  } else {
+    out.println("[auto-connect failed, will connect manually]");
+  }
 
   telnetServer.begin();
   telnetServer.setNoDelay(true);
@@ -845,8 +903,8 @@ int onRequest(uint8_t type, enum Endpoint model, int* headerlen, int* datalen, d
       if (type != VarTypes82::VarString) {
         return -1;
       }
-      // TODO right now, the only string variable will be the message, but ill need to allow for other vars later
-      *datalen = TIVar::stringToStrVar8x(String(message), data, model);
+      // Use our own ASCII→TI encoder (TIVar's has bugs like ^→nDeriv)
+      *datalen = asciiToTIString(message, data);
       TIVar::intToSizeWord(*datalen, header);
       header[2] = VarTypes82::VarString;
       header[3] = 0xAA;
