@@ -24,6 +24,21 @@
       window.__SITE_CONFIG__ = {}
     </script>
     <script id="manifest"></script>
+    <script>
+      // Unregister all service workers — SSR injects dynamic manifest data
+      // into HTML, so service worker caching of HTML causes stale gallery data
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(regs) {
+          regs.forEach(function(r) { r.unregister() })
+        })
+        // Clear all caches left by old service workers
+        if ('caches' in window) {
+          caches.keys().then(function(names) {
+            names.forEach(function(n) { caches.delete(n) })
+          })
+        }
+      }
+    </script>
   </head>
   <body>
     <div id="root">
