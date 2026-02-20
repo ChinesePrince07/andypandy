@@ -227,7 +227,9 @@ export async function POST(req: NextRequest) {
 
     // Update manifest
     const manifest = await getManifest()
-    manifest.data.unshift(photoItem)
+    manifest.data.push(photoItem)
+    // Sort by dateTaken (newest first)
+    manifest.data.sort((a, b) => new Date(b.dateTaken).getTime() - new Date(a.dateTaken).getTime())
     manifest.cameras = rebuildCameras(manifest.data)
     manifest.lenses = rebuildLenses(manifest.data)
     await saveManifest(manifest)
