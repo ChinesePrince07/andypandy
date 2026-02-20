@@ -11,12 +11,14 @@ interface UploadFile {
   previewUrl: string
   status: FileStatus
   error?: string
+  tags: string[]
 }
 
 export default function UploadPage() {
   const [files, setFiles] = useState<UploadFile[]>([])
   const [isUploading, setIsUploading] = useState(false)
   const [isDragOver, setIsDragOver] = useState(false)
+  const [batchTagInput, setBatchTagInput] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const addFiles = useCallback((newFiles: FileList | File[]) => {
@@ -29,6 +31,7 @@ export default function UploadPage() {
       file,
       previewUrl: URL.createObjectURL(file),
       status: 'pending' as const,
+      tags: [],
     }))
 
     setFiles((prev) => [...prev, ...uploadFiles])
@@ -79,6 +82,26 @@ export default function UploadPage() {
     setFiles((prev) => prev.map((f, i) => (i === index ? { ...f, status, error } : f)))
   }, [])
 
+  const updateFileTags = useCallback((index: number, tags: string[]) => {
+    setFiles((prev) => prev.map((f, i) => (i === index ? { ...f, tags } : f)))
+  }, [])
+
+  const applyBatchTags = useCallback(() => {
+    const tags = batchTagInput
+      .split(',')
+      .map((t) => t.trim().toLowerCase())
+      .filter(Boolean)
+    if (tags.length === 0) return
+    setFiles((prev) =>
+      prev.map((f) => {
+        if (f.status !== 'pending') return f
+        const merged = Array.from(new Set([...f.tags, ...tags]))
+        return { ...f, tags: merged }
+      }),
+    )
+    setBatchTagInput('')
+  }, [batchTagInput])
+
   const handleUploadAll = useCallback(async () => {
     setIsUploading(true)
 
@@ -95,11 +118,15 @@ export default function UploadPage() {
           handleUploadUrl: '/api/admin/photos/upload',
         })
 
-        // Step 2: Process metadata server-side (EXIF, thumbnail, manifest)
+        // Step 2: Process metadata server-side (EXIF, thumbnail, manifest, AI)
         const res = await fetch('/api/admin/photos/process', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ blobUrl: blob.url, filename: uploadFile.file.name }),
+          body: JSON.stringify({
+            blobUrl: blob.url,
+            filename: uploadFile.file.name,
+            tags: uploadFile.tags.length > 0 ? uploadFile.tags : undefined,
+          }),
         })
 
         if (res.ok) {
@@ -119,12 +146,12 @@ export default function UploadPage() {
   const clearAll = useCallback(() => {
     files.forEach((f) => URL.revokeObjectURL(f.previewUrl))
     setFiles([])
+    setBatchTagInput('')
   }, [files])
 
   const pendingCount = files.filter((f) => f.status === 'pending').length
   const doneCount = files.filter((f) => f.status === 'done').length
   const errorCount = files.filter((f) => f.status === 'error').length
-  const uploadingIndex = files.findIndex((f) => f.status === 'uploading')
   const allDone = files.length > 0 && pendingCount === 0 && !isUploading
   const progressPercent = files.length > 0 ? Math.round((doneCount / files.length) * 100) : 0
 
@@ -134,7 +161,7 @@ export default function UploadPage() {
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-white">Upload Photos</h1>
         <p className="mt-1 text-sm text-neutral-500">
-          Add photos to your gallery. EXIF data will be extracted automatically.
+          Add photos to your gallery. EXIF data and AI-generated titles &amp; tags are extracted automatically.
         </p>
       </div>
 
@@ -219,6 +246,27 @@ export default function UploadPage() {
               </button>
             )}
           </div>
+
+          {/* Batch tag input */}
+          {!isUploading && pendingCount > 0 && (
+            <div className="mb-5 flex items-center gap-2">
+              <input
+                type="text"
+                value={batchTagInput}
+                onChange={(e) => setBatchTagInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && applyBatchTags()}
+                placeholder="Add tags to all photos (comma-separated)"
+                className="flex-1 rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-white placeholder-neutral-500 outline-none focus:border-neutral-500"
+              />
+              <button
+                onClick={applyBatchTags}
+                disabled={!batchTagInput.trim()}
+                className="rounded-lg bg-neutral-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-neutral-600 disabled:opacity-40"
+              >
+                Apply to All
+              </button>
+            </div>
+          )}
 
           {/* Progress bar */}
           {isUploading && (
@@ -320,7 +368,7 @@ export default function UploadPage() {
                   )}
                 </div>
 
-                {/* File info */}
+                {/* File info + tags */}
                 <div className="px-3 py-2.5">
                   <p className="truncate text-xs font-medium text-neutral-300">{uploadFile.file.name}</p>
                   <p className="mt-0.5 text-[11px] text-neutral-600">
@@ -330,6 +378,60 @@ export default function UploadPage() {
                     <p className="mt-1 truncate text-[11px] text-red-400" title={uploadFile.error}>
                       {uploadFile.error}
                     </p>
+                  )}
+                  {/* Per-photo tags */}
+                  {uploadFile.status === 'pending' && (
+                    <div className="mt-2">
+                      {uploadFile.tags.length > 0 && (
+                        <div className="mb-1.5 flex flex-wrap gap-1">
+                          {uploadFile.tags.map((tag) => (
+                            <span
+                              key={tag}
+                              className="inline-flex items-center gap-0.5 rounded bg-neutral-800 px-1.5 py-0.5 text-[10px] text-neutral-400"
+                            >
+                              {tag}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  updateFileTags(
+                                    index,
+                                    uploadFile.tags.filter((t) => t !== tag),
+                                  )
+                                }}
+                                className="ml-0.5 text-neutral-600 hover:text-neutral-300"
+                              >
+                                &times;
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      <input
+                        type="text"
+                        placeholder="Tags..."
+                        className="w-full rounded border border-neutral-800 bg-transparent px-2 py-1 text-[11px] text-neutral-300 placeholder-neutral-600 outline-none focus:border-neutral-600"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ',') {
+                            e.preventDefault()
+                            const val = e.currentTarget.value.trim().toLowerCase().replace(/,$/, '')
+                            if (val && !uploadFile.tags.includes(val)) {
+                              updateFileTags(index, [...uploadFile.tags, val])
+                            }
+                            e.currentTarget.value = ''
+                          }
+                        }}
+                      />
+                    </div>
+                  )}
+                  {/* Show tags for done/uploading photos */}
+                  {uploadFile.status !== 'pending' && uploadFile.tags.length > 0 && (
+                    <div className="mt-1.5 flex flex-wrap gap-1">
+                      {uploadFile.tags.map((tag) => (
+                        <span key={tag} className="rounded bg-neutral-800 px-1.5 py-0.5 text-[10px] text-neutral-500">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
                   )}
                 </div>
               </div>
