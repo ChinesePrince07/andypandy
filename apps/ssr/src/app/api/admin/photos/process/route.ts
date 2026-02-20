@@ -4,6 +4,7 @@ import { rgbaToThumbHash } from 'thumbhash'
 
 import type { CameraInfo, LensInfo, LocationInfo, PickedExif, PhotoManifestItem } from '@afilmory/typing'
 
+import { generatePhotoAI } from '~/lib/ai'
 import { requireAdmin } from '~/lib/admin-auth'
 import { getManifest, saveManifest, uploadToBlob } from '~/lib/blob'
 
@@ -53,7 +54,7 @@ export async function POST(req: NextRequest) {
   if (authResponse) return authResponse
 
   try {
-    const { blobUrl, filename } = await req.json()
+    const { blobUrl, filename, tags: userTags, title: userTitle } = await req.json()
     if (!blobUrl || !filename) {
       return Response.json({ error: 'Missing blobUrl or filename' }, { status: 400 })
     }
@@ -189,14 +190,24 @@ export async function POST(req: NextRequest) {
     // Upload thumbnail to Vercel Blob (original is already uploaded via client)
     const thumbnailUrl = await uploadToBlob(`photos/thumb/${id}.webp`, thumbnailBuffer, 'image/webp')
 
+    // Generate AI title and tags (non-blocking — falls back gracefully)
+    const aiResult = await generatePhotoAI(thumbnailBuffer.toString('base64'))
+
+    // Use user-provided values with AI fallback
+    const finalTitle = userTitle?.trim() || aiResult?.title || filename.replace(/\.[^.]+$/, '')
+    const finalTags =
+      userTags && userTags.length > 0
+        ? userTags.map((t: string) => t.trim().toLowerCase()).filter(Boolean)
+        : aiResult?.tags || []
+
     // Build photo manifest item
     const ext = format || 'jpg'
     const photoItem: PhotoManifestItem = {
       id,
-      title: filename.replace(/\.[^.]+$/, ''),
+      title: finalTitle,
       description: '',
       dateTaken: dateTaken || new Date().toISOString(),
-      tags: [],
+      tags: finalTags,
       originalUrl: blobUrl,
       thumbnailUrl,
       ogImageUrl: null,
