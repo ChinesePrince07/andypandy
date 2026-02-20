@@ -52,7 +52,7 @@ export const PageHeaderRight = () => {
         />
 
         {/* Upload */}
-        <ActionIconButton icon="i-mingcute-upload-2-line" title="Upload" href="/upload" />
+        <ActionIconButton icon="i-mingcute-upload-2-line" title="Upload" href="/admin/upload" />
 
         {/* Desktop only: Map Link */}
         {!isMobile && (

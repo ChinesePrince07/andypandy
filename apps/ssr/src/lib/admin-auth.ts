@@ -4,7 +4,7 @@ import { cookies } from 'next/headers'
 
 const SALT = 'afilmory-admin-salt'
 const COOKIE_NAME = 'admin_session'
-const COOKIE_MAX_AGE = 60 * 60 * 24 * 7 // 7 days
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 365 // 1 year
 
 export function hashPassword(password: string): string {
   return crypto.createHash('sha256').update(`${SALT}:${password}`).digest('hex')
