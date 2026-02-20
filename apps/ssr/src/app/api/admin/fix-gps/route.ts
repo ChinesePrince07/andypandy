@@ -68,9 +68,17 @@ export async function POST() {
         }
         details.push({ id: photo.id, status: 'no-gps' })
       }
-    } catch (err) {
+    } catch {
+      // Image has no extractable GPS — clean up
+      photo.location = null
+      if (photo.exif) {
+        delete (photo.exif as Record<string, unknown>).GPSLatitude
+        delete (photo.exif as Record<string, unknown>).GPSLongitude
+        delete (photo.exif as Record<string, unknown>).GPSLatitudeRef
+        delete (photo.exif as Record<string, unknown>).GPSLongitudeRef
+      }
       failed++
-      details.push({ id: photo.id, status: 'error', lat: undefined, lng: undefined })
+      details.push({ id: photo.id, status: 'no-gps-fallback' })
     }
   }
 
