@@ -50,7 +50,7 @@ public:
 DualPrint out;
 
 // Firmware version (increment this when updating)
-#define FIRMWARE_VERSION "1.4.4"
+#define FIRMWARE_VERSION "1.4.6"
 
 // Captive portal settings
 #define AP_SSID "calc"
@@ -1049,8 +1049,8 @@ void derivative() {
   out.print("derivative of: ");
   out.println(expr);
 
-  String prompt = "Find the derivative of " + String(expr) + ". Give only the answer, no explanation. Use plain text only, no LaTeX. Write fractions as A/B, exponents as X^N.";
-  auto url = String(SERVER) + String("/gpt/ask?question=") + urlEncode(prompt);
+  String prompt = "Find the derivative of f(x) = " + String(expr) + ". Compute it step by step then give ONLY the simplified result.";
+  auto url = String(SERVER) + String("/gpt/ask?math=1&question=") + urlEncode(prompt);
 
   size_t realsize = 0;
   if (makeRequest(url, response, MAXHTTPRESPONSELEN, &realsize)) {
@@ -1069,8 +1069,8 @@ void integrate() {
   out.print("integrate: ");
   out.println(expr);
 
-  String prompt = "Find the indefinite integral of " + String(expr) + ". Give only the answer with +C, no explanation. Use plain text only, no LaTeX. Write fractions as A/B, exponents as X^N.";
-  auto url = String(SERVER) + String("/gpt/ask?question=") + urlEncode(prompt);
+  String prompt = "Find the indefinite integral of f(x) = " + String(expr) + ". Compute it then give ONLY the result with +C.";
+  auto url = String(SERVER) + String("/gpt/ask?math=1&question=") + urlEncode(prompt);
 
   size_t realsize = 0;
   if (makeRequest(url, response, MAXHTTPRESPONSELEN, &realsize)) {
@@ -1089,8 +1089,8 @@ void elastic() {
   out.print("elastic collision: ");
   out.println(values);
 
-  String prompt = "Solve elastic collision: values are m1,v1,m2,v2 = " + String(values) + ". Find final velocities v1' and v2'. Give only the numerical answers, very brief.";
-  auto url = String(SERVER) + String("/gpt/ask?question=") + urlEncode(prompt);
+  String prompt = "Solve elastic collision: m1,v1,m2,v2 = " + String(values) + ". Use conservation of momentum and kinetic energy. Give ONLY the final velocities V1F and V2F as numbers.";
+  auto url = String(SERVER) + String("/gpt/ask?math=1&question=") + urlEncode(prompt);
 
   size_t realsize = 0;
   if (makeRequest(url, response, MAXHTTPRESPONSELEN, &realsize)) {
@@ -1106,8 +1106,8 @@ void inelastic() {
   out.print("inelastic collision: ");
   out.println(values);
 
-  String prompt = "Solve perfectly inelastic collision: values are m1,v1,m2,v2 = " + String(values) + ". Find the final velocity. Reply ONLY in this exact format: THE FINAL VELOCITY IS: x (where x is the number).";
-  auto url = String(SERVER) + String("/gpt/ask?question=") + urlEncode(prompt);
+  String prompt = "Solve perfectly inelastic collision: m1,v1,m2,v2 = " + String(values) + ". Use (m1*v1 + m2*v2)/(m1+m2). Give ONLY: VF = (number).";
+  auto url = String(SERVER) + String("/gpt/ask?math=1&question=") + urlEncode(prompt);
 
   size_t realsize = 0;
   if (makeRequest(url, response, MAXHTTPRESPONSELEN, &realsize)) {
@@ -1123,8 +1123,8 @@ void series() {
   out.print("series convergence: ");
   out.println(expr);
 
-  String prompt = "Does the infinite series sum from n=0 to infinity of f(n) = " + String(expr) + " converge or diverge? State CONVERGES or DIVERGES, the test used, and if it converges give the sum if possible. Very brief. Use plain text only, no LaTeX.";
-  auto url = String(SERVER) + String("/gpt/ask?question=") + urlEncode(prompt);
+  String prompt = "Does the infinite series sum from n=1 to infinity of " + String(expr) + " converge or diverge? State CONVERGES or DIVERGES, which test, and the sum if known. Brief.";
+  auto url = String(SERVER) + String("/gpt/ask?math=1&question=") + urlEncode(prompt);
 
   size_t realsize = 0;
   if (makeRequest(url, response, MAXHTTPRESPONSELEN, &realsize)) {
@@ -1140,8 +1140,8 @@ void double_integral() {
   out.print("double integral: ");
   out.println(expr);
 
-  String prompt = "Evaluate the double integral: " + String(expr) + ". Give only the numerical answer, no explanation. Use plain text only, no LaTeX.";
-  auto url = String(SERVER) + String("/gpt/ask?question=") + urlEncode(prompt);
+  String prompt = "Evaluate the double integral: " + String(expr) + ". Compute step by step, give ONLY the final number.";
+  auto url = String(SERVER) + String("/gpt/ask?math=1&question=") + urlEncode(prompt);
 
   size_t realsize = 0;
   if (makeRequest(url, response, MAXHTTPRESPONSELEN, &realsize)) {
@@ -1157,8 +1157,8 @@ void avg_value() {
   out.print("average value: ");
   out.println(expr);
 
-  String prompt = "Calculate the average value of the function over the given region. " + String(expr) + ". The average value formula is (1/Area) * double integral of f(x,y) dA. Give only the final numerical answer, no explanation. Use plain text only, no LaTeX.";
-  auto url = String(SERVER) + String("/gpt/ask?question=") + urlEncode(prompt);
+  String prompt = "Calculate the average value: " + String(expr) + ". Use formula: avg = (1/Area) * double integral of f dA where Area = (xhigh-xlow)*(yhigh-ylow). Compute step by step, give ONLY the final number.";
+  auto url = String(SERVER) + String("/gpt/ask?math=1&question=") + urlEncode(prompt);
 
   size_t realsize = 0;
   if (makeRequest(url, response, MAXHTTPRESPONSELEN, &realsize)) {
@@ -1174,8 +1174,8 @@ void math_solver() {
   out.print("math solver: ");
   out.println(problem);
 
-  String prompt = "Solve this calculus problem. Give only the final answer, no steps. Be concise. Use plain text only, no LaTeX. Write fractions as A/B, exponents as X^N. Problem: " + String(problem);
-  auto url = String(SERVER) + String("/gpt/ask?question=") + urlEncode(prompt);
+  String prompt = "Solve this math problem. Show ONLY the final answer, no steps. Problem: " + String(problem);
+  auto url = String(SERVER) + String("/gpt/ask?math=1&question=") + urlEncode(prompt);
 
   size_t realsize = 0;
   if (makeRequest(url, response, MAXHTTPRESPONSELEN, &realsize)) {
@@ -1467,9 +1467,11 @@ bool _otaFlashFirmware() {
 
   WiFiClientSecure client;
   client.setInsecure();
-  client.setTimeout(30000);
+  client.setTimeout(60000);
 
   httpUpdate.rebootOnUpdate(false);
+  httpUpdate.setLedPin(-1);
+  httpUpdate.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
   t_httpUpdate_return ret = httpUpdate.update(client, firmwareUrl);
 
   switch (ret) {
