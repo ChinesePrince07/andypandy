@@ -3,7 +3,130 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+
+declare global {
+  interface Window {
+    L: any
+  }
+}
+
+function LocationPicker({
+  latitude,
+  longitude,
+  onLocationChange,
+}: {
+  latitude: string
+  longitude: string
+  onLocationChange: (lat: string, lng: string) => void
+}) {
+  const mapRef = useRef<HTMLDivElement>(null)
+  const mapInstanceRef = useRef<any>(null)
+  const markerRef = useRef<any>(null)
+  const [loaded, setLoaded] = useState(false)
+
+  useEffect(() => {
+    // Load Leaflet CSS + JS from CDN
+    if (document.getElementById('leaflet-css')) {
+      setLoaded(true)
+      return
+    }
+    const css = document.createElement('link')
+    css.id = 'leaflet-css'
+    css.rel = 'stylesheet'
+    css.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+    document.head.appendChild(css)
+
+    const script = document.createElement('script')
+    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+    script.onload = () => setLoaded(true)
+    document.head.appendChild(script)
+  }, [])
+
+  useEffect(() => {
+    if (!loaded || !mapRef.current || mapInstanceRef.current) return
+    const L = window.L
+    if (!L) return
+
+    const lat = parseFloat(latitude) || 40.7128
+    const lng = parseFloat(longitude) || -74.006
+    const hasCoords = latitude && longitude
+
+    const map = L.map(mapRef.current, {
+      center: [lat, lng],
+      zoom: hasCoords ? 13 : 2,
+      attributionControl: false,
+    })
+
+    // OSM tiles with building/street detail
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+    }).addTo(map)
+
+    mapInstanceRef.current = map
+
+    if (hasCoords) {
+      markerRef.current = L.marker([lat, lng], { draggable: true }).addTo(map)
+      markerRef.current.on('dragend', () => {
+        const pos = markerRef.current.getLatLng()
+        onLocationChange(pos.lat.toFixed(6), pos.lng.toFixed(6))
+      })
+    }
+
+    map.on('click', (e: any) => {
+      const { lat: clickLat, lng: clickLng } = e.latlng
+      onLocationChange(clickLat.toFixed(6), clickLng.toFixed(6))
+      if (markerRef.current) {
+        markerRef.current.setLatLng([clickLat, clickLng])
+      } else {
+        markerRef.current = L.marker([clickLat, clickLng], { draggable: true }).addTo(map)
+        markerRef.current.on('dragend', () => {
+          const pos = markerRef.current.getLatLng()
+          onLocationChange(pos.lat.toFixed(6), pos.lng.toFixed(6))
+        })
+      }
+    })
+
+    return () => {
+      map.remove()
+      mapInstanceRef.current = null
+      markerRef.current = null
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded])
+
+  // Update marker when coordinates change externally
+  useEffect(() => {
+    if (!mapInstanceRef.current || !loaded) return
+    const lat = parseFloat(latitude)
+    const lng = parseFloat(longitude)
+    if (isNaN(lat) || isNaN(lng)) return
+
+    const L = window.L
+    if (markerRef.current) {
+      const pos = markerRef.current.getLatLng()
+      if (Math.abs(pos.lat - lat) > 0.0001 || Math.abs(pos.lng - lng) > 0.0001) {
+        markerRef.current.setLatLng([lat, lng])
+        mapInstanceRef.current.setView([lat, lng], mapInstanceRef.current.getZoom())
+      }
+    } else {
+      markerRef.current = L.marker([lat, lng], { draggable: true }).addTo(mapInstanceRef.current)
+      markerRef.current.on('dragend', () => {
+        const pos = markerRef.current.getLatLng()
+        onLocationChange(pos.lat.toFixed(6), pos.lng.toFixed(6))
+      })
+      mapInstanceRef.current.setView([lat, lng], 13)
+    }
+  }, [latitude, longitude, loaded, onLocationChange])
+
+  return (
+    <div
+      ref={mapRef}
+      className="h-64 w-full overflow-hidden rounded-lg border border-neutral-700"
+      style={{ background: '#1a1a1a' }}
+    />
+  )
+}
 
 interface PhotoData {
   id: string
@@ -491,9 +614,20 @@ export default function PhotoEditPage() {
             {/* Location Section */}
             <section>
               <h2 className="mb-4 text-lg font-semibold text-white">Location</h2>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <p className="mb-3 text-xs text-neutral-500">
+                Click on the map to set location, or enter coordinates manually.
+              </p>
+              <LocationPicker
+                latitude={latitude}
+                longitude={longitude}
+                onLocationChange={(lat, lng) => {
+                  setLatitude(lat)
+                  setLongitude(lng)
+                }}
+              />
+              <div className="mt-3 grid grid-cols-2 gap-3">
                 <div>
-                  <label htmlFor="latitude" className="mb-1 block text-sm text-neutral-400">
+                  <label htmlFor="latitude" className="mb-1 block text-xs text-neutral-500">
                     Latitude
                   </label>
                   <input
@@ -502,14 +636,12 @@ export default function PhotoEditPage() {
                     step="any"
                     value={latitude}
                     onChange={(e) => setLatitude(e.target.value)}
-                    className="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white placeholder:text-neutral-600 focus:border-neutral-500 focus:outline-none"
-                    placeholder="e.g. 40.7128"
+                    className="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-1.5 text-xs text-white placeholder:text-neutral-600 focus:border-neutral-500 focus:outline-none"
+                    placeholder="40.7128"
                   />
-                  <p className="mt-1 text-xs text-neutral-600">Decimal degrees (-90 to 90)</p>
                 </div>
-
                 <div>
-                  <label htmlFor="longitude" className="mb-1 block text-sm text-neutral-400">
+                  <label htmlFor="longitude" className="mb-1 block text-xs text-neutral-500">
                     Longitude
                   </label>
                   <input
@@ -518,10 +650,9 @@ export default function PhotoEditPage() {
                     step="any"
                     value={longitude}
                     onChange={(e) => setLongitude(e.target.value)}
-                    className="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white placeholder:text-neutral-600 focus:border-neutral-500 focus:outline-none"
-                    placeholder="e.g. -74.0060"
+                    className="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-1.5 text-xs text-white placeholder:text-neutral-600 focus:border-neutral-500 focus:outline-none"
+                    placeholder="-74.0060"
                   />
-                  <p className="mt-1 text-xs text-neutral-600">Decimal degrees (-180 to 180)</p>
                 </div>
               </div>
             </section>

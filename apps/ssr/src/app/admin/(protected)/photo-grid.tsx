@@ -189,116 +189,131 @@ export function PhotoGrid({ initialPhotos }: { initialPhotos: PhotoManifestItem[
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {photos.map((photo, index) => {
-            const camera = getCameraInfo(photo.exif)
-            const isSelected = selected.has(photo.id)
+        <>
+          <div className="mb-4 flex items-center justify-between">
+            <button
+              onClick={isAllSelected ? deselectAll : selectAll}
+              className="text-sm text-neutral-400 hover:text-white transition-colors"
+            >
+              {isAllSelected ? 'Deselect All' : 'Select All'}
+            </button>
+            {selected.size > 0 && <span className="text-xs text-neutral-500">{selected.size} selected</span>}
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            {photos.map((photo, index) => {
+              const camera = getCameraInfo(photo.exif)
+              const isSelected = selected.has(photo.id)
 
-            return (
-              <div
-                key={photo.id}
-                className={`group/card relative overflow-hidden rounded-lg border bg-neutral-900 transition-all ${
-                  isSelected ? 'border-blue-500 ring-1 ring-blue-500/50' : 'border-neutral-800 hover:border-neutral-600'
-                }`}
-              >
-                {/* Checkbox */}
-                <button
-                  onClick={(e) => {
-                    e.preventDefault()
-                    e.stopPropagation()
-                    toggleSelect(photo.id, index, e.shiftKey)
-                  }}
-                  className={`absolute left-2 top-2 z-10 flex h-5 w-5 items-center justify-center rounded border transition-all ${
-                    isSelected ? 'border-blue-500 bg-blue-500' : 'border-neutral-500 bg-neutral-800/80 backdrop-blur-sm'
+              return (
+                <div
+                  key={photo.id}
+                  className={`group/card relative overflow-hidden rounded-lg border bg-neutral-900 transition-all ${
+                    isSelected
+                      ? 'border-blue-500 ring-1 ring-blue-500/50'
+                      : 'border-neutral-800 hover:border-neutral-600'
                   }`}
                 >
-                  {isSelected && (
-                    <svg className="h-3 w-3 text-white" viewBox="0 0 20 20" fill="currentColor">
-                      <path
-                        fillRule="evenodd"
-                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  )}
-                </button>
+                  {/* Checkbox */}
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      toggleSelect(photo.id, index, e.shiftKey)
+                    }}
+                    className={`absolute left-2 top-2 z-10 flex h-5 w-5 items-center justify-center rounded border transition-all ${
+                      isSelected
+                        ? 'border-blue-500 bg-blue-500'
+                        : 'border-neutral-500 bg-neutral-800/80 backdrop-blur-sm'
+                    }`}
+                  >
+                    {isSelected && (
+                      <svg className="h-3 w-3 text-white" viewBox="0 0 20 20" fill="currentColor">
+                        <path
+                          fillRule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    )}
+                  </button>
 
-                {/* Photo card - link or select based on mode */}
-                {selectionMode ? (
-                  <div className="cursor-pointer" onClick={(e) => toggleSelect(photo.id, index, e.shiftKey)}>
-                    <div className="relative aspect-[3/2] w-full overflow-hidden bg-neutral-800">
-                      <Image
-                        src={photo.thumbnailUrl}
-                        alt={photo.title || 'Untitled'}
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                      />
-                    </div>
-                    <div className="p-3">
-                      <p className="truncate text-sm font-medium text-white">{photo.title || 'Untitled'}</p>
-                      <div className="mt-1 flex items-center gap-2 text-xs text-neutral-500">
-                        {photo.dateTaken && <span>{formatDate(photo.dateTaken)}</span>}
-                        {photo.dateTaken && camera && <span className="text-neutral-700">&middot;</span>}
-                        {camera && <span className="truncate">{camera}</span>}
+                  {/* Photo card - link or select based on mode */}
+                  {selectionMode ? (
+                    <div className="cursor-pointer" onClick={(e) => toggleSelect(photo.id, index, e.shiftKey)}>
+                      <div className="relative aspect-[3/2] w-full overflow-hidden bg-neutral-800">
+                        <Image
+                          src={photo.thumbnailUrl}
+                          alt={photo.title || 'Untitled'}
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                        />
                       </div>
-                      {photo.tags && photo.tags.length > 0 && (
-                        <div className="mt-2 flex flex-wrap gap-1">
-                          {photo.tags.slice(0, 3).map((tag) => (
-                            <span
-                              key={tag}
-                              className="rounded bg-neutral-800 px-1.5 py-0.5 text-[10px] text-neutral-400"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                          {photo.tags.length > 3 && (
-                            <span className="text-[10px] text-neutral-600">+{photo.tags.length - 3}</span>
-                          )}
+                      <div className="p-3">
+                        <p className="truncate text-sm font-medium text-white">{photo.title || 'Untitled'}</p>
+                        <div className="mt-1 flex items-center gap-2 text-xs text-neutral-500">
+                          {photo.dateTaken && <span>{formatDate(photo.dateTaken)}</span>}
+                          {photo.dateTaken && camera && <span className="text-neutral-700">&middot;</span>}
+                          {camera && <span className="truncate">{camera}</span>}
                         </div>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <Link href={`/admin/photos/${photo.id}/edit`}>
-                    <div className="relative aspect-[3/2] w-full overflow-hidden bg-neutral-800">
-                      <Image
-                        src={photo.thumbnailUrl}
-                        alt={photo.title || 'Untitled'}
-                        fill
-                        className="object-cover transition-transform group-hover/card:scale-105"
-                        sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                      />
-                    </div>
-                    <div className="p-3">
-                      <p className="truncate text-sm font-medium text-white">{photo.title || 'Untitled'}</p>
-                      <div className="mt-1 flex items-center gap-2 text-xs text-neutral-500">
-                        {photo.dateTaken && <span>{formatDate(photo.dateTaken)}</span>}
-                        {photo.dateTaken && camera && <span className="text-neutral-700">&middot;</span>}
-                        {camera && <span className="truncate">{camera}</span>}
+                        {photo.tags && photo.tags.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {photo.tags.slice(0, 3).map((tag) => (
+                              <span
+                                key={tag}
+                                className="rounded bg-neutral-800 px-1.5 py-0.5 text-[10px] text-neutral-400"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                            {photo.tags.length > 3 && (
+                              <span className="text-[10px] text-neutral-600">+{photo.tags.length - 3}</span>
+                            )}
+                          </div>
+                        )}
                       </div>
-                      {photo.tags && photo.tags.length > 0 && (
-                        <div className="mt-2 flex flex-wrap gap-1">
-                          {photo.tags.slice(0, 3).map((tag) => (
-                            <span
-                              key={tag}
-                              className="rounded bg-neutral-800 px-1.5 py-0.5 text-[10px] text-neutral-400"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                          {photo.tags.length > 3 && (
-                            <span className="text-[10px] text-neutral-600">+{photo.tags.length - 3}</span>
-                          )}
-                        </div>
-                      )}
                     </div>
-                  </Link>
-                )}
-              </div>
-            )
-          })}
-        </div>
+                  ) : (
+                    <Link href={`/admin/photos/${photo.id}/edit`}>
+                      <div className="relative aspect-[3/2] w-full overflow-hidden bg-neutral-800">
+                        <Image
+                          src={photo.thumbnailUrl}
+                          alt={photo.title || 'Untitled'}
+                          fill
+                          className="object-cover transition-transform group-hover/card:scale-105"
+                          sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                        />
+                      </div>
+                      <div className="p-3">
+                        <p className="truncate text-sm font-medium text-white">{photo.title || 'Untitled'}</p>
+                        <div className="mt-1 flex items-center gap-2 text-xs text-neutral-500">
+                          {photo.dateTaken && <span>{formatDate(photo.dateTaken)}</span>}
+                          {photo.dateTaken && camera && <span className="text-neutral-700">&middot;</span>}
+                          {camera && <span className="truncate">{camera}</span>}
+                        </div>
+                        {photo.tags && photo.tags.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {photo.tags.slice(0, 3).map((tag) => (
+                              <span
+                                key={tag}
+                                className="rounded bg-neutral-800 px-1.5 py-0.5 text-[10px] text-neutral-400"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                            {photo.tags.length > 3 && (
+                              <span className="text-[10px] text-neutral-600">+{photo.tags.length - 3}</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </Link>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </>
       )}
 
       {/* Floating action bar */}
