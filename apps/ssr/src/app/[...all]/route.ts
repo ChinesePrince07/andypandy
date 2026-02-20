@@ -1,8 +1,9 @@
 import { DOMParser } from 'linkedom'
 import type { NextRequest } from 'next/server'
 
+import { verifyAdmin } from '~/lib/admin-auth'
 import { getManifest } from '~/lib/blob'
-import { injectConfigToDocument, injectManifestToDocument } from '~/lib/injectable'
+import { injectAdminButton, injectConfigToDocument, injectManifestToDocument } from '~/lib/injectable'
 
 const renderIndex = async () => {
   const indexHtml = await import('../../index.html').then((m) => m.default)
@@ -10,6 +11,10 @@ const renderIndex = async () => {
   injectConfigToDocument(document)
   const manifest = await getManifest()
   injectManifestToDocument(document, manifest)
+  const isAdmin = await verifyAdmin()
+  if (isAdmin) {
+    injectAdminButton(document)
+  }
   return new Response(document.documentElement.outerHTML, {
     headers: {
       'Content-Type': 'text/html',
