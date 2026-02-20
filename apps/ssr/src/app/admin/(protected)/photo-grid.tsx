@@ -32,32 +32,37 @@ export function PhotoGrid({ initialPhotos }: { initialPhotos: PhotoManifestItem[
   const [tagValue, setTagValue] = useState('')
   const [isDeleting, setIsDeleting] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
+  const [albums, setAlbums] = useState<Array<{ id: string; name: string }>>([])
+  const [showAlbumPicker, setShowAlbumPicker] = useState(false)
   const lastClickedIndex = useRef<number | null>(null)
 
-  const toggleSelect = useCallback((id: string, index: number, shiftKey: boolean) => {
-    setSelected((prev) => {
-      const next = new Set(prev)
+  const toggleSelect = useCallback(
+    (id: string, index: number, shiftKey: boolean) => {
+      setSelected((prev) => {
+        const next = new Set(prev)
 
-      if (shiftKey && lastClickedIndex.current !== null) {
-        // Range select
-        const start = Math.min(lastClickedIndex.current, index)
-        const end = Math.max(lastClickedIndex.current, index)
-        for (let i = start; i <= end; i++) {
-          next.add(photos[i].id)
-        }
-      } else {
-        if (next.has(id)) {
-          next.delete(id)
+        if (shiftKey && lastClickedIndex.current !== null) {
+          // Range select
+          const start = Math.min(lastClickedIndex.current, index)
+          const end = Math.max(lastClickedIndex.current, index)
+          for (let i = start; i <= end; i++) {
+            next.add(photos[i].id)
+          }
         } else {
-          next.add(id)
+          if (next.has(id)) {
+            next.delete(id)
+          } else {
+            next.add(id)
+          }
         }
-      }
 
-      return next
-    })
-    lastClickedIndex.current = index
-    if (!selectionMode) setSelectionMode(true)
-  }, [photos, selectionMode])
+        return next
+      })
+      lastClickedIndex.current = index
+      if (!selectionMode) setSelectionMode(true)
+    },
+    [photos, selectionMode],
+  )
 
   const selectAll = useCallback(() => {
     setSelected(new Set(photos.map((p) => p.id)))
@@ -92,7 +97,10 @@ export function PhotoGrid({ initialPhotos }: { initialPhotos: PhotoManifestItem[
   const handleBulkAddTags = useCallback(async () => {
     if (!tagValue.trim()) return
     setIsUpdating(true)
-    const tags = tagValue.split(',').map((t) => t.trim()).filter(Boolean)
+    const tags = tagValue
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean)
     try {
       const res = await fetch('/api/admin/photos/bulk-update', {
         method: 'POST',
@@ -118,6 +126,37 @@ export function PhotoGrid({ initialPhotos }: { initialPhotos: PhotoManifestItem[
       setIsUpdating(false)
     }
   }, [selected, tagValue])
+
+  const handleShowAlbumPicker = useCallback(async () => {
+    if (albums.length === 0) {
+      try {
+        const res = await fetch('/api/admin/albums')
+        if (res.ok) {
+          const data = await res.json()
+          setAlbums(data)
+        }
+      } catch {}
+    }
+    setShowAlbumPicker(!showAlbumPicker)
+  }, [albums.length, showAlbumPicker])
+
+  const handleAddToAlbum = useCallback(
+    async (albumId: string) => {
+      try {
+        const res = await fetch(`/api/admin/albums/${albumId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ addPhotoIds: Array.from(selected) }),
+        })
+        if (res.ok) {
+          setShowAlbumPicker(false)
+          setSelected(new Set())
+          setSelectionMode(false)
+        }
+      } catch {}
+    },
+    [selected],
+  )
 
   const isAllSelected = photos.length > 0 && selected.size === photos.length
 
@@ -171,10 +210,7 @@ export function PhotoGrid({ initialPhotos }: { initialPhotos: PhotoManifestItem[
 
                 {/* Photo card - link or select based on mode */}
                 {selectionMode ? (
-                  <div
-                    className="cursor-pointer"
-                    onClick={(e) => toggleSelect(photo.id, index, e.shiftKey)}
-                  >
+                  <div className="cursor-pointer" onClick={(e) => toggleSelect(photo.id, index, e.shiftKey)}>
                     <div className="relative aspect-[3/2] w-full overflow-hidden bg-neutral-800">
                       <Image
                         src={photo.thumbnailUrl}
@@ -194,7 +230,10 @@ export function PhotoGrid({ initialPhotos }: { initialPhotos: PhotoManifestItem[
                       {photo.tags && photo.tags.length > 0 && (
                         <div className="mt-2 flex flex-wrap gap-1">
                           {photo.tags.slice(0, 3).map((tag) => (
-                            <span key={tag} className="rounded bg-neutral-800 px-1.5 py-0.5 text-[10px] text-neutral-400">
+                            <span
+                              key={tag}
+                              className="rounded bg-neutral-800 px-1.5 py-0.5 text-[10px] text-neutral-400"
+                            >
                               {tag}
                             </span>
                           ))}
@@ -226,7 +265,10 @@ export function PhotoGrid({ initialPhotos }: { initialPhotos: PhotoManifestItem[
                       {photo.tags && photo.tags.length > 0 && (
                         <div className="mt-2 flex flex-wrap gap-1">
                           {photo.tags.slice(0, 3).map((tag) => (
-                            <span key={tag} className="rounded bg-neutral-800 px-1.5 py-0.5 text-[10px] text-neutral-400">
+                            <span
+                              key={tag}
+                              className="rounded bg-neutral-800 px-1.5 py-0.5 text-[10px] text-neutral-400"
+                            >
                               {tag}
                             </span>
                           ))}
@@ -248,9 +290,7 @@ export function PhotoGrid({ initialPhotos }: { initialPhotos: PhotoManifestItem[
       {selected.size > 0 && (
         <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2">
           <div className="flex items-center gap-3 rounded-2xl border border-neutral-700 bg-neutral-900/95 px-5 py-3 shadow-2xl shadow-black/50 backdrop-blur-sm">
-            <span className="text-sm font-medium text-white">
-              {selected.size} selected
-            </span>
+            <span className="text-sm font-medium text-white">{selected.size} selected</span>
             <div className="h-4 w-px bg-neutral-700" />
             <button
               onClick={isAllSelected ? deselectAll : selectAll}
@@ -267,16 +307,19 @@ export function PhotoGrid({ initialPhotos }: { initialPhotos: PhotoManifestItem[
               Add Tags
             </button>
             <button
+              onClick={handleShowAlbumPicker}
+              className="text-sm text-neutral-400 hover:text-white transition-colors"
+            >
+              Album
+            </button>
+            <button
               onClick={() => setShowDeleteConfirm(true)}
               disabled={isDeleting}
               className="text-sm text-red-400 hover:text-red-300 transition-colors disabled:opacity-40"
             >
               Delete
             </button>
-            <button
-              onClick={deselectAll}
-              className="text-sm text-neutral-500 hover:text-neutral-300 transition-colors"
-            >
+            <button onClick={deselectAll} className="text-sm text-neutral-500 hover:text-neutral-300 transition-colors">
               Cancel
             </button>
           </div>
@@ -301,6 +344,27 @@ export function PhotoGrid({ initialPhotos }: { initialPhotos: PhotoManifestItem[
                 >
                   {isUpdating ? '...' : 'Add'}
                 </button>
+              </div>
+            </div>
+          )}
+
+          {/* Album picker popover */}
+          {showAlbumPicker && (
+            <div className="absolute bottom-full left-1/2 mb-2 -translate-x-1/2 rounded-xl border border-neutral-700 bg-neutral-900 p-3 shadow-xl">
+              <div className="flex flex-col gap-1">
+                {albums.length === 0 ? (
+                  <p className="text-xs text-neutral-500 px-2 py-1">No albums yet</p>
+                ) : (
+                  albums.map((album) => (
+                    <button
+                      key={album.id}
+                      onClick={() => handleAddToAlbum(album.id)}
+                      className="rounded-lg px-3 py-1.5 text-left text-sm text-neutral-300 hover:bg-neutral-800 hover:text-white transition-colors"
+                    >
+                      {album.name}
+                    </button>
+                  ))
+                )}
               </div>
             </div>
           )}
