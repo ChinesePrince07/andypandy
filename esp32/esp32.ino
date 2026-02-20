@@ -50,7 +50,7 @@ public:
 DualPrint out;
 
 // Firmware version (increment this when updating)
-#define FIRMWARE_VERSION "1.4.3"
+#define FIRMWARE_VERSION "1.4.4"
 
 // Captive portal settings
 #define AP_SSID "calc"
@@ -262,7 +262,7 @@ void startCommand(int cmd) {
   strncpy(message, "no command", MAXSTRARGLEN);
 }
 
-// Sanitize string for TI-84 display (uppercase ASCII only)
+// Sanitize string for TI-84 display (uppercase ASCII, printable chars)
 void sanitizeForTI(char* dest, const char* src, size_t maxLen) {
   size_t i = 0;
   size_t j = 0;
@@ -270,16 +270,12 @@ void sanitizeForTI(char* dest, const char* src, size_t maxLen) {
     char c = src[i];
     if (c >= 'a' && c <= 'z') {
       dest[j++] = c - 32;  // Convert to uppercase
-    } else if (c >= 'A' && c <= 'Z') {
-      dest[j++] = c;
-    } else if (c >= '0' && c <= '9') {
-      dest[j++] = c;
-    } else if (c == ' ' || c == '.' || c == ',' || c == '-' || c == ':' || c == '/' || c == '(' || c == ')') {
-      dest[j++] = c;
+    } else if (c >= ' ' && c <= '~') {
+      dest[j++] = c;       // Allow all printable ASCII
     } else if (c == '\n' || c == '\r') {
-      dest[j++] = ' ';  // Replace newlines with space
+      dest[j++] = ' ';     // Replace newlines with space
     }
-    // Skip other characters
+    // Skip non-printable / non-ASCII characters
     i++;
   }
   dest[j] = '\0';
@@ -1053,8 +1049,7 @@ void derivative() {
   out.print("derivative of: ");
   out.println(expr);
 
-  // Use GPT with derivative prompt
-  String prompt = "Find the derivative of " + String(expr) + ". Give only the answer, no explanation.";
+  String prompt = "Find the derivative of " + String(expr) + ". Give only the answer, no explanation. Use plain text only, no LaTeX. Write fractions as A/B, exponents as X^N.";
   auto url = String(SERVER) + String("/gpt/ask?question=") + urlEncode(prompt);
 
   size_t realsize = 0;
@@ -1074,8 +1069,7 @@ void integrate() {
   out.print("integrate: ");
   out.println(expr);
 
-  // Use GPT with integral prompt
-  String prompt = "Find the indefinite integral of " + String(expr) + ". Give only the answer with +C, no explanation.";
+  String prompt = "Find the indefinite integral of " + String(expr) + ". Give only the answer with +C, no explanation. Use plain text only, no LaTeX. Write fractions as A/B, exponents as X^N.";
   auto url = String(SERVER) + String("/gpt/ask?question=") + urlEncode(prompt);
 
   size_t realsize = 0;
@@ -1129,7 +1123,7 @@ void series() {
   out.print("series convergence: ");
   out.println(expr);
 
-  String prompt = "Does the infinite series sum from n=0 to infinity of f(n) = " + String(expr) + " converge or diverge? State CONVERGES or DIVERGES, the test used, and if it converges give the sum if possible. Very brief.";
+  String prompt = "Does the infinite series sum from n=0 to infinity of f(n) = " + String(expr) + " converge or diverge? State CONVERGES or DIVERGES, the test used, and if it converges give the sum if possible. Very brief. Use plain text only, no LaTeX.";
   auto url = String(SERVER) + String("/gpt/ask?question=") + urlEncode(prompt);
 
   size_t realsize = 0;
@@ -1146,7 +1140,7 @@ void double_integral() {
   out.print("double integral: ");
   out.println(expr);
 
-  String prompt = "Evaluate the double integral: " + String(expr) + ". Give only the answer, no explanation.";
+  String prompt = "Evaluate the double integral: " + String(expr) + ". Give only the numerical answer, no explanation. Use plain text only, no LaTeX.";
   auto url = String(SERVER) + String("/gpt/ask?question=") + urlEncode(prompt);
 
   size_t realsize = 0;
@@ -1163,7 +1157,7 @@ void avg_value() {
   out.print("average value: ");
   out.println(expr);
 
-  String prompt = "Calculate the average value of the function over the given region. " + String(expr) + ". The average value formula is (1/Area) * double integral of f(x,y) dA. Give only the final numerical answer, no explanation.";
+  String prompt = "Calculate the average value of the function over the given region. " + String(expr) + ". The average value formula is (1/Area) * double integral of f(x,y) dA. Give only the final numerical answer, no explanation. Use plain text only, no LaTeX.";
   auto url = String(SERVER) + String("/gpt/ask?question=") + urlEncode(prompt);
 
   size_t realsize = 0;
@@ -1180,7 +1174,7 @@ void math_solver() {
   out.print("math solver: ");
   out.println(problem);
 
-  String prompt = "Solve this calculus problem. Give only the final answer, no steps. Be concise. Problem: " + String(problem);
+  String prompt = "Solve this calculus problem. Give only the final answer, no steps. Be concise. Use plain text only, no LaTeX. Write fractions as A/B, exponents as X^N. Problem: " + String(problem);
   auto url = String(SERVER) + String("/gpt/ask?question=") + urlEncode(prompt);
 
   size_t realsize = 0;

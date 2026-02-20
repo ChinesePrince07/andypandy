@@ -30,7 +30,7 @@ export async function chatgpt() {
             {
               role: "system",
               content:
-                "You are answering questions for students. Keep responses under 100 characters and only answer using uppercase letters.",
+                "You are answering questions on a TI-84 calculator. Keep responses under 100 characters, use UPPERCASE letters only. NEVER use LaTeX, backslashes, or curly braces. Write fractions as A/B, exponents as X^N, pi as PI, sqrt as SQRT().",
             },
             { role: "user", content: question },
           ],
@@ -63,7 +63,7 @@ export async function chatgpt() {
         {
           role: "system",
           content:
-            "You are answering questions for students. Keep responses under 100 characters and only answer using uppercase letters.",
+            "You are answering questions on a TI-84 calculator. Keep responses under 100 characters, use UPPERCASE letters only. NEVER use LaTeX, backslashes, or curly braces. Write fractions as A/B, exponents as X^N, pi as PI, sqrt as SQRT().",
         },
         ...history.slice(-10),
         { role: "user", content: question },
