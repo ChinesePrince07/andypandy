@@ -111,8 +111,6 @@ export default function PhotoManager() {
           "FNumber",
           "ExposureTime",
           "ISO",
-          "latitude",
-          "longitude",
           "DateTimeOriginal",
           "ImageWidth",
           "ImageHeight",
@@ -126,15 +124,34 @@ export default function PhotoManager() {
         if (exif.Make) setMake(exif.Make.trim());
         if (exif.Model) setModel(exif.Model.trim());
         if (exif.LensModel) setLens(exif.LensModel.trim());
-        if (exif.FocalLength) setFocalLength(String(Math.round(exif.FocalLength)));
+        if (exif.FocalLength)
+          setFocalLength(String(Math.round(exif.FocalLength)));
         if (exif.FNumber) setAperture(String(exif.FNumber));
-        if (exif.ExposureTime) setShutterSpeed(formatShutterSpeed(exif.ExposureTime));
+        if (exif.ExposureTime)
+          setShutterSpeed(formatShutterSpeed(exif.ExposureTime));
         if (exif.ISO) setIso(String(exif.ISO));
-        if (exif.latitude) setLatitude(String(exif.latitude));
-        if (exif.longitude) setLongitude(String(exif.longitude));
         if (exif.DateTimeOriginal) {
           const d = new Date(exif.DateTimeOriginal);
           setTakenAt(d.toISOString().slice(0, 16));
+        }
+      }
+
+      // Extract GPS separately — exifr.gps() is more reliable than pick
+      const gps = await exifr.gps(file);
+      if (gps) {
+        if (
+          typeof gps.latitude === "number" &&
+          gps.latitude >= -90 &&
+          gps.latitude <= 90
+        ) {
+          setLatitude(String(gps.latitude));
+        }
+        if (
+          typeof gps.longitude === "number" &&
+          gps.longitude >= -180 &&
+          gps.longitude <= 180
+        ) {
+          setLongitude(String(gps.longitude));
         }
       }
     } catch {
@@ -213,7 +230,9 @@ export default function PhotoManager() {
         fetchPhotos();
       }
     } catch (err) {
-      setMessage(`Upload failed: ${err instanceof Error ? err.message : String(err)}`);
+      setMessage(
+        `Upload failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
     } finally {
       setUploading(false);
     }
@@ -266,7 +285,9 @@ export default function PhotoManager() {
   function startEdit(photo: Photo) {
     setEditingSlug(photo.slug);
     setTitle(photo.title || "");
-    setTakenAt(photo.taken_at ? new Date(photo.taken_at).toISOString().slice(0, 16) : "");
+    setTakenAt(
+      photo.taken_at ? new Date(photo.taken_at).toISOString().slice(0, 16) : "",
+    );
     setMake(photo.make || "");
     setModel(photo.model || "");
     setLens(photo.lens || "");
@@ -465,11 +486,7 @@ export default function PhotoManager() {
             disabled={uploading || (!editingSlug && !selectedFile)}
             className="rounded-lg bg-gray-900 px-4 py-2 text-xs font-medium text-white hover:bg-gray-800 disabled:opacity-40 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
           >
-            {uploading
-              ? "Saving..."
-              : editingSlug
-                ? "Update"
-                : "Upload"}
+            {uploading ? "Saving..." : editingSlug ? "Update" : "Upload"}
           </button>
           {editingSlug && (
             <button
@@ -483,7 +500,8 @@ export default function PhotoManager() {
           {message && (
             <span
               className={`text-xs ${
-                message.startsWith("Error") || message.startsWith("Upload failed")
+                message.startsWith("Error") ||
+                message.startsWith("Upload failed")
                   ? "text-red-500"
                   : "text-green-600"
               }`}
@@ -516,7 +534,8 @@ export default function PhotoManager() {
                     {photo.title || photo.slug}
                   </p>
                   <p className="text-xs text-gray-400">
-                    {[photo.model, photo.lens].filter(Boolean).join(" · ") || "No EXIF"}
+                    {[photo.model, photo.lens].filter(Boolean).join(" · ") ||
+                      "No EXIF"}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
