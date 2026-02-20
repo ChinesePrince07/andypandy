@@ -1,5 +1,6 @@
 'use client'
 
+import { upload } from '@vercel/blob/client'
 import Link from 'next/link'
 import { useCallback, useRef, useState } from 'react'
 
@@ -19,8 +20,8 @@ export default function UploadPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const addFiles = useCallback((newFiles: FileList | File[]) => {
-    const fileArray = Array.from(newFiles).filter((f) =>
-      f.type.startsWith('image/'),
+    const fileArray = Array.from(newFiles).filter(
+      (f) => f.type.startsWith('image/') || /\.(heic|heif|tiff?)$/i.test(f.name),
     )
     if (fileArray.length === 0) return
 
@@ -74,14 +75,9 @@ export default function UploadPage() {
     })
   }, [])
 
-  const updateFileStatus = useCallback(
-    (index: number, status: FileStatus, error?: string) => {
-      setFiles((prev) =>
-        prev.map((f, i) => (i === index ? { ...f, status, error } : f)),
-      )
-    },
-    [],
-  )
+  const updateFileStatus = useCallback((index: number, status: FileStatus, error?: string) => {
+    setFiles((prev) => prev.map((f, i) => (i === index ? { ...f, status, error } : f)))
+  }, [])
 
   const handleUploadAll = useCallback(async () => {
     setIsUploading(true)
@@ -92,23 +88,28 @@ export default function UploadPage() {
 
       updateFileStatus(i, 'uploading')
 
-      const formData = new FormData()
-      formData.append('file', uploadFile.file)
-
       try {
-        const res = await fetch('/api/admin/photos/upload', {
+        // Step 1: Upload directly to Vercel Blob (bypasses 4.5MB serverless limit)
+        const blob = await upload(uploadFile.file.name, uploadFile.file, {
+          access: 'public',
+          handleUploadUrl: '/api/admin/photos/upload',
+        })
+
+        // Step 2: Process metadata server-side (EXIF, thumbnail, manifest)
+        const res = await fetch('/api/admin/photos/process', {
           method: 'POST',
-          body: formData,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ blobUrl: blob.url, filename: uploadFile.file.name }),
         })
 
         if (res.ok) {
           updateFileStatus(i, 'done')
         } else {
-          const data = await res.json().catch(() => ({ error: 'Upload failed' }))
-          updateFileStatus(i, 'error', data.error || 'Upload failed')
+          const data = await res.json().catch(() => ({ error: 'Processing failed' }))
+          updateFileStatus(i, 'error', data.error || 'Processing failed')
         }
       } catch {
-        updateFileStatus(i, 'error', 'Network error')
+        updateFileStatus(i, 'error', 'Upload or processing error')
       }
     }
 
@@ -149,7 +150,9 @@ export default function UploadPage() {
             : 'border-neutral-700/60 hover:border-neutral-500/60 hover:bg-white/[0.01]'
         } ${files.length > 0 ? 'py-10' : 'py-20'}`}
       >
-        <div className={`mb-3 rounded-2xl p-4 transition-colors ${isDragOver ? 'bg-white/10' : 'bg-neutral-800/50 group-hover:bg-neutral-800/80'}`}>
+        <div
+          className={`mb-3 rounded-2xl p-4 transition-colors ${isDragOver ? 'bg-white/10' : 'bg-neutral-800/50 group-hover:bg-neutral-800/80'}`}
+        >
           <svg
             className={`h-8 w-8 transition-colors ${isDragOver ? 'text-white' : 'text-neutral-500 group-hover:text-neutral-400'}`}
             fill="none"
@@ -167,13 +170,11 @@ export default function UploadPage() {
         <p className={`text-sm font-medium transition-colors ${isDragOver ? 'text-white' : 'text-neutral-300'}`}>
           {isDragOver ? 'Drop to add photos' : 'Drop photos here or click to browse'}
         </p>
-        <p className="mt-1 text-xs text-neutral-600">
-          JPEG, PNG, WebP, HEIC, TIFF
-        </p>
+        <p className="mt-1 text-xs text-neutral-600">JPEG, PNG, WebP, HEIC, TIFF</p>
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept="image/*,.heic,.heif"
           multiple
           onChange={handleFileChange}
           className="hidden"
@@ -197,7 +198,11 @@ export default function UploadPage() {
               {doneCount > 0 && !isUploading && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-400">
                   <svg className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    <path
+                      fillRule="evenodd"
+                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                   {doneCount} uploaded
                 </span>
@@ -209,10 +214,7 @@ export default function UploadPage() {
               )}
             </div>
             {!isUploading && pendingCount > 0 && (
-              <button
-                onClick={clearAll}
-                className="text-xs text-neutral-600 transition-colors hover:text-neutral-400"
-              >
+              <button onClick={clearAll} className="text-xs text-neutral-600 transition-colors hover:text-neutral-400">
                 Clear all
               </button>
             )}
@@ -260,7 +262,11 @@ export default function UploadPage() {
                     <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition-opacity group-hover/card:opacity-100">
                       <div className="rounded-full bg-emerald-500 p-1.5">
                         <svg className="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
                         </svg>
                       </div>
                     </div>
@@ -269,7 +275,11 @@ export default function UploadPage() {
                     <div className="absolute inset-0 flex items-center justify-center bg-black/40">
                       <div className="rounded-full bg-red-500 p-1.5">
                         <svg className="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                          <path
+                            fillRule="evenodd"
+                            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                            clipRule="evenodd"
+                          />
                         </svg>
                       </div>
                     </div>
@@ -280,7 +290,11 @@ export default function UploadPage() {
                     <div className="absolute left-2 top-2">
                       <div className="rounded-full bg-emerald-500 p-1 shadow-lg shadow-black/20">
                         <svg className="h-3 w-3 text-white" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
                         </svg>
                       </div>
                     </div>
@@ -296,7 +310,11 @@ export default function UploadPage() {
                       className="absolute right-2 top-2 rounded-full bg-black/60 p-1 text-white/70 opacity-0 backdrop-blur-sm transition-all hover:bg-black/80 hover:text-white group-hover/card:opacity-100"
                     >
                       <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                        <path
+                          fillRule="evenodd"
+                          d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                          clipRule="evenodd"
+                        />
                       </svg>
                     </button>
                   )}
@@ -304,9 +322,7 @@ export default function UploadPage() {
 
                 {/* File info */}
                 <div className="px-3 py-2.5">
-                  <p className="truncate text-xs font-medium text-neutral-300">
-                    {uploadFile.file.name}
-                  </p>
+                  <p className="truncate text-xs font-medium text-neutral-300">{uploadFile.file.name}</p>
                   <p className="mt-0.5 text-[11px] text-neutral-600">
                     {(uploadFile.file.size / (1024 * 1024)).toFixed(1)} MB
                   </p>
@@ -326,7 +342,13 @@ export default function UploadPage() {
                 className="flex aspect-square items-center justify-center rounded-xl border border-dashed border-neutral-800 bg-transparent transition-colors hover:border-neutral-600 hover:bg-neutral-900/50"
               >
                 <div className="flex flex-col items-center gap-1.5">
-                  <svg className="h-6 w-6 text-neutral-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <svg
+                    className="h-6 w-6 text-neutral-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                  >
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                   </svg>
                   <span className="text-xs text-neutral-600">Add more</span>
@@ -347,7 +369,11 @@ export default function UploadPage() {
                   <span className="inline-flex items-center gap-2">
                     <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                      />
                     </svg>
                     Uploading {doneCount + 1} of {files.length}...
                   </span>
@@ -363,19 +389,17 @@ export default function UploadPage() {
             <div className="mt-8 rounded-2xl border border-neutral-800 bg-neutral-900/50 p-8 text-center">
               <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10">
                 <svg className="h-6 w-6 text-emerald-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  <path
+                    fillRule="evenodd"
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               </div>
-              <p className="text-base font-semibold text-white">
-                Upload Complete
-              </p>
+              <p className="text-base font-semibold text-white">Upload Complete</p>
               <p className="mt-1 text-sm text-neutral-500">
                 {doneCount} photo{doneCount !== 1 ? 's' : ''} added to your gallery
-                {errorCount > 0 && (
-                  <span className="text-red-400">
-                    {' '}&middot; {errorCount} failed
-                  </span>
-                )}
+                {errorCount > 0 && <span className="text-red-400"> &middot; {errorCount} failed</span>}
               </p>
               <div className="mt-6 flex justify-center gap-3">
                 <Link

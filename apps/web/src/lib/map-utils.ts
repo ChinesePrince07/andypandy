@@ -120,13 +120,24 @@ export function isValidGPSCoordinates(coords: GPSCoordinates | null): coords is 
  * Convert PhotoManifestItem to PhotoMarker if it has GPS coordinates in EXIF
  */
 export function convertPhotoToMarkerFromEXIF(photo: PhotoManifestItem): PhotoMarker | null {
-  const { exif } = photo
+  // Prefer photo.location (clean decimal from upload/fix-gps)
+  if (photo.location && isValidGPSCoordinates(photo.location)) {
+    return {
+      id: photo.id,
+      longitude: photo.location.longitude,
+      latitude: photo.location.latitude,
+      latitudeRef: photo.location.latitude >= 0 ? GPSDirection.North : GPSDirection.South,
+      longitudeRef: photo.location.longitude >= 0 ? GPSDirection.East : GPSDirection.West,
+      photo,
+    }
+  }
 
+  // Fallback to EXIF parsing for legacy photos without location field
+  const { exif } = photo
   if (!exif) {
     return null
   }
 
-  // Use the common GPS conversion function
   const gpsData = convertExifGPSToDecimal(exif)
   if (!gpsData) {
     return null

@@ -188,7 +188,7 @@ export const MasonryPhotoItem = memo(({ data, width }: { data: PhotoManifest; wi
           src={data.thumbnailUrl}
           alt={data.title}
           loading="lazy"
-          className={'absolute inset-0 h-full w-full object-cover duration-300 group-hover:scale-105'}
+          className={`absolute inset-0 h-full w-full object-cover duration-300 group-hover:scale-105 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
           onLoad={handleImageLoad}
           onError={handleImageError}
         />

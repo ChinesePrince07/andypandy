@@ -3,6 +3,8 @@ import Link from 'next/link'
 
 import { getManifest } from '~/lib/blob'
 
+import { FixGPSButton } from './fix-gps-button'
+
 function formatDate(dateString: string): string {
   try {
     const date = new Date(dateString)
@@ -37,21 +39,21 @@ export default async function AdminDashboardPage() {
             {photos.length}
           </span>
         </div>
-        <Link
-          href="/admin/upload"
-          className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black hover:bg-neutral-200 transition-colors"
-        >
-          Upload Photos
-        </Link>
+        <div className="flex items-center gap-3">
+          <FixGPSButton />
+          <Link
+            href="/admin/upload"
+            className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black hover:bg-neutral-200 transition-colors"
+          >
+            Upload Photos
+          </Link>
+        </div>
       </div>
 
       {photos.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-neutral-700 py-20">
           <p className="mb-2 text-neutral-400">No photos yet</p>
-          <Link
-            href="/admin/upload"
-            className="text-sm text-white underline underline-offset-4 hover:text-neutral-300"
-          >
+          <Link href="/admin/upload" className="text-sm text-white underline underline-offset-4 hover:text-neutral-300">
             Upload your first photo
           </Link>
         </div>
@@ -75,19 +77,11 @@ export default async function AdminDashboardPage() {
                   />
                 </div>
                 <div className="p-3">
-                  <p className="truncate text-sm font-medium text-white">
-                    {photo.title || 'Untitled'}
-                  </p>
+                  <p className="truncate text-sm font-medium text-white">{photo.title || 'Untitled'}</p>
                   <div className="mt-1 flex items-center gap-2 text-xs text-neutral-500">
-                    {photo.dateTaken && (
-                      <span>{formatDate(photo.dateTaken)}</span>
-                    )}
-                    {photo.dateTaken && camera && (
-                      <span className="text-neutral-700">&middot;</span>
-                    )}
-                    {camera && (
-                      <span className="truncate">{camera}</span>
-                    )}
+                    {photo.dateTaken && <span>{formatDate(photo.dateTaken)}</span>}
+                    {photo.dateTaken && camera && <span className="text-neutral-700">&middot;</span>}
+                    {camera && <span className="truncate">{camera}</span>}
                   </div>
                 </div>
               </Link>
