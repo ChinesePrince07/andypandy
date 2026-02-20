@@ -2,6 +2,7 @@ import type { NextRequest } from 'next/server'
 
 import type { CameraInfo, LensInfo, PhotoManifestItem } from '@afilmory/typing'
 
+import { reverseGeocode } from '~/lib/ai'
 import { requireAdmin } from '~/lib/admin-auth'
 import { deleteFromBlob, getManifest, saveManifest } from '~/lib/blob'
 
@@ -97,17 +98,20 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     Object.assign(photo.exif!, exifUpdates)
   }
 
-  // Update location (lat/lng)
+  // Update location (lat/lng) with reverse geocoding
   if ('location' in body) {
     if (body.location === null) {
       photo.location = null
     } else if (typeof body.location === 'object' && body.location !== null) {
       const loc = body.location as { latitude?: number; longitude?: number }
       if (typeof loc.latitude === 'number' && typeof loc.longitude === 'number') {
+        const geo = await reverseGeocode(loc.latitude, loc.longitude)
         photo.location = {
-          ...(photo.location || {}),
           latitude: loc.latitude,
           longitude: loc.longitude,
+          country: geo.country || undefined,
+          city: geo.city || undefined,
+          locationName: geo.locationName || undefined,
         }
       }
     }

@@ -20,7 +20,7 @@ export async function getManifest(): Promise<AfilmoryManifest> {
       return { ...EMPTY_MANIFEST }
     }
 
-    const res = await fetch(blob.url)
+    const res = await fetch(blob.url, { cache: 'no-store' })
     const text = await res.text()
     const manifest: AfilmoryManifest = JSON.parse(text)
     return manifest

@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server'
 
-import { generatePhotoAI, reverseGeocodeCity } from '~/lib/ai'
+import { generatePhotoAI, reverseGeocode } from '~/lib/ai'
 import { requireAdmin } from '~/lib/admin-auth'
 import { getManifest, saveManifest } from '~/lib/blob'
 
@@ -47,10 +47,17 @@ export async function POST(req: NextRequest) {
           continue
         }
 
-        // Reverse-geocode city from photo location
+        // Reverse-geocode from photo location
         let cityTag: string | null = null
         if (photo.location?.latitude && photo.location?.longitude) {
-          cityTag = await reverseGeocodeCity(photo.location.latitude, photo.location.longitude)
+          const geo = await reverseGeocode(photo.location.latitude, photo.location.longitude)
+          cityTag = geo.city
+          // Fill in missing location details
+          if (!photo.location.locationName && geo.locationName) {
+            photo.location.locationName = geo.locationName
+            photo.location.city = geo.city || undefined
+            photo.location.country = geo.country || undefined
+          }
         }
 
         // Apply AI results — only fill in missing fields unless overwrite is true

@@ -1,22 +1,30 @@
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY
 
-export async function reverseGeocodeCity(latitude: number, longitude: number): Promise<string | null> {
+export async function reverseGeocode(
+  latitude: number,
+  longitude: number,
+): Promise<{ city: string | null; country: string | null; locationName: string | null }> {
   try {
     const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&zoom=10`,
+      `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&zoom=10&addressdetails=1`,
       { headers: { 'User-Agent': 'afilmory/1.0' } },
     )
-    if (!res.ok) return null
+    if (!res.ok) return { city: null, country: null, locationName: null }
     const data = await res.json()
     const city =
       data.address?.city ||
       data.address?.town ||
       data.address?.village ||
       data.address?.municipality ||
-      data.address?.county
-    return city ? String(city).trim().toLowerCase() : null
+      data.address?.county ||
+      null
+    const country = data.address?.country || null
+    const state = data.address?.state || null
+    const parts = [city, state, country].filter(Boolean)
+    const locationName = parts.length > 0 ? parts.join(', ') : null
+    return { city: city ? String(city).trim().toLowerCase() : null, country, locationName }
   } catch {
-    return null
+    return { city: null, country: null, locationName: null }
   }
 }
 

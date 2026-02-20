@@ -5,6 +5,8 @@ import { verifyAdmin } from '~/lib/admin-auth'
 import { getManifest } from '~/lib/blob'
 import { injectAdminButton, injectConfigToDocument, injectManifestToDocument } from '~/lib/injectable'
 
+export const dynamic = 'force-dynamic'
+
 export const GET = async (req: NextRequest) => {
   if (process.env.NODE_ENV === 'development') {
     return import('./[...all]/dev').then((m) => m.handler(req))

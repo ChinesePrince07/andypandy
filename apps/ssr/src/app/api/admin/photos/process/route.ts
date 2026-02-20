@@ -4,7 +4,7 @@ import { rgbaToThumbHash } from 'thumbhash'
 
 import type { CameraInfo, LensInfo, LocationInfo, PickedExif, PhotoManifestItem } from '@afilmory/typing'
 
-import { generatePhotoAI, reverseGeocodeCity } from '~/lib/ai'
+import { generatePhotoAI, reverseGeocode } from '~/lib/ai'
 import { requireAdmin } from '~/lib/admin-auth'
 import { getManifest, saveManifest, uploadToBlob } from '~/lib/blob'
 
@@ -178,12 +178,18 @@ export async function POST(req: NextRequest) {
       dateTaken = exifData.CreateDate instanceof Date ? exifData.CreateDate.toISOString() : String(exifData.CreateDate)
     }
 
-    // Extract GPS location
+    // Extract GPS location and reverse-geocode
     let gpsData: LocationInfo | null = null
+    let cityTag: string | null = null
     if (gpsDecimal) {
+      const geo = await reverseGeocode(gpsDecimal.latitude, gpsDecimal.longitude)
+      cityTag = geo.city
       gpsData = {
         latitude: gpsDecimal.latitude,
         longitude: gpsDecimal.longitude,
+        country: geo.country || undefined,
+        city: geo.city || undefined,
+        locationName: geo.locationName || undefined,
       }
     }
 
@@ -192,12 +198,6 @@ export async function POST(req: NextRequest) {
 
     // Generate AI title and tags (non-blocking — falls back gracefully)
     const aiResult = await generatePhotoAI(thumbnailBuffer.toString('base64'))
-
-    // Reverse-geocode city from GPS coordinates
-    let cityTag: string | null = null
-    if (gpsDecimal) {
-      cityTag = await reverseGeocodeCity(gpsDecimal.latitude, gpsDecimal.longitude)
-    }
 
     // Use user-provided values with AI fallback
     const finalTitle = userTitle?.trim() || aiResult?.title || filename.replace(/\.[^.]+$/, '')
