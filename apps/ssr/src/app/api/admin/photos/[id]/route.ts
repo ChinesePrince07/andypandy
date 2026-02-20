@@ -97,6 +97,22 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     Object.assign(photo.exif!, exifUpdates)
   }
 
+  // Update location (lat/lng)
+  if ('location' in body) {
+    if (body.location === null) {
+      photo.location = null
+    } else if (typeof body.location === 'object' && body.location !== null) {
+      const loc = body.location as { latitude?: number; longitude?: number }
+      if (typeof loc.latitude === 'number' && typeof loc.longitude === 'number') {
+        photo.location = {
+          ...(photo.location || {}),
+          latitude: loc.latitude,
+          longitude: loc.longitude,
+        }
+      }
+    }
+  }
+
   manifest.data[index] = photo
 
   // Recalculate cameras if make/model may have changed

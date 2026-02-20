@@ -27,6 +27,7 @@ export async function saveManifest(manifest: AfilmoryManifest): Promise<void> {
   await put(MANIFEST_KEY, JSON.stringify(manifest), {
     access: 'public',
     addRandomSuffix: false,
+    allowOverwrite: true,
     contentType: 'application/json',
   })
 }

@@ -1,13 +1,13 @@
 import type { NextRequest } from 'next/server'
 
-import { env } from '@env'
 import { setAdminCookie } from '~/lib/admin-auth'
 
 export async function POST(req: NextRequest) {
   try {
     const { password } = await req.json()
+    const adminPassword = process.env.ADMIN_PASSWORD
 
-    if (!env.ADMIN_PASSWORD || password !== env.ADMIN_PASSWORD) {
+    if (!adminPassword || password !== adminPassword) {
       return Response.json({ error: 'Invalid password' }, { status: 401 })
     }
 

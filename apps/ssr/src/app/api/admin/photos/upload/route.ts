@@ -86,6 +86,7 @@ export async function POST(req: NextRequest) {
     // Extract EXIF data
     const exifr = (await import('exifr')).default
     let exifData: Record<string, any> | null = null
+    let gpsDecimal: { latitude: number; longitude: number } | null = null
     try {
       exifData = await exifr.parse(buffer, {
         pick: [
@@ -108,16 +109,18 @@ export async function POST(req: NextRequest) {
           'ImageWidth',
           'ImageHeight',
           'Orientation',
-          'GPSLatitude',
-          'GPSLongitude',
-          'GPSAltitude',
         ],
       })
+      // Use exifr.gps() for proper decimal degree conversion
+      const gps = await exifr.gps(buffer)
+      if (gps && typeof gps.latitude === 'number' && typeof gps.longitude === 'number') {
+        gpsDecimal = { latitude: gps.latitude, longitude: gps.longitude }
+      }
     } catch {
       // EXIF parsing can fail for some images, continue without it
     }
 
-    // Build PickedExif
+    // Build PickedExif — store GPS as decimal numbers, not raw EXIF arrays
     const pickedExif: PickedExif | null = exifData
       ? ({
           Make: exifData.Make || undefined,
@@ -139,8 +142,8 @@ export async function POST(req: NextRequest) {
           ImageWidth: exifData.ImageWidth || width || undefined,
           ImageHeight: exifData.ImageHeight || height || undefined,
           Orientation: exifData.Orientation || undefined,
-          GPSLatitude: exifData.GPSLatitude || undefined,
-          GPSLongitude: exifData.GPSLongitude || undefined,
+          GPSLatitude: gpsDecimal?.latitude,
+          GPSLongitude: gpsDecimal?.longitude,
           GPSAltitude: exifData.GPSAltitude || undefined,
           DateTimeOriginal: exifData.DateTimeOriginal
             ? exifData.DateTimeOriginal instanceof Date
@@ -161,12 +164,12 @@ export async function POST(req: NextRequest) {
       dateTaken = exifData.CreateDate instanceof Date ? exifData.CreateDate.toISOString() : String(exifData.CreateDate)
     }
 
-    // Extract GPS location
+    // Extract GPS location as decimal degrees
     let gpsData: LocationInfo | null = null
-    if (exifData?.GPSLatitude != null && exifData?.GPSLongitude != null) {
+    if (gpsDecimal) {
       gpsData = {
-        latitude: exifData.GPSLatitude,
-        longitude: exifData.GPSLongitude,
+        latitude: gpsDecimal.latitude,
+        longitude: gpsDecimal.longitude,
       }
     }
 

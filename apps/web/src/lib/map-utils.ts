@@ -24,14 +24,22 @@ export function convertExifGPSToDecimal(exif: PickedExif | null): {
 
   try {
     // Handle different EXIF coordinate formats
+    // exifr can return: decimal number, or DMS array [degrees, minutes, seconds]
     if (typeof exif.GPSLatitude === 'number') {
       latitude = exif.GPSLatitude
+    } else if (Array.isArray(exif.GPSLatitude) && exif.GPSLatitude.length >= 3) {
+      // Convert DMS [degrees, minutes, seconds] to decimal
+      const [d, m, s] = exif.GPSLatitude
+      latitude = d + m / 60 + s / 3600
     } else {
       latitude = Number(exif.GPSLatitude)
     }
 
     if (typeof exif.GPSLongitude === 'number') {
       longitude = exif.GPSLongitude
+    } else if (Array.isArray(exif.GPSLongitude) && exif.GPSLongitude.length >= 3) {
+      const [d, m, s] = exif.GPSLongitude
+      longitude = d + m / 60 + s / 3600
     } else {
       longitude = Number(exif.GPSLongitude)
     }

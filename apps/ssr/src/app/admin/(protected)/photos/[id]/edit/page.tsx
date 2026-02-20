@@ -13,6 +13,13 @@ interface PhotoData {
   tags: string[]
   thumbnailUrl: string
   originalUrl: string
+  location: {
+    latitude: number
+    longitude: number
+    country?: string
+    city?: string
+    locationName?: string
+  } | null
   exif: {
     Make?: string
     Model?: string
@@ -22,6 +29,8 @@ interface PhotoData {
     ISO?: number
     ExposureTime?: string | number
     WhiteBalance?: string
+    GPSLatitude?: number
+    GPSLongitude?: number
   } | null
 }
 
@@ -53,6 +62,10 @@ export default function PhotoEditPage() {
   const [exposureTime, setExposureTime] = useState('')
   const [whiteBalance, setWhiteBalance] = useState('')
 
+  // Location form state
+  const [latitude, setLatitude] = useState('')
+  const [longitude, setLongitude] = useState('')
+
   const fetchPhoto = useCallback(async () => {
     try {
       setLoading(true)
@@ -83,6 +96,12 @@ export default function PhotoEditPage() {
       setIso(data.exif?.ISO?.toString() || '')
       setExposureTime(data.exif?.ExposureTime?.toString() || '')
       setWhiteBalance(data.exif?.WhiteBalance?.toString() || '')
+
+      // Populate location — prefer exif GPS (decimal), fall back to location object
+      const lat = data.exif?.GPSLatitude ?? data.location?.latitude
+      const lng = data.exif?.GPSLongitude ?? data.location?.longitude
+      setLatitude(lat != null ? String(lat) : '')
+      setLongitude(lng != null ? String(lng) : '')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load photo')
     } finally {
@@ -139,11 +158,27 @@ export default function PhotoEditPage() {
         exifUpdate.WhiteBalance = whiteBalance || undefined
       }
 
+      // Handle GPS coordinate updates
+      const parsedLat = latitude ? Number.parseFloat(latitude) : null
+      const parsedLng = longitude ? Number.parseFloat(longitude) : null
+      const origLat = photo?.exif?.GPSLatitude ?? photo?.location?.latitude
+      const origLng = photo?.exif?.GPSLongitude ?? photo?.location?.longitude
+      if (parsedLat !== origLat) exifUpdate.GPSLatitude = parsedLat ?? undefined
+      if (parsedLng !== origLng) exifUpdate.GPSLongitude = parsedLng ?? undefined
+
       const body: Record<string, unknown> = {
         title,
         description,
         dateTaken: dateTaken ? new Date(dateTaken).toISOString() : photo?.dateTaken,
         tags: parsedTags,
+      }
+
+      // Send location update if coordinates changed
+      if (parsedLat != null && parsedLng != null) {
+        body.location = { latitude: parsedLat, longitude: parsedLng }
+      } else if (!latitude && !longitude && (origLat != null || origLng != null)) {
+        // Cleared coordinates
+        body.location = null
       }
 
       if (Object.keys(exifUpdate).length > 0) {
@@ -173,9 +208,7 @@ export default function PhotoEditPage() {
   }
 
   async function handleDelete() {
-    const confirmed = window.confirm(
-      'Are you sure you want to delete this photo? This action cannot be undone.',
-    )
+    const confirmed = window.confirm('Are you sure you want to delete this photo? This action cannot be undone.')
     if (!confirmed) return
 
     setDeleting(true)
@@ -210,10 +243,7 @@ export default function PhotoEditPage() {
     return (
       <div className="flex flex-col items-center justify-center py-20">
         <p className="mb-4 text-red-400">{error}</p>
-        <Link
-          href="/admin"
-          className="text-sm text-neutral-400 underline underline-offset-4 hover:text-white"
-        >
+        <Link href="/admin" className="text-sm text-neutral-400 underline underline-offset-4 hover:text-white">
           Back to dashboard
         </Link>
       </div>
@@ -227,10 +257,7 @@ export default function PhotoEditPage() {
       {/* Header */}
       <div className="mb-8 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link
-            href="/admin"
-            className="text-sm text-neutral-400 hover:text-white transition-colors"
-          >
+          <Link href="/admin" className="text-sm text-neutral-400 hover:text-white transition-colors">
             &larr; Back
           </Link>
           <h1 className="text-2xl font-bold">Edit Photo</h1>
@@ -247,9 +274,7 @@ export default function PhotoEditPage() {
 
       {/* Messages */}
       {error && (
-        <div className="mb-6 rounded-lg border border-red-800 bg-red-950 px-4 py-3 text-sm text-red-300">
-          {error}
-        </div>
+        <div className="mb-6 rounded-lg border border-red-800 bg-red-950 px-4 py-3 text-sm text-red-300">{error}</div>
       )}
       {success && (
         <div className="mb-6 rounded-lg border border-green-800 bg-green-950 px-4 py-3 text-sm text-green-300">
@@ -463,6 +488,44 @@ export default function PhotoEditPage() {
               </div>
             </section>
 
+            {/* Location Section */}
+            <section>
+              <h2 className="mb-4 text-lg font-semibold text-white">Location</h2>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="latitude" className="mb-1 block text-sm text-neutral-400">
+                    Latitude
+                  </label>
+                  <input
+                    id="latitude"
+                    type="number"
+                    step="any"
+                    value={latitude}
+                    onChange={(e) => setLatitude(e.target.value)}
+                    className="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white placeholder:text-neutral-600 focus:border-neutral-500 focus:outline-none"
+                    placeholder="e.g. 40.7128"
+                  />
+                  <p className="mt-1 text-xs text-neutral-600">Decimal degrees (-90 to 90)</p>
+                </div>
+
+                <div>
+                  <label htmlFor="longitude" className="mb-1 block text-sm text-neutral-400">
+                    Longitude
+                  </label>
+                  <input
+                    id="longitude"
+                    type="number"
+                    step="any"
+                    value={longitude}
+                    onChange={(e) => setLongitude(e.target.value)}
+                    className="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white placeholder:text-neutral-600 focus:border-neutral-500 focus:outline-none"
+                    placeholder="e.g. -74.0060"
+                  />
+                  <p className="mt-1 text-xs text-neutral-600">Decimal degrees (-180 to 180)</p>
+                </div>
+              </div>
+            </section>
+
             {/* Submit */}
             <div className="flex items-center gap-4 border-t border-neutral-800 pt-6">
               <button
@@ -472,10 +535,7 @@ export default function PhotoEditPage() {
               >
                 {saving ? 'Saving...' : 'Save Changes'}
               </button>
-              <Link
-                href="/admin"
-                className="text-sm text-neutral-400 hover:text-white transition-colors"
-              >
+              <Link href="/admin" className="text-sm text-neutral-400 hover:text-white transition-colors">
                 Cancel
               </Link>
             </div>
