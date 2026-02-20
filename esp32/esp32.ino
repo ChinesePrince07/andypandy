@@ -1519,13 +1519,13 @@ void _resetProgram() {
   programLength = 0;
 }
 
-bool _otaFlashFirmware() {
-  out.println("Downloading ESP32 firmware...");
+void _otaFlashAndReboot() {
+  out.println("Downloading + flashing firmware...");
   String firmwareUrl = String(SERVER) + "/firmware/download";
 
   WiFiClientSecure client;
   client.setInsecure();
-  client.setTimeout(60000);
+  client.setTimeout(120000);
 
   httpUpdate.rebootOnUpdate(false);
   httpUpdate.setLedPin(-1);
@@ -1536,38 +1536,21 @@ bool _otaFlashFirmware() {
     case HTTP_UPDATE_FAILED:
       out.printf("Firmware update failed (%d): %s\n",
         httpUpdate.getLastError(), httpUpdate.getLastErrorString().c_str());
-      return false;
+      out.println("OTA FAILED - old firmware still running");
+      return;
     case HTTP_UPDATE_NO_UPDATES:
       out.println("No firmware binary on server");
-      return false;
+      return;
     case HTTP_UPDATE_OK:
-      out.println("Firmware written to flash");
-      return true;
-  }
-  return false;
-}
-
-void _otaUpdateSequence() {
-  // Step 1: Push launcher to calc first (while calc is still on and can receive it)
-  out.println("Pushing launcher to calculator...");
-  int result = sendProgramVariable(programName, (uint8_t*)programData, programLength);
-  _resetProgram();
-  if (result) {
-    out.print("Launcher push failed: ");
-    out.println(result);
-  } else {
-    out.println("Launcher pushed successfully");
-  }
-
-  // Step 2: Flash ESP32 firmware
-  bool firmwareOk = _otaFlashFirmware();
-
-  if (firmwareOk) {
-    out.println("Firmware flashed, rebooting...");
-    delay(500);
-    ESP.restart();
-  } else {
-    out.println("Firmware flash failed");
+      out.println("Firmware written to flash!");
+      // Set flag to push launcher after reboot (from embedded launcher.h)
+      prefs.begin("ccalc", false);
+      prefs.putBool("push_launcher", true);
+      prefs.end();
+      out.println("Rebooting with new firmware...");
+      delay(500);
+      ESP.restart();
+      return;
   }
 }
 
@@ -1578,48 +1561,23 @@ void ota_update() {
 
   // Check for new version
   String versionUrl = String(SERVER) + "/firmware/version";
-  out.print("Checking: ");
-  out.println(versionUrl);
-
   size_t realsize = 0;
   if (makeRequest(versionUrl, response, MAXHTTPRESPONSELEN, &realsize)) {
-    out.println("Version check failed!");
     setError("CHECK FAILED");
     return;
   }
 
   String serverVersion = String(response);
   serverVersion.trim();
-  out.print("Server version: '");
+  out.print("Server: ");
   out.print(serverVersion);
-  out.println("'");
-  out.print("Local version: '");
-  out.print(FIRMWARE_VERSION);
-  out.println("'");
+  out.print(" Local: ");
+  out.println(FIRMWARE_VERSION);
 
-  out.println(serverVersion == FIRMWARE_VERSION ? "Same version, updating anyway" : "New version available");
-
-  // Download launcher from server
-  out.println("New version available, downloading launcher...");
-  String launcherUrl = String(SERVER) + "/firmware/launcher";
-
-  _resetProgram();
-  if (makeRequest(launcherUrl, programData, 4096, &programLength)) {
-    out.println("Launcher download failed!");
-    setError("DL FAILED");
-    return;
-  }
-
-  out.print("Downloaded launcher: ");
-  out.print(programLength);
-  out.println(" bytes");
-
-  strncpy(programName, "ANDYGPT", 256);
-
-  // Queue: push launcher to calc, then flash ESP32 firmware, then reboot
-  queued_action = _otaUpdateSequence;
+  // Queue firmware flash (gives calc time to read status first)
+  queued_action = _otaFlashAndReboot;
   queued_action_time = millis() + 3000;
-  setSuccess("FLASHING FW+LAUNCHER");
+  setSuccess("FLASHING FIRMWARE...");
 }
 
 void send() {

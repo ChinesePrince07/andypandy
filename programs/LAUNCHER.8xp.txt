@@ -447,9 +447,10 @@ ClrHome
 Disp Str1
 Disp ""
 Disp "DO NOT TURN OFF"
-Disp "CALC WILL RECEIVE"
-Disp "NEW PROGRAM WHEN"
-Disp "BOTH ARE DONE"
+Disp "ESP WILL REBOOT"
+Disp "WHEN FLASH IS DONE"
+Disp ""
+Disp "RUN ANDYGPT AFTER"
 Stop
 
 Lbl V0:
