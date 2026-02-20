@@ -88,6 +88,6 @@ export async function serveSPAWithMeta(
   }
 
   return new Response(document.documentElement.outerHTML, {
-    headers: { 'Content-Type': 'text/html', 'X-SSR': '1' },
+    headers: { 'Content-Type': 'text/html', 'Cache-Control': 'no-store, no-cache, must-revalidate', 'X-SSR': '1' },
   })
 }

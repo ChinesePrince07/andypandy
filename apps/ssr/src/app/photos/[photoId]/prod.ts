@@ -4,8 +4,9 @@ import { DOMParser } from 'linkedom'
 import type { NextRequest } from 'next/server'
 
 import indexHtml from '~/index.html'
-import { injectConfigToDocument } from '~/lib/injectable'
-import { photoLoader } from '~/lib/photo-loader'
+import { verifyAdmin } from '~/lib/admin-auth'
+import { getManifest } from '~/lib/blob'
+import { injectAdminButton, injectConfigToDocument, injectManifestToDocument } from '~/lib/injectable'
 
 type HtmlElement = ReturnType<typeof DOMParser.prototype.parseFromString>
 type OnlyHTMLDocument = HtmlElement extends infer T ? (T extends { [key: string]: any; head: any } ? T : never) : never
@@ -13,7 +14,8 @@ type OnlyHTMLDocument = HtmlElement extends infer T ? (T extends { [key: string]
 export const handler = async (request: NextRequest, { params }: { params: Promise<{ photoId: string }> }) => {
   const { photoId } = await params
 
-  const photo = photoLoader.getPhoto(photoId)
+  const manifest = await getManifest()
+  const photo = manifest.data.find((p) => p.id === photoId)
   if (!photo) {
     return new Response(indexHtml, {
       headers: { 'Content-Type': 'text/html' },
@@ -41,10 +43,16 @@ export const handler = async (request: NextRequest, { params }: { params: Promis
     createAndInsertOpenGraphMeta(document, photo, request)
 
     injectConfigToDocument(document)
+    injectManifestToDocument(document, manifest)
+    const isAdmin = await verifyAdmin()
+    if (isAdmin) {
+      injectAdminButton(document)
+    }
 
     return new Response(document.documentElement.outerHTML, {
       headers: {
         'Content-Type': 'text/html',
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
         'X-SSR': '1',
       },
     })

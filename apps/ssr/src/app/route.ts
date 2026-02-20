@@ -23,6 +23,7 @@ export const GET = async (req: NextRequest) => {
   return new Response(document.documentElement.outerHTML, {
     headers: {
       'Content-Type': 'text/html',
+      'Cache-Control': 'no-store, no-cache, must-revalidate',
       'X-SSR': '1',
     },
   })

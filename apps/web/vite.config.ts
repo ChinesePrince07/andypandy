@@ -98,9 +98,14 @@ const staticWebBuildPlugins: PluginOption[] = [
     },
     workbox: {
       maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10MB
-      globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'],
-      globIgnores: ['**/*.{jpg,jpeg}'], // 忽略大图片文件
+      globPatterns: ['**/*.{js,css,ico,png,svg}'],
+      globIgnores: ['**/*.{jpg,jpeg}', '**/*.html'],
+      navigateFallback: null,
       runtimeCaching: [
+        {
+          urlPattern: ({ request }: { request: Request }) => request.mode === 'navigate',
+          handler: 'NetworkOnly',
+        },
         {
           urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
           handler: 'CacheFirst',
@@ -124,13 +129,13 @@ const staticWebBuildPlugins: PluginOption[] = [
           },
         },
         {
-          urlPattern: /\.(?:png|jpg|jpeg|svg|webp)$/,
-          handler: 'CacheFirst',
+          urlPattern: /\.(?:png|svg|webp)$/,
+          handler: 'StaleWhileRevalidate',
           options: {
             cacheName: 'images-cache',
             expiration: {
               maxEntries: 100,
-              maxAgeSeconds: 60 * 60 * 24 * 30, // <== 30 days
+              maxAgeSeconds: 60 * 60 * 24 * 7, // <== 7 days
             },
           },
         },
