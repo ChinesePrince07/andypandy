@@ -14,5 +14,6 @@ export const migrateV1ToV6: ManifestMigrator = (_raw: AfilmoryManifest, _ctx: Mi
     data: [],
     cameras: [],
     lenses: [],
+    albums: [],
   }
 }

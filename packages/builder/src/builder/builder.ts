@@ -505,6 +505,7 @@ export class AfilmoryBuilder {
           data: [],
           cameras: [],
           lenses: [],
+          albums: [],
         }
       : await loadExistingManifest()
   }

@@ -2,7 +2,7 @@ import fs from 'node:fs/promises'
 import path, { basename } from 'node:path'
 
 import { workdir } from '@afilmory/builder/path.js'
-import type { AfilmoryManifest, CameraInfo, LensInfo, PhotoManifestItem  } from '@afilmory/typing'
+import type { AfilmoryManifest, CameraInfo, LensInfo, PhotoManifestItem } from '@afilmory/typing'
 
 import { logger } from '../logger/index.js'
 import type { S3ObjectLike } from '../types/s3.js'
@@ -24,6 +24,7 @@ export async function loadExistingManifest(): Promise<AfilmoryManifest> {
       data: [],
       cameras: [],
       lenses: [],
+      albums: [],
     }
   }
 
