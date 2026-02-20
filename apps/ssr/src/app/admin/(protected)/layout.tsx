@@ -24,12 +24,15 @@ export default async function AdminProtectedLayout({ children }: { children: Rea
               Upload
             </Link>
           </div>
-          <LogoutButton />
+          <div className="flex items-center gap-4">
+            <Link href="/" className="text-sm text-neutral-500 hover:text-white transition-colors">
+              View Site
+            </Link>
+            <LogoutButton />
+          </div>
         </div>
       </nav>
-      <main className="mx-auto max-w-6xl px-6 py-8">
-        {children}
-      </main>
+      <main className="mx-auto max-w-6xl px-6 py-8">{children}</main>
     </div>
   )
 }
