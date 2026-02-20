@@ -53,23 +53,29 @@ export async function POST(req: NextRequest) {
     const toDelete = manifest.data.filter((p) => idSet.has(p.id))
     manifest.data = manifest.data.filter((p) => !idSet.has(p.id))
 
-    // Delete blobs
-    const failed: string[] = []
-    for (const photo of toDelete) {
-      try {
-        await deleteFromBlob(photo.originalUrl)
-      } catch { /* ignore */ }
-      try {
-        await deleteFromBlob(photo.thumbnailUrl)
-      } catch { /* ignore */ }
-    }
-
     // Rebuild cameras/lenses
     manifest.cameras = rebuildCameras(manifest.data)
     manifest.lenses = rebuildLenses(manifest.data)
+
+    // Save manifest FIRST so photos are removed from gallery immediately,
+    // even if blob cleanup fails afterwards
     await saveManifest(manifest)
 
-    return Response.json({ deleted: toDelete.length, failed })
+    // Then delete blobs (best-effort cleanup)
+    for (const photo of toDelete) {
+      try {
+        await deleteFromBlob(photo.originalUrl)
+      } catch {
+        /* ignore */
+      }
+      try {
+        await deleteFromBlob(photo.thumbnailUrl)
+      } catch {
+        /* ignore */
+      }
+    }
+
+    return Response.json({ deleted: toDelete.length })
   } catch (error) {
     console.error('Bulk delete error:', error)
     return Response.json({ error: error instanceof Error ? error.message : 'Bulk delete failed' }, { status: 500 })

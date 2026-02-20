@@ -162,7 +162,15 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   // Remove from manifest
   manifest.data.splice(index, 1)
 
-  // Delete blobs
+  // Recalculate cameras and lenses
+  manifest.cameras = rebuildCameras(manifest.data)
+  manifest.lenses = rebuildLenses(manifest.data)
+
+  // Save manifest FIRST so the photo is removed from gallery immediately,
+  // even if blob cleanup fails afterwards
+  await saveManifest(manifest)
+
+  // Then delete blobs (best-effort cleanup)
   try {
     await deleteFromBlob(photo.originalUrl)
   } catch {
@@ -173,12 +181,6 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   } catch {
     // Thumbnail may already be gone, continue
   }
-
-  // Recalculate cameras and lenses
-  manifest.cameras = rebuildCameras(manifest.data)
-  manifest.lenses = rebuildLenses(manifest.data)
-
-  await saveManifest(manifest)
 
   return Response.json({ success: true })
 }
