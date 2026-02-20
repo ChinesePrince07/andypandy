@@ -14,9 +14,19 @@ export interface LensInfo {
   displayName: string // e.g., "Canon RF 24-70mm F2.8 L IS USM"
 }
 
+export interface AlbumInfo {
+  id: string
+  name: string
+  description: string
+  photoIds: string[]
+  coverPhotoId: string | null
+  createdAt: string
+}
+
 export type AfilmoryManifest = {
   version: ManifestVersion
   data: PhotoManifestItem[]
   cameras: CameraInfo[] // Unique cameras found in all photos
   lenses: LensInfo[] // Unique lenses found in all photos
+  albums: AlbumInfo[]
 }

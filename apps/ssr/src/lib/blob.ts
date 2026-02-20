@@ -8,6 +8,7 @@ const EMPTY_MANIFEST: AfilmoryManifest = {
   data: [],
   cameras: [],
   lenses: [],
+  albums: [],
 }
 
 export async function getManifest(): Promise<AfilmoryManifest> {
