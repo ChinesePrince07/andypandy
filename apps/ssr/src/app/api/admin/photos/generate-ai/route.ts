@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server'
 
-import { generatePhotoAI } from '~/lib/ai'
+import { generatePhotoAI, reverseGeocodeCity } from '~/lib/ai'
 import { requireAdmin } from '~/lib/admin-auth'
 import { getManifest, saveManifest } from '~/lib/blob'
 
@@ -17,9 +17,8 @@ export async function POST(req: NextRequest) {
     const manifest = await getManifest()
 
     // If specific IDs provided, use those; otherwise process all photos
-    const targetPhotos = ids && Array.isArray(ids) && ids.length > 0
-      ? manifest.data.filter((p) => ids.includes(p.id))
-      : manifest.data
+    const targetPhotos =
+      ids && Array.isArray(ids) && ids.length > 0 ? manifest.data.filter((p) => ids.includes(p.id)) : manifest.data
 
     let updated = 0
     let failed = 0
@@ -48,12 +47,25 @@ export async function POST(req: NextRequest) {
           continue
         }
 
+        // Reverse-geocode city from photo location
+        let cityTag: string | null = null
+        if (photo.location?.latitude && photo.location?.longitude) {
+          cityTag = await reverseGeocodeCity(photo.location.latitude, photo.location.longitude)
+        }
+
         // Apply AI results — only fill in missing fields unless overwrite is true
         if (overwrite || !photo.title || photo.title === photo.id) {
           photo.title = aiResult.title
         }
         if (overwrite || !photo.tags || photo.tags.length === 0) {
-          photo.tags = aiResult.tags
+          let tags = aiResult.tags
+          if (cityTag && !tags.includes(cityTag)) {
+            tags = [cityTag, ...tags]
+          }
+          photo.tags = tags
+        } else if (cityTag && !photo.tags.includes(cityTag)) {
+          // Even if keeping existing tags, prepend city if missing
+          photo.tags = [cityTag, ...photo.tags]
         }
 
         updated++
@@ -67,9 +79,6 @@ export async function POST(req: NextRequest) {
     return Response.json({ updated, failed, skipped, total: targetPhotos.length })
   } catch (error) {
     console.error('Bulk AI generation error:', error)
-    return Response.json(
-      { error: error instanceof Error ? error.message : 'AI generation failed' },
-      { status: 500 },
-    )
+    return Response.json({ error: error instanceof Error ? error.message : 'AI generation failed' }, { status: 500 })
   }
 }

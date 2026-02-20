@@ -4,7 +4,7 @@ import { rgbaToThumbHash } from 'thumbhash'
 
 import type { CameraInfo, LensInfo, LocationInfo, PickedExif, PhotoManifestItem } from '@afilmory/typing'
 
-import { generatePhotoAI } from '~/lib/ai'
+import { generatePhotoAI, reverseGeocodeCity } from '~/lib/ai'
 import { requireAdmin } from '~/lib/admin-auth'
 import { getManifest, saveManifest, uploadToBlob } from '~/lib/blob'
 
@@ -193,12 +193,23 @@ export async function POST(req: NextRequest) {
     // Generate AI title and tags (non-blocking — falls back gracefully)
     const aiResult = await generatePhotoAI(thumbnailBuffer.toString('base64'))
 
+    // Reverse-geocode city from GPS coordinates
+    let cityTag: string | null = null
+    if (gpsDecimal) {
+      cityTag = await reverseGeocodeCity(gpsDecimal.latitude, gpsDecimal.longitude)
+    }
+
     // Use user-provided values with AI fallback
     const finalTitle = userTitle?.trim() || aiResult?.title || filename.replace(/\.[^.]+$/, '')
-    const finalTags =
+    let finalTags =
       userTags && userTags.length > 0
         ? userTags.map((t: string) => t.trim().toLowerCase()).filter(Boolean)
         : aiResult?.tags || []
+
+    // Prepend city as first tag if available
+    if (cityTag && !finalTags.includes(cityTag)) {
+      finalTags = [cityTag, ...finalTags]
+    }
 
     // Build photo manifest item
     const ext = format || 'jpg'

@@ -1,5 +1,25 @@
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY
 
+export async function reverseGeocodeCity(latitude: number, longitude: number): Promise<string | null> {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&zoom=10`,
+      { headers: { 'User-Agent': 'afilmory/1.0' } },
+    )
+    if (!res.ok) return null
+    const data = await res.json()
+    const city =
+      data.address?.city ||
+      data.address?.town ||
+      data.address?.village ||
+      data.address?.municipality ||
+      data.address?.county
+    return city ? String(city).trim().toLowerCase() : null
+  } catch {
+    return null
+  }
+}
+
 export async function generatePhotoAI(imageBase64: string): Promise<{ title: string; tags: string[] } | null> {
   if (!OPENAI_API_KEY) return null
 
@@ -8,7 +28,7 @@ export async function generatePhotoAI(imageBase64: string): Promise<{ title: str
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
         model: 'gpt-4o-mini',
@@ -45,7 +65,10 @@ export async function generatePhotoAI(imageBase64: string): Promise<{ title: str
     if (!content) return null
 
     // Parse JSON response, handling potential markdown wrapping
-    const jsonStr = content.replace(/^```json?\n?/, '').replace(/\n?```$/, '').trim()
+    const jsonStr = content
+      .replace(/^```json?\n?/, '')
+      .replace(/\n?```$/, '')
+      .trim()
     const parsed = JSON.parse(jsonStr)
 
     return {
