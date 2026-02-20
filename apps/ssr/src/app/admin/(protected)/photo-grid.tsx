@@ -34,6 +34,7 @@ export function PhotoGrid({ initialPhotos }: { initialPhotos: PhotoManifestItem[
   const [isUpdating, setIsUpdating] = useState(false)
   const [albums, setAlbums] = useState<Array<{ id: string; name: string }>>([])
   const [showAlbumPicker, setShowAlbumPicker] = useState(false)
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false)
   const lastClickedIndex = useRef<number | null>(null)
 
   const toggleSelect = useCallback(
@@ -158,6 +159,24 @@ export function PhotoGrid({ initialPhotos }: { initialPhotos: PhotoManifestItem[
     [selected],
   )
 
+  const handleBulkGenerateAI = useCallback(async () => {
+    setIsGeneratingAI(true)
+    try {
+      const res = await fetch('/api/admin/photos/generate-ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: Array.from(selected), overwrite: true }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.updated > 0) {
+          window.location.reload()
+        }
+      }
+    } catch {}
+    setIsGeneratingAI(false)
+  }, [selected])
+
   const isAllSelected = photos.length > 0 && selected.size === photos.length
 
   return (
@@ -190,11 +209,7 @@ export function PhotoGrid({ initialPhotos }: { initialPhotos: PhotoManifestItem[
                     toggleSelect(photo.id, index, e.shiftKey)
                   }}
                   className={`absolute left-2 top-2 z-10 flex h-5 w-5 items-center justify-center rounded border transition-all ${
-                    isSelected
-                      ? 'border-blue-500 bg-blue-500'
-                      : selectionMode
-                        ? 'border-neutral-500 bg-neutral-800/80 backdrop-blur-sm'
-                        : 'border-neutral-500 bg-neutral-800/80 opacity-0 backdrop-blur-sm group-hover/card:opacity-100'
+                    isSelected ? 'border-blue-500 bg-blue-500' : 'border-neutral-500 bg-neutral-800/80 backdrop-blur-sm'
                   }`}
                 >
                   {isSelected && (
@@ -311,6 +326,13 @@ export function PhotoGrid({ initialPhotos }: { initialPhotos: PhotoManifestItem[
               className="text-sm text-neutral-400 hover:text-white transition-colors"
             >
               Album
+            </button>
+            <button
+              onClick={handleBulkGenerateAI}
+              disabled={isGeneratingAI}
+              className="text-sm text-neutral-400 hover:text-white transition-colors disabled:opacity-40"
+            >
+              {isGeneratingAI ? 'AI...' : 'AI'}
             </button>
             <button
               onClick={() => setShowDeleteConfirm(true)}

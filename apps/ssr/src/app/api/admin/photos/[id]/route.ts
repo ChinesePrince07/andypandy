@@ -115,6 +115,15 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   manifest.data[index] = photo
 
+  // Re-sort by dateTaken if date was changed (newest first)
+  if (typeof body.dateTaken === 'string') {
+    manifest.data.sort((a, b) => {
+      const dateA = new Date(a.dateTaken).getTime()
+      const dateB = new Date(b.dateTaken).getTime()
+      return dateB - dateA
+    })
+  }
+
   // Recalculate cameras if make/model may have changed
   const exifUpdates = body.exif as Record<string, unknown> | undefined
   if (exifUpdates && ('Make' in exifUpdates || 'Model' in exifUpdates)) {
