@@ -19,7 +19,7 @@ The original concept came from ChromaLock, who made a [video about it](https://w
 ## Features
 
 - ChatGPT integration - ask questions directly from your calculator, with **loop mode** to keep asking without returning to menu
-- **Calculus solver** - derivatives, integrals, double integrals, and infinite series convergence
+- **Calculus solver** - derivatives, integrals, double integrals, average value, general math solver, and infinite series convergence
 - **Physics solver** - elastic and inelastic collision calculations
 - **Utilities** - translate text and define words
 - Wi-Fi connectivity via ESP32 with **captive portal configuration**
@@ -134,10 +134,12 @@ The GPT mode loops so you can have a continuous conversation without navigating 
 ## Using Math
 
 1. From the main menu, select **MATH**
-2. Choose **DERIVATIVE**, **INTEGRAL**, **DOUBLE INT**, or **SERIES**
+2. Choose **DERIVATIVE**, **INTEGRAL**, **DOUBLE INT**, **SERIES**, **AVG VALUE**, or **SOLVER**
 3. Enter your function:
    - For derivatives/integrals: use X as the variable (e.g., `X^2`, `sin(X)`)
    - For double integrals: enter F(X,Y), Y bounds, and X bounds when prompted
+   - For average value: enter F(X,Y) and the region bounds
+   - For solver: type any math problem in plain text
    - For series: use N as the variable (e.g., `1/N^2`, `1/2^N`)
 4. The result appears instantly
 5. Press **any key** for another calculation, **CLEAR** to go back
@@ -146,6 +148,8 @@ The GPT mode loops so you can have a continuous conversation without navigating 
 - Derivative of `X^3` → `3 X^2`
 - Integral of `X^2` → `1/3 X^3 + C`
 - Double integral of `X*Y` with Y=0..1, X=0..2
+- Average value of `X*Y` over rectangle [0,4] x [0,3]
+- Solver: `evaluate integral 0 to 1 of integral 0 to 1-x of x+y dy dx`
 - Series `1/N^2` → converges (pi^2/6)
 
 ## Using Physics

@@ -24,8 +24,33 @@
 #define SERVER "https://api.andypandy.org"
 #define SECURE
 
+// Telnet serial monitor
+#define TELNET_PORT 23
+WiFiServer telnetServer(TELNET_PORT);
+WiFiClient telnetClient;
+
+// Dual output: Serial + Telnet
+class DualPrint : public Print {
+public:
+  size_t write(uint8_t c) override {
+    Serial.write(c);
+    if (telnetClient && telnetClient.connected()) {
+      telnetClient.write(c);
+    }
+    return 1;
+  }
+  size_t write(const uint8_t *buf, size_t size) override {
+    Serial.write(buf, size);
+    if (telnetClient && telnetClient.connected()) {
+      telnetClient.write(buf, size);
+    }
+    return size;
+  }
+};
+DualPrint out;
+
 // Firmware version (increment this when updating)
-#define FIRMWARE_VERSION "1.3.8"
+#define FIRMWARE_VERSION "1.4.3"
 
 // Captive portal settings
 #define AP_SSID "calc"
@@ -148,6 +173,10 @@ void set_mac();
 void wifi_scan();
 void wifi_connect();
 void eduroam_connect();
+void suffield_connect();
+void get_ip();
+void avg_value();
+void math_solver();
 void beginEnterprise(const char* ssid, const char* user, const char* pass);
 void _sendLauncher();
 
@@ -193,10 +222,14 @@ struct Command commands[] = {
   { 30, "wifi_connect", 2, wifi_connect, false },
   { 31, "double_integral", 1, double_integral, true },
   { 32, "eduroam_connect", 0, eduroam_connect, false },
+  { 33, "suffield_connect", 0, suffield_connect, false },
+  { 34, "get_ip", 0, get_ip, false },
+  { 35, "avg_value", 1, avg_value, true },
+  { 36, "math_solver", 1, math_solver, true },
 };
 
 constexpr int NUMCOMMANDS = sizeof(commands) / sizeof(struct Command);
-constexpr int MAXCOMMAND = 32;
+constexpr int MAXCOMMAND = 36;
 
 uint8_t header[MAXHDRLEN];
 uint8_t data[MAXDATALEN];
@@ -253,8 +286,8 @@ void sanitizeForTI(char* dest, const char* src, size_t maxLen) {
 }
 
 void setError(const char* err) {
-  Serial.print("ERROR: ");
-  Serial.println(err);
+  out.print("ERROR: ");
+  out.println(err);
   error = 1;
   status = 1;
   command = -1;
@@ -262,8 +295,8 @@ void setError(const char* err) {
 }
 
 void setSuccess(const char* success) {
-  Serial.print("SUCCESS: ");
-  Serial.println(success);
+  out.print("SUCCESS: ");
+  out.println(success);
   error = 0;
   status = 1;
   command = -1;
@@ -384,8 +417,8 @@ void handleSave() {
   }
   prefs.end();
 
-  Serial.println("Saved WiFi credentials:");
-  Serial.println("SSID: " + storedSSID);
+  out.println("Saved WiFi credentials:");
+  out.println("SSID: " + storedSSID);
 
   webServer.send(200, "text/html", successHTML);
 
@@ -394,7 +427,7 @@ void handleSave() {
 
   WiFi.softAPdisconnect(true);
   if (storedEapUser.length() > 0) {
-    Serial.println("Connecting via WPA2-Enterprise");
+    out.println("Connecting via WPA2-Enterprise");
     beginEnterprise(storedSSID.c_str(), storedEapUser.c_str(), storedPass.c_str());
   } else {
     WiFi.begin(storedSSID.c_str(), storedPass.c_str());
@@ -407,12 +440,12 @@ void handleNotFound() {
 }
 
 void startCaptivePortal() {
-  Serial.println("[Starting Captive Portal]");
+  out.println("[Starting Captive Portal]");
   WiFi.mode(WIFI_AP);
   WiFi.softAP(AP_SSID, AP_PASS);
 
-  Serial.print("AP IP: ");
-  Serial.println(WiFi.softAPIP());
+  out.print("AP IP: ");
+  out.println(WiFi.softAPIP());
 
   dnsServer.start(DNS_PORT, "*", WiFi.softAPIP());
 
@@ -422,7 +455,7 @@ void startCaptivePortal() {
   webServer.begin();
 
   portalActive = true;
-  Serial.println("Captive portal started on SSID: calc");
+  out.println("Captive portal started on SSID: calc");
 }
 
 void loadSavedCredentials() {
@@ -434,9 +467,9 @@ void loadSavedCredentials() {
 }
 
 void beginEnterprise(const char* ssid, const char* user, const char* pass) {
-  Serial.println("=== Enterprise Connect ===");
-  Serial.print("SSID: "); Serial.println(ssid);
-  Serial.print("User: "); Serial.println(user);
+  out.println("=== Enterprise Connect ===");
+  out.print("SSID: "); out.println(ssid);
+  out.print("User: "); out.println(user);
 
   WiFi.disconnect(true);
   delay(500);
@@ -450,20 +483,20 @@ void beginEnterprise(const char* ssid, const char* user, const char* pass) {
   esp_wifi_sta_wpa2_ent_set_disable_time_check(true);
 
   esp_err_t err = esp_wifi_sta_wpa2_ent_enable();
-  Serial.print("wpa2_ent_enable: ");
-  Serial.println(err);
+  out.print("wpa2_ent_enable: ");
+  out.println(err);
 
   WiFi.begin(ssid);
-  Serial.println("WiFi.begin called");
+  out.println("WiFi.begin called");
 }
 
 void tryAutoConnect() {
   if (storedSSID.length() > 0) {
-    Serial.println("Found saved credentials, connecting...");
-    Serial.println("SSID: " + storedSSID);
+    out.println("Found saved credentials, connecting...");
+    out.println("SSID: " + storedSSID);
 
     if (storedEapUser.length() > 0) {
-      Serial.println("Using WPA2-Enterprise");
+      out.println("Using WPA2-Enterprise");
       beginEnterprise(storedSSID.c_str(), storedEapUser.c_str(), storedPass.c_str());
     } else {
       WiFi.begin(storedSSID.c_str(), storedPass.c_str());
@@ -473,29 +506,29 @@ void tryAutoConnect() {
     int attempts = 0;
     while (WiFi.status() != WL_CONNECTED && attempts < maxAttempts) {
       delay(500);
-      Serial.print(".");
+      out.print(".");
       attempts++;
     }
 
     if (WiFi.status() == WL_CONNECTED) {
-      Serial.println("\nConnected to WiFi!");
-      Serial.print("IP: ");
-      Serial.println(WiFi.localIP());
+      out.println("\nConnected to WiFi!");
+      out.print("IP: ");
+      out.println(WiFi.localIP());
     } else {
-      Serial.println("\nFailed to connect. Use SETUP in calculator to configure WiFi.");
+      out.println("\nFailed to connect. Use SETUP in calculator to configure WiFi.");
     }
   } else {
-    Serial.println("No saved credentials. Use SETUP in calculator to configure WiFi.");
+    out.println("No saved credentials. Use SETUP in calculator to configure WiFi.");
   }
 }
 
 void setup() {
   Serial.begin(115200);
-  Serial.println("[CBL]");
+  out.println("[CBL]");
 
   esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
   if (wakeup_reason == ESP_SLEEP_WAKEUP_GPIO) {
-    Serial.println("[woke from deep sleep]");
+    out.println("[woke from deep sleep]");
   }
 
   cbl.setLines(TIP, RING);
@@ -506,16 +539,16 @@ void setup() {
   pinMode(TIP, INPUT);
   pinMode(RING, INPUT);
 
-  Serial.println("[preferences]");
+  out.println("[preferences]");
   prefs.begin("ccalc", false);
   auto reboots = prefs.getUInt("boots", 0);
-  Serial.print("reboots: ");
-  Serial.println(reboots);
+  out.print("reboots: ");
+  out.println(reboots);
   prefs.putUInt("boots", reboots + 1);
   prefs.end();
 
 #ifdef CAMERA
-  Serial.println("[camera]");
+  out.println("[camera]");
 
   camera_config_t config;
   config.ledc_channel = LEDC_CHANNEL_0;
@@ -568,10 +601,10 @@ void setup() {
   // camera init
   esp_err_t err = esp_camera_init(&config);
   if (err != ESP_OK) {
-    Serial.printf("Camera init failed with error 0x%x\n", err);
+    out.printf("Camera init failed with error 0x%x\n", err);
     return;
   } else {
-    Serial.println("camera ready");
+    out.println("camera ready");
     camera_sign = true;  // Camera initialization check passes
   }
 
@@ -591,10 +624,10 @@ void setup() {
   if (pushLauncher) {
     prefs.putBool("push_launcher", false);
     prefs.end();
-    Serial.println("[pushing launcher after OTA]");
+    out.println("[pushing launcher after OTA]");
     delay(2000);  // Give calculator time to be ready
     sendProgramVariable("ANDYGPT", __launcher_var, __launcher_var_len);
-    Serial.println("[launcher pushed]");
+    out.println("[launcher pushed]");
   } else {
     prefs.end();
   }
@@ -604,20 +637,22 @@ void setup() {
     uint8_t mac[6] = {0x24, 0xFD, 0xFA, 0x0B, 0x80, 0xBF};
     WiFi.mode(WIFI_STA);
     esp_wifi_set_mac(WIFI_IF_STA, mac);
-    Serial.println("MAC set to 24:FD:FA:0B:80:BF");
+    out.println("MAC set to 24:FD:FA:0B:80:BF");
   }
 
   // Load saved WiFi credentials (connect when user selects CONNECT)
   loadSavedCredentials();
 
-  Serial.println("[ready]");
+  telnetServer.begin();
+  telnetServer.setNoDelay(true);
+  out.println("[ready - telnet on port 23]");
 }
 
 void (*queued_action)() = NULL;
 unsigned long queued_action_time = 0;
 
 void enterDeepSleep() {
-  Serial.println("[entering deep sleep]");
+  out.println("[entering deep sleep]");
   Serial.flush();
 
   if (WiFi.isConnected()) {
@@ -632,6 +667,15 @@ void enterDeepSleep() {
 }
 
 void loop() {
+  // Handle telnet connections
+  if (telnetServer.hasClient()) {
+    if (telnetClient && telnetClient.connected()) {
+      telnetClient.stop();
+    }
+    telnetClient = telnetServer.accept();
+    telnetClient.println("=== TI-84 GPT HACK Serial Monitor ===");
+  }
+
   // Handle captive portal
   if (portalActive) {
     dnsServer.processNextRequest();
@@ -639,7 +683,7 @@ void loop() {
   }
 
   if (queued_action && queued_action_time > 0 && millis() >= queued_action_time) {
-    Serial.println("executing queued actions");
+    out.println("executing queued actions");
     void (*tmp)() = queued_action;
     queued_action_time = 0;
     tmp();
@@ -650,21 +694,21 @@ void loop() {
     for (int i = 0; i < NUMCOMMANDS; ++i) {
       if (commands[i].id == command && commands[i].num_args == currentArg) {
         found = true;
-        Serial.print("matched command: ");
-        Serial.print(commands[i].name);
-        Serial.print(" (wifi required: ");
-        Serial.print(commands[i].wifi);
-        Serial.print(", connected: ");
-        Serial.print(WiFi.isConnected());
-        Serial.println(")");
+        out.print("matched command: ");
+        out.print(commands[i].name);
+        out.print(" (wifi required: ");
+        out.print(commands[i].wifi);
+        out.print(", connected: ");
+        out.print(WiFi.isConnected());
+        out.println(")");
         if (commands[i].wifi && !WiFi.isConnected()) {
-          Serial.println("ERROR: WiFi not connected!");
+          out.println("ERROR: WiFi not connected!");
           setError("NO WIFI");
         } else {
-          Serial.print("processing command: ");
-          Serial.println(commands[i].name);
+          out.print("processing command: ");
+          out.println(commands[i].name);
           commands[i].command_fp();
-          Serial.println("command finished");
+          out.println("command finished");
         }
         break;
       }
@@ -686,18 +730,18 @@ int onReceived(uint8_t type, enum Endpoint model, int datalen) {
   lastActivityMillis = millis();
   char varName = header[3];
 
-  Serial.print("unlocked: ");
-  Serial.println(unlocked);
+  out.print("unlocked: ");
+  out.println(unlocked);
 
   // check for password
   if (!unlocked && varName == 'P') {
     auto password = TIVar::realToLong8x(data, model);
     if (password == PASSWORD) {
-      Serial.println("successful unlock");
+      out.println("successful unlock");
       unlocked = true;
       return 0;
     } else {
-      Serial.println("failed unlock");
+      out.println("failed unlock");
     }
   }
 
@@ -712,19 +756,19 @@ int onReceived(uint8_t type, enum Endpoint model, int datalen) {
     }
     int cmd = TIVar::realToLong8x(data, model);
     if (cmd >= 0 && cmd <= MAXCOMMAND) {
-      Serial.print("command: ");
-      Serial.println(cmd);
+      out.print("command: ");
+      out.println(cmd);
       startCommand(cmd);
       return 0;
     } else {
-      Serial.print("invalid command: ");
-      Serial.println(cmd);
+      out.print("invalid command: ");
+      out.println(cmd);
       return -1;
     }
   }
 
   if (currentArg >= MAXARGS) {
-    Serial.println("argument overflow");
+    out.println("argument overflow");
     setError("argument overflow");
     return -1;
   }
@@ -734,35 +778,35 @@ int onReceived(uint8_t type, enum Endpoint model, int datalen) {
       {
         // Get the token length from the first two bytes
         int tokenLen = data[0] | (data[1] << 8);
-        Serial.print("token len: ");
-        Serial.println(tokenLen);
+        out.print("token len: ");
+        out.println(tokenLen);
 
         // Debug: print raw hex bytes
-        Serial.print("raw tokens: ");
+        out.print("raw tokens: ");
         for (int i = 0; i < tokenLen && i < 32; i++) {
-          Serial.print("0x");
-          if (data[2 + i] < 16) Serial.print("0");
-          Serial.print(data[2 + i], HEX);
-          Serial.print(" ");
+          out.print("0x");
+          if (data[2 + i] < 16) out.print("0");
+          out.print(data[2 + i], HEX);
+          out.print(" ");
         }
-        Serial.println();
+        out.println();
 
         // Decode the tokens to readable text
         decodeTokenString(data + 2, tokenLen, strArgs[currentArg], MAXSTRARGLEN);
         decodeCasing(strArgs[currentArg]);
-        Serial.print("Str");
-        Serial.print(currentArg);
-        Serial.print(" (decoded): ");
-        Serial.println(strArgs[currentArg]);
+        out.print("Str");
+        out.print(currentArg);
+        out.print(" (decoded): ");
+        out.println(strArgs[currentArg]);
         currentArg++;
       }
       break;
     case VarTypes82::VarReal:
       realArgs[currentArg++] = TIVar::realToFloat8x(data, model);
-      Serial.print("Real");
-      Serial.print(currentArg - 1);
-      Serial.print(" ");
-      Serial.println(realArgs[currentArg - 1]);
+      out.print("Real");
+      out.print(currentArg - 1);
+      out.print(" ");
+      out.println(realArgs[currentArg - 1]);
       break;
     default:
       // maybe set error here?
@@ -785,8 +829,8 @@ int onRequest(uint8_t type, enum Endpoint model, int* headerlen, int* datalen, d
   char strIndex = header[4];
   char strname[5] = { 'S', 't', 'r', varIndex(strIndex), 0x00 };
   char picname[5] = { 'P', 'i', 'c', varIndex(strIndex), 0x00 };
-  Serial.print("request for ");
-  Serial.println(varName == 0xaa ? strname : varName == 0x60 ? picname
+  out.print("request for ");
+  out.println(varName == 0xaa ? strname : varName == 0x60 ? picname
                                                              : (const char*)&header[3]);
   memset(header, 0, sizeof(header));
   switch (varName) {
@@ -829,8 +873,8 @@ int onRequest(uint8_t type, enum Endpoint model, int* headerlen, int* datalen, d
       if (type != VarTypes82::VarReal) {
         return -1;
       }
-      Serial.print("sending S=");
-      Serial.println(status);
+      out.print("sending S=");
+      out.println(status);
       *datalen = TIVar::longToReal8x(status, data, model);
       TIVar::intToSizeWord(*datalen, header);
       header[2] = VarTypes82::VarReal;
@@ -855,7 +899,7 @@ int makeRequest(String url, char* result, int resultLen, size_t* len) {
 #endif
   HTTPClient http;
 
-  Serial.println(url);
+  out.println(url);
   client.setTimeout(10000);
   http.begin(client, url.c_str());
   http.setTimeout(10000);
@@ -863,24 +907,24 @@ int makeRequest(String url, char* result, int resultLen, size_t* len) {
 
   // Send HTTP GET request
   int httpResponseCode = http.GET();
-  Serial.print(url);
-  Serial.print(" ");
-  Serial.println(httpResponseCode);
+  out.print(url);
+  out.print(" ");
+  out.println(httpResponseCode);
 
   int responseSize = http.getSize();
   WiFiClient* httpStream = http.getStreamPtr();
 
-  Serial.print("response size: ");
-  Serial.println(responseSize);
+  out.print("response size: ");
+  out.println(responseSize);
 
   if (httpResponseCode != 200) {
     return httpResponseCode;
   }
 
   if (httpStream->available() > resultLen) {
-    Serial.print("response size: ");
-    Serial.print(httpStream->available());
-    Serial.println(" is too big");
+    out.print("response size: ");
+    out.print(httpStream->available());
+    out.println(" is too big");
     return -1;
   }
 
@@ -899,13 +943,13 @@ void connect() {
     setError("no wifi configured");
     return;
   }
-  Serial.print("SSID: ");
-  Serial.println(storedSSID);
-  Serial.print("PASS: ");
-  Serial.println("<hidden>");
+  out.print("SSID: ");
+  out.println(storedSSID);
+  out.print("PASS: ");
+  out.println("<hidden>");
   bool enterprise = storedEapUser.length() > 0;
   if (enterprise) {
-    Serial.println("Using WPA2-Enterprise");
+    out.println("Using WPA2-Enterprise");
     beginEnterprise(storedSSID.c_str(), storedEapUser.c_str(), storedPass.c_str());
   } else {
     WiFi.begin(storedSSID.c_str(), storedPass.c_str());
@@ -944,8 +988,8 @@ void setup_wifi() {
 
 void gpt() {
   const char* prompt = strArgs[0];
-  Serial.print("prompt: ");
-  Serial.println(prompt);
+  out.print("prompt: ");
+  out.println(prompt);
 
   auto url = String(SERVER) + String("/gpt/ask?question=") + urlEncode(String(prompt));
 
@@ -955,8 +999,8 @@ void gpt() {
     return;
   }
 
-  Serial.print("response: ");
-  Serial.println(response);
+  out.print("response: ");
+  out.println(response);
 
   setSuccess(response);
 }
@@ -1006,8 +1050,8 @@ void gpt_new() {
 
 void derivative() {
   const char* expr = strArgs[0];
-  Serial.print("derivative of: ");
-  Serial.println(expr);
+  out.print("derivative of: ");
+  out.println(expr);
 
   // Use GPT with derivative prompt
   String prompt = "Find the derivative of " + String(expr) + ". Give only the answer, no explanation.";
@@ -1019,16 +1063,16 @@ void derivative() {
     return;
   }
 
-  Serial.print("result: ");
-  Serial.println(response);
+  out.print("result: ");
+  out.println(response);
 
   setSuccess(response);
 }
 
 void integrate() {
   const char* expr = strArgs[0];
-  Serial.print("integrate: ");
-  Serial.println(expr);
+  out.print("integrate: ");
+  out.println(expr);
 
   // Use GPT with integral prompt
   String prompt = "Find the indefinite integral of " + String(expr) + ". Give only the answer with +C, no explanation.";
@@ -1040,16 +1084,16 @@ void integrate() {
     return;
   }
 
-  Serial.print("result: ");
-  Serial.println(response);
+  out.print("result: ");
+  out.println(response);
 
   setSuccess(response);
 }
 
 void elastic() {
   const char* values = strArgs[0];
-  Serial.print("elastic collision: ");
-  Serial.println(values);
+  out.print("elastic collision: ");
+  out.println(values);
 
   String prompt = "Solve elastic collision: values are m1,v1,m2,v2 = " + String(values) + ". Find final velocities v1' and v2'. Give only the numerical answers, very brief.";
   auto url = String(SERVER) + String("/gpt/ask?question=") + urlEncode(prompt);
@@ -1065,8 +1109,8 @@ void elastic() {
 
 void inelastic() {
   const char* values = strArgs[0];
-  Serial.print("inelastic collision: ");
-  Serial.println(values);
+  out.print("inelastic collision: ");
+  out.println(values);
 
   String prompt = "Solve perfectly inelastic collision: values are m1,v1,m2,v2 = " + String(values) + ". Find the final velocity. Reply ONLY in this exact format: THE FINAL VELOCITY IS: x (where x is the number).";
   auto url = String(SERVER) + String("/gpt/ask?question=") + urlEncode(prompt);
@@ -1082,8 +1126,8 @@ void inelastic() {
 
 void series() {
   const char* expr = strArgs[0];
-  Serial.print("series convergence: ");
-  Serial.println(expr);
+  out.print("series convergence: ");
+  out.println(expr);
 
   String prompt = "Does the infinite series sum from n=0 to infinity of f(n) = " + String(expr) + " converge or diverge? State CONVERGES or DIVERGES, the test used, and if it converges give the sum if possible. Very brief.";
   auto url = String(SERVER) + String("/gpt/ask?question=") + urlEncode(prompt);
@@ -1099,10 +1143,44 @@ void series() {
 
 void double_integral() {
   const char* expr = strArgs[0];
-  Serial.print("double integral: ");
-  Serial.println(expr);
+  out.print("double integral: ");
+  out.println(expr);
 
   String prompt = "Evaluate the double integral: " + String(expr) + ". Give only the answer, no explanation.";
+  auto url = String(SERVER) + String("/gpt/ask?question=") + urlEncode(prompt);
+
+  size_t realsize = 0;
+  if (makeRequest(url, response, MAXHTTPRESPONSELEN, &realsize)) {
+    setError("REQUEST FAILED");
+    return;
+  }
+
+  setSuccess(response);
+}
+
+void avg_value() {
+  const char* expr = strArgs[0];
+  out.print("average value: ");
+  out.println(expr);
+
+  String prompt = "Calculate the average value of the function over the given region. " + String(expr) + ". The average value formula is (1/Area) * double integral of f(x,y) dA. Give only the final numerical answer, no explanation.";
+  auto url = String(SERVER) + String("/gpt/ask?question=") + urlEncode(prompt);
+
+  size_t realsize = 0;
+  if (makeRequest(url, response, MAXHTTPRESPONSELEN, &realsize)) {
+    setError("REQUEST FAILED");
+    return;
+  }
+
+  setSuccess(response);
+}
+
+void math_solver() {
+  const char* problem = strArgs[0];
+  out.print("math solver: ");
+  out.println(problem);
+
+  String prompt = "Solve this calculus problem. Give only the final answer, no steps. Be concise. Problem: " + String(problem);
   auto url = String(SERVER) + String("/gpt/ask?question=") + urlEncode(prompt);
 
   size_t realsize = 0;
@@ -1130,8 +1208,8 @@ void get_newest() {
 
 void weather() {
   const char* city = strArgs[0];
-  Serial.print("weather for: ");
-  Serial.println(city);
+  out.print("weather for: ");
+  out.println(city);
 
   String prompt = "Current weather in " + String(city) + "? Give temp in F and C, conditions. Very brief, max 50 words.";
   auto url = String(SERVER) + String("/gpt/ask?question=") + urlEncode(prompt);
@@ -1147,8 +1225,8 @@ void weather() {
 
 void translate() {
   const char* text = strArgs[0];
-  Serial.print("translate: ");
-  Serial.println(text);
+  out.print("translate: ");
+  out.println(text);
 
   // Format: "LANG:text" e.g. "SPANISH:hello" or just "text" for auto-detect to English
   String prompt = "Translate this: " + String(text) + ". Give only the translation, nothing else.";
@@ -1165,8 +1243,8 @@ void translate() {
 
 void define() {
   const char* word = strArgs[0];
-  Serial.print("define: ");
-  Serial.println(word);
+  out.print("define: ");
+  out.println(word);
 
   String prompt = "Define '" + String(word) + "' in one brief sentence.";
   auto url = String(SERVER) + String("/gpt/ask?question=") + urlEncode(prompt);
@@ -1182,8 +1260,8 @@ void define() {
 
 void units() {
   const char* conversion = strArgs[0];
-  Serial.print("convert: ");
-  Serial.println(conversion);
+  out.print("convert: ");
+  out.println(conversion);
 
   String prompt = "Convert: " + String(conversion) + ". Give only the result with units.";
   auto url = String(SERVER) + String("/gpt/ask?question=") + urlEncode(prompt);
@@ -1282,8 +1360,8 @@ void wifi_connect() {
   }
 
   const char* ssid = scanResults[idx];
-  Serial.print("Connecting to: ");
-  Serial.println(ssid);
+  out.print("Connecting to: ");
+  out.println(ssid);
 
   WiFi.begin(ssid, password);
   int attempts = 0;
@@ -1310,7 +1388,7 @@ void wifi_connect() {
 void eduroam_connect() {
   const char* user = "jennifersxq.walkerazj.687@my.csun.edu";
   const char* pass = "wcGSRD25983356";
-  Serial.println("Eduroam connect (hardcoded credentials)");
+  out.println("Eduroam connect (hardcoded credentials)");
 
   beginEnterprise("eduroam", user, pass);
 
@@ -1318,16 +1396,16 @@ void eduroam_connect() {
   while (WiFi.status() != WL_CONNECTED && attempts < 60) {
     delay(500);
     int status = WiFi.status();
-    Serial.print(" s=");
-    Serial.print(status);
+    out.print(" s=");
+    out.print(status);
     attempts++;
   }
-  Serial.println();
-  Serial.print("Final WiFi.status(): ");
-  Serial.println(WiFi.status());
+  out.println();
+  out.print("Final WiFi.status(): ");
+  out.println(WiFi.status());
 
   if (WiFi.status() == WL_CONNECTED) {
-    Serial.println("Eduroam connected!");
+    out.println("Eduroam connected!");
     storedSSID = "eduroam";
     storedPass = String(pass);
     storedEapUser = String(user);
@@ -1342,6 +1420,43 @@ void eduroam_connect() {
   }
 }
 
+void suffield_connect() {
+  const char* ssid = "Suffield Gear";
+  const char* pass = "suffield";
+  out.println("Suffield connect (hardcoded)");
+
+  WiFi.begin(ssid, pass);
+  int attempts = 0;
+  while (WiFi.status() != WL_CONNECTED && attempts < 20) {
+    delay(500);
+    attempts++;
+  }
+
+  if (WiFi.status() == WL_CONNECTED) {
+    storedSSID = String(ssid);
+    storedPass = String(pass);
+    storedEapUser = "";
+    prefs.begin("wifi", false);
+    prefs.putString("ssid", storedSSID);
+    prefs.putString("pass", storedPass);
+    prefs.remove("eap_user");
+    prefs.end();
+    out.print("Connected! IP: ");
+    out.println(WiFi.localIP());
+    setSuccess("CONNECTED");
+  } else {
+    setError("CONNECTION FAILED");
+  }
+}
+
+void get_ip() {
+  if (WiFi.status() == WL_CONNECTED) {
+    setSuccess(WiFi.localIP().toString().c_str());
+  } else {
+    setError("NOT CONNECTED");
+  }
+}
+
 char programName[256];
 char programData[4096];
 size_t programLength;
@@ -1353,7 +1468,7 @@ void _resetProgram() {
 }
 
 bool _otaFlashFirmware() {
-  Serial.println("Downloading ESP32 firmware...");
+  out.println("Downloading ESP32 firmware...");
   String firmwareUrl = String(SERVER) + "/firmware/download";
 
   WiFiClientSecure client;
@@ -1365,14 +1480,14 @@ bool _otaFlashFirmware() {
 
   switch (ret) {
     case HTTP_UPDATE_FAILED:
-      Serial.printf("Firmware update failed (%d): %s\n",
+      out.printf("Firmware update failed (%d): %s\n",
         httpUpdate.getLastError(), httpUpdate.getLastErrorString().c_str());
       return false;
     case HTTP_UPDATE_NO_UPDATES:
-      Serial.println("No firmware binary on server");
+      out.println("No firmware binary on server");
       return false;
     case HTTP_UPDATE_OK:
-      Serial.println("Firmware written to flash");
+      out.println("Firmware written to flash");
       return true;
   }
   return false;
@@ -1380,70 +1495,70 @@ bool _otaFlashFirmware() {
 
 void _otaUpdateSequence() {
   // Step 1: Push launcher to calc first (while calc is still on and can receive it)
-  Serial.println("Pushing launcher to calculator...");
+  out.println("Pushing launcher to calculator...");
   int result = sendProgramVariable(programName, (uint8_t*)programData, programLength);
   _resetProgram();
   if (result) {
-    Serial.print("Launcher push failed: ");
-    Serial.println(result);
+    out.print("Launcher push failed: ");
+    out.println(result);
   } else {
-    Serial.println("Launcher pushed successfully");
+    out.println("Launcher pushed successfully");
   }
 
   // Step 2: Flash ESP32 firmware
   bool firmwareOk = _otaFlashFirmware();
 
   if (firmwareOk) {
-    Serial.println("Firmware flashed, rebooting...");
+    out.println("Firmware flashed, rebooting...");
     delay(500);
     ESP.restart();
   } else {
-    Serial.println("Firmware flash failed");
+    out.println("Firmware flash failed");
   }
 }
 
 void ota_update() {
-  Serial.println("Starting OTA update...");
-  Serial.print("Current version: ");
-  Serial.println(FIRMWARE_VERSION);
+  out.println("Starting OTA update...");
+  out.print("Current version: ");
+  out.println(FIRMWARE_VERSION);
 
   // Check for new version
   String versionUrl = String(SERVER) + "/firmware/version";
-  Serial.print("Checking: ");
-  Serial.println(versionUrl);
+  out.print("Checking: ");
+  out.println(versionUrl);
 
   size_t realsize = 0;
   if (makeRequest(versionUrl, response, MAXHTTPRESPONSELEN, &realsize)) {
-    Serial.println("Version check failed!");
+    out.println("Version check failed!");
     setError("CHECK FAILED");
     return;
   }
 
   String serverVersion = String(response);
   serverVersion.trim();
-  Serial.print("Server version: '");
-  Serial.print(serverVersion);
-  Serial.println("'");
-  Serial.print("Local version: '");
-  Serial.print(FIRMWARE_VERSION);
-  Serial.println("'");
+  out.print("Server version: '");
+  out.print(serverVersion);
+  out.println("'");
+  out.print("Local version: '");
+  out.print(FIRMWARE_VERSION);
+  out.println("'");
 
-  Serial.println(serverVersion == FIRMWARE_VERSION ? "Same version, updating anyway" : "New version available");
+  out.println(serverVersion == FIRMWARE_VERSION ? "Same version, updating anyway" : "New version available");
 
   // Download launcher from server
-  Serial.println("New version available, downloading launcher...");
+  out.println("New version available, downloading launcher...");
   String launcherUrl = String(SERVER) + "/firmware/launcher";
 
   _resetProgram();
   if (makeRequest(launcherUrl, programData, 4096, &programLength)) {
-    Serial.println("Launcher download failed!");
+    out.println("Launcher download failed!");
     setError("DL FAILED");
     return;
   }
 
-  Serial.print("Downloaded launcher: ");
-  Serial.print(programLength);
-  Serial.println(" bytes");
+  out.print("Downloaded launcher: ");
+  out.print(programLength);
+  out.println(" bytes");
 
   strncpy(programName, "ANDYGPT", 256);
 
@@ -1456,11 +1571,11 @@ void ota_update() {
 void send() {
   const char* recipient = strArgs[0];
   const char* message = strArgs[1];
-  Serial.print("sending \"");
-  Serial.print(message);
-  Serial.print("\" to \"");
-  Serial.print(recipient);
-  Serial.println("\"");
+  out.print("sending \"");
+  out.print(message);
+  out.print("\" to \"");
+  out.print(recipient);
+  out.println("\"");
   setSuccess("OK: sent");
 }
 
@@ -1506,8 +1621,8 @@ void image_list() {
     return;
   }
 
-  Serial.print("response: ");
-  Serial.println(response);
+  out.print("response: ");
+  out.println(response);
 
   setSuccess(response);
 }
@@ -1516,8 +1631,8 @@ void fetch_image() {
   memset(frame + 2, 0, 756);
   // fetch image and put it into the frame variable
   int id = realArgs[0];
-  Serial.print("id: ");
-  Serial.println(id);
+  out.print("id: ");
+  out.println(id);
 
   auto url = String(SERVER) + String("/image/get?id=") + urlEncode(String(id));
 
@@ -1528,8 +1643,8 @@ void fetch_image() {
   }
 
   if (realsize != PICSIZE) {
-    Serial.print("response size:");
-    Serial.println(realsize);
+    out.print("response size:");
+    out.println(realsize);
     setError("bad image size");
     return;
   }
@@ -1552,8 +1667,8 @@ void program_list() {
     return;
   }
 
-  Serial.print("response: ");
-  Serial.println(response);
+  out.print("response: ");
+  out.println(response);
 
   setSuccess(response);
 }
@@ -1561,19 +1676,19 @@ void program_list() {
 
 void _sendDownloadedProgram() {
   if (sendProgramVariable(programName, (uint8_t*)programData, programLength)) {
-    Serial.println("failed to transfer requested download");
-    Serial.print(programName);
-    Serial.print("(");
-    Serial.print(programLength);
-    Serial.println(")");
+    out.println("failed to transfer requested download");
+    out.print(programName);
+    out.print("(");
+    out.print(programLength);
+    out.println(")");
   }
   _resetProgram();
 }
 
 void fetch_program() {
   int id = realArgs[0];
-  Serial.print("id: ");
-  Serial.println(id);
+  out.print("id: ");
+  out.println(id);
 
   _resetProgram();
 
@@ -1600,11 +1715,11 @@ void fetch_program() {
 /// OTHER FUNCTIONS
 
 int sendProgramVariable(const char* name, uint8_t* program, size_t variableSize) {
-  Serial.print("transferring: ");
-  Serial.print(name);
-  Serial.print("(");
-  Serial.print(variableSize);
-  Serial.println(")");
+  out.print("transferring: ");
+  out.print(name);
+  out.print("(");
+  out.print(variableSize);
+  out.println(")");
 
   int dataLength = 0;
 
@@ -1621,23 +1736,23 @@ int sendProgramVariable(const char* name, uint8_t* program, size_t variableSize)
 
   auto rtsVal = cbl.send(msg_header, rtsdata, 13);
   if (rtsVal) {
-    Serial.print("rts return: ");
-    Serial.println(rtsVal);
+    out.print("rts return: ");
+    out.println(rtsVal);
     return rtsVal;
   }
 
   cbl.resetLines();
   auto ackVal = cbl.get(msg_header, NULL, &dataLength, 0);
   if (ackVal || msg_header[1] != ACK) {
-    Serial.print("ack return: ");
-    Serial.println(ackVal);
+    out.print("ack return: ");
+    out.println(ackVal);
     return ackVal;
   }
 
   auto ctsRet = cbl.get(msg_header, NULL, &dataLength, 0);
   if (ctsRet || msg_header[1] != CTS) {
-    Serial.print("cts return: ");
-    Serial.println(ctsRet);
+    out.print("cts return: ");
+    out.println(ctsRet);
     return ctsRet;
   }
 
@@ -1646,8 +1761,8 @@ int sendProgramVariable(const char* name, uint8_t* program, size_t variableSize)
   msg_header[3] = 0x00;
   ackVal = cbl.send(msg_header, NULL, 0);
   if (ackVal || msg_header[1] != ACK) {
-    Serial.print("ack cts return: ");
-    Serial.println(ackVal);
+    out.print("ack cts return: ");
+    out.println(ackVal);
     return ackVal;
   }
 
@@ -1656,15 +1771,15 @@ int sendProgramVariable(const char* name, uint8_t* program, size_t variableSize)
   msg_header[3] = (variableSize >> 8) & 0xff;
   auto dataRet = cbl.send(msg_header, program, variableSize);
   if (dataRet) {
-    Serial.print("data return: ");
-    Serial.println(dataRet);
+    out.print("data return: ");
+    out.println(dataRet);
     return dataRet;
   }
 
   ackVal = cbl.get(msg_header, NULL, &dataLength, 0);
   if (ackVal || msg_header[1] != ACK) {
-    Serial.print("ack data: ");
-    Serial.println(ackVal);
+    out.print("ack data: ");
+    out.println(ackVal);
     return ackVal;
   }
 
@@ -1673,12 +1788,12 @@ int sendProgramVariable(const char* name, uint8_t* program, size_t variableSize)
   msg_header[3] = 0x00;
   auto eotVal = cbl.send(msg_header, NULL, 0);
   if (eotVal) {
-    Serial.print("eot return: ");
-    Serial.println(eotVal);
+    out.print("eot return: ");
+    out.println(eotVal);
     return eotVal;
   }
 
-  Serial.print("transferred: ");
-  Serial.println(name);
+  out.print("transferred: ");
+  out.println(name);
   return 0;
 }
