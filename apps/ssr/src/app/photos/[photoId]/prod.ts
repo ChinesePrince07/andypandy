@@ -36,7 +36,7 @@ export const handler = async (request: NextRequest, { params }: { params: Promis
         }
       }
     })
-    document.head.title = `${photo.id} | ${siteConfig.title}`
+    document.head.title = `${photo.title || photo.id} | ${siteConfig.title}`
     // Insert meta open graph tags and twitter meta tags
     createAndInsertOpenGraphMeta(document, photo, request)
 
@@ -77,10 +77,10 @@ const createAndInsertOpenGraphMeta = (document: OnlyHTMLDocument, photo: PhotoMa
 
   const ogTags = {
     'og:type': 'website',
-    'og:title': `${photo.id} on ${siteConfig.title}`,
+    'og:title': `${photo.title || photo.id} | ${siteConfig.title}`,
     'og:description': photo.description || '',
-    'og:image': `${realOrigin}/og/${photo.id}`,
-    'og:url': `${realOrigin}/${photo.id}`,
+    'og:image': `${realOrigin}/api/og/photo/${photo.id}`,
+    'og:url': `${realOrigin}/photos/${photo.id}`,
   }
 
   for (const [property, content] of Object.entries(ogTags)) {
@@ -93,9 +93,9 @@ const createAndInsertOpenGraphMeta = (document: OnlyHTMLDocument, photo: PhotoMa
   // Twitter Card meta tags
   const twitterTags = {
     'twitter:card': 'summary_large_image',
-    'twitter:title': `${photo.id} on ${siteConfig.title}`,
+    'twitter:title': `${photo.title || photo.id} | ${siteConfig.title}`,
     'twitter:description': photo.description || '',
-    'twitter:image': `${realOrigin}/og/${photo.id}`,
+    'twitter:image': `${realOrigin}/api/og/photo/${photo.id}`,
   }
 
   for (const [name, content] of Object.entries(twitterTags)) {
