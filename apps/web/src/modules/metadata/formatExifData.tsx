@@ -310,10 +310,10 @@ export const formatExifData = (exif: PickedExif | null) => {
   const gpsInfo = {
     altitude: exif.GPSAltitude ? `${GPSAltitudeIsAboveSeaLevel ? '' : '-'}${exif.GPSAltitude}` : null,
     latitude: exif.GPSLatitude
-      ? `${Math.abs(exif.GPSLatitude)}° ${exif.GPSLatitudeRef || (exif.GPSLatitude >= 0 ? 'N' : 'S')}`
+      ? `${Math.abs(Number(exif.GPSLatitude))}° ${exif.GPSLatitudeRef || (Number(exif.GPSLatitude) >= 0 ? 'N' : 'S')}`
       : null,
     longitude: exif.GPSLongitude
-      ? `${Math.abs(exif.GPSLongitude)}° ${exif.GPSLongitudeRef || (exif.GPSLongitude >= 0 ? 'E' : 'W')}`
+      ? `${Math.abs(Number(exif.GPSLongitude))}° ${exif.GPSLongitudeRef || (Number(exif.GPSLongitude) >= 0 ? 'E' : 'W')}`
       : null,
   }
 
