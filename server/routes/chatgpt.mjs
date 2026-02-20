@@ -34,7 +34,7 @@ export async function chatgpt() {
             { role: "system", content: systemPrompt },
             { role: "user", content: question },
           ],
-          model: "gpt-4.1-nano",
+          model: "gpt-5.2",
         });
         res.send(result.choices[0]?.message?.content ?? "no response");
         return;
@@ -71,7 +71,7 @@ export async function chatgpt() {
 
       const result = await gpt.chat.completions.create({
         messages,
-        model: "gpt-4.1-nano",
+        model: "gpt-5.2",
       });
 
       const answer = result.choices[0]?.message?.content ?? "NO RESPONSE";
@@ -176,7 +176,7 @@ export async function chatgpt() {
             ],
           },
         ],
-        model: "gpt-4.1-nano",
+        model: "gpt-5.2",
       });
 
       res.send(result.choices[0]?.message?.content ?? "no response");
