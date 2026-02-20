@@ -18,14 +18,28 @@ export async function POST() {
     if (!photo.originalUrl) continue
 
     try {
-      // Fetch only the first 64KB — enough for EXIF headers
-      const res = await fetch(photo.originalUrl, {
-        headers: { Range: 'bytes=0-65535' },
-      })
-      const buffer = Buffer.from(await res.arrayBuffer())
+      // Try partial fetch first, fall back to full image
+      let buffer: Buffer
+      try {
+        const res = await fetch(photo.originalUrl, {
+          headers: { Range: 'bytes=0-131071' },
+        })
+        buffer = Buffer.from(await res.arrayBuffer())
+      } catch {
+        const res = await fetch(photo.originalUrl)
+        buffer = Buffer.from(await res.arrayBuffer())
+      }
 
       // Use exifr.gps() for proper decimal conversion with hemisphere handling
-      const gps = await exifr.gps(buffer)
+      let gps: { latitude: number; longitude: number } | null = null
+      try {
+        gps = await exifr.gps(buffer)
+      } catch {
+        // Partial buffer might fail, try full image
+        const fullRes = await fetch(photo.originalUrl)
+        const fullBuffer = Buffer.from(await fullRes.arrayBuffer())
+        gps = await exifr.gps(fullBuffer)
+      }
 
       if (gps && typeof gps.latitude === 'number' && typeof gps.longitude === 'number') {
         // Update location
