@@ -495,6 +495,39 @@ export default function PhotoEditPage() {
             {/* EXIF Section */}
             <section>
               <h2 className="mb-4 text-lg font-semibold text-white">Camera / EXIF Data</h2>
+
+              {/* Camera Presets */}
+              <div className="mb-4">
+                <p className="mb-2 text-xs text-neutral-500">Quick presets:</p>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { label: 'X-T5', make: 'FUJIFILM', model: 'X-T5', lens: 'XF18-55mmF2.8-4 R LM OIS' },
+                    { label: 'X-T4', make: 'FUJIFILM', model: 'X-T4', lens: 'XF18-55mmF2.8-4 R LM OIS' },
+                    { label: 'X-T30 II', make: 'FUJIFILM', model: 'X-T30 II', lens: 'XF18-55mmF2.8-4 R LM OIS' },
+                    { label: 'X100V', make: 'FUJIFILM', model: 'X100V', lens: '23mm f/2' },
+                    { label: 'X100VI', make: 'FUJIFILM', model: 'X100VI', lens: '23mm f/2' },
+                    { label: 'X-H2S', make: 'FUJIFILM', model: 'X-H2S', lens: 'XF18-55mmF2.8-4 R LM OIS' },
+                    { label: 'X-H2', make: 'FUJIFILM', model: 'X-H2', lens: 'XF18-55mmF2.8-4 R LM OIS' },
+                    { label: 'X-S20', make: 'FUJIFILM', model: 'X-S20', lens: 'XF18-55mmF2.8-4 R LM OIS' },
+                    { label: 'X-Pro3', make: 'FUJIFILM', model: 'X-Pro3', lens: 'XF35mmF1.4 R' },
+                    { label: 'GFX 100S', make: 'FUJIFILM', model: 'GFX 100S', lens: 'GF32-64mmF4 R LM WR' },
+                  ].map((preset) => (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      onClick={() => {
+                        setCameraMake(preset.make)
+                        setCameraModel(preset.model)
+                        setLensModel(preset.lens)
+                      }}
+                      className="rounded-md border border-neutral-700 bg-neutral-800 px-2.5 py-1 text-xs text-neutral-300 transition-colors hover:border-neutral-500 hover:bg-neutral-700 hover:text-white"
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label htmlFor="cameraMake" className="mb-1 block text-sm text-neutral-400">

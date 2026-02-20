@@ -309,8 +309,12 @@ export const formatExifData = (exif: PickedExif | null) => {
   // GPS 信息
   const gpsInfo = {
     altitude: exif.GPSAltitude ? `${GPSAltitudeIsAboveSeaLevel ? '' : '-'}${exif.GPSAltitude}` : null,
-    latitude: exif.GPSLatitude ? `${exif.GPSLatitude}° ${exif.GPSLatitudeRef}` : null,
-    longitude: exif.GPSLongitude ? `${exif.GPSLongitude}° ${exif.GPSLongitudeRef}` : null,
+    latitude: exif.GPSLatitude
+      ? `${Math.abs(exif.GPSLatitude)}° ${exif.GPSLatitudeRef || (exif.GPSLatitude >= 0 ? 'N' : 'S')}`
+      : null,
+    longitude: exif.GPSLongitude
+      ? `${Math.abs(exif.GPSLongitude)}° ${exif.GPSLongitudeRef || (exif.GPSLongitude >= 0 ? 'E' : 'W')}`
+      : null,
   }
 
   const exposureProgram = translateExposureProgram(exif.ExposureProgram || null)
