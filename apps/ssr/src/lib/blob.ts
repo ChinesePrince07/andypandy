@@ -12,16 +12,22 @@ const EMPTY_MANIFEST: AfilmoryManifest = {
 }
 
 export async function getManifest(): Promise<AfilmoryManifest> {
-  const { blobs } = await list({ prefix: MANIFEST_KEY, limit: 1 })
-  const blob = blobs.find((b) => b.pathname === MANIFEST_KEY)
+  try {
+    const { blobs } = await list({ prefix: MANIFEST_KEY, limit: 1 })
+    const blob = blobs.find((b) => b.pathname === MANIFEST_KEY)
 
-  if (!blob) {
-    return EMPTY_MANIFEST
+    if (!blob) {
+      return { ...EMPTY_MANIFEST }
+    }
+
+    const res = await fetch(blob.url)
+    const text = await res.text()
+    const manifest: AfilmoryManifest = JSON.parse(text)
+    return manifest
+  } catch (error) {
+    console.error('Failed to load manifest:', error)
+    return { ...EMPTY_MANIFEST }
   }
-
-  const res = await fetch(blob.url)
-  const manifest: AfilmoryManifest = await res.json()
-  return manifest
 }
 
 export async function saveManifest(manifest: AfilmoryManifest): Promise<void> {
