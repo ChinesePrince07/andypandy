@@ -60,6 +60,10 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
   const { data, content } = matter(text);
   const renderer = new marked.Renderer();
   renderer.image = ({ href, title, text }) => {
+    const isVideo = /\.(mp4|mov|webm|ogg)(\?.*)?$/i.test(href || "");
+    if (isVideo) {
+      return `<video src="${href}" controls style="max-width: 50%; height: auto;"></video>`;
+    }
     const alt = text ? ` alt="${text}"` : "";
     const t = title ? ` title="${title}"` : "";
     return `<img src="${href}"${alt}${t} style="max-width: 50%; height: auto;" />`;
