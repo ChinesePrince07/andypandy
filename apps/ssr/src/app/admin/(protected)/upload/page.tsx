@@ -19,6 +19,7 @@ export default function UploadPage() {
   const [isUploading, setIsUploading] = useState(false)
   const [isDragOver, setIsDragOver] = useState(false)
   const [batchTagInput, setBatchTagInput] = useState('')
+  const [selected, setSelected] = useState<Set<number>>(new Set())
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const addFiles = useCallback((newFiles: FileList | File[]) => {
@@ -76,7 +77,27 @@ export default function UploadPage() {
       }
       return prev.filter((_, i) => i !== index)
     })
+    setSelected(new Set())
   }, [])
+
+  const toggleSelect = useCallback((index: number) => {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(index)) next.delete(index)
+      else next.add(index)
+      return next
+    })
+  }, [])
+
+  const removeSelected = useCallback(() => {
+    setFiles((prev) => {
+      for (const i of selected) {
+        if (prev[i]) URL.revokeObjectURL(prev[i].previewUrl)
+      }
+      return prev.filter((_, i) => !selected.has(i))
+    })
+    setSelected(new Set())
+  }, [selected])
 
   const updateFileStatus = useCallback((index: number, status: FileStatus, error?: string) => {
     setFiles((prev) => prev.map((f, i) => (i === index ? { ...f, status, error } : f)))
@@ -147,8 +168,14 @@ export default function UploadPage() {
     files.forEach((f) => URL.revokeObjectURL(f.previewUrl))
     setFiles([])
     setBatchTagInput('')
+    setSelected(new Set())
   }, [files])
 
+  const selectableIndices = files.reduce<number[]>((acc, f, i) => {
+    if (f.status !== 'done' && f.status !== 'uploading') acc.push(i)
+    return acc
+  }, [])
+  const allSelectable = selectableIndices.length > 0 && selectableIndices.every((i) => selected.has(i))
   const pendingCount = files.filter((f) => f.status === 'pending').length
   const doneCount = files.filter((f) => f.status === 'done').length
   const errorCount = files.filter((f) => f.status === 'error').length
@@ -214,15 +241,36 @@ export default function UploadPage() {
           {/* Stats bar */}
           <div className="mb-5 flex items-center justify-between">
             <div className="flex items-center gap-3">
+              {!isUploading && selectableIndices.length > 0 && (
+                <button
+                  onClick={() => {
+                    if (allSelectable) setSelected(new Set())
+                    else setSelected(new Set(selectableIndices))
+                  }}
+                  className="flex h-5 w-5 items-center justify-center rounded border border-neutral-600 transition-colors hover:border-neutral-400"
+                >
+                  {allSelectable && (
+                    <svg className="h-3 w-3 text-white" viewBox="0 0 20 20" fill="currentColor">
+                      <path
+                        fillRule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  )}
+                </button>
+              )}
               <span className="text-sm font-medium text-white">
-                {files.length} photo{files.length !== 1 ? 's' : ''}
+                {selected.size > 0
+                  ? `${selected.size} selected`
+                  : `${files.length} photo${files.length !== 1 ? 's' : ''}`}
               </span>
               {isUploading && (
                 <span className="text-xs text-neutral-500">
                   {doneCount + 1} of {files.length}
                 </span>
               )}
-              {doneCount > 0 && !isUploading && (
+              {doneCount > 0 && !isUploading && selected.size === 0 && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-400">
                   <svg className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
                     <path
@@ -234,17 +282,30 @@ export default function UploadPage() {
                   {doneCount} uploaded
                 </span>
               )}
-              {errorCount > 0 && (
+              {errorCount > 0 && selected.size === 0 && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-red-500/10 px-2 py-0.5 text-xs font-medium text-red-400">
                   {errorCount} failed
                 </span>
               )}
             </div>
-            {!isUploading && pendingCount > 0 && (
-              <button onClick={clearAll} className="text-xs text-neutral-600 transition-colors hover:text-neutral-400">
-                Clear all
-              </button>
-            )}
+            <div className="flex items-center gap-3">
+              {!isUploading && selected.size > 0 && (
+                <button
+                  onClick={removeSelected}
+                  className="rounded-lg bg-red-500/10 px-3 py-1.5 text-xs font-medium text-red-400 transition-colors hover:bg-red-500/20"
+                >
+                  Delete {selected.size}
+                </button>
+              )}
+              {!isUploading && pendingCount > 0 && selected.size === 0 && (
+                <button
+                  onClick={clearAll}
+                  className="text-xs text-neutral-600 transition-colors hover:text-neutral-400"
+                >
+                  Clear all
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Batch tag input */}
@@ -333,7 +394,7 @@ export default function UploadPage() {
                     </div>
                   )}
 
-                  {/* Done badge - always visible */}
+                  {/* Done badge */}
                   {uploadFile.status === 'done' && (
                     <div className="absolute left-2 top-2">
                       <div className="rounded-full bg-emerald-500 p-1 shadow-lg shadow-black/20">
@@ -346,6 +407,31 @@ export default function UploadPage() {
                         </svg>
                       </div>
                     </div>
+                  )}
+
+                  {/* Selection checkbox */}
+                  {!isUploading && uploadFile.status !== 'done' && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        toggleSelect(index)
+                      }}
+                      className={`absolute left-2 top-2 flex h-5 w-5 items-center justify-center rounded border backdrop-blur-sm transition-all ${
+                        selected.has(index)
+                          ? 'border-white bg-white'
+                          : 'border-white/50 bg-black/40 hover:border-white/80'
+                      }`}
+                    >
+                      {selected.has(index) && (
+                        <svg className="h-3 w-3 text-black" viewBox="0 0 20 20" fill="currentColor">
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      )}
+                    </button>
                   )}
 
                   {/* Remove button */}
