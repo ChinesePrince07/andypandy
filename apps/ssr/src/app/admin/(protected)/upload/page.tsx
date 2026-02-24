@@ -355,7 +355,7 @@ export default function UploadPage() {
                         e.stopPropagation()
                         removeFile(index)
                       }}
-                      className="absolute right-2 top-2 rounded-full bg-black/60 p-1 text-white/70 opacity-0 backdrop-blur-sm transition-all hover:bg-black/80 hover:text-white group-hover/card:opacity-100"
+                      className="absolute right-2 top-2 rounded-full bg-black/60 p-1.5 text-white/80 backdrop-blur-sm transition-all hover:bg-red-500 hover:text-white"
                     >
                       <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
                         <path
