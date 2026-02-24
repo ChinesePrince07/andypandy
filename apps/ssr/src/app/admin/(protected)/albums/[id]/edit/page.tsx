@@ -1,10 +1,10 @@
-import { getManifest } from '~/lib/blob'
+import { getManifestSafe } from '~/lib/blob'
 
 import { AlbumEditor } from './album-editor'
 
 export default async function EditAlbumPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const manifest = await getManifest()
+  const manifest = await getManifestSafe()
   const album = (manifest.albums || []).find((a) => a.id === id)
 
   if (!album) {

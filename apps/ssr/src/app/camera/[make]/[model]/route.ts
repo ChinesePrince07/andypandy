@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server'
 
-import { getManifest } from '~/lib/blob'
+import { getManifestSafe } from '~/lib/blob'
 import { serveSPAWithMeta } from '~/lib/ssr-meta'
 
 export const dynamic = 'force-dynamic'
@@ -11,7 +11,7 @@ export async function GET(
 ) {
   const { make, model } = await params
   const displayName = `${decodeURIComponent(make)} ${decodeURIComponent(model)}`
-  const manifest = await getManifest()
+  const manifest = await getManifestSafe()
   const count = manifest.data.filter((p) => {
     if (!p.exif?.Make || !p.exif?.Model) return false
     return `${p.exif.Make.trim()} ${p.exif.Model.trim()}` === displayName

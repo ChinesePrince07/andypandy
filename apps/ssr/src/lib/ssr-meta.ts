@@ -3,7 +3,7 @@ import { DOMParser } from 'linkedom'
 import type { NextRequest } from 'next/server'
 
 import { verifyAdmin } from '~/lib/admin-auth'
-import { getManifest } from '~/lib/blob'
+import { getManifestSafe } from '~/lib/blob'
 import { injectAdminButton, injectConfigToDocument, injectManifestToDocument } from '~/lib/injectable'
 
 type HtmlElement = ReturnType<typeof DOMParser.prototype.parseFromString>
@@ -79,7 +79,7 @@ export async function serveSPAWithMeta(
   })
 
   injectConfigToDocument(document)
-  const manifest = await getManifest()
+  const manifest = await getManifestSafe()
   injectManifestToDocument(document, manifest)
 
   const isAdmin = await verifyAdmin()

@@ -2,7 +2,7 @@ import { DOMParser } from 'linkedom'
 import type { NextRequest } from 'next/server'
 
 import { verifyAdmin } from '~/lib/admin-auth'
-import { getManifest } from '~/lib/blob'
+import { getManifestSafe } from '~/lib/blob'
 import { injectAdminButton, injectConfigToDocument, injectManifestToDocument } from '~/lib/injectable'
 
 export const dynamic = 'force-dynamic'
@@ -11,7 +11,7 @@ const renderIndex = async () => {
   const indexHtml = await import('../../index.html').then((m) => m.default)
   const document = new DOMParser().parseFromString(indexHtml, 'text/html')
   injectConfigToDocument(document)
-  const manifest = await getManifest()
+  const manifest = await getManifestSafe()
   injectManifestToDocument(document, manifest)
   const isAdmin = await verifyAdmin()
   if (isAdmin) {

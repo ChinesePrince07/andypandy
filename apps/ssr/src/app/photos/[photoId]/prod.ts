@@ -5,7 +5,7 @@ import type { NextRequest } from 'next/server'
 
 import indexHtml from '~/index.html'
 import { verifyAdmin } from '~/lib/admin-auth'
-import { getManifest } from '~/lib/blob'
+import { getManifestSafe } from '~/lib/blob'
 import { injectAdminButton, injectConfigToDocument, injectManifestToDocument } from '~/lib/injectable'
 
 type HtmlElement = ReturnType<typeof DOMParser.prototype.parseFromString>
@@ -14,7 +14,7 @@ type OnlyHTMLDocument = HtmlElement extends infer T ? (T extends { [key: string]
 export const handler = async (request: NextRequest, { params }: { params: Promise<{ photoId: string }> }) => {
   const { photoId } = await params
 
-  const manifest = await getManifest()
+  const manifest = await getManifestSafe()
   const photo = manifest.data.find((p) => p.id === photoId)
   if (!photo) {
     return new Response(indexHtml, {

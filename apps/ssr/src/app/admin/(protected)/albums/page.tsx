@@ -1,11 +1,11 @@
 import Link from 'next/link'
 
-import { getManifest } from '~/lib/blob'
+import { getManifestSafe } from '~/lib/blob'
 
 import { AlbumActions } from './album-actions'
 
 export default async function AlbumsPage() {
-  const manifest = await getManifest()
+  const manifest = await getManifestSafe()
   const albums = manifest.albums || []
 
   return (

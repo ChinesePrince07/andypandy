@@ -1,14 +1,14 @@
 import { ImageResponse } from 'next/og'
 import type { NextRequest } from 'next/server'
 
-import { getManifest } from '~/lib/blob'
+import { getManifestSafe } from '~/lib/blob'
 import { getOGImageLayout } from '~/lib/og-helpers'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ albumId: string }> }) {
   const { albumId } = await params
-  const manifest = await getManifest()
+  const manifest = await getManifestSafe()
   const album = (manifest.albums || []).find((a) => a.id === albumId)
 
   if (!album) {
