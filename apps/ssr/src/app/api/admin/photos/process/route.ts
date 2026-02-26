@@ -487,6 +487,13 @@ async function handleRecover(body: any) {
       await saveManifest(manifest)
     }
 
+    // Debug: sample of all blob pathnames and their content types
+    const blobSample = allBlobs.slice(0, 30).map((b: any) => ({
+      pathname: b.pathname,
+      contentType: b.contentType,
+      size: b.size,
+    }))
+
     return Response.json({
       dryRun,
       totalBlobsScanned: allBlobs.length,
@@ -495,6 +502,7 @@ async function handleRecover(body: any) {
       recovered: recovered.length,
       errors,
       recoveredPhotos: recovered.map((p: PhotoManifestItem) => ({ id: p.id, pathname: p.s3Key, url: p.originalUrl })),
+      debug: { blobSample, manifestPhotos: manifest.data.length },
     })
   } catch (error) {
     console.error('Recovery error:', error)
