@@ -268,12 +268,28 @@ async function handleRecover(body: any) {
 
     const allBlobs = await listAllBlobs()
 
-    const originalBlobs = allBlobs.filter(
-      (b: any) =>
-        !b.pathname.startsWith('photos/thumb/') &&
-        b.pathname !== 'manifest.json' &&
-        b.contentType?.startsWith('image/'),
-    )
+    const imageExtensions = new Set([
+      'jpg',
+      'jpeg',
+      'png',
+      'webp',
+      'gif',
+      'tiff',
+      'tif',
+      'heic',
+      'heif',
+      'avif',
+      'bmp',
+      'svg',
+    ])
+    const originalBlobs = allBlobs.filter((b: any) => {
+      if (b.pathname.startsWith('photos/thumb/')) return false
+      if (b.pathname === 'manifest.json') return false
+      // Check content type if available, otherwise check file extension
+      if (b.contentType?.startsWith('image/')) return true
+      const ext = b.pathname.split('.').pop()?.toLowerCase() || ''
+      return imageExtensions.has(ext)
+    })
 
     const thumbBlobs = new Map(
       allBlobs.filter((b: any) => b.pathname.startsWith('photos/thumb/')).map((b: any) => [b.pathname, b]),
