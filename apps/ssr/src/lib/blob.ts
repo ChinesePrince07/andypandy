@@ -25,7 +25,9 @@ export async function getManifest(): Promise<AfilmoryManifest> {
     return { ...EMPTY_MANIFEST, albums: [...EMPTY_MANIFEST.albums] }
   }
 
-  const res = await fetch(blob.url, { cache: 'no-store' })
+  // Add cache-busting param to bypass CDN edge caches
+  const bustUrl = `${blob.url}${blob.url.includes('?') ? '&' : '?'}t=${Date.now()}`
+  const res = await fetch(bustUrl, { cache: 'no-store' })
   if (!res.ok) {
     throw new Error(`Failed to fetch manifest blob: ${res.status} ${res.statusText}`)
   }

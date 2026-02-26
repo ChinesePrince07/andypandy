@@ -157,7 +157,9 @@ export async function POST(req: NextRequest) {
           .raw()
           .toBuffer({ resolveWithObject: true })
         const thumbHashArray = rgbaToThumbHash(info.width, info.height, data)
-        const thumbHashBase64 = Buffer.from(thumbHashArray).toString('base64')
+        const thumbHashHex = Array.from(thumbHashArray)
+          .map((byte) => byte.toString(16).padStart(2, '0'))
+          .join('')
 
         // Extract EXIF
         const exifr = (await import('exifr')).default
@@ -263,7 +265,7 @@ export async function POST(req: NextRequest) {
           originalUrl: blob.url,
           thumbnailUrl,
           ogImageUrl: null,
-          thumbHash: thumbHashBase64,
+          thumbHash: thumbHashHex,
           width: fullWidth,
           height: fullHeight,
           aspectRatio: fullWidth && fullHeight ? fullWidth / fullHeight : 1,

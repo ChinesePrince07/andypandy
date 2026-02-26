@@ -108,7 +108,10 @@ export async function POST(req: NextRequest) {
       .raw()
       .toBuffer({ resolveWithObject: true })
     const thumbHashArray = rgbaToThumbHash(info.width, info.height, data)
-    const thumbHashBase64 = Buffer.from(thumbHashArray).toString('base64')
+    // Encode as hex string to match frontend's decompressUint8Array expectation
+    const thumbHashHex = Array.from(thumbHashArray)
+      .map((byte) => byte.toString(16).padStart(2, '0'))
+      .join('')
 
     // Extract EXIF data
     const exifr = (await import('exifr')).default
@@ -234,7 +237,7 @@ export async function POST(req: NextRequest) {
       originalUrl: blobUrl,
       thumbnailUrl,
       ogImageUrl: null,
-      thumbHash: thumbHashBase64,
+      thumbHash: thumbHashHex,
       width: fullWidth,
       height: fullHeight,
       aspectRatio: fullWidth && fullHeight ? fullWidth / fullHeight : 1,
@@ -249,7 +252,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Update manifest with retry to handle concurrent writes
-    for (let attempt = 0; attempt < 3; attempt++) {
+    for (let attempt = 0; attempt < 5; attempt++) {
       const manifest = await getManifest()
       // Skip if already added (dedup)
       if (manifest.data.some((p) => p.id === photoItem.id)) break
@@ -259,11 +262,16 @@ export async function POST(req: NextRequest) {
       manifest.lenses = rebuildLenses(manifest.data)
       await saveManifest(manifest)
 
+      // Brief delay to allow Vercel Blob propagation before verification
+      await new Promise((r) => setTimeout(r, 500))
+
       // Verify the write succeeded by re-reading
       const verification = await getManifest()
       if (verification.data.some((p) => p.id === photoItem.id)) break
-      // If not found, another concurrent write overwrote us — retry
-      console.warn(`Manifest write lost for ${photoItem.id}, retrying (attempt ${attempt + 1})`)
+      // If not found, another concurrent write overwrote us — retry with backoff
+      const backoff = 1000 * (attempt + 1)
+      console.warn(`Manifest write lost for ${photoItem.id}, retrying in ${backoff}ms (attempt ${attempt + 1})`)
+      await new Promise((r) => setTimeout(r, backoff))
     }
 
     return Response.json(photoItem)
@@ -385,7 +393,9 @@ async function handleRecover(body: any) {
           .raw()
           .toBuffer({ resolveWithObject: true })
         const thumbHashArray = rgbaToThumbHash(thumbData.info.width, thumbData.info.height, thumbData.data)
-        const thumbHashBase64 = Buffer.from(thumbHashArray).toString('base64')
+        const thumbHashHex = Array.from(thumbHashArray)
+          .map((byte) => byte.toString(16).padStart(2, '0'))
+          .join('')
 
         const exifr = (await import('exifr')).default
         let exifData: Record<string, any> | null = null
@@ -488,7 +498,7 @@ async function handleRecover(body: any) {
           originalUrl: blob.url,
           thumbnailUrl,
           ogImageUrl: null,
-          thumbHash: thumbHashBase64,
+          thumbHash: thumbHashHex,
           width: fullWidth,
           height: fullHeight,
           aspectRatio: fullWidth && fullHeight ? fullWidth / fullHeight : 1,

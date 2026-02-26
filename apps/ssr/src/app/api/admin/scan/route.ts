@@ -109,7 +109,9 @@ export async function POST(req: NextRequest) {
           .raw()
           .toBuffer({ resolveWithObject: true })
         const thumbHashArray = rgbaToThumbHash(thumbData.info.width, thumbData.info.height, thumbData.data)
-        const thumbHashBase64 = Buffer.from(thumbHashArray).toString('base64')
+        const thumbHashHex = Array.from(thumbHashArray)
+          .map((byte) => byte.toString(16).padStart(2, '0'))
+          .join('')
 
         const exifr = (await import('exifr')).default
         let exifData: Record<string, any> | null = null
@@ -117,11 +119,25 @@ export async function POST(req: NextRequest) {
         try {
           exifData = await exifr.parse(buffer, {
             pick: [
-              'Make', 'Model', 'LensModel', 'LensMake', 'FocalLength',
-              'FocalLengthIn35mmFormat', 'FNumber', 'ISO', 'ExposureTime',
-              'ExposureCompensation', 'WhiteBalance', 'DateTimeOriginal',
-              'CreateDate', 'Flash', 'MeteringMode', 'ColorSpace',
-              'ImageWidth', 'ImageHeight', 'Orientation',
+              'Make',
+              'Model',
+              'LensModel',
+              'LensMake',
+              'FocalLength',
+              'FocalLengthIn35mmFormat',
+              'FNumber',
+              'ISO',
+              'ExposureTime',
+              'ExposureCompensation',
+              'WhiteBalance',
+              'DateTimeOriginal',
+              'CreateDate',
+              'Flash',
+              'MeteringMode',
+              'ColorSpace',
+              'ImageWidth',
+              'ImageHeight',
+              'Orientation',
             ],
           })
           const gps = await exifr.gps(buffer)
@@ -188,14 +204,18 @@ export async function POST(req: NextRequest) {
 
         const photoItem: PhotoManifestItem = {
           id,
-          title: blob.pathname.split('/').pop()?.replace(/\.\w+$/, '') || id,
+          title:
+            blob.pathname
+              .split('/')
+              .pop()
+              ?.replace(/\.\w+$/, '') || id,
           description: '',
           dateTaken: dateTaken || blob.uploadedAt.toString(),
           tags: [],
           originalUrl: blob.url,
           thumbnailUrl,
           ogImageUrl: null,
-          thumbHash: thumbHashBase64,
+          thumbHash: thumbHashHex,
           width: fullWidth,
           height: fullHeight,
           aspectRatio: fullWidth && fullHeight ? fullWidth / fullHeight : 1,
@@ -218,8 +238,9 @@ export async function POST(req: NextRequest) {
 
     if (!dryRun && recovered.length > 0) {
       manifest.data.push(...recovered)
-      manifest.data.sort((a: PhotoManifestItem, b: PhotoManifestItem) =>
-        new Date(b.dateTaken).getTime() - new Date(a.dateTaken).getTime()
+      manifest.data.sort(
+        (a: PhotoManifestItem, b: PhotoManifestItem) =>
+          new Date(b.dateTaken).getTime() - new Date(a.dateTaken).getTime(),
       )
 
       const camerasSeen = new Map<string, CameraInfo>()
