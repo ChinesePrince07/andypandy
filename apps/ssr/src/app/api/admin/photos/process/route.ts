@@ -243,14 +243,23 @@ export async function POST(req: NextRequest) {
       isHDR: false,
     }
 
-    // Update manifest
-    const manifest = await getManifest()
-    manifest.data.push(photoItem)
-    // Sort by dateTaken (newest first)
-    manifest.data.sort((a, b) => new Date(b.dateTaken).getTime() - new Date(a.dateTaken).getTime())
-    manifest.cameras = rebuildCameras(manifest.data)
-    manifest.lenses = rebuildLenses(manifest.data)
-    await saveManifest(manifest)
+    // Update manifest with retry to handle concurrent writes
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const manifest = await getManifest()
+      // Skip if already added (dedup)
+      if (manifest.data.some((p) => p.id === photoItem.id)) break
+      manifest.data.push(photoItem)
+      manifest.data.sort((a, b) => new Date(b.dateTaken).getTime() - new Date(a.dateTaken).getTime())
+      manifest.cameras = rebuildCameras(manifest.data)
+      manifest.lenses = rebuildLenses(manifest.data)
+      await saveManifest(manifest)
+
+      // Verify the write succeeded by re-reading
+      const verification = await getManifest()
+      if (verification.data.some((p) => p.id === photoItem.id)) break
+      // If not found, another concurrent write overwrote us — retry
+      console.warn(`Manifest write lost for ${photoItem.id}, retrying (attempt ${attempt + 1})`)
+    }
 
     return Response.json(photoItem)
   } catch (error) {
@@ -503,13 +512,6 @@ async function handleRecover(body: any) {
       await saveManifest(manifest)
     }
 
-    // Debug: sample of all blob pathnames and their content types
-    const blobSample = allBlobs.slice(0, 30).map((b: any) => ({
-      pathname: b.pathname,
-      contentType: b.contentType,
-      size: b.size,
-    }))
-
     return Response.json({
       dryRun,
       totalBlobsScanned: allBlobs.length,
@@ -518,7 +520,6 @@ async function handleRecover(body: any) {
       recovered: recovered.length,
       errors,
       recoveredPhotos: recovered.map((p: PhotoManifestItem) => ({ id: p.id, pathname: p.s3Key, url: p.originalUrl })),
-      debug: { blobSample, manifestPhotos: manifest.data.length },
     })
   } catch (error) {
     console.error('Recovery error:', error)
