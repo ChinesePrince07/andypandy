@@ -6,7 +6,7 @@ import type { CameraInfo, LensInfo, LocationInfo, PickedExif, PhotoManifestItem 
 
 import { generatePhotoAI, reverseGeocode } from '~/lib/ai'
 import { requireAdmin } from '~/lib/admin-auth'
-import { getManifest, listAllBlobs, saveManifest, uploadToBlob } from '~/lib/blob'
+import { deleteFromBlob, getManifest, listAllBlobs, saveManifest, uploadToBlob } from '~/lib/blob'
 
 export const maxDuration = 300
 export const dynamic = 'force-dynamic'
@@ -59,6 +59,11 @@ export async function POST(req: NextRequest) {
     // Recovery mode: scan blob storage for orphaned photos
     if (body.action === 'recover') {
       return handleRecover(body)
+    }
+
+    // Cleanup mode: delete orphaned blobs not referenced by any manifest entry
+    if (body.action === 'cleanup') {
+      return handleCleanup(body)
     }
 
     const { blobUrl, filename, tags: userTags, title: userTitle } = body
@@ -524,5 +529,55 @@ async function handleRecover(body: any) {
   } catch (error) {
     console.error('Recovery error:', error)
     return Response.json({ error: error instanceof Error ? error.message : 'Recovery failed' }, { status: 500 })
+  }
+}
+
+async function handleCleanup(body: any) {
+  try {
+    const dryRun = body.dryRun !== false
+
+    const manifest = await getManifest()
+    const allBlobs = await listAllBlobs()
+
+    // Build a set of all URLs referenced by the manifest
+    const referencedUrls = new Set<string>()
+    for (const photo of manifest.data) {
+      if (photo.originalUrl) referencedUrls.add(photo.originalUrl)
+      if (photo.thumbnailUrl) referencedUrls.add(photo.thumbnailUrl)
+      if (photo.ogImageUrl) referencedUrls.add(photo.ogImageUrl)
+    }
+
+    // Find orphaned blobs (not referenced by manifest, not the manifest itself)
+    const orphaned = allBlobs.filter((b) => {
+      if (b.pathname === 'manifest.json') return false
+      return !referencedUrls.has(b.url)
+    })
+
+    const deleted: string[] = []
+    const errors: string[] = []
+
+    if (!dryRun) {
+      for (const blob of orphaned) {
+        try {
+          await deleteFromBlob(blob.url)
+          deleted.push(blob.pathname)
+        } catch (e) {
+          errors.push(`Failed to delete ${blob.pathname}: ${e instanceof Error ? e.message : String(e)}`)
+        }
+      }
+    }
+
+    return Response.json({
+      dryRun,
+      totalBlobs: allBlobs.length,
+      referencedBlobs: referencedUrls.size,
+      orphanedBlobs: orphaned.length,
+      deleted: deleted.length,
+      errors,
+      orphanedList: orphaned.map((b) => ({ pathname: b.pathname, url: b.url, size: b.size })),
+    })
+  } catch (error) {
+    console.error('Cleanup error:', error)
+    return Response.json({ error: error instanceof Error ? error.message : 'Cleanup failed' }, { status: 500 })
   }
 }
