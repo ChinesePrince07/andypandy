@@ -170,17 +170,26 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   // even if blob cleanup fails afterwards
   await saveManifest(manifest)
 
-  // Then delete blobs (best-effort cleanup)
+  // Then delete blobs
+  const blobErrors: string[] = []
   try {
+    console.log(`[DELETE] Deleting original blob: ${photo.originalUrl}`)
     await deleteFromBlob(photo.originalUrl)
-  } catch {
-    // Original may already be gone, continue
+    console.log(`[DELETE] Successfully deleted original blob`)
+  } catch (e) {
+    const msg = `Failed to delete original blob ${photo.originalUrl}: ${e instanceof Error ? e.message : String(e)}`
+    console.error(`[DELETE] ${msg}`)
+    blobErrors.push(msg)
   }
   try {
+    console.log(`[DELETE] Deleting thumbnail blob: ${photo.thumbnailUrl}`)
     await deleteFromBlob(photo.thumbnailUrl)
-  } catch {
-    // Thumbnail may already be gone, continue
+    console.log(`[DELETE] Successfully deleted thumbnail blob`)
+  } catch (e) {
+    const msg = `Failed to delete thumbnail blob ${photo.thumbnailUrl}: ${e instanceof Error ? e.message : String(e)}`
+    console.error(`[DELETE] ${msg}`)
+    blobErrors.push(msg)
   }
 
-  return Response.json({ success: true })
+  return Response.json({ success: true, blobsDeleted: blobErrors.length === 0, blobErrors })
 }

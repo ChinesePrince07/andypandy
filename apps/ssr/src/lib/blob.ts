@@ -66,7 +66,13 @@ export async function uploadToBlob(filename: string, data: Buffer, contentType: 
 }
 
 export async function deleteFromBlob(url: string): Promise<void> {
+  if (!url) {
+    console.warn('[deleteFromBlob] Empty URL provided, skipping')
+    return
+  }
+  console.log(`[deleteFromBlob] Calling del() with URL: ${url}`)
   await del(url)
+  console.log(`[deleteFromBlob] del() completed for: ${url}`)
 }
 
 export async function listAllBlobs(prefix?: string) {

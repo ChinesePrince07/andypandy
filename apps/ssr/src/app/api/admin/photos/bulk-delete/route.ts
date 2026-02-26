@@ -61,21 +61,26 @@ export async function POST(req: NextRequest) {
     // even if blob cleanup fails afterwards
     await saveManifest(manifest)
 
-    // Then delete blobs (best-effort cleanup)
+    // Then delete blobs
+    const blobErrors: string[] = []
     for (const photo of toDelete) {
       try {
         await deleteFromBlob(photo.originalUrl)
-      } catch {
-        /* ignore */
+      } catch (e) {
+        const msg = `Failed to delete original ${photo.originalUrl}: ${e instanceof Error ? e.message : String(e)}`
+        console.error(`[BULK-DELETE] ${msg}`)
+        blobErrors.push(msg)
       }
       try {
         await deleteFromBlob(photo.thumbnailUrl)
-      } catch {
-        /* ignore */
+      } catch (e) {
+        const msg = `Failed to delete thumbnail ${photo.thumbnailUrl}: ${e instanceof Error ? e.message : String(e)}`
+        console.error(`[BULK-DELETE] ${msg}`)
+        blobErrors.push(msg)
       }
     }
 
-    return Response.json({ deleted: toDelete.length })
+    return Response.json({ deleted: toDelete.length, blobsDeleted: blobErrors.length === 0, blobErrors })
   } catch (error) {
     console.error('Bulk delete error:', error)
     return Response.json({ error: error instanceof Error ? error.message : 'Bulk delete failed' }, { status: 500 })
