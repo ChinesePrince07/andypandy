@@ -7,7 +7,7 @@ import {
 } from '@afilmory/ui'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 import { Drawer } from 'vaul'
@@ -29,6 +29,11 @@ export const PageHeaderRight = () => {
   const setCommandPaletteOpen = useSetAtom(isCommandPaletteOpenAtom)
   const navigate = useNavigate()
   const sessionUser = useAtomValue(sessionUserAtom)
+  const [isAdmin, setIsAdmin] = useState(false)
+
+  useEffect(() => {
+    setIsAdmin(!!(window as any).__IS_ADMIN__)
+  }, [])
 
   // 计算视图设置是否有自定义配置
   const hasViewCustomization = gallerySetting.columns !== 'auto' || gallerySetting.sortOrder !== 'desc'
@@ -84,7 +89,7 @@ export const PageHeaderRight = () => {
         {isMobile && <MoreActionMenu />}
 
         {/* Admin - only shown when logged in as admin (SSR-injected flag) */}
-        {typeof window !== 'undefined' && (window as any).__IS_ADMIN__ && (
+        {isAdmin && (
           <ActionIconButton
             icon="i-mingcute-settings-6-line"
             title="Admin"
