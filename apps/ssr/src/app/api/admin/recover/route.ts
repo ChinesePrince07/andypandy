@@ -10,6 +10,7 @@ import { getManifest, listAllBlobs, saveManifest, uploadToBlob } from '~/lib/blo
 
 export const maxDuration = 300
 export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
 function rebuildCameras(photos: PhotoManifestItem[]): CameraInfo[] {
   const seen = new Map<string, CameraInfo>()
@@ -165,11 +166,25 @@ export async function POST(req: NextRequest) {
         try {
           exifData = await exifr.parse(buffer, {
             pick: [
-              'Make', 'Model', 'LensModel', 'LensMake', 'FocalLength',
-              'FocalLengthIn35mmFormat', 'FNumber', 'ISO', 'ExposureTime',
-              'ExposureCompensation', 'WhiteBalance', 'DateTimeOriginal',
-              'CreateDate', 'Flash', 'MeteringMode', 'ColorSpace',
-              'ImageWidth', 'ImageHeight', 'Orientation',
+              'Make',
+              'Model',
+              'LensModel',
+              'LensMake',
+              'FocalLength',
+              'FocalLengthIn35mmFormat',
+              'FNumber',
+              'ISO',
+              'ExposureTime',
+              'ExposureCompensation',
+              'WhiteBalance',
+              'DateTimeOriginal',
+              'CreateDate',
+              'Flash',
+              'MeteringMode',
+              'ColorSpace',
+              'ImageWidth',
+              'ImageHeight',
+              'Orientation',
             ],
           })
           const gps = await exifr.gps(buffer)
@@ -219,7 +234,8 @@ export async function POST(req: NextRequest) {
               ? exifData.DateTimeOriginal.toISOString()
               : String(exifData.DateTimeOriginal)
         } else if (exifData?.CreateDate) {
-          dateTaken = exifData.CreateDate instanceof Date ? exifData.CreateDate.toISOString() : String(exifData.CreateDate)
+          dateTaken =
+            exifData.CreateDate instanceof Date ? exifData.CreateDate.toISOString() : String(exifData.CreateDate)
         }
 
         let gpsData: LocationInfo | null = null
@@ -236,7 +252,11 @@ export async function POST(req: NextRequest) {
 
         const photoItem: PhotoManifestItem = {
           id,
-          title: blob.pathname.split('/').pop()?.replace(/\.\w+$/, '') || id,
+          title:
+            blob.pathname
+              .split('/')
+              .pop()
+              ?.replace(/\.\w+$/, '') || id,
           description: '',
           dateTaken: dateTaken || blob.uploadedAt.toString(),
           tags: [],

@@ -10,6 +10,7 @@ import { getManifest, listAllBlobs, saveManifest, uploadToBlob } from '~/lib/blo
 
 export const maxDuration = 300
 export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
 export async function GET() {
   const authenticated = await verifyAdmin()
