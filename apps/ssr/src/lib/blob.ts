@@ -65,6 +65,7 @@ export async function uploadToBlob(filename: string, data: Buffer, contentType: 
   const { url } = await put(filename, data, {
     access: 'public',
     addRandomSuffix: false,
+    allowOverwrite: true,
     contentType,
   })
   return url

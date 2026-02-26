@@ -189,6 +189,9 @@ export default function PhotoEditPage() {
   const [latitude, setLatitude] = useState('')
   const [longitude, setLongitude] = useState('')
 
+  // Write EXIF to image file toggle
+  const [writeExif, setWriteExif] = useState(false)
+
   const fetchPhoto = useCallback(async () => {
     try {
       setLoading(true)
@@ -308,6 +311,10 @@ export default function PhotoEditPage() {
         body.exif = exifUpdate
       }
 
+      if (writeExif) {
+        body.writeExif = true
+      }
+
       const res = await fetch(`/api/admin/photos/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -319,10 +326,17 @@ export default function PhotoEditPage() {
         throw new Error(data.error || 'Failed to save')
       }
 
-      const updated: PhotoData = await res.json()
+      const updated = await res.json()
       setPhoto(updated)
-      setSuccess('Photo updated successfully')
-      setTimeout(() => setSuccess(null), 3000)
+      const exifResult = updated._exifWrite
+      if (exifResult && !exifResult.success) {
+        setSuccess(`Manifest saved, but EXIF write failed: ${exifResult.error}`)
+      } else if (exifResult?.success) {
+        setSuccess('Photo updated & EXIF written to image file')
+      } else {
+        setSuccess('Photo updated successfully')
+      }
+      setTimeout(() => setSuccess(null), 5000)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save')
     } finally {
@@ -691,17 +705,34 @@ export default function PhotoEditPage() {
             </section>
 
             {/* Submit */}
-            <div className="flex items-center gap-4 border-t border-neutral-800 pt-6">
-              <button
-                type="submit"
-                disabled={saving}
-                className="rounded-lg bg-white px-6 py-2 text-sm font-medium text-black hover:bg-neutral-200 transition-colors disabled:opacity-50"
-              >
-                {saving ? 'Saving...' : 'Save Changes'}
-              </button>
-              <Link href="/admin" className="text-sm text-neutral-400 hover:text-white transition-colors">
-                Cancel
-              </Link>
+            <div className="space-y-4 border-t border-neutral-800 pt-6">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={writeExif}
+                  onChange={(e) => setWriteExif(e.target.checked)}
+                  className="size-4 rounded border-neutral-600 bg-neutral-800 text-blue-500 focus:ring-blue-500 focus:ring-offset-0"
+                />
+                <div>
+                  <span className="text-sm text-white">Write EXIF to image file</span>
+                  <p className="text-xs text-neutral-500">
+                    Embeds date, location, camera, and lens data into the original image&apos;s EXIF metadata. This
+                    modifies the actual file so downloaded images contain the updated info.
+                  </p>
+                </div>
+              </label>
+              <div className="flex items-center gap-4">
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="rounded-lg bg-white px-6 py-2 text-sm font-medium text-black hover:bg-neutral-200 transition-colors disabled:opacity-50"
+                >
+                  {saving ? (writeExif ? 'Saving & writing EXIF...' : 'Saving...') : 'Save Changes'}
+                </button>
+                <Link href="/admin" className="text-sm text-neutral-400 hover:text-white transition-colors">
+                  Cancel
+                </Link>
+              </div>
             </div>
           </div>
         </div>
