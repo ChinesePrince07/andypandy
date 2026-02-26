@@ -520,11 +520,32 @@ async function handleRecover(body: any) {
     }
 
     if (!dryRun && recovered.length > 0) {
-      manifest.data.push(...recovered)
-      manifest.data.sort((a, b) => new Date(b.dateTaken).getTime() - new Date(a.dateTaken).getTime())
-      manifest.cameras = rebuildCameras(manifest.data)
-      manifest.lenses = rebuildLenses(manifest.data)
-      await saveManifest(manifest)
+      // Re-read manifest fresh to avoid overwriting concurrent changes
+      const freshManifest = await getManifest()
+      const freshIds = new Set(freshManifest.data.map((p) => p.id))
+      const newPhotos = recovered.filter((p) => !freshIds.has(p.id))
+      freshManifest.data.push(...newPhotos)
+      freshManifest.data.sort((a, b) => new Date(b.dateTaken).getTime() - new Date(a.dateTaken).getTime())
+      freshManifest.cameras = rebuildCameras(freshManifest.data)
+      freshManifest.lenses = rebuildLenses(freshManifest.data)
+
+      console.log(`[RECOVER] Saving manifest with ${freshManifest.data.length} photos (${newPhotos.length} new)`)
+      await saveManifest(freshManifest)
+
+      // Verify
+      await new Promise((r) => setTimeout(r, 1000))
+      const verification = await getManifest()
+      console.log(`[RECOVER] Verification: manifest has ${verification.data.length} photos`)
+      if (verification.data.length < freshManifest.data.length) {
+        console.error(
+          `[RECOVER] Manifest verification failed! Expected ${freshManifest.data.length}, got ${verification.data.length}`,
+        )
+        // Retry once
+        await saveManifest(freshManifest)
+        await new Promise((r) => setTimeout(r, 1000))
+        const retry = await getManifest()
+        console.log(`[RECOVER] Retry verification: manifest has ${retry.data.length} photos`)
+      }
     }
 
     return Response.json({
