@@ -640,10 +640,21 @@ async function handleFixThumbHash() {
     }
 
     if (fixed > 0) {
-      await saveManifest(manifest)
+      const savedUrl = await saveManifest(manifest)
+      // Verify by reading back
+      await new Promise((r) => setTimeout(r, 1000))
+      const verification = await getManifest()
+      const stillBad = verification.data.filter((p) => p.thumbHash && /[+/=A-Z]/.test(p.thumbHash)).length
+      return Response.json({
+        fixed,
+        total: manifest.data.length,
+        savedUrl,
+        verified: stillBad === 0,
+        stillBadCount: stillBad,
+      })
     }
 
-    return Response.json({ fixed, total: manifest.data.length })
+    return Response.json({ fixed: 0, total: manifest.data.length })
   } catch (error) {
     console.error('Fix thumbhash error:', error)
     return Response.json({ error: error instanceof Error ? error.message : 'Fix failed' }, { status: 500 })

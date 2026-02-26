@@ -33,6 +33,7 @@ export async function getManifest(): Promise<AfilmoryManifest> {
   }
   const text = await res.text()
   const manifest: AfilmoryManifest = JSON.parse(text)
+  console.log(`[getManifest] Loaded ${manifest.data.length} photos from ${blob.url}`)
   return manifest
 }
 
@@ -49,13 +50,15 @@ export async function getManifestSafe(): Promise<AfilmoryManifest> {
   }
 }
 
-export async function saveManifest(manifest: AfilmoryManifest): Promise<void> {
-  await put(MANIFEST_KEY, JSON.stringify(manifest), {
+export async function saveManifest(manifest: AfilmoryManifest): Promise<string> {
+  const { url } = await put(MANIFEST_KEY, JSON.stringify(manifest), {
     access: 'public',
     addRandomSuffix: false,
     allowOverwrite: true,
     contentType: 'application/json',
   })
+  console.log(`[saveManifest] Saved manifest with ${manifest.data.length} photos to ${url}`)
+  return url
 }
 
 export async function uploadToBlob(filename: string, data: Buffer, contentType: string): Promise<string> {
