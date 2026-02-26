@@ -82,6 +82,17 @@ export const PageHeaderRight = () => {
         )}
 
         {isMobile && <MoreActionMenu />}
+
+        {/* Admin - only shown when logged in as admin (SSR-injected flag) */}
+        {typeof window !== 'undefined' && (window as any).__IS_ADMIN__ && (
+          <ActionIconButton
+            icon="i-mingcute-settings-6-line"
+            title="Admin"
+            onClick={() => {
+              window.location.href = '/admin'
+            }}
+          />
+        )}
       </div>
 
       {/* Auth Section - Only show when useCloud is true */}
