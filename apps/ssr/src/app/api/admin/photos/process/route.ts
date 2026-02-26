@@ -66,6 +66,11 @@ export async function POST(req: NextRequest) {
       return handleCleanup(body)
     }
 
+    // Fix thumbHash encoding: convert any base64 thumbHashes to hex
+    if (body.action === 'fix-thumbhash') {
+      return handleFixThumbHash()
+    }
+
     const { blobUrl, filename, tags: userTags, title: userTitle } = body
     if (!blobUrl || !filename) {
       return Response.json({ error: 'Missing blobUrl or filename' }, { status: 400 })
@@ -610,5 +615,37 @@ async function handleCleanup(body: any) {
   } catch (error) {
     console.error('Cleanup error:', error)
     return Response.json({ error: error instanceof Error ? error.message : 'Cleanup failed' }, { status: 500 })
+  }
+}
+
+async function handleFixThumbHash() {
+  try {
+    const manifest = await getManifest()
+    let fixed = 0
+
+    for (const photo of manifest.data) {
+      if (!photo.thumbHash || typeof photo.thumbHash !== 'string') continue
+      // Check if it looks like base64 (contains +, /, or = which are not hex chars)
+      if (/[+/=A-Z]/.test(photo.thumbHash)) {
+        try {
+          const raw = Buffer.from(photo.thumbHash, 'base64')
+          photo.thumbHash = Array.from(raw)
+            .map((byte) => byte.toString(16).padStart(2, '0'))
+            .join('')
+          fixed++
+        } catch {
+          // Not valid base64, skip
+        }
+      }
+    }
+
+    if (fixed > 0) {
+      await saveManifest(manifest)
+    }
+
+    return Response.json({ fixed, total: manifest.data.length })
+  } catch (error) {
+    console.error('Fix thumbhash error:', error)
+    return Response.json({ error: error instanceof Error ? error.message : 'Fix failed' }, { status: 500 })
   }
 }
