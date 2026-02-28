@@ -200,7 +200,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   // Update simple fields
   if (typeof body.title === 'string') photo.title = body.title
   if (typeof body.description === 'string') photo.description = body.description
-  if (typeof body.dateTaken === 'string') photo.dateTaken = body.dateTaken
+  if (typeof body.dateTaken === 'string') {
+    photo.dateTaken = body.dateTaken
+    // Also sync exif.DateTimeOriginal — the gallery sorts by this field
+    if (!photo.exif) {
+      photo.exif = {} as PhotoManifestItem['exif'] & object
+    }
+    photo.exif!.DateTimeOriginal = body.dateTaken
+  }
   if (Array.isArray(body.tags)) photo.tags = body.tags
 
   // Merge exif fields (don't replace entirely)
