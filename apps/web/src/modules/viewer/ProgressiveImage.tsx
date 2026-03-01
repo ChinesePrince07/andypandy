@@ -91,6 +91,7 @@ export const ProgressiveImage = ({
     setState.setHighResLoaded,
     setState.setError,
     setState.setIsHighResImageRendered,
+    thumbnailSrc,
   )
 
   const { onTransformed, onDOMTransformed } = useScaleIndicator(

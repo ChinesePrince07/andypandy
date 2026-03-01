@@ -72,6 +72,7 @@ export const useImageLoader = (
   setHighResLoaded?: (loaded: boolean) => void,
   setError?: (error: boolean) => void,
   setIsHighResImageRendered?: (rendered: boolean) => void,
+  fallbackSrc?: string,
 ) => {
   const { t } = useTranslation()
   const imageLoaderManagerRef = useRef<ImageLoaderManager | null>(null)
@@ -108,10 +109,29 @@ export const useImageLoader = (
         onBlobSrcChange?.(result.blobSrc)
         setHighResLoaded?.(true)
       } catch (loadError) {
+        // If original failed and we have a fallback (thumbnail), try that instead
+        if (fallbackSrc && fallbackSrc !== src) {
+          console.warn('Original image failed, falling back to thumbnail:', loadError)
+          try {
+            const fallbackManager = new ImageLoaderManager()
+            const result = await fallbackManager.loadImage(fallbackSrc, {
+              onProgress,
+              onLoadingStateUpdate: (state) => {
+                loadingIndicatorRef?.current?.updateLoadingState(state)
+              },
+            })
+            setBlobSrc?.(result.blobSrc)
+            onBlobSrcChange?.(result.blobSrc)
+            setHighResLoaded?.(true)
+            return
+          } catch {
+            // Fallback also failed, show error below
+          }
+        }
+
         console.error('Failed to load image:', loadError)
         setError?.(true)
 
-        // 显示错误状态，而不是完全隐藏图片
         loadingIndicatorRef?.current?.updateLoadingState({
           isVisible: true,
           isError: true,
@@ -131,6 +151,7 @@ export const useImageLoader = (
     error,
     onProgress,
     src,
+    fallbackSrc,
     onError,
     isCurrentImage,
     onBlobSrcChange,
