@@ -1,4 +1,4 @@
-import { del, list, put } from '@vercel/blob'
+import { del, head, list, put } from '@vercel/blob'
 import type { AfilmoryManifest } from '@afilmory/typing'
 
 const MANIFEST_KEY = 'manifest.json'
@@ -13,28 +13,30 @@ const EMPTY_MANIFEST: AfilmoryManifest = {
 
 /**
  * Get the manifest from Vercel Blob storage.
- * Returns the manifest if found, or EMPTY_MANIFEST if no manifest exists yet.
- * Throws on network/auth errors to prevent write operations from accidentally
- * saving an empty manifest and wiping existing data.
+ * Uses head() to get the downloadUrl which bypasses CDN cache, then fetches
+ * the content directly. This avoids the stale reads caused by Vercel Blob's
+ * default 1-month CDN cache, which was the root cause of lost photos.
  */
 export async function getManifest(): Promise<AfilmoryManifest> {
-  const { blobs } = await list({ prefix: MANIFEST_KEY, limit: 1 })
-  const blob = blobs.find((b) => b.pathname === MANIFEST_KEY)
-
-  if (!blob) {
-    return { ...EMPTY_MANIFEST, albums: [...EMPTY_MANIFEST.albums] }
+  try {
+    // head() returns fresh metadata including downloadUrl (not CDN-cached)
+    const blobMeta = await head(MANIFEST_KEY, { token: process.env.BLOB_READ_WRITE_TOKEN! })
+    // downloadUrl bypasses CDN — it's a token-authenticated direct URL
+    const res = await fetch(blobMeta.downloadUrl, { cache: 'no-store' })
+    if (!res.ok) {
+      throw new Error(`Failed to fetch manifest: ${res.status} ${res.statusText}`)
+    }
+    const text = await res.text()
+    const manifest: AfilmoryManifest = JSON.parse(text)
+    console.log(`[getManifest] Loaded ${manifest.data.length} photos`)
+    return manifest
+  } catch (error: any) {
+    // BlobNotFoundError means no manifest exists yet
+    if (error?.name === 'BlobNotFoundError' || error?.code === 'blob_not_found') {
+      return { ...EMPTY_MANIFEST, albums: [...EMPTY_MANIFEST.albums] }
+    }
+    throw error
   }
-
-  // Add cache-busting param to bypass CDN edge caches
-  const bustUrl = `${blob.url}${blob.url.includes('?') ? '&' : '?'}t=${Date.now()}`
-  const res = await fetch(bustUrl, { cache: 'no-store' })
-  if (!res.ok) {
-    throw new Error(`Failed to fetch manifest blob: ${res.status} ${res.statusText}`)
-  }
-  const text = await res.text()
-  const manifest: AfilmoryManifest = JSON.parse(text)
-  console.log(`[getManifest] Loaded ${manifest.data.length} photos from ${blob.url}`)
-  return manifest
 }
 
 /**
@@ -56,6 +58,7 @@ export async function saveManifest(manifest: AfilmoryManifest): Promise<string> 
     addRandomSuffix: false,
     allowOverwrite: true,
     contentType: 'application/json',
+    cacheControlMaxAge: 60, // 1 minute — default is 1 month which causes stale reads
   })
   console.log(`[saveManifest] Saved manifest with ${manifest.data.length} photos to ${url}`)
   return url

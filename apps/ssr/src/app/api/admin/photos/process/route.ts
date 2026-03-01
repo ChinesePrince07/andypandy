@@ -256,27 +256,23 @@ export async function POST(req: NextRequest) {
       isHDR: false,
     }
 
-    // Update manifest with retry to handle concurrent writes
-    for (let attempt = 0; attempt < 5; attempt++) {
-      const manifest = await getManifest()
-      // Skip if already added (dedup)
-      if (manifest.data.some((p) => p.id === photoItem.id)) break
+    // Add photo to manifest. Vercel Blob put() is atomic — once it returns,
+    // the data IS saved. We don't verify reads because CDN edge caching can
+    // return stale data, and retry logic based on stale reads can accidentally
+    // overwrite good data with stale data (the root cause of lost photos).
+    const manifest = await getManifest()
+    const prevCount = manifest.data.length
+    console.log(`[process] Read manifest: ${prevCount} photos`)
+
+    if (!manifest.data.some((p) => p.id === photoItem.id)) {
       manifest.data.push(photoItem)
       manifest.data.sort((a, b) => new Date(b.dateTaken).getTime() - new Date(a.dateTaken).getTime())
       manifest.cameras = rebuildCameras(manifest.data)
       manifest.lenses = rebuildLenses(manifest.data)
-      await saveManifest(manifest)
-
-      // Brief delay to allow Vercel Blob propagation before verification
-      await new Promise((r) => setTimeout(r, 500))
-
-      // Verify the write succeeded by re-reading
-      const verification = await getManifest()
-      if (verification.data.some((p) => p.id === photoItem.id)) break
-      // If not found, another concurrent write overwrote us — retry with backoff
-      const backoff = 1000 * (attempt + 1)
-      console.warn(`Manifest write lost for ${photoItem.id}, retrying in ${backoff}ms (attempt ${attempt + 1})`)
-      await new Promise((r) => setTimeout(r, backoff))
+      const savedUrl = await saveManifest(manifest)
+      console.log(`[process] Saved manifest: ${manifest.data.length} photos (was ${prevCount}) → ${savedUrl}`)
+    } else {
+      console.log(`[process] Photo ${photoItem.id} already in manifest, skipping`)
     }
 
     return Response.json(photoItem)
