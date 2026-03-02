@@ -123,6 +123,9 @@ export const useImageLoader = (
             setBlobSrc?.(result.blobSrc)
             onBlobSrcChange?.(result.blobSrc)
             setHighResLoaded?.(true)
+            // Since fallback is the thumbnail itself, mark as rendered
+            // immediately to hide the duplicate thumbnail <img> overlay
+            setIsHighResImageRendered?.(true)
             return
           } catch {
             // Fallback also failed, show error below
