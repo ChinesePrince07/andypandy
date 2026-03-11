@@ -102,7 +102,16 @@ export const ProgressiveImage = ({
 
   const { handleLongPressStart, handleLongPressEnd } = useLivePhotoControls(hasVideo, isLivePhotoPlaying, livePhotoRef)
 
-  const handleWebGLLoadingStateChange = useWebGLLoadingState(loadingIndicatorRef)
+  const baseWebGLLoadingStateChange = useWebGLLoadingState(loadingIndicatorRef)
+  const handleWebGLLoadingStateChange = useCallback(
+    (isLoading: boolean, state?: any, quality?: any) => {
+      baseWebGLLoadingStateChange(isLoading, state, quality)
+      if (!isLoading) {
+        setState.setIsHighResImageRendered(true)
+      }
+    },
+    [baseWebGLLoadingStateChange, setState],
+  )
 
   const handleThumbnailLoad = useCallback(() => {
     setState.setIsThumbnailLoaded(true)
@@ -187,12 +196,7 @@ export const ProgressiveImage = ({
               centerOnInit={true}
               smooth={true}
               onZoomChange={onTransformed}
-              onLoadingStateChange={(isLoading, state, quality) => {
-                handleWebGLLoadingStateChange(isLoading, state, quality)
-                if (!isLoading) {
-                  setState.setIsHighResImageRendered(true)
-                }
-              }}
+              onLoadingStateChange={handleWebGLLoadingStateChange}
               debug={import.meta.env.DEV}
             />
           )}
