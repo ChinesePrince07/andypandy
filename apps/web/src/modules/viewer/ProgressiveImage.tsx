@@ -187,7 +187,12 @@ export const ProgressiveImage = ({
               centerOnInit={true}
               smooth={true}
               onZoomChange={onTransformed}
-              onLoadingStateChange={handleWebGLLoadingStateChange}
+              onLoadingStateChange={(isLoading, state, quality) => {
+                handleWebGLLoadingStateChange(isLoading, state, quality)
+                if (!isLoading) {
+                  setState.setIsHighResImageRendered(true)
+                }
+              }}
               debug={import.meta.env.DEV}
             />
           )}
