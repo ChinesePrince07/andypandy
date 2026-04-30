@@ -7,12 +7,15 @@
     {
       "school": "UC Berkeley",
       "location": "Berkeley, California",
-      "year": "Class of 2030"
+<<<<<<< HEAD
+      "year": "Class of 2030",
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/a/a1/Seal_of_University_of_California%2C_Berkeley.svg"
     },
     {
       "school": "Suffield Academy",
       "location": "Suffield, Connecticut",
-      "year": "Class of 2026"
+      "year": "Class of 2026",
+      "logo": "https://resources.finalsite.net/images/v1577557425/suffieldacademyorg/u6rewxgvkvkmenqxv8pt/logo-sidebar.svg"
     }
   ],
   "skills": [
