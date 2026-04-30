@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getPhotoBySlug } from "@/lib/photos";
 import { isAdmin } from "@/lib/admin-auth";
-import PhotoMap from "@/components/photo-map";
 import ExifEditor from "@/components/exif-editor";
 
 export const dynamic = "force-dynamic";
@@ -101,13 +100,8 @@ export default async function PhotoDetailPage({
         </div>
       )}
 
-      {/* EXIF detail panel — inline editing for admins */}
+      {/* EXIF detail panel + map — inline editing for admins */}
       <ExifEditor photo={photo} isAdmin={admin} />
-
-      {/* Map */}
-      {photo.latitude && photo.longitude && (
-        <PhotoMap latitude={photo.latitude} longitude={photo.longitude} />
-      )}
     </div>
   );
 }

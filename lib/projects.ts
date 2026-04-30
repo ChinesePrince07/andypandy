@@ -11,6 +11,24 @@ export interface Project {
 
 export const projects: Project[] = [
   {
+    name: "Andy's Swiss Knife",
+    slug: "andy-swiss-knife",
+    repo: "ChinesePrince07/Andy-Swiss-Knife",
+    description:
+      "A single iOS app that swallowed five of mine — todos, class schedule, dining menu, pomodoro, athletics, school events, and Canvas assignments. Built it so I'd stop juggling tabs between classes.",
+    tags: ["Swift", "iOS"],
+    emoji: "🔪",
+  },
+  {
+    name: "Servo Light Switch",
+    slug: "servo-light-switch",
+    repo: "ChinesePrince07/servo-light-switch",
+    description:
+      "A tiny robot finger that flips my dorm light switch when I ask Siri. XIAO ESP32C3 + MG90S servo + HomeKit, because getting out of bed is hard.",
+    tags: ["C++", "ESP32", "HomeKit"],
+    emoji: "💡",
+  },
+  {
     name: "TI-84 GPT Hack",
     slug: "ti-84-gpt-hack",
     repo: "ChinesePrince07/TI-84-GPT-HACK",
@@ -63,8 +81,7 @@ export const projects: Project[] = [
     name: "Music Landing Page",
     slug: "music-landing-page",
     repo: "ChinesePrince07/music-landing-page-commissioned",
-    description:
-      "A commissioned landing page for a music artist.",
+    description: "A commissioned landing page for a music artist.",
     tags: ["HTML", "Design"],
     emoji: "🎵",
     demo: "https://music-landing-page-commissioned.vercel.app",
@@ -82,8 +99,7 @@ export const projects: Project[] = [
     name: "Chatbot UI",
     slug: "chatbot-ui",
     repo: "ChinesePrince07/chatbot-ui",
-    description:
-      "A chat interface for interacting with AI models.",
+    description: "A chat interface for interacting with AI models.",
     tags: ["TypeScript", "AI"],
     emoji: "💬",
     demo: "https://chatbot-ui-phi-one-74.vercel.app",
@@ -105,7 +121,7 @@ export async function getPinnedSlugs(): Promise<string[]> {
           Accept: "application/vnd.github.v3+json",
         },
         next: { tags: ["pinned-projects"], revalidate: 60 },
-      }
+      },
     );
     if (!res.ok) return [];
     const data = await res.json();

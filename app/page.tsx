@@ -138,43 +138,50 @@ export default async function AboutPage() {
         <div className="flex items-center">
           <h2 className="text-xl font-bold tracking-tight">Education</h2>
         </div>
-        <div className="rounded-xl border border-gray-200/80 bg-white p-5 shadow-sm dark:border-gray-800/80 dark:bg-gray-900">
-          <div className="flex items-center gap-4">
-            {about.education.logo ? (
-              <img
-                src={about.education.logo}
-                alt={about.education.school}
-                className="h-10 w-10 rounded-lg object-contain"
-              />
-            ) : (
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500">
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5"
+        <div className="space-y-3">
+          {about.education.map((entry) => (
+            <div
+              key={entry.school}
+              className="rounded-xl border border-gray-200/80 bg-white p-5 shadow-sm dark:border-gray-800/80 dark:bg-gray-900"
+            >
+              <div className="flex items-center gap-4">
+                {entry.logo ? (
+                  <img
+                    src={entry.logo}
+                    alt={entry.school}
+                    className="h-10 w-10 rounded-lg object-contain"
                   />
-                </svg>
+                ) : (
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500">
+                    <svg
+                      className="h-5 w-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5"
+                      />
+                    </svg>
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                    {entry.school}
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {entry.location}
+                  </p>
+                </div>
+                <span className="shrink-0 text-xs tabular-nums text-gray-400 font-mono dark:text-gray-500">
+                  {entry.year}
+                </span>
               </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-gray-900 dark:text-gray-100">
-                {about.education.school}
-              </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                {about.education.location}
-              </p>
             </div>
-            <span className="shrink-0 text-xs tabular-nums text-gray-400 font-mono dark:text-gray-500">
-              {about.education.year}
-            </span>
-          </div>
+          ))}
         </div>
       </section>
 

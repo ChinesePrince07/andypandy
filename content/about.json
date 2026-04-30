@@ -3,11 +3,18 @@
     "I tinker with hardware, write software, and occasionally share what I learn on my blog. Right now I'm especially interested in IoT, calculator hacking, and full-stack web development. ",
     "When I'm not coding, you can probably find me exploring new tech, working on side projects, or diving deep into some obscure rabbit hole."
   ],
-  "education": {
-    "school": "Suffield Academy",
-    "location": "Suffield, Connecticut",
-    "year": "Class of 2026"
-  },
+  "education": [
+    {
+      "school": "UC Berkeley",
+      "location": "Berkeley, California",
+      "year": "Class of 2030"
+    },
+    {
+      "school": "Suffield Academy",
+      "location": "Suffield, Connecticut",
+      "year": "Class of 2026"
+    }
+  ],
   "skills": [
     {
       "category": "Languages",

@@ -148,77 +148,117 @@ export default function AboutEditor({ data }: { data: AboutData }) {
             )}
 
             {editing === "education" && (
-              <div className="space-y-3">
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-gray-500">
-                    School
-                  </label>
-                  <input
-                    value={draft.education.school}
-                    onChange={(e) =>
-                      setDraft({
-                        ...draft,
-                        education: {
-                          ...draft.education,
-                          school: e.target.value,
-                        },
-                      })
-                    }
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-gray-500">
-                    Location
-                  </label>
-                  <input
-                    value={draft.education.location}
-                    onChange={(e) =>
-                      setDraft({
-                        ...draft,
-                        education: {
-                          ...draft.education,
-                          location: e.target.value,
-                        },
-                      })
-                    }
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-gray-500">
-                    Year
-                  </label>
-                  <input
-                    value={draft.education.year}
-                    onChange={(e) =>
-                      setDraft({
-                        ...draft,
-                        education: { ...draft.education, year: e.target.value },
-                      })
-                    }
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-gray-500">
-                    Logo URL (optional)
-                  </label>
-                  <input
-                    value={draft.education.logo || ""}
-                    onChange={(e) =>
-                      setDraft({
-                        ...draft,
-                        education: {
-                          ...draft.education,
-                          logo: e.target.value || undefined,
-                        },
-                      })
-                    }
-                    placeholder="https://example.com/logo.png"
-                    className={inputClass}
-                  />
-                </div>
+              <div className="space-y-4">
+                {draft.education.map((entry, i) => (
+                  <div
+                    key={i}
+                    className="rounded-lg border border-gray-100 p-3 dark:border-gray-800 space-y-3"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        Entry {i + 1}
+                      </span>
+                      {draft.education.length > 1 && (
+                        <button
+                          onClick={() =>
+                            setDraft({
+                              ...draft,
+                              education: draft.education.filter(
+                                (_, j) => j !== i,
+                              ),
+                            })
+                          }
+                          className="text-xs text-red-400 hover:text-red-600"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-medium text-gray-500">
+                        School
+                      </label>
+                      <input
+                        value={entry.school}
+                        onChange={(e) => {
+                          const education = [...draft.education];
+                          education[i] = {
+                            ...education[i],
+                            school: e.target.value,
+                          };
+                          setDraft({ ...draft, education });
+                        }}
+                        className={inputClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-medium text-gray-500">
+                        Location
+                      </label>
+                      <input
+                        value={entry.location}
+                        onChange={(e) => {
+                          const education = [...draft.education];
+                          education[i] = {
+                            ...education[i],
+                            location: e.target.value,
+                          };
+                          setDraft({ ...draft, education });
+                        }}
+                        className={inputClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-medium text-gray-500">
+                        Year
+                      </label>
+                      <input
+                        value={entry.year}
+                        onChange={(e) => {
+                          const education = [...draft.education];
+                          education[i] = {
+                            ...education[i],
+                            year: e.target.value,
+                          };
+                          setDraft({ ...draft, education });
+                        }}
+                        className={inputClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-medium text-gray-500">
+                        Logo URL (optional)
+                      </label>
+                      <input
+                        value={entry.logo || ""}
+                        onChange={(e) => {
+                          const education = [...draft.education];
+                          education[i] = {
+                            ...education[i],
+                            logo: e.target.value || undefined,
+                          };
+                          setDraft({ ...draft, education });
+                        }}
+                        placeholder="https://example.com/logo.png"
+                        className={inputClass}
+                      />
+                    </div>
+                  </div>
+                ))}
+                <button
+                  onClick={() =>
+                    setDraft({
+                      ...draft,
+                      education: [
+                        ...draft.education,
+                        { school: "", location: "", year: "" },
+                      ],
+                    })
+                  }
+                  className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  + Add entry
+                </button>
               </div>
             )}
 

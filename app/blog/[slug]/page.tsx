@@ -4,7 +4,7 @@ import { getPostBySlug } from "@/lib/blog";
 import { isAdmin } from "@/lib/admin-auth";
 import Comments from "@/components/comments";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export async function generateMetadata({
   params,

@@ -12,14 +12,19 @@ export interface Post {
 }
 
 export async function getAllPosts(): Promise<Post[]> {
-  const { blobs } = await list({ prefix: "blog/", token: process.env.BLOB_READ_WRITE_TOKEN });
+  const { blobs } = await list({
+    prefix: "blog/",
+    token: process.env.BLOB_READ_WRITE_TOKEN,
+  });
 
   const posts: Post[] = [];
   for (const blob of blobs) {
     if (!blob.pathname.endsWith(".md")) continue;
     const slug = blob.pathname.replace("blog/", "").replace(/\.md$/, "");
 
-    const res = await fetch(`${blob.url}?t=${Date.now()}`, { cache: "no-store" });
+    const res = await fetch(`${blob.url}?t=${Date.now()}`, {
+      cache: "no-store",
+    });
     if (!res.ok) continue;
     const text = await res.text();
     const { data, content } = matter(text);
@@ -42,7 +47,10 @@ export async function getAllPosts(): Promise<Post[]> {
 }
 
 export async function getPostBySlug(slug: string): Promise<Post | null> {
-  const { blobs } = await list({ prefix: `blog/${slug}.md`, token: process.env.BLOB_READ_WRITE_TOKEN });
+  const { blobs } = await list({
+    prefix: `blog/${slug}.md`,
+    token: process.env.BLOB_READ_WRITE_TOKEN,
+  });
   const blob = blobs.find((b) => b.pathname === `blog/${slug}.md`);
   if (!blob) return null;
 
@@ -52,11 +60,19 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
   const { data, content } = matter(text);
   const renderer = new marked.Renderer();
   renderer.image = ({ href, title, text }) => {
+    const isVideo = /\.(mp4|mov|webm|ogg)(\?.*)?$/i.test(href || "");
+    if (isVideo) {
+      return `<video src="${href}" controls style="max-width: 50%; height: auto;"></video>`;
+    }
     const alt = text ? ` alt="${text}"` : "";
     const t = title ? ` title="${title}"` : "";
     return `<img src="${href}"${alt}${t} style="max-width: 50%; height: auto;" />`;
   };
-  const rendered = await marked(content, { gfm: true, breaks: false, renderer });
+  const rendered = await marked(content, {
+    gfm: true,
+    breaks: false,
+    renderer,
+  });
 
   return {
     slug,
@@ -77,15 +93,23 @@ export async function savePost(slug: string, fileContent: string) {
 }
 
 export async function deletePost(slug: string) {
-  const { blobs } = await list({ prefix: `blog/${slug}.md`, token: process.env.BLOB_READ_WRITE_TOKEN });
+  const { blobs } = await list({
+    prefix: `blog/${slug}.md`,
+    token: process.env.BLOB_READ_WRITE_TOKEN,
+  });
   const blob = blobs.find((b) => b.pathname === `blog/${slug}.md`);
   if (blob) {
     await del(blob.url, { token: process.env.BLOB_READ_WRITE_TOKEN });
   }
 }
 
-export async function getRawPost(slug: string): Promise<{ frontmatter: Record<string, unknown>; content: string } | null> {
-  const { blobs } = await list({ prefix: `blog/${slug}.md`, token: process.env.BLOB_READ_WRITE_TOKEN });
+export async function getRawPost(
+  slug: string,
+): Promise<{ frontmatter: Record<string, unknown>; content: string } | null> {
+  const { blobs } = await list({
+    prefix: `blog/${slug}.md`,
+    token: process.env.BLOB_READ_WRITE_TOKEN,
+  });
   const blob = blobs.find((b) => b.pathname === `blog/${slug}.md`);
   if (!blob) return null;
 
