@@ -185,41 +185,6 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      {/* Divider */}
-      <div className="divider" />
-
-      {/* Technical Skills */}
-      <section
-        className="space-y-4 animate-fade-in"
-        style={{ animationDelay: "600ms" }}
-      >
-        <div className="flex items-center">
-          <h2 className="text-xl font-bold tracking-tight">Technical Skills</h2>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {about.skills.map((group) => (
-            <div
-              key={group.category}
-              className="rounded-xl border border-gray-200/80 bg-white p-4 shadow-sm dark:border-gray-800/80 dark:bg-gray-900"
-            >
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                {group.category}
-              </h3>
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {group.items.map((item) => (
-                  <span
-                    key={item}
-                    className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-0.5 text-xs text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
-                  >
-                    {item}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* Admin editor */}
       {admin && <AboutEditor data={about} />}
     </div>
