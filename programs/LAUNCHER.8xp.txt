@@ -429,7 +429,7 @@ End
 Goto M6
 
 Lbl P0:
-Menu("PHYSICS","ELASTIC",P1,"INELASTIC",P2,"BACK",B0)
+Menu("PHYSICS","ELASTIC",P1,"INELASTIC",P2,"EM",P3,"BACK",B0)
 
 Lbl P1:
 ClrHome
@@ -480,6 +480,120 @@ If K=45:Then
 Goto P0
 End
 Goto P2
+
+Lbl P3:
+Menu("EM","DERIVE",P4,"TRANSLATE",P5,"LAB",P6,"JUSTIFY",P7,"SOLVER",P8,"BACK",P0)
+
+Lbl P4:
+ClrHome
+37->C
+Disp "TOPIC:"
+Input "",Str0
+ClrHome
+Output(4,4,"DERIVING...")
+Send(C)
+Send(Str0)
+0->S
+Repeat S
+Get(S)
+End
+Get(Str0)
+Goto D8
+
+Lbl P5:
+ClrHome
+38->C
+Disp "PROBLEM:"
+Input "",Str0
+ClrHome
+Output(4,4,"TRANSLATING...")
+Send(C)
+Send(Str0)
+0->S
+Repeat S
+Get(S)
+End
+Get(Str0)
+Goto D8
+
+Lbl P6:
+ClrHome
+39->C
+Disp "PROBLEM:"
+Input "",Str0
+ClrHome
+Output(4,4,"ANALYZING...")
+Send(C)
+Send(Str0)
+0->S
+Repeat S
+Get(S)
+End
+Get(Str0)
+Goto D8
+
+Lbl P7:
+ClrHome
+40->C
+Disp "CLAIM:"
+Input "",Str0
+ClrHome
+Output(4,4,"JUSTIFYING...")
+Send(C)
+Send(Str0)
+0->S
+Repeat S
+Get(S)
+End
+Get(Str0)
+Goto D8
+
+Lbl P8:
+ClrHome
+41->C
+Disp "PROBLEM:"
+Input "",Str0
+ClrHome
+Output(4,4,"SOLVING...")
+Send(C)
+Send(Str0)
+0->S
+Repeat S
+Get(S)
+End
+Get(Str0)
+length(Str0)->L
+0->P
+Lbl P9:
+ClrHome
+96P+1->T
+If T>L:Then
+max(P-1,0)->P
+96P+1->T
+End
+If L-T+1>96:Then
+Output(1,1,sub(Str0,T,96))
+Else
+Output(1,1,sub(Str0,T,L-T+1))
+End
+Output(7,1,"L/R=PAGE")
+Output(8,1,"CLEAR=EXIT")
+0->K
+Repeat max(K={24,26,45,105})
+getKey->K
+End
+If K=45
+Goto P3
+If K=24:Then
+max(P-1,0)->P
+Goto P9
+End
+If K=26:Then
+If 96(P+1)+1<=L
+P+1->P
+Goto P9
+End
+Goto P8
 
 Lbl U0:
 20->C
