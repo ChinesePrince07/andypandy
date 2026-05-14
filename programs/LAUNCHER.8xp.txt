@@ -848,3 +848,57 @@ Pause
 
 
 Goto Q1
+
+Lbl D8:
+length(Str0)->L
+0->P
+Lbl D9:
+ClrHome
+1->I
+0->X
+1->R
+Lbl D2:
+If I>L:Then
+X->P
+Goto D3
+End
+inString(Str0,">",I)->W
+If W=0:Then
+L-I+1->Q
+L+1->U
+Else
+W-I->Q
+W+1->U
+End
+1->H
+If Q>16:2->H
+If Q>32:3->H
+If R+H-1>7:Then
+If X=P:Goto D3
+X+1->X
+1->R
+End
+If X=P:Then
+Output(R,1,sub(Str0,I,min(Q,16)))
+If H>=2:Output(R+1,1,sub(Str0,I+16,min(Q-16,16)))
+If H>=3:Output(R+2,1,sub(Str0,I+32,Q-32))
+End
+R+H->R
+U->I
+Goto D2
+Lbl D3:
+Output(8,1,"L/R=PAGE  CLR=X")
+0->K
+Repeat max(K={24,26,45})
+getKey->K
+End
+If K=45:Goto P3
+If K=24:Then
+If P>0:P-1->P
+Goto D9
+End
+If K=26:Then
+P+1->P
+Goto D9
+End
+Goto D3
