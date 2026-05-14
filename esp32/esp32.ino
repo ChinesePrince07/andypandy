@@ -1240,6 +1240,120 @@ void math_solver() {
   setSuccess(response);
 }
 
+void em_derive() {
+  const char* topic = strArgs[0];
+  out.print("em_derive: ");
+  out.println(topic);
+
+  String prompt =
+    "You derive AP Physics C E&M equations step-by-step. "
+    "Start from a fundamental law (Gauss/Ampere/Faraday/Coulomb/Ohm/Kirchhoff). "
+    "Each step on its own line, separated by '>'. "
+    "Prefix each step with its number like '1)' '2)'. "
+    "Each step <=48 chars. UPPERCASE only, no LaTeX. "
+    "Use SQRT() for roots, ^ for powers, * for mult, / for div. "
+    "NEVER write a literal '>' inside a step; use 'GT' instead. "
+    "Max 10 steps. Problem: " + String(topic);
+  auto url = String(SERVER) + String("/gpt/ask?math=1&question=") + urlEncode(prompt);
+
+  size_t realsize = 0;
+  if (makeRequest(url, response, MAXHTTPRESPONSELEN, &realsize)) {
+    setError("REQUEST FAILED");
+    return;
+  }
+  setSuccess(response);
+}
+
+void em_translate() {
+  const char* problem = strArgs[0];
+  out.print("em_translate: ");
+  out.println(problem);
+
+  String prompt =
+    "Translate between physics representations (equation <-> graph <-> diagram <-> words) "
+    "for AP Physics C E&M. Each step on its own line, separated by '>'. "
+    "Prefix each step with its number like '1)' '2)'. Each step <=48 chars. "
+    "UPPERCASE only. Identify axes, slopes, intercepts, and physical meaning. "
+    "Use SQRT(), ^, *, / for math. "
+    "NEVER write a literal '>' inside a step; use 'GT' instead. "
+    "Max 10 steps. Problem: " + String(problem);
+  auto url = String(SERVER) + String("/gpt/ask?math=1&question=") + urlEncode(prompt);
+
+  size_t realsize = 0;
+  if (makeRequest(url, response, MAXHTTPRESPONSELEN, &realsize)) {
+    setError("REQUEST FAILED");
+    return;
+  }
+  setSuccess(response);
+}
+
+void em_lab() {
+  const char* problem = strArgs[0];
+  out.print("em_lab: ");
+  out.println(problem);
+
+  String prompt =
+    "AP Physics C E&M lab analysis. Design experiments or linearize equations to Y=MX+B form. "
+    "Each step on its own line, separated by '>'. Prefix each step with its number. "
+    "Each step <=48 chars. UPPERCASE only. "
+    "State in order: what to measure, X axis, Y axis, slope meaning, intercept meaning. "
+    "Use SQRT(), ^, *, /. "
+    "NEVER write a literal '>' inside a step; use 'GT' instead. "
+    "Max 10 steps. Problem: " + String(problem);
+  auto url = String(SERVER) + String("/gpt/ask?math=1&question=") + urlEncode(prompt);
+
+  size_t realsize = 0;
+  if (makeRequest(url, response, MAXHTTPRESPONSELEN, &realsize)) {
+    setError("REQUEST FAILED");
+    return;
+  }
+  setSuccess(response);
+}
+
+void em_justify() {
+  const char* problem = strArgs[0];
+  out.print("em_justify: ");
+  out.println(problem);
+
+  String prompt =
+    "Justify an AP Physics C E&M claim with quantitative reasoning. "
+    "Each step on its own line, separated by '>'. Prefix each step with its number. "
+    "Each step <=48 chars. UPPERCASE only. "
+    "Format in order: claim, relevant equation(s), substitution/limit reasoning, conclusion. "
+    "Use SQRT(), ^, *, /. "
+    "NEVER write a literal '>' inside a step; use 'GT' instead. "
+    "Max 10 steps. Problem: " + String(problem);
+  auto url = String(SERVER) + String("/gpt/ask?math=1&question=") + urlEncode(prompt);
+
+  size_t realsize = 0;
+  if (makeRequest(url, response, MAXHTTPRESPONSELEN, &realsize)) {
+    setError("REQUEST FAILED");
+    return;
+  }
+  setSuccess(response);
+}
+
+void em_solver() {
+  const char* problem = strArgs[0];
+  out.print("em_solver: ");
+  out.println(problem);
+
+  String prompt =
+    "Solve this AP Physics C E&M problem and return ONLY the final numeric answer with SI units "
+    "(or a short closed-form symbolic answer if the inputs are symbolic). "
+    "Use Coulomb's, Gauss's, Ohm's, Kirchhoff's, Biot-Savart, Ampere's, Faraday's, and Lenz's laws as appropriate. "
+    "UPPERCASE only, no LaTeX, no steps. Use SQRT() for roots, ^ for powers. "
+    "Problem: " + String(problem);
+  auto url = String(SERVER) + String("/gpt/ask?math=1&question=") + urlEncode(prompt);
+
+  size_t realsize = 0;
+  if (makeRequest(url, response, MAXHTTPRESPONSELEN, &realsize)) {
+    setError("REQUEST FAILED");
+    return;
+  }
+  setSuccess(response);
+}
+
 void get_version() {
   setSuccess(FIRMWARE_VERSION);
 }
