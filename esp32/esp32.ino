@@ -1270,7 +1270,7 @@ void em_translate() {
   out.println(problem);
 
   String prompt =
-    "Translate between physics representations (equation <-> graph <-> diagram <-> words) "
+    "Translate between physics representations (equations, graphs, diagrams, and word descriptions) "
     "for AP Physics C E&M. Each step on its own line, separated by '>'. "
     "Prefix each step with its number like '1)' '2)'. Each step <=48 chars. "
     "UPPERCASE only. Identify axes, slopes, intercepts, and physical meaning. "
