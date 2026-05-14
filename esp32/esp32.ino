@@ -50,7 +50,7 @@ public:
 DualPrint out;
 
 // Firmware version (increment this when updating)
-#define FIRMWARE_VERSION "1.5.0"
+#define FIRMWARE_VERSION "1.6.0"
 
 // Captive portal settings
 #define AP_SSID "calc"
@@ -177,6 +177,11 @@ void suffield_connect();
 void get_ip();
 void avg_value();
 void math_solver();
+void em_derive();
+void em_translate();
+void em_lab();
+void em_justify();
+void em_solver();
 void beginEnterprise(const char* ssid, const char* user, const char* pass);
 void _sendLauncher();
 
@@ -226,10 +231,15 @@ struct Command commands[] = {
   { 34, "get_ip", 0, get_ip, false },
   { 35, "avg_value", 1, avg_value, true },
   { 36, "math_solver", 1, math_solver, true },
+  { 37, "em_derive", 1, em_derive, true },
+  { 38, "em_translate", 1, em_translate, true },
+  { 39, "em_lab", 1, em_lab, true },
+  { 40, "em_justify", 1, em_justify, true },
+  { 41, "em_solver", 1, em_solver, true },
 };
 
 constexpr int NUMCOMMANDS = sizeof(commands) / sizeof(struct Command);
-constexpr int MAXCOMMAND = 36;
+constexpr int MAXCOMMAND = 41;
 
 uint8_t header[MAXHDRLEN];
 uint8_t data[MAXDATALEN];
