@@ -50,7 +50,7 @@ public:
 DualPrint out;
 
 // Firmware version (increment this when updating)
-#define FIRMWARE_VERSION "1.5.0"
+#define FIRMWARE_VERSION "1.11.1"
 
 // Captive portal settings
 #define AP_SSID "calc"
@@ -142,6 +142,7 @@ void decodeCasing(char* str) {
 
 void connect();
 void disconnect();
+int askGpt(const String& question, bool isMath);
 void gpt();
 void gpt_chat();
 void gpt_history();
@@ -161,8 +162,6 @@ void series();
 void ota_update();
 void get_version();
 void get_newest();
-void elastic();
-void inelastic();
 void weather();
 void translate();
 void define();
@@ -177,6 +176,13 @@ void suffield_connect();
 void get_ip();
 void avg_value();
 void math_solver();
+void em_solver();
+void em_derive_get();
+void em_equation_get();
+void em_rhr_get();
+void em_behavior_get();
+void em_graph_get();
+void em_rules_get();
 void beginEnterprise(const char* ssid, const char* user, const char* pass);
 void _sendLauncher();
 
@@ -209,8 +215,6 @@ struct Command commands[] = {
   { 20, "ota_update", 0, ota_update, true },
   { 21, "get_version", 0, get_version, false },
   { 26, "get_newest", 0, get_newest, true },
-  { 27, "elastic", 1, elastic, true },
-  { 28, "inelastic", 1, inelastic, true },
   { 29, "series", 1, series, true },
   { 22, "weather", 1, weather, true },
   { 23, "translate", 1, translate, true },
@@ -226,10 +230,17 @@ struct Command commands[] = {
   { 34, "get_ip", 0, get_ip, false },
   { 35, "avg_value", 1, avg_value, true },
   { 36, "math_solver", 1, math_solver, true },
+  { 41, "em_solver", 1, em_solver, true },
+  { 50, "em_derive_get", 1, em_derive_get, false },
+  { 51, "em_equation_get", 1, em_equation_get, false },
+  { 52, "em_rhr_get", 1, em_rhr_get, false },
+  { 53, "em_behavior_get", 1, em_behavior_get, false },
+  { 54, "em_graph_get", 1, em_graph_get, false },
+  { 55, "em_rules_get", 1, em_rules_get, false },
 };
 
 constexpr int NUMCOMMANDS = sizeof(commands) / sizeof(struct Command);
-constexpr int MAXCOMMAND = 36;
+constexpr int MAXCOMMAND = 55;
 
 uint8_t header[MAXHDRLEN];
 uint8_t data[MAXDATALEN];
@@ -264,6 +275,8 @@ int asciiToTIToken(char c, uint8_t* out) {
     case ']':  out[0] = 0x07; return 1;
     case '{':  out[0] = 0x08; return 1;
     case '}':  out[0] = 0x09; return 1;
+    case '~':  out[0] = 0xAC; return 1;  // pi (TI builtin)
+    case '@':  out[0] = 0x5B; return 1;  // theta (TI builtin)
     default:   out[0] = 0x29; return 1;  // unknown → space
   }
 }
@@ -978,6 +991,30 @@ int makeRequest(String url, char* result, int resultLen, size_t* len) {
   return 0;
 }
 
+// Unified GPT request — every /gpt/ask call goes through here so all
+// commands share one conversation. Server always returns "sid|answer";
+// we strip the sid prefix, update the global sessionId, and leave the
+// answer at the start of the `response` buffer for the caller.
+int askGpt(const String& question, bool isMath) {
+  String url = String(SERVER) + "/gpt/ask?";
+  if (isMath) url += "math=1&";
+  url += "sid=" + urlEncode(String(sessionId)) + "&question=" + urlEncode(question);
+
+  size_t realsize = 0;
+  if (makeRequest(url, response, MAXHTTPRESPONSELEN, &realsize)) {
+    return -1;
+  }
+
+  char* delim = strchr(response, '|');
+  if (delim) {
+    *delim = '\0';
+    strncpy(sessionId, response, sizeof(sessionId) - 1);
+    sessionId[sizeof(sessionId) - 1] = '\0';
+    memmove(response, delim + 1, strlen(delim + 1) + 1);
+  }
+  return 0;
+}
+
 void connect() {
   if (storedSSID.length() == 0) {
     setError("no wifi configured");
@@ -1031,10 +1068,7 @@ void gpt() {
   out.print("prompt: ");
   out.println(prompt);
 
-  auto url = String(SERVER) + String("/gpt/ask?question=") + urlEncode(String(prompt));
-
-  size_t realsize = 0;
-  if (makeRequest(url, response, MAXHTTPRESPONSELEN, &realsize)) {
+  if (askGpt(String(prompt), false)) {
     setError("error making request");
     return;
   }
@@ -1047,24 +1081,11 @@ void gpt() {
 
 void gpt_chat() {
   const char* prompt = strArgs[0];
-  String url = String(SERVER) + "/gpt/ask?question=" + urlEncode(String(prompt)) + "&sid=" + urlEncode(String(sessionId));
-
-  size_t realsize = 0;
-  if (makeRequest(url, response, MAXHTTPRESPONSELEN, &realsize)) {
+  if (askGpt(String(prompt), false)) {
     setError("REQUEST FAILED");
     return;
   }
-
-  // Parse "sid|answer"
-  char* delim = strchr(response, '|');
-  if (delim) {
-    *delim = '\0';
-    strncpy(sessionId, response, sizeof(sessionId) - 1);
-    sessionId[sizeof(sessionId) - 1] = '\0';
-    setSuccess(delim + 1);
-  } else {
-    setSuccess(response);
-  }
+  setSuccess(response);
 }
 
 void gpt_history() {
@@ -1094,10 +1115,7 @@ void derivative() {
   out.println(expr);
 
   String prompt = "Find the derivative of f(x) = " + String(expr) + ". Compute it step by step then give ONLY the simplified result.";
-  auto url = String(SERVER) + String("/gpt/ask?math=1&question=") + urlEncode(prompt);
-
-  size_t realsize = 0;
-  if (makeRequest(url, response, MAXHTTPRESPONSELEN, &realsize)) {
+  if (askGpt(prompt, true)) {
     setError("error making request");
     return;
   }
@@ -1114,10 +1132,7 @@ void integrate() {
   out.println(expr);
 
   String prompt = "Find the indefinite integral of f(x) = " + String(expr) + ". Compute it then give ONLY the result with +C.";
-  auto url = String(SERVER) + String("/gpt/ask?math=1&question=") + urlEncode(prompt);
-
-  size_t realsize = 0;
-  if (makeRequest(url, response, MAXHTTPRESPONSELEN, &realsize)) {
+  if (askGpt(prompt, true)) {
     setError("error making request");
     return;
   }
@@ -1128,50 +1143,13 @@ void integrate() {
   setSuccess(response);
 }
 
-void elastic() {
-  const char* values = strArgs[0];
-  out.print("elastic collision: ");
-  out.println(values);
-
-  String prompt = "Solve elastic collision: m1,v1,m2,v2 = " + String(values) + ". Use conservation of momentum and kinetic energy. Give ONLY the final velocities V1F and V2F as numbers.";
-  auto url = String(SERVER) + String("/gpt/ask?math=1&question=") + urlEncode(prompt);
-
-  size_t realsize = 0;
-  if (makeRequest(url, response, MAXHTTPRESPONSELEN, &realsize)) {
-    setError("error making request");
-    return;
-  }
-
-  setSuccess(response);
-}
-
-void inelastic() {
-  const char* values = strArgs[0];
-  out.print("inelastic collision: ");
-  out.println(values);
-
-  String prompt = "Solve perfectly inelastic collision: m1,v1,m2,v2 = " + String(values) + ". Use (m1*v1 + m2*v2)/(m1+m2). Give ONLY: VF = (number).";
-  auto url = String(SERVER) + String("/gpt/ask?math=1&question=") + urlEncode(prompt);
-
-  size_t realsize = 0;
-  if (makeRequest(url, response, MAXHTTPRESPONSELEN, &realsize)) {
-    setError("error making request");
-    return;
-  }
-
-  setSuccess(response);
-}
-
 void series() {
   const char* expr = strArgs[0];
   out.print("series convergence: ");
   out.println(expr);
 
   String prompt = "Does the infinite series sum from n=1 to infinity of " + String(expr) + " converge or diverge? State CONVERGES or DIVERGES, which test, and the sum if known. Brief.";
-  auto url = String(SERVER) + String("/gpt/ask?math=1&question=") + urlEncode(prompt);
-
-  size_t realsize = 0;
-  if (makeRequest(url, response, MAXHTTPRESPONSELEN, &realsize)) {
+  if (askGpt(prompt, true)) {
     setError("error making request");
     return;
   }
@@ -1185,10 +1163,7 @@ void double_integral() {
   out.println(expr);
 
   String prompt = "Evaluate the double integral: " + String(expr) + ". Compute step by step, give ONLY the final number.";
-  auto url = String(SERVER) + String("/gpt/ask?math=1&question=") + urlEncode(prompt);
-
-  size_t realsize = 0;
-  if (makeRequest(url, response, MAXHTTPRESPONSELEN, &realsize)) {
+  if (askGpt(prompt, true)) {
     setError("REQUEST FAILED");
     return;
   }
@@ -1202,10 +1177,7 @@ void avg_value() {
   out.println(expr);
 
   String prompt = "Calculate the average value of a function: " + String(expr) + ". Use the formula: avg = (1/Area) * integral from xlow to xhigh of integral from ylow to yhigh of f(x,y) dy dx, where Area = (xhigh-xlow)*(yhigh-ylow). Show the setup: INTEGRAND: (show the fraction 1/Area * f(x,y)), AREA: (show the value), then compute the double integral step by step and give the FINAL ANSWER as a number or fraction.";
-  auto url = String(SERVER) + String("/gpt/ask?math=1&question=") + urlEncode(prompt);
-
-  size_t realsize = 0;
-  if (makeRequest(url, response, MAXHTTPRESPONSELEN, &realsize)) {
+  if (askGpt(prompt, true)) {
     setError("REQUEST FAILED");
     return;
   }
@@ -1219,14 +1191,274 @@ void math_solver() {
   out.println(problem);
 
   String prompt = "Solve this math problem. Show ONLY the final answer, no steps. Problem: " + String(problem);
-  auto url = String(SERVER) + String("/gpt/ask?math=1&question=") + urlEncode(prompt);
-
-  size_t realsize = 0;
-  if (makeRequest(url, response, MAXHTTPRESPONSELEN, &realsize)) {
+  if (askGpt(prompt, true)) {
     setError("REQUEST FAILED");
     return;
   }
 
+  setSuccess(response);
+}
+
+// ============================================================
+// EM REFERENCE CONTENT (no internet required)
+// Steps separated by '>'. Each step <=16 chars to fit one calc
+// row. ~ -> pi (TI builtin), @ -> theta (TI builtin). Other
+// Greek letters spelled out (rho/sigma/lambda/omega/tau/phi/mu).
+// Int() = integral. EMF = electromotive force.
+// ============================================================
+
+const char* DERIV_BODIES[] = {
+  // 0: RC CHRG
+  "EMF=iR+q/C>i=dq/dt>Rdq/dt+q/C=EMF>dq/(EMFC-q)>=dt/(RC)>-ln(EMFC-q)>=t/RC+K>t=0:q=0>K=-ln(EMFC)>q=EMFC*>(1-e^-t/RC)>i=(EMF/R)*>e^-t/RC>tau=RC",
+  // 1: RC DSCH
+  "q/C+iR=0>i=dq/dt>Rdq/dt=-q/C>dq/q=-dt/(RC)>ln(q/Q0)=>-t/(RC)>q=Q0*e^-t/RC>i=-(Q0/RC)*>e^-t/RC>|i|=I0*e^-t/RC>I0=Q0/RC>tau=RC",
+  // 2: LC OSC
+  "q/C+L*di/dt=0>i=dq/dt>q/C+L*>d2q/dt2=0>d2q/dt2=>-(1/(LC))*q>omega2=1/(LC)>omega=>1/sqrt(LC)>T=2~*sqrt(LC)>q=Qm*cos(>omega*t+phi)>i=-Qm*omega*>sin(omega*t)>Im=Qm*omega>1/2*C*V2=>1/2*L*I2",
+  // 3: LR CHRG
+  "EMF=iR+L*di/dt>L*di/dt=>EMF-iR>di/(EMF/R-i)>=R/L*dt>-ln(EMF/R-i)>=Rt/L+K>t=0:i=0>K=-ln(EMF/R)>i=(EMF/R)*>(1-e^-Rt/L)>tau=L/R",
+  // 4: LR DSCH
+  "L*di/dt+iR=0>di/i=-R/L*dt>ln(i/I0)=>-Rt/L>i=I0*e^-Rt/L>I0=EMF/R>tau=L/R",
+  // 5: SPHERE E (uniform rho)
+  "Int(E*dA)=>Qenc/eps0>r<R INSIDE>Qenc=rho*>(4/3)~*r3>E*4~*r2=>(rho*4~*r3)>/(3*eps0)>E=rho*r/>(3*eps0)>R<r OUTSIDE>Qenc=Q>E*4~*r2=>Q/eps0>E=kQ/r2",
+  // 6: CYL E (line charge lambda)
+  "Int(E*dA)=>Qenc/eps0>Qenc=lambda*L>E*2~*r*L=>lambda*L/eps0>E=lambda/>(2~*eps0*r)>E=2k*lambda/r",
+  // 7: PLANE E (sigma)
+  "Int(E*dA)=>Qenc/eps0>Qenc=sigma*A>2EA=sigma*A>/eps0>E=sigma/>(2*eps0)",
+  // 8: PAR PLT C
+  "Q=sigma*A>E=sigma/eps0>V=E*d>V=sigma*d/eps0>V=Q*d/>(eps0*A)>C=Q/V>C=eps0*A/d",
+  // 9: MOT EMF (bar)
+  "Phi=BA=BLx>dPhi/dt=>BL*dx/dt=BLv>EMF=-dPhi/dt>|EMF|=BLv>i=BLv/R>F=BiL=>B2*L2*v/R>m*dv/dt=>-B2L2v/R>v=v0*e^-t/tau>tau=mR/(B2L2)",
+  // 10: ROT LOOP
+  "Phi=BA*cos(>omega*t)>dPhi/dt=>-BA*omega*>sin(omega*t)>EMF=NBA*omega>*sin(omega*t)>EMFm=NBA*omega",
+  // 11: CHG B
+  "Phi=B*A>dPhi/dt=>A*dB/dt>EMF=-A*dB/dt>|EMF|=A|dB/dt|>i=EMF/R",
+  // 12: LOOP B
+  "dB=mu0/(4~)*>I*dl x rh/r2>r=R const>|dl x rh|=dl>B=mu0*I/>(4~*R2)*>Int(dl)>Int(dl)=2~*R>B=mu0*I/(2R)",
+  // 13: INF WIRE B
+  "Int(B*ds)=>mu0*Ienc>B*2~*r=>mu0*I>B=mu0*I/>(2~*r)",
+  // 14: SOLN B
+  "Int(B*ds)=>mu0*Ienc>Ienc=n*L*I>B*L=mu0*n*L*I>B=mu0*n*I>n=N/L",
+  // 15: CAP U
+  "dU=V*dq>V=q/C>U=Int(q/C*dq)>=Int(q*dq)/C>U=Q2/(2C)>Q=CV>U=1/2*C*V2>U=1/2*Q*V",
+  // 16: SPHERE V (conducting shell)
+  "Cond shell Q,R:>r<R INSIDE>E=0 (cond)>V=kQ/R const>same as surface>R<r OUTSIDE>V=kQ/r>like point chg>V=-Int(E*dr)>from infinity",
+  // 17: CYLINDER V (line charge)
+  "Line charge:>E=lambda/>(2~*eps0*r)>V_B-V_A=>-Int(E*dr)>From R to r>V=-lambda/>(2~*eps0)>*ln(r/R)>Logarithmic>(no V=0 at inf)",
+  // 18: RING/HOOP on axis
+  "Charge -Q, R>r=sqrt(z2+R2)>each dq same r>V=k*(-Q)/>sqrt(z2+R2)>E_z=-dV/dz>E_z=-kQz/>(z2+R2)^(3/2)>Max E mag at>z=+/-R/sqrt(2)",
+};
+const int DERIV_COUNT = sizeof(DERIV_BODIES) / sizeof(char*);
+
+const char* EQUATION_BODIES[] = {
+  // 0: FLUX
+  "Phi=E*A*>cos(@)>For uniform E>@=angle btw>E and area vec>If E para A:>Phi=EA>If E perp A:>Phi=0",
+  // 1: UNIFORM V
+  "dV=-E*d>For uniform E>over distance d>E from high V>to low V>E=-dV/dx>general case",
+  // 2: CAP U (alt forms)
+  "U=1/2*Q*V>Equivalent:>U=1/2*C*V2>U=Q2/(2C)>Q=CV>Pick by what's>held constant",
+  // 3: POWER
+  "P=I*V (given)>P=I2*R>P=V2/R>From V=IR:>sub in P=IV>P=I*(IR)=I2R>P=(V/R)*V=V2/R",
+  // 4: RC TRANSIENT
+  "Charging:>q=EMFC*>(1-e^-t/RC)>i=(EMF/R)*>e^-t/RC>Discharging:>q=Q0*e^-t/RC>i=I0*e^-t/RC>tau=RC>at tau:63.2%>at 5tau:done",
+  // 5: LR TRANSIENT
+  "Charging:>i=(EMF/R)*>(1-e^-Rt/L)>Discharging:>i=I0*e^-Rt/L>tau=L/R",
+  // 6: GAUSS LAW
+  "Int(E*dA)=>Qenc/eps0>LHS=closed>surface S>Qenc=charge>inside S>Use symmetry>to pull E out",
+  // 7: AMPERE LAW
+  "Int(B*ds)=>mu0*Ienc>LHS=closed>loop L>Ienc=current>through L>Use symmetry>to pull B out",
+  // 8: MOTIONAL EMF
+  "EMF=B*L*v>Conductor moves>velocity v>length L in B>v perp B perp L>From F=qv*B>charges separate",
+  // 9: SOLENOID L
+  "L=mu0*N2*A/l>N=total turns>A=cross-sec>l=length>n=N/l per m>L=mu0*n2*A*l",
+  // 10: LC FREQ
+  "omega=>1/sqrt(LC)>T=2~*sqrt(LC)>f=1/(2~*>sqrt(LC))>From SHM:>d2q/dt2=>-(1/LC)*q",
+  // 11: COULOMB K
+  "k=1/(4~*eps0)>k=8.99e9>Nm2/C2>eps0=8.85e-12>F/m or>C2/(Nm2)>F=kQ1Q2/r2",
+  // 12: DENSITIES
+  "Linear:>lambda=Q/L>Surface:>sigma=Q/A>Volume:>rho=Q/V>In Gauss:>Qenc=lambda*L>sigma*A or>rho*V",
+  // 13: MAXWELL
+  "1)Int(E*dA)=>Q/eps0>2)Int(B*dA)=0>3)Int(E*dl)=>-dPhiB/dt>4)Int(B*dl)=>mu0*I+>mu0*eps0*>dPhiE/dt",
+  // 14: NETWORK
+  "Cap series:>1/Ceq=sum>1/Ci>Cap parallel:>Ceq=sum Ci>Res series:>Req=sum Ri>Res parallel:>1/Req=sum>1/Ri>Opposite of res",
+  // 15: RESISTIVITY
+  "R=rho*L/A>rho=resistivity>L=length>A=cross-sec>R(T)=R0(1+>alpha*(T-T0))>units: Ohm*m",
+  // 16: KIRCHHOFF
+  "Junction Rule:>sum I in=>sum I out>Loop Rule:>sum dV=0>around loop>EMF up, IR down",
+  // 17: TORQUE LOOP
+  "tau=NIAB*sin(@)>N=turns>I=current>A=loop area>B=field>@=angle btw>n vector & B>Loop aligns>n with B",
+  // 18: F ON Q
+  "F=qvB*sin(@)>@=angle btw>v and B>Max when perp>Zero when para>F perp v and B>B does no work",
+  // 19: F ON WIRE
+  "F=ILB*sin(@)>I=current>L=length>B=field>@=angle btw>I and B>Same form as>F=qvB",
+  // 20: U DENSITY
+  "u_E=1/2*eps0*E2>E energy/vol>u_B=B2/(2mu0)>B energy/vol>u_total=>u_E+u_B>EM wave:>both equal",
+  // 21: POYNTING
+  "S=(1/mu0)*ExB>EM energy flow>per unit area>per unit time>|S|=intensity>W/m2>Direction:>EM wave dir",
+  // 22: PARA WIRES
+  "F/L=mu0*I1*I2/>(2~*d)>Same dir:>ATTRACT>Opposite dir:>REPEL>d=wire sep",
+  // 23: CYCLOTRON
+  "Charged in B:>r=mv/(qB)>radius>T=2~*m/(qB)>period>omega=qB/m>angular freq>B perp v>circular",
+  // 24: TRANSFORMER
+  "Vs/Vp=Ns/Np>voltage ratio>Is/Ip=Np/Ns>current ratio>P_in=P_out>(ideal)>Step up:Ns>Np>Step down:Ns<Np",
+  // 25: QUANTIZATION
+  "Q=n*e>n=integer>e=1.60e-19 C>elementary chg>Charge cant be>created or>destroyed>only transferred",
+  // 26: TOROID
+  "B=mu0*N*I/>(2~*r)>Inside toroid>N=total turns>r=radius from>center axis>Azimuthal dir",
+  // 27: CURRENT DIV
+  "2 R parallel:>I1=I*R2/>(R1+R2)>I2=I*R1/>(R1+R2)>Bigger R gets>smaller share",
+  // 28: DRIFT VEL
+  "I=n*q*v_d*A>n=carrier num>density 1/m3>q=charge each>v_d=drift vel>A=cross-sec>J=I/A=n*q*v_d>J=current dens>(A/m2)",
+  // 29: INTERNAL R
+  "V_t=EMF-I*r>V_t=terminal V>r=internal R>Open ckt:>I=0, V_t=EMF>Short ckt:>I=EMF/r MAX>(limited by r)",
+  // 30: WIRE STRETCH
+  "Stretch by k:>L'=k*L>Volume const>so A'=A/k>R=rho*L/A>R'=rho*kL/(A/k)>R'=k2 * R>Scales as k2",
+};
+const int EQUATION_COUNT = sizeof(EQUATION_BODIES) / sizeof(char*);
+
+const char* RHR_BODIES[] = {
+  // 0: CURR WIRE B
+  "Wire B field:>Thumb=I dir>Fingers curl>=B direction>B above wire>points OUT or>IN based on I",
+  // 1: F ON CHARGE
+  "F=qv*B (+chg):>Fingers=v dir>Curl to B dir>Thumb=F dir>Reverse for>negative charge",
+  // 2: F ON WIRE
+  "F=IL*B>Fingers=I dir>Curl toward B>Thumb=F dir",
+  // 3: LENZ
+  "Flux changing>Find dB/dt dir>i opposes change>Curl fingers>in i direction>Thumb=Binduced",
+  // 4: LOOP/SOLN B
+  "Curl fingers=>I direction>Thumb=B inside>(N pole side)",
+  // 5: CROSS PROD
+  "A x B:>Fingers=A dir>Curl toward B>Thumb=A*B dir>Perp to both",
+};
+const int RHR_COUNT = sizeof(RHR_BODIES) / sizeof(char*);
+
+const char* BEHAVIOR_BODIES[] = {
+  // 0: CONDUCTOR
+  "E=0 INSIDE>All charge on>outer surface>Whole cond=>equipotential>E outside:>sigma/eps0>perp to surf",
+  // 1: CAP IMMED/LONG
+  "t=0+:>Cap=short wire>V_C=0>Full EMF on R>i=EMF/R>t=infty:>Cap=open ckt>i=0, V_C=EMF",
+  // 2: IND IMMED/LONG
+  "t=0+:>L=open ckt>i=0>Full EMF on L>t=infty:>L=short wire>V_L=0>i=EMF/R",
+  // 3: CAP vs IND
+  "Cap: starts as>short, ends open>Ind: starts as>open, ends short>Each opposes>sudden change",
+  // 4: NETWORK
+  "Series R:>Req=sum Ri>Series C:>1/Ceq=sum 1/Ci>Parallel R:>1/Req=sum 1/Ri>Parallel C:>Ceq=sum Ci>Opposite pattern",
+  // 5: DIELECTRIC
+  "kappa boosts C>divides E by k>Battery on:>V fixed,C up>Q up, U up>Battery off:>Q fixed,C up>V down, U down",
+  // 6: CIRC IN B
+  "F=qv*B perp v>B does no work>KE constant>r=mv/(qB)>T=2~*m/(qB)>If v has || B:>helix path",
+  // 7: V FROM E
+  "E perp to>equipotentials>E points high>V to low V>Closer eq lines>=stronger E>V=-Int(E*dx)",
+  // 8: INDEPENDENCE
+  "R, C, L do not>depend on:>R: current I>C: charge Q>or voltage V>L: current I>Only geometry>and material",
+  // 9: SUPERPOSITION
+  "V: scalar add>V_tot=sum Vi>E,F: vector add>component-wise>Use V whenever>possible: easier>than vector E",
+  // 10: REFERENCE V
+  "V=0 reference:>point charges:>V=0 at infinity>Uniform field:>V=0 at origin>Choose convention>before solving",
+  // 11: SHARP POINT
+  "Conductor:>charge dens>highest at>sharpest curve>(small radius)>E strongest near>pointy tips>Why lightning>rods work",
+  // 12: FIELD LINES
+  "Rules:>Start on +chg>End on -chg>(or at infty)>Density=field>strength>Never cross>(field unique>at each point)>Tangent=E dir",
+  // 13: GROUNDING
+  "Ground=>infinite charge>sink/source>Ground a cond:>Net Q -> 0>V final = 0>(Earth ref)>Cant ground>an insulator",
+  // 14: FARADAY CAGE
+  "Hollow cond:>Outer E=0>in cavity>Shields from>external E>(cell phone in>metal box)>Excess charge>on outer surf",
+  // 15: CHARGE REDISTR
+  "Connect 2 cond>with wire:>Charge flows>until V1=V2>(same potential)>Q_total const>(conservation)>Spheres:>kQ1/R1=kQ2/R2>Q1/Q2=R1/R2",
+  // 16: POWER DISSIPATION
+  "P=I2*R=V2/R>SERIES (same I):>Big R = big P>P=I2*R rule>PARALLEL:>(same V)>Small R = big P>P=V2/R rule",
+  // 17: METER PLACEMENT
+  "AMMETER:>measures I>Connect SERIES>Ideal R=0>VOLTMETER:>measures V>Connect PARALLEL>Ideal R=infty>(no I drawn)",
+  // 18: dq ELEMENT
+  "Continuous chg:>Linear:>dq=lambda*dL>Surface:>dq=sigma*dA>Volume:>dq=rho*dV>Then Int over>the body",
+};
+const int BEHAVIOR_COUNT = sizeof(BEHAVIOR_BODIES) / sizeof(char*);
+
+const char* RULE_BODIES[] = {
+  // 0: KIRCH JUNCTION
+  "Sum I in =>Sum I out>at every node>(conservation>of charge)>If 3 wires meet:>I1+I2=I3>or signed sum=0",
+  // 1: KIRCH LOOP
+  "Sum dV=0>around any>closed loop>(conservation>of energy)>EMF: + when>traverse - to +>IR: - when>traverse with I",
+  // 2: LAW OF CHARGES
+  "Same sign:>REPEL>Opposite sign:>ATTRACT>Force mag:>F=kq1q2/r2>1/r2 always",
+  // 3: LENZ
+  "Induced i>opposes change>in mag flux>NOT the flux>only CHANGE>If Phi rising:>i opposes, B opp>If Phi falling:>i supports B",
+  // 4: CONSERVATION
+  "Charge conserved>Q=n*e (integer)>e=1.60e-19 C>Cant create or>destroy charge>Only transferred>Energy: KVL=0>around loop",
+  // 5: SUPERPOSITION
+  "V is SCALAR sum:>V=sum Vi>(easier!)>E and F: VECTORS>must add>component-wise>Use V whenever>possible",
+  // 6: SYMMETRY
+  "Gauss when:>Sphere/Cyl/Plane>Choose surface>perp or para E>Ampere when:>Long wire,>solenoid, toroid>Else use>Biot-Savart",
+  // 7: INDEPENDENCE
+  "R: not on I>C: not on Q,V>L: not on I>Only geometry>and material>Example:>Double V>Same R, C, L",
+};
+const int RULE_COUNT = sizeof(RULE_BODIES) / sizeof(char*);
+
+const char* GRAPH_BODIES[] = {
+  // 0: RC CHRG Q
+  "RC CHRG Q vs t>SHAPE:EXP RISE>y(0)=0>y(inf)=EMF*C>y(tau)=>0.632*EMF*C>y=EMFC*>(1-e^-t/RC)>tau=RC",
+  // 1: RC CHRG I
+  "RC CHRG I vs t>SHAPE:EXP DECAY>y(0)=EMF/R MAX>y(inf)=0>y(tau)=>0.368*EMF/R>y=(EMF/R)*>e^-t/RC>tau=RC",
+  // 2: RC DSCH Q
+  "RC DSCH Q vs t>SHAPE:EXP DECAY>y(0)=Q0 MAX>y(inf)=0>y(tau)=0.368*Q0>y=Q0*e^-t/RC>tau=RC",
+  // 3: RC DSCH I
+  "RC DSCH I vs t>SHAPE:EXP DECAY>y(0)=Q0/(RC) MAX>y(inf)=0>y=I0*e^-t/RC>I0=Q0/RC>(neg of dQ/dt)>tau=RC",
+  // 4: RL CHRG I
+  "RL CHRG I vs t>SHAPE:EXP RISE>y(0)=0>y(inf)=EMF/R>y(tau)=>0.632*EMF/R>y=(EMF/R)*>(1-e^-Rt/L)>tau=L/R",
+  // 5: RL DSCH I
+  "RL DSCH I vs t>SHAPE:EXP DECAY>y(0)=I0=EMF/R>y(inf)=0>y(tau)=0.368*I0>y=I0*e^-Rt/L>tau=L/R",
+  // 6: LC Q
+  "LC Q vs t>SHAPE:COS OSC>y=Qm*cos(>omega*t+phi)>omega=1/sqrt(LC)>T=2~*sqrt(LC)>Peak: y=Qm>Zero at T/4",
+  // 7: LC I
+  "LC I vs t>SHAPE:SIN OSC>y=-Im*sin(>omega*t+phi)>Im=Qm*omega>90 DEG lag Q>Peak at T/4>Zero at t=0",
+  // 8: SPHERE V
+  "SPHERE V vs r>r<R INSIDE:>V=kQ/(2R3)*>(3R2-r2)>Parabolic down>R<r OUTSIDE:>V=kQ/r>1/r decay>V(R)=kQ/R",
+  // 9: SPHERE E
+  "SPHERE E vs r>r<R INSIDE:>E=kQ*r/R3>LINEAR rise>R<r OUTSIDE:>E=kQ/r2>1/r2 decay>Peak at r=R",
+  // 10: CYL V
+  "CYL V vs r>V=-2k*lambda*>ln(r/r0)>LOG decay>r0=reference>radius>Same shape>inside & out",
+  // 11: CYL E
+  "CYL E vs r>SHAPE:1/r>E=2k*lambda/r>E=lambda/>(2~*eps0*r)>HYPERBOLIC>Goes to 0 as>r -> infty",
+  // 12: WIRE B
+  "INF WIRE B vs r>SHAPE:1/r>B=mu0*I/(2~*r)>HYPERBOLIC>Direction:>RHR thumb=I>B circles wire",
+  // 13: SOLN B
+  "SOLN B in/out>INSIDE: const>B=mu0*n*I>OUTSIDE: B=0>STEP FUNCTION>n=N/L turns/m>Long solenoid",
+};
+const int GRAPH_COUNT = sizeof(GRAPH_BODIES) / sizeof(char*);
+
+static void emLookup(const char** table, int count, const char* tag) {
+  int idx = (int)realArgs[0];
+  out.print(tag);
+  out.print(": idx=");
+  out.println(idx);
+  if (idx < 0 || idx >= count) {
+    setError("BAD INDEX");
+    return;
+  }
+  setSuccess(table[idx]);
+}
+
+void em_derive_get()   { emLookup(DERIV_BODIES,    DERIV_COUNT,    "em_derive_get"); }
+void em_equation_get() { emLookup(EQUATION_BODIES, EQUATION_COUNT, "em_equation_get"); }
+void em_rhr_get()      { emLookup(RHR_BODIES,      RHR_COUNT,      "em_rhr_get"); }
+void em_behavior_get() { emLookup(BEHAVIOR_BODIES, BEHAVIOR_COUNT, "em_behavior_get"); }
+void em_graph_get()    { emLookup(GRAPH_BODIES,    GRAPH_COUNT,    "em_graph_get"); }
+void em_rules_get()    { emLookup(RULE_BODIES,     RULE_COUNT,     "em_rules_get"); }
+
+void em_solver() {
+  const char* problem = strArgs[0];
+  out.print("em_solver: ");
+  out.println(problem);
+
+  String prompt =
+    "Solve this AP Physics C E&M problem and return ONLY the final numeric answer with SI units "
+    "(or a short closed-form symbolic answer if the inputs are symbolic). "
+    "Use Coulomb's, Gauss's, Ohm's, Kirchhoff's, Biot-Savart, Ampere's, Faraday's, and Lenz's laws as appropriate. "
+    "UPPERCASE only, no LaTeX, no steps. Use SQRT() for roots, ^ for powers. "
+    "Problem: " + String(problem);
+  if (askGpt(prompt, true)) {
+    setError("REQUEST FAILED");
+    return;
+  }
   setSuccess(response);
 }
 
@@ -1250,10 +1482,7 @@ void weather() {
   out.println(city);
 
   String prompt = "Current weather in " + String(city) + "? Give temp in F and C, conditions. Very brief, max 50 words.";
-  auto url = String(SERVER) + String("/gpt/ask?question=") + urlEncode(prompt);
-
-  size_t realsize = 0;
-  if (makeRequest(url, response, MAXHTTPRESPONSELEN, &realsize)) {
+  if (askGpt(prompt, false)) {
     setError("REQUEST FAILED");
     return;
   }
@@ -1268,10 +1497,7 @@ void translate() {
 
   // Format: "LANG:text" e.g. "SPANISH:hello" or just "text" for auto-detect to English
   String prompt = "Translate this: " + String(text) + ". Give only the translation, nothing else.";
-  auto url = String(SERVER) + String("/gpt/ask?question=") + urlEncode(prompt);
-
-  size_t realsize = 0;
-  if (makeRequest(url, response, MAXHTTPRESPONSELEN, &realsize)) {
+  if (askGpt(prompt, false)) {
     setError("REQUEST FAILED");
     return;
   }
@@ -1285,10 +1511,7 @@ void define() {
   out.println(word);
 
   String prompt = "Define '" + String(word) + "' in one brief sentence.";
-  auto url = String(SERVER) + String("/gpt/ask?question=") + urlEncode(prompt);
-
-  size_t realsize = 0;
-  if (makeRequest(url, response, MAXHTTPRESPONSELEN, &realsize)) {
+  if (askGpt(prompt, false)) {
     setError("REQUEST FAILED");
     return;
   }
@@ -1302,10 +1525,7 @@ void units() {
   out.println(conversion);
 
   String prompt = "Convert: " + String(conversion) + ". Give only the result with units.";
-  auto url = String(SERVER) + String("/gpt/ask?question=") + urlEncode(prompt);
-
-  size_t realsize = 0;
-  if (makeRequest(url, response, MAXHTTPRESPONSELEN, &realsize)) {
+  if (askGpt(prompt, false)) {
     setError("REQUEST FAILED");
     return;
   }
