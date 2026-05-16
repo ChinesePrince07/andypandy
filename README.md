@@ -18,16 +18,17 @@ The original concept came from ChromaLock, who made a [video about it](https://w
 
 ## Features
 
-- ChatGPT integration - ask questions directly from your calculator, with **loop mode** to keep asking without returning to menu
-- **Calculus solver** - derivatives, integrals, double integrals, average value, general math solver, and infinite series convergence
-- **Physics solver** - elastic and inelastic collision calculations
-- **Utilities** - translate text and define words
+- **ChatGPT integration** - ask questions directly from your calculator, with persistent chat sessions (`HISTORY` recalls your last conversation, `NEW CHAT` starts fresh)
+- **AP Physics C E&M cheat-sheet** - a deep menu of static derivations, equations, ASCII graphs, right-hand-rule mnemonics, conceptual behavior, and physics laws — all served locally from firmware, no network needed
+- **Physics SOLVER** - GPT-backed numeric problem solver for circuits, fields, energy, and custom plug-and-chug
+- **Multi-page output** - long GPT/solver responses paginate with ◄/► keys
 - Wi-Fi connectivity via ESP32 with **captive portal configuration**
 - **WiFi scanner** - scan for nearby networks and connect directly from the calculator
 - **WPA2-Enterprise (eduroam)** - connect to university/enterprise WiFi networks via the captive portal
+- **One-tap Suffield** - quick-connect shortcut to Suffield Academy WiFi from the SETTINGS menu
 - **MAC address spoofing** - view and change the ESP32's MAC address
+- **IP viewer** - see the ESP32's current IP for the remote serial monitor (`telnet <ip> 23`)
 - **Smart case input** - letters default to lowercase; wrap in parentheses for uppercase, e.g. `A(B)CD` becomes `aBcd`
-- Program downloads over the air
 - Image display support (96x63 monochrome)
 - **OTA updates** - update both ESP32 firmware and calculator program wirelessly
 - **Deep sleep** - ESP32 sleeps after 2 minutes of inactivity to save battery, wakes instantly when the calculator sends a command
@@ -101,6 +102,7 @@ By default, the ESP32 connects to my hosted server. If you want to run your own:
 If you need to change WiFi settings:
 - Go to **Settings → MORE → SETUP** in the ANDYGPT program to broadcast the captive portal
 - Or use **Settings → SCAN WIFI** to scan for nearby networks and connect directly
+- Or use **Settings → SUFFIELD** for a one-tap Suffield Academy connect
 - Or erase ESP32 flash and re-upload the firmware
 
 ## Connecting to Eduroam (University WiFi)
@@ -122,43 +124,46 @@ The TI-84 keyboard only types uppercase letters. To enter lowercase or mixed-cas
 
 ## Using GPT
 
-1. From the main menu, select **GPT**
+1. From the main menu, select **GPT → ASK**
 2. Type your question and press ENTER
-3. Wait for the response to appear
-4. Press **any key** to ask another question, or **CLEAR** to return to the menu
+3. Wait for the response to appear; use **◄/►** to flip pages on long answers
+4. Press any other key to ask a follow-up (the conversation persists), or **CLEAR** to return to the menu
 
-The GPT mode loops so you can have a continuous conversation without navigating back to the menu each time.
+The GPT submenu also has:
+- **HISTORY** — replay your previous messages and responses for the current chat session
+- **NEW CHAT** — clear the server-side session and start a fresh conversation
 
-**Note:** Use plain text for math questions (e.g., "integrate x squared from 0 to 1") rather than calculator symbols like ∫(. The TI-84's special math tokens aren't fully decoded yet.
-
-## Using Math
-
-1. From the main menu, select **MATH**
-2. Choose **DERIVATIVE**, **INTEGRAL**, **DOUBLE INT**, **SERIES**, **AVG VALUE**, or **SOLVER**
-3. Enter your function:
-   - For derivatives/integrals: use X as the variable (e.g., `X^2`, `sin(X)`)
-   - For double integrals: enter F(X,Y), Y bounds, and X bounds when prompted
-   - For average value: enter F(X,Y) and the region bounds
-   - For solver: type any math problem in plain text
-   - For series: use N as the variable (e.g., `1/N^2`, `1/2^N`)
-4. The result appears instantly
-5. Press **any key** for another calculation, **CLEAR** to go back
-
-**Examples:**
-- Derivative of `X^3` → `3 X^2`
-- Integral of `X^2` → `1/3 X^3 + C`
-- Double integral of `X*Y` with Y=0..1, X=0..2
-- Average value of `X*Y` over rectangle [0,4] x [0,3]
-- Solver: `evaluate integral 0 to 1 of integral 0 to 1-x of x+y dy dx`
-- Series `1/N^2` → converges (pi^2/6)
+**Note:** The TI-84's math glyphs (∫, Σ, etc.) don't fully decode over the link port. Type math in plain words (e.g., "integrate x squared from 0 to 1") instead of using special tokens.
 
 ## Using Physics
 
-1. From the main menu, select **PHYSICS**
-2. Choose **ELASTIC** or **INELASTIC**
-3. Enter values as: `M1,V1,M2,V2` (masses and velocities)
-4. The result shows the final velocities
-5. Press **any key** for another calculation, **CLEAR** to go back
+The **PHYSICS** menu is built around AP Physics C E&M. Most entries serve pre-computed cheat-sheets straight from the firmware (no network round-trip); **SOLVER** is the only branch that calls GPT.
+
+From the main menu, select **PHYSICS**, then pick a branch:
+
+- **DERIVE** — step-by-step derivations
+  - `CIRCUITS` (RC charge/discharge, LC oscillation, LR charge/discharge)
+  - `GAUSS` (sphere, cylinder, plane, parallel plate)
+  - `INDUCT` (motional EMF, rotating loop, changing B)
+  - `MAGNET` (loop B, infinite wire, solenoid)
+  - `POTENT` (sphere V, cylinder V, ring, capacitor U)
+- **EQUATION** — formula lookup
+  - `STATIC`, `OHMS`, `FORCES`, `FIELDS`, `INDUCT`, `ENERGY`
+- **GRAPHS** — ASCII descriptions of standard E&M curves (transient, oscillation, field profiles)
+- **RHR** — right-hand-rule mnemonics (wire B, force on charge / wire, Lenz, loop B, cross product)
+- **BEHAVIOR** — conceptual reasoning
+  - `STATICS` (conductors, dielectrics, V/E relationships, sharp points, field lines, Faraday cage)
+  - `CIRCUITS` (caps/inductors at t=0 and t=∞, networks, power, meters)
+  - `GENERAL` (circulating B, reference voltages, infinitesimal charge elements, grounding, charge redistribution)
+  - `RULES` (junction, loop, charges, Lenz, conservation, symmetry)
+- **SOLVER** — GPT-backed numeric solver
+  - `CIRCUITS` (current, voltage, resistance, capacitance, inductance, power)
+  - `FIELDS` (E field, B field, flux, potential)
+  - `ENERGY` (cap U, ind U, charge)
+  - `OTHER` (force, EMF, τ, frequency, torque)
+  - `CUSTOM` — plain-text catch-all; type the problem in your own words
+
+Each cheat-sheet returns a multi-line answer that paginates with **◄/►**. **CLEAR** returns to the menu.
 
 ## OTA Updates
 
@@ -181,14 +186,15 @@ To check your current version and the latest available, go to **Settings → VER
 
 ## Planned Features
 
-- Multi-page GPT responses
 - Basic web browsing
 - Camera support (ESP32-S3)
+- Mechanics + chemistry cheat-sheets alongside the existing E&M suite
 
 ## Known Issues
 
 - Images don't work consistently
-- **Complex math expressions** (integrals, derivatives, summations) use TI tokens that aren't decoded yet - type questions as plain text instead of using math symbols
+- **Complex math expressions** (integrals, derivatives, summations) use TI tokens that aren't decoded yet — type questions as plain text instead of using math symbols
+- The standalone **MATH** menu (derivative / integral / series / avg value / etc.) and **UTILS** menu (translate / define) have been archived from the launcher UI to make room for the static physics formulas. The underlying ESP32 handlers are still in firmware and reachable by command ID if you build a custom client.
 
 ## Credits
 
