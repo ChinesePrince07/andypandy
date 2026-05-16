@@ -7,7 +7,7 @@ ClrDraw
 0->S
 0->E
 ""->Str0
-Menu("OPERATION","SETTINGS",K0,"IMAGES",I0,"GPT",G0,"PHYSICS",P0,"EXIT",X0)
+Menu("OPERATION","SETTINGS",K0,"IMAGES",I0,"GPT",G0,"MATH",M0,"PHYSICS",P0,"EXIT",X0)
 
 Lbl C9:
 7->C
@@ -167,443 +167,120 @@ Pause Str0
 Goto G0
 
 Lbl P0:
-Menu("PHYSICS","DERIVE",P1,"EQUATION",P2,"GRAPHS",P7,"RHR",P3,"BEHAVIOR",P4,"SOLVER",P5,"BACK",B0)
+Menu("PHYSICS","SOLVER",P5,"BACK",B0)
 
-Lbl P1:
-Menu("DERIVE","CIRCUITS",D1,"GAUSS",D4,"INDUCT",D5,"MAGNET",D6,"POTENT",D7,"BACK",P0)
+Lbl M0:
+Menu("MATH","FORMULAS",M1,"REFERENCE",M3,"SOLVER",M4,"BACK",B0)
 
-Lbl D7:
-Menu("POTENT","SPHERE V",DQ,"CYL V",DR,"RING",DS,"CAP U",DP,"BACK",P1)
+Lbl M1:
+Menu("FORMULAS","15.1 FIELDS",MA,"15.2 LINE",MB,"15.3 FT LN",MC,"15.4 GREEN",MD,"MORE",M2,"BACK",M0)
 
-Lbl D1:
-Menu("CIRCUITS","RC CHRG",DA,"RC DSCH",DB,"LC OSC",DC,"LR CHRG",DD,"LR DSCH",DE,"BACK",P1)
+Lbl M2:
+Menu("MORE","15.5 PARAM",ME,"15.6 SURF",MF,"15.7 DIV",MG,"15.8 STK",MH,"BACK",M1)
 
-Lbl D4:
-Menu("GAUSS","SPHERE",DF,"CYLINDER",DG,"PLANE",DH,"PAR PLT",DI,"BACK",P1)
+Lbl M3:
+Menu("REFER","BIG 4",MI,"QUICK REF",MJ,"DECISION",MK,"MISTAKES",ML,"BACK",M0)
 
-Lbl D5:
-Menu("INDUCT","MOT EMF",DJ,"ROT LOOP",DK,"CHG B",DL,"BACK",P1)
+Lbl M4:
+Menu("SOLVER","FIELDS",MN,"LINE INT",MO,"GREEN",MP,"SURFACE",MQ,"BIG THM",MR,"AUTO",MS,"BACK",M0)
 
-Lbl D6:
-Menu("MAGNET","LOOP B",DM,"INF WIRE",DN,"SOLN B",DO,"BACK",P1)
-
-Lbl DA:
+Lbl MA:
 50->C
 0->N
-1->J
+23->J
 Goto Z0
-Lbl DB:
+Lbl MB:
 50->C
 1->N
-1->J
+23->J
 Goto Z0
-Lbl DC:
+Lbl MC:
 50->C
 2->N
-1->J
+23->J
 Goto Z0
-Lbl DD:
+Lbl MD:
 50->C
 3->N
-1->J
+23->J
 Goto Z0
-Lbl DE:
+Lbl ME:
 50->C
 4->N
-1->J
+24->J
 Goto Z0
-Lbl DF:
+Lbl MF:
 50->C
 5->N
-2->J
+24->J
 Goto Z0
-Lbl DG:
+Lbl MG:
 50->C
 6->N
-2->J
+24->J
 Goto Z0
-Lbl DH:
+Lbl MH:
 50->C
 7->N
-2->J
+24->J
 Goto Z0
-Lbl DI:
+Lbl MI:
 50->C
 8->N
-2->J
+25->J
 Goto Z0
-Lbl DJ:
+Lbl MJ:
 50->C
 9->N
-3->J
+25->J
 Goto Z0
-Lbl DK:
+Lbl MK:
 50->C
 10->N
-3->J
+25->J
 Goto Z0
-Lbl DL:
+Lbl ML:
 50->C
 11->N
-3->J
-Goto Z0
-Lbl DM:
-50->C
-12->N
-4->J
-Goto Z0
-Lbl DN:
-50->C
-13->N
-4->J
-Goto Z0
-Lbl DO:
-50->C
-14->N
-4->J
-Goto Z0
-Lbl DP:
-50->C
-15->N
-19->J
-Goto Z0
-Lbl DQ:
-50->C
-16->N
-19->J
-Goto Z0
-Lbl DR:
-50->C
-17->N
-19->J
-Goto Z0
-Lbl DS:
-50->C
-18->N
-19->J
+25->J
 Goto Z0
 
-Lbl P2:
-Menu("EQUATION","STATIC",E1,"OHMS",E2,"FORCES",E3,"FIELDS",E4,"INDUCT",E5,"ENERGY",E6,"BACK",P0)
+Lbl MN:
+"F:"->Str9
+Goto MX
+Lbl MO:
+"L:"->Str9
+Goto MX
+Lbl MP:
+"G:"->Str9
+Goto MX
+Lbl MQ:
+"S:"->Str9
+Goto MX
+Lbl MR:
+"B:"->Str9
+Goto MX
+Lbl MS:
+"A:"->Str9
+Goto MX
 
-Lbl E1:
-Menu("STATIC","FLUX",EA,"UNIF V",EB,"COUL K",EL,"DENSITY",EM,"QUANT",EZ,"BACK",P2)
-
-Lbl E2:
-Menu("OHMS","RESIST",EP,"KIRCH",EQ,"POWER",ED,"CURRDIV",AB,"DRIFT V",AC,"INT R",AD,"BACK",P2)
-
-Lbl E7:
-Menu("RC/CAP","CAP U",EC,"RC TRAN",EE,"BACK",P2)
-
-Lbl E3:
-Menu("FORCES","F ON Q",ES,"F ON I",ET,"TORQUE",ER,"PARA",EW,"CYCL",EX,"BACK",P2)
-
-Lbl E4:
-Menu("FIELDS","GAUSS",EG,"AMPERE",EH,"TOROID",AA,"SOLN L",EJ,"STRETCH",AE,"BACK",P2)
-
-Lbl E5:
-Menu("INDUCT","MOT EMF",EI,"LR TRAN",EF,"RC TRAN",EE,"MAXWELL",EN,"BACK",P2)
-
-Lbl E6:
-Menu("ENERGY","LC FREQ",EK,"U DENS",EU,"POYNT",EV,"TRANS",EY,"NETWORK",EO,"CAP U",EC,"BACK",P2)
-
-Lbl EA:
-51->C
-0->N
-6->J
-Goto Z0
-Lbl EB:
-51->C
-1->N
-6->J
-Goto Z0
-Lbl EC:
-51->C
-2->N
-14->J
-Goto Z0
-Lbl ED:
-51->C
-3->N
-7->J
-Goto Z0
-Lbl EE:
-51->C
-4->N
-13->J
-Goto Z0
-Lbl EF:
-51->C
-5->N
-13->J
-Goto Z0
-Lbl EG:
-51->C
-6->N
-9->J
-Goto Z0
-Lbl EH:
-51->C
-7->N
-9->J
-Goto Z0
-Lbl EI:
-51->C
-8->N
-13->J
-Goto Z0
-Lbl EJ:
-51->C
-9->N
-9->J
-Goto Z0
-Lbl EK:
-51->C
-10->N
-14->J
-Goto Z0
-Lbl EL:
-51->C
-11->N
-6->J
-Goto Z0
-Lbl EM:
-51->C
-12->N
-6->J
-Goto Z0
-Lbl EN:
-51->C
-13->N
-13->J
-Goto Z0
-Lbl EO:
-51->C
-14->N
-14->J
-Goto Z0
-Lbl EP:
-51->C
-15->N
-7->J
-Goto Z0
-Lbl EQ:
-51->C
-16->N
-7->J
-Goto Z0
-Lbl ER:
-51->C
-17->N
-8->J
-Goto Z0
-Lbl ES:
-51->C
-18->N
-8->J
-Goto Z0
-Lbl ET:
-51->C
-19->N
-8->J
-Goto Z0
-Lbl EU:
-51->C
-20->N
-14->J
-Goto Z0
-Lbl EV:
-51->C
-21->N
-14->J
-Goto Z0
-Lbl EW:
-51->C
-22->N
-8->J
-Goto Z0
-Lbl EX:
-51->C
-23->N
-8->J
-Goto Z0
-Lbl EY:
-51->C
-24->N
-14->J
-Goto Z0
-Lbl EZ:
-51->C
-25->N
-6->J
-Goto Z0
-Lbl AA:
-51->C
-26->N
-9->J
-Goto Z0
-Lbl AB:
-51->C
-27->N
-7->J
-Goto Z0
-Lbl AC:
-51->C
-28->N
-7->J
-Goto Z0
-Lbl AD:
-51->C
-29->N
-7->J
-Goto Z0
-Lbl AE:
-51->C
-30->N
-9->J
-Goto Z0
-
-Lbl P3:
-Menu("RHR","WIRE B",RA,"F CHARGE",RB,"F WIRE",RC,"LENZ",RD,"LOOP B",RE,"CROSS",RF,"BACK",P0)
-
-Lbl RA:
-52->C
-0->N
-10->J
-Goto Z0
-Lbl RB:
-52->C
-1->N
-10->J
-Goto Z0
-Lbl RC:
-52->C
-2->N
-10->J
-Goto Z0
-Lbl RD:
-52->C
-3->N
-10->J
-Goto Z0
-Lbl RE:
-52->C
-4->N
-10->J
-Goto Z0
-Lbl RF:
-52->C
-5->N
-10->J
-Goto Z0
-
-Lbl P4:
-Menu("BEHAVIOR","STATICS",H1,"CIRCUITS",H2,"GENERAL",H3,"RULES",P8,"BACK",P0)
-
-Lbl H1:
-Menu("STATICS","CONDCT",BA,"DIELEC",BF,"V/E",BH,"SHARP",BL,"FLD LINES",BM,"FARADAY",BO,"BACK",P4)
-
-Lbl H2:
-Menu("CIRCUITS","CAP T=0",BB,"IND T=0",BC,"CAP/IND",BD,"NETWORK",BE,"POWER",BQ,"METER",BR,"BACK",P4)
-
-Lbl H3:
-Menu("GENERAL","CIRC B",BG,"REF V",BK,"dQ ELEM",BS,"GROUND",BN,"REDISTR",BP,"BACK",P4)
-
-Lbl BA:
-53->C
-0->N
-11->J
-Goto Z0
-Lbl BB:
-53->C
-1->N
-12->J
-Goto Z0
-Lbl BC:
-53->C
-2->N
-12->J
-Goto Z0
-Lbl BD:
-53->C
-3->N
-12->J
-Goto Z0
-Lbl BE:
-53->C
-4->N
-12->J
-Goto Z0
-Lbl BF:
-53->C
-5->N
-11->J
-Goto Z0
-Lbl BG:
-53->C
-6->N
-21->J
-Goto Z0
-Lbl BH:
-53->C
-7->N
-11->J
-Goto Z0
-Lbl BI:
-53->C
-8->N
-21->J
-Goto Z0
-Lbl BJ:
-53->C
-9->N
-21->J
-Goto Z0
-Lbl BK:
-53->C
-10->N
-21->J
-Goto Z0
-Lbl BL:
-53->C
-11->N
-11->J
-Goto Z0
-Lbl BM:
-53->C
-12->N
-11->J
-Goto Z0
-Lbl BN:
-53->C
-13->N
-21->J
-Goto Z0
-Lbl BO:
-53->C
-14->N
-11->J
-Goto Z0
-Lbl BP:
-53->C
-15->N
-21->J
-Goto Z0
-Lbl BQ:
-53->C
-16->N
-12->J
-Goto Z0
-Lbl BR:
-53->C
-17->N
-12->J
-Goto Z0
-Lbl BS:
-53->C
-18->N
-21->J
-Goto Z0
+Lbl MX:
+ClrHome
+42->C
+Disp "PROBLEM:"
+Input "",Str1
+Str9+Str1->Str0
+ClrHome
+Output(4,4,"SOLVING...")
+Send(C)
+Send(Str0)
+0->S
+Repeat S
+Get(S)
+End
+Get(Str0)
+22->J
+Goto D8
 
 Lbl P5:
 Menu("SOLVER","CIRCUITS",SQ,"FIELDS",SF,"ENERGY",SE,"OTHER",SO,"CUSTOM",SC,"BACK",P0)
@@ -727,133 +404,6 @@ P+1->P
 Goto P6
 End
 Goto P6
-
-Lbl P7:
-Menu("GRAPHS","TRANSIENT",G1,"OSCILL",G2,"FIELDS",G3,"BACK",P0)
-
-Lbl G1:
-Menu("TRANSIENT","RC CHRG Q",GA,"RC CHRG I",GB,"RC DSCH Q",GC,"RC DSCH I",GD,"RL CHRG",GE,"RL DSCH",GF,"BACK",P7)
-
-Lbl G2:
-Menu("OSCILL","LC Q",GG,"LC I",GH,"BACK",P7)
-
-Lbl G3:
-Menu("FIELDS","SPHERE V",GI,"SPHERE E",GJ,"CYL V",GK,"CYL E",GL,"WIRE B",GM,"SOLN B",GN,"BACK",P7)
-
-Lbl GA:
-54->C
-0->N
-15->J
-Goto Z0
-Lbl GB:
-54->C
-1->N
-15->J
-Goto Z0
-Lbl GC:
-54->C
-2->N
-15->J
-Goto Z0
-Lbl GD:
-54->C
-3->N
-15->J
-Goto Z0
-Lbl GE:
-54->C
-4->N
-15->J
-Goto Z0
-Lbl GF:
-54->C
-5->N
-15->J
-Goto Z0
-Lbl GG:
-54->C
-6->N
-16->J
-Goto Z0
-Lbl GH:
-54->C
-7->N
-16->J
-Goto Z0
-Lbl GI:
-54->C
-8->N
-17->J
-Goto Z0
-Lbl GJ:
-54->C
-9->N
-17->J
-Goto Z0
-Lbl GK:
-54->C
-10->N
-17->J
-Goto Z0
-Lbl GL:
-54->C
-11->N
-17->J
-Goto Z0
-Lbl GM:
-54->C
-12->N
-17->J
-Goto Z0
-Lbl GN:
-54->C
-13->N
-17->J
-Goto Z0
-
-Lbl P8:
-Menu("RULES","JUNCTION",R1,"LOOP",R2,"CHARGES",R3,"LENZ",R4,"CONSERV",R5,"SYMMETRY",R7,"BACK",P4)
-
-Lbl R1:
-55->C
-0->N
-18->J
-Goto Z0
-Lbl R2:
-55->C
-1->N
-18->J
-Goto Z0
-Lbl R3:
-55->C
-2->N
-18->J
-Goto Z0
-Lbl R4:
-55->C
-3->N
-18->J
-Goto Z0
-Lbl R5:
-55->C
-4->N
-18->J
-Goto Z0
-Lbl R6:
-55->C
-5->N
-18->J
-Goto Z0
-Lbl R7:
-55->C
-6->N
-18->J
-Goto Z0
-Lbl R8:
-55->C
-7->N
-18->J
-Goto Z0
 
 Lbl Z0:
 ClrHome
@@ -1165,28 +715,11 @@ Repeat max(K={24,26,45})
 getKey->K
 End
 If K=45:Then
-If J=1:Goto D1
-If J=2:Goto D4
-If J=3:Goto D5
-If J=4:Goto D6
-If J=5:Goto P1
-If J=6:Goto E1
-If J=7:Goto E2
-If J=8:Goto E3
-If J=9:Goto E4
-If J=10:Goto P3
-If J=11:Goto H1
-If J=12:Goto H2
-If J=13:Goto E5
-If J=14:Goto E6
-If J=15:Goto G1
-If J=16:Goto G2
-If J=17:Goto G3
-If J=18:Goto P8
-If J=19:Goto D7
-If J=20:Goto E7
-If J=21:Goto H3
-Goto P0
+If J=22:Goto M4
+If J=23:Goto M1
+If J=24:Goto M2
+If J=25:Goto M3
+Goto M0
 End
 If K=24:Then
 If P>0:P-1->P
