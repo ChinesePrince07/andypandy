@@ -34,7 +34,7 @@ export async function chatgpt() {
             { role: "system", content: systemPrompt },
             { role: "user", content: question },
           ],
-          model: "gpt-5.4-nano",
+          model: isMath ? "gpt-5.4" : "gpt-5.4-nano",
         });
         res.send(result.choices[0]?.message?.content ?? "no response");
         return;
