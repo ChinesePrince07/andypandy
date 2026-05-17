@@ -170,7 +170,7 @@ Lbl P0:
 Menu("PHYSICS","SOLVER",P5,"BACK",B0)
 
 Lbl M0:
-Menu("MATH","FORMULAS",M1,"REFERENCE",M3,"SOLVER",M4,"BACK",B0)
+Menu("MATH","FORMULAS",M1,"REFERENCE",M3,"COORDS",M5,"SOLVER",M4,"BACK",B0)
 
 Lbl M1:
 Menu("FORMULAS","15.1 FIELDS",MA,"15.2 LINE",MB,"15.3 FT LN",MC,"15.4 GREEN",MD,"MORE",M2,"BACK",M0)
@@ -183,6 +183,40 @@ Menu("REFER","BIG 4",MI,"QUICK REF",MJ,"DECISION",MK,"MISTAKES",ML,"BACK",M0)
 
 Lbl M4:
 Menu("SOLVER","FIELDS",MN,"LINE INT",MO,"GREEN",MP,"SURFACE",MQ,"BIG THM",MR,"AUTO",MS,"BACK",M0)
+
+Lbl M5:
+Menu("COORDS","R TO C",TA,"C TO R",TB,"C TO S",TC,"S TO C",TD,"R TO S",TE,"S TO R",TF,"BACK",M0)
+
+Lbl TA:
+50->C
+12->N
+26->J
+Goto Z0
+Lbl TB:
+50->C
+13->N
+26->J
+Goto Z0
+Lbl TC:
+50->C
+14->N
+26->J
+Goto Z0
+Lbl TD:
+50->C
+15->N
+26->J
+Goto Z0
+Lbl TE:
+50->C
+16->N
+26->J
+Goto Z0
+Lbl TF:
+50->C
+17->N
+26->J
+Goto Z0
 
 Lbl MA:
 50->C
@@ -267,9 +301,11 @@ Goto MX
 Lbl MX:
 ClrHome
 42->C
-Disp "PROBLEM:"
+Disp "F(X,Y,Z):"
 Input "",Str1
-Str9+Str1->Str0
+Disp "CURVE C:"
+Input "",Str2
+Str9+"F=("+Str1+"), C=("+Str2+")"->Str0
 ClrHome
 Output(4,4,"SOLVING...")
 Send(C)
@@ -719,6 +755,7 @@ If J=22:Goto M4
 If J=23:Goto M1
 If J=24:Goto M2
 If J=25:Goto M3
+If J=26:Goto M5
 Goto M0
 End
 If K=24:Then
