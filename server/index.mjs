@@ -9,6 +9,7 @@ import { programs } from "./routes/programs.mjs";
 
 import { firmware } from "./routes/firmware.mjs";
 import { logs } from "./routes/logs.mjs";
+import { requests, captureMiddleware } from "./routes/requests.mjs";
 dot.config();
 
 async function main() {
@@ -31,6 +32,12 @@ async function main() {
     console.log(req.headers.authorization);
     next();
   });
+
+  // Capture inbound requests (must come before route handlers so res.on('finish') fires)
+  app.use(captureMiddleware());
+
+  // Request monitor
+  app.use("/requests", requests());
 
   // Programs
   app.use("/programs", programs());
