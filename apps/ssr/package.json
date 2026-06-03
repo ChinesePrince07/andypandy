@@ -17,12 +17,15 @@
   },
   "dependencies": {
     "@afilmory/data": "workspace:*",
-    "@afilmory/ui": "workspace:*",
     "@afilmory/typing": "workspace:*",
+    "@afilmory/ui": "workspace:*",
     "@afilmory/utils": "workspace:*",
     "@t3-oss/env-nextjs": "0.13.10",
+    "@vercel/blob": "^0.27.1",
+    "aws4fetch": "^1.0.20",
     "clsx": "2.1.1",
     "es-toolkit": "1.44.0",
+    "exifr": "^7.1.3",
     "linkedom": "0.18.12",
     "prop-types": "15.8.1",
     "react": "19.2.4",
@@ -33,8 +36,6 @@
     "tailwind-variants": "catalog:",
     "thumbhash": "0.1.1",
     "usehooks-ts": "3.1.1",
-    "@vercel/blob": "^0.27.1",
-    "exifr": "^7.1.3",
     "zod": "catalog:"
   },
   "devDependencies": {
