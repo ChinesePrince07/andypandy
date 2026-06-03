@@ -1,6 +1,5 @@
 'use client'
 
-import { upload } from '@vercel/blob/client'
 import Link from 'next/link'
 import { useCallback, useRef, useState } from 'react'
 
@@ -133,18 +132,37 @@ export default function UploadPage() {
       updateFileStatus(i, 'uploading')
 
       try {
-        // Step 1: Upload directly to Vercel Blob (bypasses 4.5MB serverless limit)
-        const blob = await upload(uploadFile.file.name, uploadFile.file, {
-          access: 'public',
-          handleUploadUrl: '/api/admin/photos/upload',
+        // Step 1: Get a presigned R2 upload URL
+        const presignRes = await fetch('/api/admin/photos/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename: uploadFile.file.name, contentType: uploadFile.file.type }),
         })
+        if (!presignRes.ok) {
+          const data = await presignRes.json().catch(() => ({ error: 'Failed to get upload URL' }))
+          updateFileStatus(i, 'error', data.error || 'Failed to get upload URL')
+          continue
+        }
+        const { id, key, uploadUrl } = await presignRes.json()
 
-        // Step 2: Process metadata server-side (EXIF, thumbnail, manifest, AI)
+        // Step 2: Upload the original directly to R2 (bypasses 4.5MB serverless limit)
+        const putRes = await fetch(uploadUrl, {
+          method: 'PUT',
+          body: uploadFile.file,
+          headers: uploadFile.file.type ? { 'Content-Type': uploadFile.file.type } : undefined,
+        })
+        if (!putRes.ok) {
+          updateFileStatus(i, 'error', `Upload to storage failed (${putRes.status})`)
+          continue
+        }
+
+        // Step 3: Process metadata server-side (EXIF, thumbnail, manifest, AI)
         const res = await fetch('/api/admin/photos/process', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            blobUrl: blob.url,
+            id,
+            key,
             filename: uploadFile.file.name,
             tags: uploadFile.tags.length > 0 ? uploadFile.tags : undefined,
           }),
