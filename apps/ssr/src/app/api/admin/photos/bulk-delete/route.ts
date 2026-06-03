@@ -3,7 +3,8 @@ import type { NextRequest } from 'next/server'
 import type { CameraInfo, LensInfo, PhotoManifestItem } from '@afilmory/typing'
 
 import { requireAdmin } from '~/lib/admin-auth'
-import { deleteFromBlob, getManifest, saveManifest } from '~/lib/blob'
+import { getManifest, saveManifest } from '~/lib/manifest'
+import { deleteFromR2ByUrl } from '~/lib/r2'
 
 export const maxDuration = 60
 export const dynamic = 'force-dynamic'
@@ -65,14 +66,14 @@ export async function POST(req: NextRequest) {
     const blobErrors: string[] = []
     for (const photo of toDelete) {
       try {
-        await deleteFromBlob(photo.originalUrl)
+        await deleteFromR2ByUrl(photo.originalUrl)
       } catch (e) {
         const msg = `Failed to delete original ${photo.originalUrl}: ${e instanceof Error ? e.message : String(e)}`
         console.error(`[BULK-DELETE] ${msg}`)
         blobErrors.push(msg)
       }
       try {
-        await deleteFromBlob(photo.thumbnailUrl)
+        await deleteFromR2ByUrl(photo.thumbnailUrl)
       } catch (e) {
         const msg = `Failed to delete thumbnail ${photo.thumbnailUrl}: ${e instanceof Error ? e.message : String(e)}`
         console.error(`[BULK-DELETE] ${msg}`)
