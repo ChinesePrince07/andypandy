@@ -6,7 +6,8 @@ import type { CameraInfo, LensInfo, LocationInfo, PickedExif, PhotoManifestItem 
 
 import { generatePhotoAI, reverseGeocode } from '~/lib/ai'
 import { requireAdmin } from '~/lib/admin-auth'
-import { deleteFromBlob, getManifest, listAllBlobs, saveManifest, uploadToBlob } from '~/lib/blob'
+import { getManifest, saveManifest } from '~/lib/manifest'
+import { deleteFromR2ByUrl, getFromR2, listR2, publicUrl, uploadToR2 } from '~/lib/r2'
 
 export const maxDuration = 300
 export const dynamic = 'force-dynamic'
@@ -71,18 +72,16 @@ export async function POST(req: NextRequest) {
       return handleFixThumbHash()
     }
 
-    const { blobUrl, filename, tags: userTags, title: userTitle } = body
-    if (!blobUrl || !filename) {
-      return Response.json({ error: 'Missing blobUrl or filename' }, { status: 400 })
+    const { id, key, filename, tags: userTags, title: userTitle } = body
+    if (!id || !key || !filename) {
+      return Response.json({ error: 'Missing id, key, or filename' }, { status: 400 })
     }
 
-    // Download the uploaded blob
-    const blobRes = await fetch(blobUrl)
-    if (!blobRes.ok) {
-      return Response.json({ error: 'Failed to download uploaded file' }, { status: 500 })
+    // Download the original the browser uploaded to R2
+    const buffer = await getFromR2(key)
+    if (!buffer) {
+      return Response.json({ error: 'Uploaded file not found in storage' }, { status: 500 })
     }
-    const buffer = Buffer.from(await blobRes.arrayBuffer())
-    const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6)
 
     // Image processing with Sharp (with orientation fix)
     const sharp = (await import('sharp')).default
@@ -213,8 +212,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Upload thumbnail to Vercel Blob (original is already uploaded via client)
-    const thumbnailUrl = await uploadToBlob(`photos/thumb/${id}.webp`, thumbnailBuffer, 'image/webp')
+    // Upload thumbnail to R2 (original is already in R2 at `key`)
+    const thumbnailUrl = await uploadToR2(`photos/thumb/${id}.webp`, thumbnailBuffer, 'image/webp')
 
     // Generate AI title and tags (non-blocking — falls back gracefully)
     const aiResult = await generatePhotoAI(thumbnailBuffer.toString('base64'))
@@ -232,21 +231,20 @@ export async function POST(req: NextRequest) {
     }
 
     // Build photo manifest item
-    const ext = format || 'jpg'
     const photoItem: PhotoManifestItem = {
       id,
       title: finalTitle,
       description: '',
       dateTaken: dateTaken || new Date().toISOString(),
       tags: finalTags,
-      originalUrl: blobUrl,
+      originalUrl: publicUrl(key),
       thumbnailUrl,
       ogImageUrl: null,
       thumbHash: thumbHashHex,
       width: fullWidth,
       height: fullHeight,
       aspectRatio: fullWidth && fullHeight ? fullWidth / fullHeight : 1,
-      s3Key: `photos/original/${id}.${ext}`,
+      s3Key: key,
       format: format || 'unknown',
       size: buffer.length,
       lastModified: new Date().toISOString(),
@@ -289,7 +287,7 @@ async function handleRecover(body: any) {
     const manifest = await getManifest()
     const existingIds = new Set(manifest.data.map((p: PhotoManifestItem) => p.id))
 
-    const allBlobs = await listAllBlobs()
+    const allBlobs = await listR2()
 
     const imageExtensions = new Set([
       'jpg',
@@ -384,7 +382,7 @@ async function handleRecover(body: any) {
             .resize({ width: 1600, withoutEnlargement: true })
             .webp({ quality: 80 })
             .toBuffer({ resolveWithObject: true })
-          thumbnailUrl = await uploadToBlob(thumbKey, thumbResult.data, 'image/webp')
+          thumbnailUrl = await uploadToR2(thumbKey, thumbResult.data, 'image/webp')
         }
 
         const thumbData = await sharp(buffer)
@@ -569,7 +567,7 @@ async function handleCleanup(body: any) {
     const dryRun = body.dryRun !== false
 
     const manifest = await getManifest()
-    const allBlobs = await listAllBlobs()
+    const allBlobs = await listR2()
 
     // Build a set of all URLs referenced by the manifest
     const referencedUrls = new Set<string>()
@@ -591,7 +589,7 @@ async function handleCleanup(body: any) {
     if (!dryRun) {
       for (const blob of orphaned) {
         try {
-          await deleteFromBlob(blob.url)
+          await deleteFromR2ByUrl(blob.url)
           deleted.push(blob.pathname)
         } catch (e) {
           errors.push(`Failed to delete ${blob.pathname}: ${e instanceof Error ? e.message : String(e)}`)

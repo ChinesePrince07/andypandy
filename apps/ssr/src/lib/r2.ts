@@ -62,7 +62,9 @@ export async function uploadToR2(
   opts?: { immutable?: boolean },
 ): Promise<string> {
   const cacheControl = opts?.immutable === false ? 'no-store, max-age=0' : IMMUTABLE_CACHE
-  const body = data instanceof Uint8Array ? data : new Uint8Array(data)
+  // aws4fetch needs a body with byteLength (string | ArrayBuffer | ArrayBufferView);
+  // Uint8Array satisfies that at runtime. The cast sidesteps TS 5.7 BodyInit generics friction.
+  const body = (data instanceof Uint8Array ? data : new Uint8Array(data)) as unknown as BodyInit
   const res = await aws.fetch(objectUrl(key), {
     method: 'PUT',
     body,
