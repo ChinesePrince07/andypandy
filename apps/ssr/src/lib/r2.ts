@@ -1,3 +1,5 @@
+import https from 'node:https'
+
 import { AwsClient } from 'aws4fetch'
 
 const ACCOUNT_ID = process.env.R2_ACCOUNT_ID ?? ''
@@ -62,20 +64,36 @@ export async function uploadToR2(
   opts?: { immutable?: boolean },
 ): Promise<string> {
   const cacheControl = opts?.immutable === false ? 'no-store, max-age=0' : IMMUTABLE_CACHE
-  // Wrap in a Blob so the runtime always sends a Content-Length header. R2 rejects
-  // chunked PUTs with 411 MissingContentLength, and on some Node versions (e.g. Vercel's
-  // Node 22 undici) a bare Uint8Array body is sent without Content-Length. A Blob has a
-  // known .size so undici always sets it. aws4fetch uses UNSIGNED-PAYLOAD for S3, so it
-  // never tries to hash the Blob body.
-  const body = new Blob([data], { type: contentType })
-  const res = await aws.fetch(objectUrl(key), {
-    method: 'PUT',
-    body,
-    headers: { 'content-type': contentType, 'cache-control': cacheControl },
+  const buf = Buffer.isBuffer(data) ? data : Buffer.from(data)
+  // Upload via a presigned URL using Node's https module with an explicit Content-Length.
+  // R2 rejects chunked PUTs (411 MissingContentLength), and fetch/undici omits Content-Length
+  // for buffer/Blob bodies on some runtimes (notably Vercel's bundled functions). The https
+  // module lets us set Content-Length directly, which is bulletproof across runtimes.
+  const presignedUrl = await presignPutUrl(key, 300)
+  await new Promise<void>((resolve, reject) => {
+    const req = https.request(
+      new URL(presignedUrl),
+      {
+        method: 'PUT',
+        headers: {
+          'content-type': contentType,
+          'cache-control': cacheControl,
+          'content-length': buf.length,
+        },
+      },
+      (res) => {
+        const chunks: Buffer[] = []
+        res.on('data', (c) => chunks.push(c as Buffer))
+        res.on('end', () => {
+          const status = res.statusCode ?? 0
+          if (status >= 200 && status < 300) resolve()
+          else reject(new Error(`R2 upload failed for ${key}: ${status} ${Buffer.concat(chunks).toString()}`))
+        })
+      },
+    )
+    req.on('error', reject)
+    req.end(buf)
   })
-  if (!res.ok) {
-    throw new Error(`R2 upload failed for ${key}: ${res.status} ${await res.text().catch(() => '')}`)
-  }
   return publicUrl(key)
 }
 
