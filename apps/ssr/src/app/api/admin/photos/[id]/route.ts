@@ -4,7 +4,8 @@ import type { CameraInfo, LensInfo, PhotoManifestItem } from '@afilmory/typing'
 
 import { reverseGeocode } from '~/lib/ai'
 import { requireAdmin } from '~/lib/admin-auth'
-import { deleteFromBlob, getManifest, saveManifest, uploadToBlob } from '~/lib/blob'
+import { getManifest, saveManifest } from '~/lib/manifest'
+import { deleteFromR2ByUrl, getFromR2, uploadToR2 } from '~/lib/r2'
 
 function rebuildCameras(photos: PhotoManifestItem[]): CameraInfo[] {
   const seen = new Map<string, CameraInfo>()
@@ -77,12 +78,11 @@ async function writeExifToImage(photo: PhotoManifestItem): Promise<{ success: bo
   try {
     const sharp = (await import('sharp')).default
 
-    // Download original image
-    const res = await fetch(photo.originalUrl)
-    if (!res.ok) {
-      return { success: false, error: `Failed to download original: ${res.status}` }
+    // Download original image from R2
+    const buffer = await getFromR2(photo.s3Key)
+    if (!buffer) {
+      return { success: false, error: 'Failed to download original from storage' }
     }
-    const buffer = Buffer.from(await res.arrayBuffer())
 
     // Build EXIF data to merge
     const ifd0: Record<string, string> = {}
@@ -147,7 +147,7 @@ async function writeExifToImage(photo: PhotoManifestItem): Promise<{ success: bo
               ? 'image/tiff'
               : `image/${photo.format}`
 
-    await uploadToBlob(photo.s3Key, outputBuffer, contentType)
+    await uploadToR2(photo.s3Key, outputBuffer, contentType)
 
     console.log(`[writeExif] Successfully wrote EXIF to ${photo.s3Key}`)
     return { success: true }
@@ -304,7 +304,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   const blobErrors: string[] = []
   try {
     console.log(`[DELETE] Deleting original blob: ${photo.originalUrl}`)
-    await deleteFromBlob(photo.originalUrl)
+    await deleteFromR2ByUrl(photo.originalUrl)
     console.log(`[DELETE] Successfully deleted original blob`)
   } catch (e) {
     const msg = `Failed to delete original blob ${photo.originalUrl}: ${e instanceof Error ? e.message : String(e)}`
@@ -313,7 +313,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   }
   try {
     console.log(`[DELETE] Deleting thumbnail blob: ${photo.thumbnailUrl}`)
-    await deleteFromBlob(photo.thumbnailUrl)
+    await deleteFromR2ByUrl(photo.thumbnailUrl)
     console.log(`[DELETE] Successfully deleted thumbnail blob`)
   } catch (e) {
     const msg = `Failed to delete thumbnail blob ${photo.thumbnailUrl}: ${e instanceof Error ? e.message : String(e)}`
