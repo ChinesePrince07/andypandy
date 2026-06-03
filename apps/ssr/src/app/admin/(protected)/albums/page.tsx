@@ -1,6 +1,6 @@
 import Link from 'next/link'
 
-import { getManifestSafe } from '~/lib/blob'
+import { getManifestSafe } from '~/lib/manifest'
 
 import { AlbumActions } from './album-actions'
 
@@ -56,9 +56,7 @@ export default async function AlbumsPage() {
                   <p className="mt-1 text-sm text-neutral-500">
                     {album.photoIds.length} photo{album.photoIds.length !== 1 ? 's' : ''}
                   </p>
-                  {album.description && (
-                    <p className="mt-1 truncate text-sm text-neutral-400">{album.description}</p>
-                  )}
+                  {album.description && <p className="mt-1 truncate text-sm text-neutral-400">{album.description}</p>}
                 </div>
               </Link>
             )

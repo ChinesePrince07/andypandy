@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og'
 import type { NextRequest } from 'next/server'
 
-import { getManifestSafe } from '~/lib/blob'
+import { getManifestSafe } from '~/lib/manifest'
 import { getOGImageLayout } from '~/lib/og-helpers'
 
 export const dynamic = 'force-dynamic'
@@ -16,9 +16,13 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
   }
 
   const subtitle = [
-    photo.dateTaken ? new Date(photo.dateTaken).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : null,
+    photo.dateTaken
+      ? new Date(photo.dateTaken).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+      : null,
     photo.exif?.Make && photo.exif?.Model ? `${photo.exif.Make} ${photo.exif.Model}` : null,
-  ].filter(Boolean).join(' \u00b7 ')
+  ]
+    .filter(Boolean)
+    .join(' \u00b7 ')
 
   const layout = getOGImageLayout(photo.title || 'Untitled', subtitle, [photo])
   return new ImageResponse(layout.element, layout.options)

@@ -21,7 +21,6 @@
     "@afilmory/ui": "workspace:*",
     "@afilmory/utils": "workspace:*",
     "@t3-oss/env-nextjs": "0.13.10",
-    "@vercel/blob": "^0.27.1",
     "aws4fetch": "^1.0.20",
     "clsx": "2.1.1",
     "es-toolkit": "1.44.0",

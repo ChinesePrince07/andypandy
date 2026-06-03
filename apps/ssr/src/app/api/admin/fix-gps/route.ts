@@ -1,5 +1,5 @@
 import { requireAdmin } from '~/lib/admin-auth'
-import { getManifest, saveManifest } from '~/lib/blob'
+import { getManifest, saveManifest } from '~/lib/manifest'
 
 export const maxDuration = 60
 export const dynamic = 'force-dynamic'

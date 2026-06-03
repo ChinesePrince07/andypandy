@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server'
 
 import { requireAdmin } from '~/lib/admin-auth'
-import { getManifest, saveManifest } from '~/lib/blob'
+import { getManifest, saveManifest } from '~/lib/manifest'
 
 export const dynamic = 'force-dynamic'
 
@@ -49,10 +49,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   return Response.json(album)
 }
 
-export async function DELETE(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const authResponse = await requireAdmin()
   if (authResponse) return authResponse
 

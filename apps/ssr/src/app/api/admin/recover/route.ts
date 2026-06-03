@@ -6,7 +6,8 @@ import type { CameraInfo, LensInfo, LocationInfo, PickedExif, PhotoManifestItem 
 
 import { reverseGeocode } from '~/lib/ai'
 import { requireAdmin } from '~/lib/admin-auth'
-import { getManifest, listAllBlobs, saveManifest, uploadToBlob } from '~/lib/blob'
+import { getManifest, saveManifest } from '~/lib/manifest'
+import { listR2, uploadToR2 } from '~/lib/r2'
 
 export const maxDuration = 300
 export const dynamic = 'force-dynamic'
@@ -59,7 +60,7 @@ export async function POST(req: NextRequest) {
     const existingIds = new Set(manifest.data.map((p) => p.id))
 
     // Scan blob storage for original photos
-    const allBlobs = await listAllBlobs()
+    const allBlobs = await listR2()
 
     // Find original photo blobs (uploaded via the process route as photos/original/{id}.{ext}
     // or directly via client upload)
@@ -146,7 +147,7 @@ export async function POST(req: NextRequest) {
             .resize({ width: 1600, withoutEnlargement: true })
             .webp({ quality: 80 })
             .toBuffer({ resolveWithObject: true })
-          thumbnailUrl = await uploadToBlob(thumbKey, thumbnailBuffer, 'image/webp')
+          thumbnailUrl = await uploadToR2(thumbKey, thumbnailBuffer, 'image/webp')
         }
 
         // Generate thumbhash

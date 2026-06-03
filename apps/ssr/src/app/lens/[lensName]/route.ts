@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server'
 
-import { getManifestSafe } from '~/lib/blob'
+import { getManifestSafe } from '~/lib/manifest'
 import { serveSPAWithMeta } from '~/lib/ssr-meta'
 
 export const dynamic = 'force-dynamic'

@@ -2,7 +2,7 @@ import { DOMParser } from 'linkedom'
 import type { NextRequest } from 'next/server'
 
 import { verifyAdmin } from '~/lib/admin-auth'
-import { getManifestSafe } from '~/lib/blob'
+import { getManifestSafe } from '~/lib/manifest'
 import { injectAdminButton, injectConfigToDocument, injectManifestToDocument } from '~/lib/injectable'
 
 export const dynamic = 'force-dynamic'
