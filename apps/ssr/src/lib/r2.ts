@@ -62,9 +62,12 @@ export async function uploadToR2(
   opts?: { immutable?: boolean },
 ): Promise<string> {
   const cacheControl = opts?.immutable === false ? 'no-store, max-age=0' : IMMUTABLE_CACHE
-  // aws4fetch needs a body with byteLength (string | ArrayBuffer | ArrayBufferView);
-  // Uint8Array satisfies that at runtime. The cast sidesteps TS 5.7 BodyInit generics friction.
-  const body = (data instanceof Uint8Array ? data : new Uint8Array(data)) as unknown as BodyInit
+  // Wrap in a Blob so the runtime always sends a Content-Length header. R2 rejects
+  // chunked PUTs with 411 MissingContentLength, and on some Node versions (e.g. Vercel's
+  // Node 22 undici) a bare Uint8Array body is sent without Content-Length. A Blob has a
+  // known .size so undici always sets it. aws4fetch uses UNSIGNED-PAYLOAD for S3, so it
+  // never tries to hash the Blob body.
+  const body = new Blob([data], { type: contentType })
   const res = await aws.fetch(objectUrl(key), {
     method: 'PUT',
     body,
