@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og'
 import type { NextRequest } from 'next/server'
 
-import { getManifestSafe } from '~/lib/blob'
+import { getManifestSafe } from '~/lib/manifest'
 import { getOGImageLayout } from '~/lib/og-helpers'
 
 export const dynamic = 'force-dynamic'

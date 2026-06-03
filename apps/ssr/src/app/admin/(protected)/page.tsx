@@ -1,6 +1,6 @@
 import Link from 'next/link'
 
-import { getManifestSafe } from '~/lib/blob'
+import { getManifestSafe } from '~/lib/manifest'
 
 import { FixGPSButton } from './fix-gps-button'
 import { GenerateAIButton } from './generate-ai-button'

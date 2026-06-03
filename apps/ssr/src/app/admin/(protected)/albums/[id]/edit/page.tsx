@@ -1,4 +1,4 @@
-import { getManifestSafe } from '~/lib/blob'
+import { getManifestSafe } from '~/lib/manifest'
 
 import { AlbumEditor } from './album-editor'
 

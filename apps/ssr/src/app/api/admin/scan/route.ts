@@ -1,7 +1,8 @@
 import type { NextRequest } from 'next/server'
 
 import { requireAdmin } from '~/lib/admin-auth'
-import { getManifest, listAllBlobs, saveManifest, uploadToBlob } from '~/lib/blob'
+import { getManifest, saveManifest } from '~/lib/manifest'
+import { listR2, uploadToR2 } from '~/lib/r2'
 
 import type { CameraInfo, LensInfo, LocationInfo, PickedExif, PhotoManifestItem } from '@afilmory/typing'
 
@@ -19,7 +20,7 @@ export async function POST(req: NextRequest) {
     const manifest = await getManifest()
     const existingIds = new Set(manifest.data.map((p: PhotoManifestItem) => p.id))
 
-    const allBlobs = await listAllBlobs()
+    const allBlobs = await listR2()
 
     const originalBlobs = allBlobs.filter(
       (b: any) =>
@@ -98,7 +99,7 @@ export async function POST(req: NextRequest) {
             .resize({ width: 1600, withoutEnlargement: true })
             .webp({ quality: 80 })
             .toBuffer({ resolveWithObject: true })
-          thumbnailUrl = await uploadToBlob(thumbKey, thumbResult.data, 'image/webp')
+          thumbnailUrl = await uploadToR2(thumbKey, thumbResult.data, 'image/webp')
         }
 
         const { rgbaToThumbHash } = await import('thumbhash')

@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og'
 import type { NextRequest } from 'next/server'
 
-import { getManifestSafe } from '~/lib/blob'
+import { getManifestSafe } from '~/lib/manifest'
 import { getOGImageLayout } from '~/lib/og-helpers'
 
 export const dynamic = 'force-dynamic'
@@ -18,11 +18,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
   const idSet = new Set(album.photoIds)
   const photos = manifest.data.filter((p) => idSet.has(p.id))
 
-  const layout = getOGImageLayout(
-    album.name,
-    `${photos.length} photo${photos.length !== 1 ? 's' : ''}`,
-    photos,
-  )
+  const layout = getOGImageLayout(album.name, `${photos.length} photo${photos.length !== 1 ? 's' : ''}`, photos)
 
   return new ImageResponse(layout.element, layout.options)
 }

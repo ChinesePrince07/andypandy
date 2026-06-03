@@ -1,14 +1,11 @@
 import type { NextRequest } from 'next/server'
 
-import { getManifestSafe } from '~/lib/blob'
+import { getManifestSafe } from '~/lib/manifest'
 import { serveSPAWithMeta } from '~/lib/ssr-meta'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ make: string; model: string }> },
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ make: string; model: string }> }) {
   const { make, model } = await params
   const displayName = `${decodeURIComponent(make)} ${decodeURIComponent(model)}`
   const manifest = await getManifestSafe()

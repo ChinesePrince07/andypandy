@@ -5,7 +5,7 @@ import type { NextRequest } from 'next/server'
 
 import indexHtml from '~/index.html'
 import { verifyAdmin } from '~/lib/admin-auth'
-import { getManifestSafe } from '~/lib/blob'
+import { getManifestSafe } from '~/lib/manifest'
 import { injectAdminButton, injectConfigToDocument, injectManifestToDocument } from '~/lib/injectable'
 
 type HtmlElement = ReturnType<typeof DOMParser.prototype.parseFromString>
