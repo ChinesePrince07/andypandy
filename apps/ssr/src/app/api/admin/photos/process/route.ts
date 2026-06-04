@@ -7,7 +7,17 @@ import type { CameraInfo, LensInfo, LocationInfo, PickedExif, PhotoManifestItem 
 import { generatePhotoAI, reverseGeocode } from '~/lib/ai'
 import { requireAdmin } from '~/lib/admin-auth'
 import { getManifest, saveManifest } from '~/lib/manifest'
-import { deleteFromR2ByUrl, getFromR2, listR2, publicUrl, uploadToR2 } from '~/lib/r2'
+import { deleteFromR2, deleteFromR2ByUrl, getFromR2, listR2, publicUrl, uploadToR2 } from '~/lib/r2'
+
+/** Detect HEIC/HEIF by extension or ISO-BMFF brand (iPhone photos). */
+function isHeic(buf: Buffer, key: string): boolean {
+  if (/\.(heic|heif)$/i.test(key)) return true
+  if (buf.length >= 12 && buf.toString('latin1', 4, 8) === 'ftyp') {
+    const brand = buf.toString('latin1', 8, 12)
+    return ['heic', 'heix', 'heif', 'mif1', 'hevc', 'msf1'].includes(brand)
+  }
+  return false
+}
 
 export const maxDuration = 300
 export const dynamic = 'force-dynamic'
@@ -83,9 +93,24 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: 'Uploaded file not found in storage' }, { status: 500 })
     }
 
-    // Image processing with Sharp (with orientation fix)
     const sharp = (await import('sharp')).default
-    const image = sharp(buffer).rotate()
+
+    // HEIC/HEIF (iPhone photos) can't be decoded by Vercel's sharp build, so decode to
+    // JPEG with the pure-JS heic-convert. Keep the original HEIC buffer for EXIF (exifr
+    // reads HEIC), but store + process a displayable JPEG as the "original".
+    let pixelBuffer = buffer
+    let storedKey = key
+    if (isHeic(buffer, key)) {
+      const heicConvert = (await import('heic-convert')).default
+      const out = await heicConvert({ buffer, format: 'JPEG', quality: 0.92 })
+      pixelBuffer = Buffer.from(out)
+      storedKey = /\.(heic|heif)$/i.test(key) ? key.replace(/\.(heic|heif)$/i, '.jpg') : `${key}.jpg`
+      await uploadToR2(storedKey, pixelBuffer, 'image/jpeg')
+      if (storedKey !== key) await deleteFromR2(key)
+    }
+
+    // Image processing with Sharp (with orientation fix)
+    const image = sharp(pixelBuffer).rotate()
     const metadata = await image.metadata()
     const { format } = metadata
 
@@ -105,7 +130,7 @@ export async function POST(req: NextRequest) {
       .toBuffer({ resolveWithObject: true })
 
     // Generate thumbhash
-    const { data, info } = await sharp(buffer)
+    const { data, info } = await sharp(pixelBuffer)
       .rotate()
       .resize({ width: 100, height: 100, fit: 'inside' })
       .ensureAlpha()
@@ -237,14 +262,14 @@ export async function POST(req: NextRequest) {
       description: '',
       dateTaken: dateTaken || new Date().toISOString(),
       tags: finalTags,
-      originalUrl: publicUrl(key),
+      originalUrl: publicUrl(storedKey),
       thumbnailUrl,
       ogImageUrl: null,
       thumbHash: thumbHashHex,
       width: fullWidth,
       height: fullHeight,
       aspectRatio: fullWidth && fullHeight ? fullWidth / fullHeight : 1,
-      s3Key: key,
+      s3Key: storedKey,
       format: format || 'unknown',
       size: buffer.length,
       lastModified: new Date().toISOString(),
