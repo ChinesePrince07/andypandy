@@ -51,11 +51,12 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "Source not found" }, { status: 404 });
   }
 
+  const encodedSource = from.split("/").map(encodeURIComponent).join("/");
   await s3.send(
     new CopyObjectCommand({
       Bucket: BUCKET,
       Key: to,
-      CopySource: `${BUCKET}/${encodeURIComponent(from)}`,
+      CopySource: `${BUCKET}/${encodedSource}`,
     })
   );
 

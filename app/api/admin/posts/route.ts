@@ -44,7 +44,8 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "title or content required" }, { status: 400 });
   }
 
-  let slug = (body.slug ? String(body.slug) : slugify(title || content.split("\n")[0])).trim();
+  // Always normalize through slugify so caller-supplied slugs can't path-traverse.
+  let slug = slugify((body.slug ? String(body.slug) : (title || content.split("\n")[0])).trim());
   if (!slug) {
     return Response.json({ error: "Could not derive slug" }, { status: 400 });
   }

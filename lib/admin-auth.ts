@@ -5,6 +5,15 @@ const SECRET = process.env.ADMIN_PASSWORD || process.env.PUBLISH_SECRET || "";
 const COOKIE_NAME = "admin_session";
 const SESSION_DAYS = 7;
 
+function timingSafeEqualStrings(a: string, b: string): boolean {
+  const ea = new TextEncoder().encode(a);
+  const eb = new TextEncoder().encode(b);
+  if (ea.length !== eb.length) return false;
+  let diff = 0;
+  for (let i = 0; i < ea.length; i++) diff |= ea[i] ^ eb[i];
+  return diff === 0;
+}
+
 async function hmac(data: string): Promise<string> {
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey(
@@ -32,7 +41,7 @@ export async function verifySession(token: string): Promise<boolean> {
   const expires = Number(expiresStr);
   if (Date.now() > expires) return false;
   const expected = await hmac(expiresStr);
-  return sig === expected;
+  return timingSafeEqualStrings(sig, expected);
 }
 
 export async function isAdmin(): Promise<boolean> {
@@ -44,13 +53,15 @@ export async function isAdmin(): Promise<boolean> {
 
 function bearerMatchesSecret(req: NextRequest | Request): boolean {
   const auth = req.headers.get("authorization");
-  if (!auth) return false;
-  if (auth.startsWith("Bearer ")) return SECRET !== "" && auth.slice(7) === SECRET;
+  if (!auth || SECRET === "") return false;
+  if (auth.startsWith("Bearer ")) {
+    return timingSafeEqualStrings(auth.slice(7), SECRET);
+  }
   if (auth.startsWith("Basic ")) {
     try {
       const decoded = atob(auth.slice(6));
       const password = decoded.split(":").slice(1).join(":");
-      return SECRET !== "" && password === SECRET;
+      return timingSafeEqualStrings(password, SECRET);
     } catch {
       return false;
     }

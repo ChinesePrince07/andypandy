@@ -86,13 +86,16 @@ export async function DELETE(req: NextRequest) {
     return Response.json({ error: "No keys provided" }, { status: 400 });
   }
 
-  await s3.send(
+  const result = await s3.send(
     new DeleteObjectsCommand({
       Bucket: BUCKET,
       Delete: { Objects: keys.map((k) => ({ Key: k })) },
     })
   );
 
-  const deployTriggered = body?.triggerDeploy === false ? false : await triggerDeploy();
-  return Response.json({ deleted: keys.length, deployTriggered });
+  const deleted = (result.Deleted ?? []).map((d) => d.Key).filter((k): k is string => !!k);
+  const failed = (result.Errors ?? []).map((e) => ({ key: e.Key, code: e.Code, message: e.Message }));
+
+  const deployTriggered = body?.triggerDeploy === false ? false : (deleted.length > 0 ? await triggerDeploy() : false);
+  return Response.json({ deleted: deleted.length, failed, deployTriggered });
 }
