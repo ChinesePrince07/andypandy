@@ -1,11 +1,12 @@
 import { NextRequest } from "next/server";
-import { put } from "@vercel/blob";
 import { isAdminRequest } from "@/lib/admin-auth";
+import { r2AbsoluteUrl, r2Put } from "@/lib/r2-storage";
 
 export const dynamic = "force-dynamic";
 
 // POST multipart/form-data with a single `file` field. Returns { url, pathname }.
-// Designed for native clients that can't easily run the @vercel/blob/client protocol.
+// Stores the file in R2 under `uploads/` and returns either the configured
+// public URL or the in-app /api/uploads/ proxy URL.
 export async function POST(req: NextRequest) {
   if (!(await isAdminRequest(req))) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
@@ -18,15 +19,11 @@ export async function POST(req: NextRequest) {
   }
 
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
-  const pathname = `uploads/${safeName}`;
+  const key = `uploads/${safeName}`;
+  const buffer = Buffer.from(await file.arrayBuffer());
 
-  const blob = await put(pathname, file, {
-    access: "public",
-    addRandomSuffix: false,
-    allowOverwrite: true,
-    token: process.env.BLOB_READ_WRITE_TOKEN,
-    contentType: file.type || undefined,
-  });
+  await r2Put(key, buffer, file.type || "application/octet-stream");
 
-  return Response.json({ url: blob.url, pathname: blob.pathname });
+  // Absolute URL so iOS / external clients can embed it as <img src> directly.
+  return Response.json({ url: r2AbsoluteUrl(key, req), pathname: key });
 }

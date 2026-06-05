@@ -1,9 +1,19 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { upload } from "@vercel/blob/client";
 import exifr from "exifr";
 import Link from "next/link";
+
+async function uploadToR2(file: File, key: string): Promise<{ url: string }> {
+  const form = new FormData();
+  // Server uses the provided key as `uploads/<safeName>`; we override by passing
+  // a renamed File so the safeName matches the slugged key.
+  const renamed = new File([file], key, { type: file.type });
+  form.append("file", renamed);
+  const res = await fetch("/api/admin/upload-blob/", { method: "POST", body: form });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
 
 interface Photo {
   id: string;
@@ -183,11 +193,7 @@ export default function PhotoManager() {
       const slug = slugify(selectedFile.name) + "-" + Date.now().toString(36);
       const ext = selectedFile.name.split(".").pop() || "jpg";
 
-      // Upload to blob
-      const blob = await upload(`photos/${slug}.${ext}`, selectedFile, {
-        access: "public",
-        handleUploadUrl: "/api/admin/upload/",
-      });
+      const blob = await uploadToR2(selectedFile, `${slug}.${ext}`);
 
       // Get image dimensions
       const img = new Image();

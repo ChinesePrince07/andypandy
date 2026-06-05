@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAllPosts, savePost } from "@/lib/blog";
-import { put } from "@vercel/blob";
+import { r2AbsoluteUrl, r2Put } from "@/lib/r2-storage";
 
 const PUBLISH_SECRET = process.env.PUBLISH_SECRET!;
 const SITE_URL =
@@ -359,18 +359,16 @@ ${content.trim()}
 
     const safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, "-");
     const buffer = Buffer.from(bits, "base64");
+    const key = `uploads/${safeName}`;
 
-    const blob = await put(`uploads/${safeName}`, buffer, {
-      access: "public",
-      addRandomSuffix: false,
-      allowOverwrite: true,
-    });
+    await r2Put(key, buffer, "image/jpeg");
+    const publicUrl = r2AbsoluteUrl(key, req);
 
     return xml(
       `<methodResponse><params><param><value><struct>
 <member><name>id</name><value><string>${Date.now()}</string></value></member>
 <member><name>file</name><value><string>${safeName}</string></value></member>
-<member><name>url</name><value><string>${blob.url}</string></value></member>
+<member><name>url</name><value><string>${publicUrl}</string></value></member>
 <member><name>type</name><value><string>image/jpeg</string></value></member>
 </struct></value></param></params></methodResponse>`
     );

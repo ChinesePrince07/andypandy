@@ -1,19 +1,10 @@
 import { NextRequest } from "next/server";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { isAdminRequest } from "@/lib/admin-auth";
+import { r2Client as s3, R2_BUCKET as BUCKET } from "@/lib/r2-storage";
 
-const s3 = new S3Client({
-  region: "auto",
-  endpoint: process.env.R2_ENDPOINT!,
-  credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
-  },
-});
-
-const BUCKET = process.env.R2_BUCKET_NAME || "afilmory-photos";
-const DEPLOY_HOOK = process.env.AFILMORY_DEPLOY_HOOK || "";
+const DEPLOY_HOOK = (process.env.AFILMORY_DEPLOY_HOOK || "").trim();
 
 // POST with JSON body — returns presigned URLs for each file
 export async function POST(req: NextRequest) {

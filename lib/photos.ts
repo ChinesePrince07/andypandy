@@ -1,5 +1,18 @@
 import { sql } from "@vercel/postgres";
-import { list, put, del } from "@vercel/blob";
+import { r2Delete } from "./r2-storage";
+
+const PUBLIC_BASE = (process.env.R2_PUBLIC_BASE_URL || "").replace(/\/$/, "");
+
+function keyFromPhotoUrl(url: string): string | null {
+  if (!url) return null;
+  if (PUBLIC_BASE && url.startsWith(PUBLIC_BASE + "/")) {
+    return decodeURI(url.slice(PUBLIC_BASE.length + 1));
+  }
+  // In-app proxy: /api/uploads/<path>/
+  const proxy = url.match(/^\/?api\/uploads\/(.+?)\/?$/);
+  if (proxy) return `uploads/${decodeURI(proxy[1])}`;
+  return null;
+}
 
 export interface Photo {
   id: string;
@@ -100,11 +113,13 @@ export async function deletePhoto(slug: string): Promise<boolean> {
   const photo = await getPhotoBySlug(slug);
   if (!photo) return false;
 
-  // Delete blob
-  const { blobs } = await list({ prefix: `photos/`, token: process.env.BLOB_READ_WRITE_TOKEN });
-  const blob = blobs.find((b) => b.url === photo.url);
-  if (blob) {
-    await del(blob.url, { token: process.env.BLOB_READ_WRITE_TOKEN });
+  const key = keyFromPhotoUrl(photo.url);
+  if (key) {
+    try {
+      await r2Delete(key);
+    } catch {
+      // Orphaned object; don't block the DB delete.
+    }
   }
 
   await sql`DELETE FROM photos WHERE slug = ${slug}`;

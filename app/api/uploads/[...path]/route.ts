@@ -1,13 +1,31 @@
 import { NextRequest } from "next/server";
+import { r2GetStream } from "@/lib/r2-storage";
 
-const BLOB_BASE = "https://rrz9nfvwk55zvkzt.public.blob.vercel-storage.com";
+export const dynamic = "force-dynamic";
 
-// Redirect old /api/uploads/ URLs to Vercel Blob
+// Streams /uploads/* objects from R2 through the Next.js server.
+// Used when R2_PUBLIC_BASE_URL is not configured (so blobs aren't exposed
+// directly). Cached aggressively because uploads are immutable by convention.
 export async function GET(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
 ) {
   const { path } = await params;
-  const filePath = path.join("/");
-  return Response.redirect(`${BLOB_BASE}/uploads/${filePath}`, 301);
+  if (!path?.length) {
+    return new Response("Not found", { status: 404 });
+  }
+
+  const key = `uploads/${path.map(decodeURIComponent).join("/")}`;
+  const obj = await r2GetStream(key);
+  if (!obj) {
+    return new Response("Not found", { status: 404 });
+  }
+
+  const headers = new Headers();
+  headers.set("Content-Type", obj.contentType || "application/octet-stream");
+  if (obj.contentLength != null) {
+    headers.set("Content-Length", String(obj.contentLength));
+  }
+  headers.set("Cache-Control", "public, max-age=31536000, immutable");
+  return new Response(obj.body, { status: 200, headers });
 }

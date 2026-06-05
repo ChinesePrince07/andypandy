@@ -1,25 +1,15 @@
 import { NextRequest } from "next/server";
 import {
-  S3Client,
   CopyObjectCommand,
   DeleteObjectCommand,
   HeadObjectCommand,
 } from "@aws-sdk/client-s3";
 import { isAdminRequest } from "@/lib/admin-auth";
+import { r2Client as s3, R2_BUCKET as BUCKET } from "@/lib/r2-storage";
 
 export const dynamic = "force-dynamic";
 
-const s3 = new S3Client({
-  region: "auto",
-  endpoint: process.env.R2_ENDPOINT!,
-  credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
-  },
-});
-
-const BUCKET = process.env.R2_BUCKET_NAME || "afilmory-photos";
-const DEPLOY_HOOK = process.env.AFILMORY_DEPLOY_HOOK || "";
+const DEPLOY_HOOK = (process.env.AFILMORY_DEPLOY_HOOK || "").trim();
 
 async function triggerDeploy(): Promise<boolean> {
   if (!DEPLOY_HOOK) return false;

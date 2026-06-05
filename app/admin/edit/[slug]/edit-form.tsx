@@ -2,8 +2,15 @@
 
 import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { upload } from "@vercel/blob/client";
 import Link from "next/link";
+
+async function uploadToR2(file: File): Promise<{ url: string }> {
+  const form = new FormData();
+  form.append("file", file);
+  const res = await fetch("/api/admin/upload-blob/", { method: "POST", body: form });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
 
 interface Props {
   slug: string;
@@ -85,11 +92,7 @@ export default function EditForm({
     setMessage("");
 
     try {
-      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
-      const blob = await upload(`uploads/${safeName}`, file, {
-        access: "public",
-        handleUploadUrl: "/api/admin/upload/",
-      });
+      const blob = await uploadToR2(file);
 
       const url = blob.url;
       const isVideo = /\.(mp4|mov|webm|ogg)$/i.test(file.name);

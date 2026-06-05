@@ -1,6 +1,6 @@
 import matter from "gray-matter";
 import { marked } from "marked";
-import { list, put, del } from "@vercel/blob";
+import { r2Delete, r2GetText, r2List, r2Put } from "./r2-storage";
 
 export interface Post {
   slug: string;
@@ -11,24 +11,29 @@ export interface Post {
   pinned?: boolean;
 }
 
+const BLOG_PREFIX = "blog/";
+
+function keyFor(slug: string): string {
+  return `${BLOG_PREFIX}${slug}.md`;
+}
+
+function slugFromKey(key: string): string | null {
+  if (!key.startsWith(BLOG_PREFIX) || !key.endsWith(".md")) return null;
+  return key.slice(BLOG_PREFIX.length, -3);
+}
+
 export async function getAllPosts(): Promise<Post[]> {
-  const { blobs } = await list({
-    prefix: "blog/",
-    token: process.env.BLOB_READ_WRITE_TOKEN,
-  });
-
+  const objects = await r2List(BLOG_PREFIX);
   const posts: Post[] = [];
-  for (const blob of blobs) {
-    if (!blob.pathname.endsWith(".md")) continue;
-    const slug = blob.pathname.replace("blog/", "").replace(/\.md$/, "");
 
-    const res = await fetch(`${blob.url}?t=${Date.now()}`, {
-      cache: "no-store",
-    });
-    if (!res.ok) continue;
-    const text = await res.text();
+  for (const obj of objects) {
+    const slug = obj.Key ? slugFromKey(obj.Key) : null;
+    if (!slug) continue;
+
+    const text = await r2GetText(obj.Key!);
+    if (!text) continue;
+
     const { data, content } = matter(text);
-
     posts.push({
       slug,
       title: data.title || slug,
@@ -47,16 +52,9 @@ export async function getAllPosts(): Promise<Post[]> {
 }
 
 export async function getPostBySlug(slug: string): Promise<Post | null> {
-  const { blobs } = await list({
-    prefix: `blog/${slug}.md`,
-    token: process.env.BLOB_READ_WRITE_TOKEN,
-  });
-  const blob = blobs.find((b) => b.pathname === `blog/${slug}.md`);
-  if (!blob) return null;
+  const text = await r2GetText(keyFor(slug));
+  if (!text) return null;
 
-  const res = await fetch(`${blob.url}?t=${Date.now()}`, { cache: "no-store" });
-  if (!res.ok) return null;
-  const text = await res.text();
   const { data, content } = matter(text);
   const renderer = new marked.Renderer();
   renderer.image = ({ href, title, text }) => {
@@ -84,38 +82,18 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
 }
 
 export async function savePost(slug: string, fileContent: string) {
-  await put(`blog/${slug}.md`, fileContent, {
-    access: "public",
-    addRandomSuffix: false,
-    allowOverwrite: true,
-    token: process.env.BLOB_READ_WRITE_TOKEN,
-  });
+  await r2Put(keyFor(slug), fileContent, "text/markdown; charset=utf-8");
 }
 
 export async function deletePost(slug: string) {
-  const { blobs } = await list({
-    prefix: `blog/${slug}.md`,
-    token: process.env.BLOB_READ_WRITE_TOKEN,
-  });
-  const blob = blobs.find((b) => b.pathname === `blog/${slug}.md`);
-  if (blob) {
-    await del(blob.url, { token: process.env.BLOB_READ_WRITE_TOKEN });
-  }
+  await r2Delete(keyFor(slug));
 }
 
 export async function getRawPost(
   slug: string,
 ): Promise<{ frontmatter: Record<string, unknown>; content: string } | null> {
-  const { blobs } = await list({
-    prefix: `blog/${slug}.md`,
-    token: process.env.BLOB_READ_WRITE_TOKEN,
-  });
-  const blob = blobs.find((b) => b.pathname === `blog/${slug}.md`);
-  if (!blob) return null;
-
-  const res = await fetch(`${blob.url}?t=${Date.now()}`, { cache: "no-store" });
-  if (!res.ok) return null;
-  const text = await res.text();
+  const text = await r2GetText(keyFor(slug));
+  if (!text) return null;
   const { data, content } = matter(text);
   return { frontmatter: data, content };
 }

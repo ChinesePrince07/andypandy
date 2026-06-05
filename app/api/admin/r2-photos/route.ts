@@ -1,26 +1,16 @@
 import { NextRequest } from "next/server";
 import {
-  S3Client,
   ListObjectsV2Command,
   DeleteObjectsCommand,
   type _Object,
 } from "@aws-sdk/client-s3";
 import { isAdminRequest } from "@/lib/admin-auth";
+import { r2Client as s3, R2_BUCKET as BUCKET } from "@/lib/r2-storage";
 
 export const dynamic = "force-dynamic";
 
-const s3 = new S3Client({
-  region: "auto",
-  endpoint: process.env.R2_ENDPOINT!,
-  credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
-  },
-});
-
-const BUCKET = process.env.R2_BUCKET_NAME || "afilmory-photos";
-const PUBLIC_BASE = (process.env.R2_PUBLIC_BASE_URL || "").replace(/\/$/, "");
-const DEPLOY_HOOK = process.env.AFILMORY_DEPLOY_HOOK || "";
+const PUBLIC_BASE = (process.env.R2_PUBLIC_BASE_URL || "").trim().replace(/\/$/, "");
+const DEPLOY_HOOK = (process.env.AFILMORY_DEPLOY_HOOK || "").trim();
 
 const IMAGE_EXT = /\.(jpe?g|png|gif|webp|heic|heif|tiff?|bmp|avif)$/i;
 

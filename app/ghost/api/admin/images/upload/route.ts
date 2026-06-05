@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { put } from "@vercel/blob";
+import { r2AbsoluteUrl, r2Put } from "@/lib/r2-storage";
 
 export const dynamic = "force-dynamic";
 
@@ -22,16 +22,14 @@ export async function POST(req: NextRequest) {
     if (!file) return ghostError("No file uploaded", 422);
 
     const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
+    const key = `uploads/${safeName}`;
+    const buffer = Buffer.from(await file.arrayBuffer());
 
-    const blob = await put(`uploads/${safeName}`, file, {
-      access: "public",
-      addRandomSuffix: false,
-      allowOverwrite: true,
-    });
+    await r2Put(key, buffer, file.type || "application/octet-stream");
 
     return Response.json(
       {
-        images: [{ url: blob.url, ref: null }],
+        images: [{ url: r2AbsoluteUrl(key, req), ref: null }],
       },
       { headers: GHOST_HEADERS }
     );

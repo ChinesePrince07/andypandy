@@ -1,4 +1,4 @@
-import { list, put } from "@vercel/blob";
+import { r2GetText, r2Put } from "./r2-storage";
 
 export interface Comment {
   id: string;
@@ -8,16 +8,22 @@ export interface Comment {
   parentId?: string;
 }
 
-const token = process.env.BLOB_READ_WRITE_TOKEN;
+function keyFor(slug: string): string {
+  return `comments/${slug}.json`;
+}
 
 export async function getComments(slug: string): Promise<Comment[]> {
-  const { blobs } = await list({ prefix: `comments/${slug}.json`, token });
-  const blob = blobs.find((b) => b.pathname === `comments/${slug}.json`);
-  if (!blob) return [];
+  const text = await r2GetText(keyFor(slug));
+  if (!text) return [];
+  try {
+    return JSON.parse(text) as Comment[];
+  } catch {
+    return [];
+  }
+}
 
-  const res = await fetch(`${blob.url}?t=${Date.now()}`, { cache: "no-store" });
-  if (!res.ok) return [];
-  return res.json();
+async function saveComments(slug: string, comments: Comment[]): Promise<void> {
+  await r2Put(keyFor(slug), JSON.stringify(comments), "application/json");
 }
 
 export async function addComment(
@@ -35,12 +41,7 @@ export async function addComment(
     ...(parentId ? { parentId } : {}),
   };
   comments.push(comment);
-  await put(`comments/${slug}.json`, JSON.stringify(comments), {
-    access: "public",
-    addRandomSuffix: false,
-    allowOverwrite: true,
-    token,
-  });
+  await saveComments(slug, comments);
   return comment;
 }
 
@@ -49,11 +50,6 @@ export async function deleteComment(slug: string, id: string): Promise<boolean> 
   // Remove the comment and any replies to it
   const filtered = comments.filter((c) => c.id !== id && c.parentId !== id);
   if (filtered.length === comments.length) return false;
-  await put(`comments/${slug}.json`, JSON.stringify(filtered), {
-    access: "public",
-    addRandomSuffix: false,
-    allowOverwrite: true,
-    token,
-  });
+  await saveComments(slug, filtered);
   return true;
 }
