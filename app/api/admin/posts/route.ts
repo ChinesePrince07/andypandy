@@ -1,7 +1,14 @@
 import { NextRequest } from "next/server";
-import { revalidateTag } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { isAdminRequest } from "@/lib/admin-auth";
 import { getAllPosts, getRawPost, savePost } from "@/lib/blog";
+
+function flushBlogCaches(slug?: string) {
+  revalidateTag("posts");
+  revalidatePath("/blog");
+  revalidatePath("/feed.xml");
+  if (slug) revalidatePath(`/blog/${slug}`);
+}
 
 export const dynamic = "force-dynamic";
 
@@ -74,6 +81,6 @@ ${content}
     return Response.json({ error: String(err) }, { status: 500 });
   }
 
-  revalidateTag("posts");
+  flushBlogCaches(slug);
   return Response.json({ slug, ok: true }, { status: 201 });
 }

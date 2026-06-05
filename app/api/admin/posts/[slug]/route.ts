@@ -1,7 +1,14 @@
 import { NextRequest } from "next/server";
-import { revalidateTag } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { isAdminRequest } from "@/lib/admin-auth";
 import { savePost, deletePost, getRawPost } from "@/lib/blog";
+
+function flushBlogCaches(slug: string) {
+  revalidateTag("posts");
+  revalidatePath("/blog");
+  revalidatePath("/feed.xml");
+  revalidatePath(`/blog/${slug}`);
+}
 
 export const dynamic = "force-dynamic";
 
@@ -58,7 +65,7 @@ ${(content || "").trim()}
   } catch (err) {
     return Response.json({ error: String(err) }, { status: 500 });
   }
-  revalidateTag("posts");
+  flushBlogCaches(slug);
   return Response.json({ ok: true });
 }
 
@@ -92,7 +99,7 @@ export async function PATCH(
   const newContent = `---\n${frontmatter}\n---\n\n${raw.content.trim()}\n`;
 
   await savePost(slug, newContent);
-  revalidateTag("posts");
+  flushBlogCaches(slug);
   return Response.json({ ok: true });
 }
 
@@ -107,6 +114,6 @@ export async function DELETE(
 
   const { slug } = await params;
   await deletePost(slug);
-  revalidateTag("posts");
+  flushBlogCaches(slug);
   return Response.json({ ok: true });
 }
