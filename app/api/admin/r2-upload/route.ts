@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { isAdmin } from "@/lib/admin-auth";
+import { isAdminRequest } from "@/lib/admin-auth";
 
 const s3 = new S3Client({
   region: "auto",
@@ -17,14 +17,15 @@ const DEPLOY_HOOK = process.env.AFILMORY_DEPLOY_HOOK || "";
 
 // POST with JSON body — returns presigned URLs for each file
 export async function POST(req: NextRequest) {
-  if (!(await isAdmin())) {
+  if (!(await isAdminRequest(req))) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const { files, triggerDeploy } = await req.json();
 
-  if (!files?.length) {
-    return Response.json({ error: "No files" }, { status: 400 });
+  // Allow an empty files array if all the caller wants is to fire the deploy hook.
+  if (files === undefined) {
+    return Response.json({ error: "Missing files array" }, { status: 400 });
   }
 
   const urls: { name: string; url: string }[] = [];

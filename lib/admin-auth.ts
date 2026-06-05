@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import type { NextRequest } from "next/server";
 
 const SECRET = process.env.ADMIN_PASSWORD || process.env.PUBLISH_SECRET || "";
 const COOKIE_NAME = "admin_session";
@@ -39,6 +40,27 @@ export async function isAdmin(): Promise<boolean> {
   const token = jar.get(COOKIE_NAME)?.value;
   if (!token) return false;
   return verifySession(token);
+}
+
+function bearerMatchesSecret(req: NextRequest | Request): boolean {
+  const auth = req.headers.get("authorization");
+  if (!auth) return false;
+  if (auth.startsWith("Bearer ")) return SECRET !== "" && auth.slice(7) === SECRET;
+  if (auth.startsWith("Basic ")) {
+    try {
+      const decoded = atob(auth.slice(6));
+      const password = decoded.split(":").slice(1).join(":");
+      return SECRET !== "" && password === SECRET;
+    } catch {
+      return false;
+    }
+  }
+  return false;
+}
+
+export async function isAdminRequest(req: NextRequest | Request): Promise<boolean> {
+  if (bearerMatchesSecret(req)) return true;
+  return isAdmin();
 }
 
 export function verifyPassword(password: string): boolean {

@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { isAdmin } from "@/lib/admin-auth";
+import { isAdminRequest } from "@/lib/admin-auth";
 import { getAboutData, saveAboutData } from "@/lib/about";
 import { revalidateTag } from "next/cache";
 
@@ -11,7 +11,7 @@ export async function GET() {
 }
 
 export async function PUT(req: NextRequest) {
-  if (!(await isAdmin())) {
+  if (!(await isAdminRequest(req))) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 

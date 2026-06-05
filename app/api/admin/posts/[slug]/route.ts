@@ -1,14 +1,42 @@
 import { NextRequest } from "next/server";
 import { revalidateTag } from "next/cache";
-import { isAdmin } from "@/lib/admin-auth";
+import { isAdminRequest } from "@/lib/admin-auth";
 import { savePost, deletePost, getRawPost } from "@/lib/blog";
+
+export const dynamic = "force-dynamic";
+
+// GET — load raw post (frontmatter + markdown body) for editing
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ slug: string }> }
+) {
+  if (!(await isAdminRequest(req))) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { slug } = await params;
+  const raw = await getRawPost(slug);
+  if (!raw) {
+    return Response.json({ error: "Post not found" }, { status: 404 });
+  }
+
+  const fm = raw.frontmatter;
+  return Response.json({
+    slug,
+    title: typeof fm.title === "string" ? fm.title : "",
+    date: typeof fm.date === "string" ? fm.date : "",
+    description: typeof fm.description === "string" ? fm.description : "",
+    content: raw.content,
+    pinned: fm.pinned === true,
+  });
+}
 
 // PUT — edit post
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
-  if (!(await isAdmin())) {
+  if (!(await isAdminRequest(req))) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -39,7 +67,7 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
-  if (!(await isAdmin())) {
+  if (!(await isAdminRequest(req))) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -73,7 +101,7 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
-  if (!(await isAdmin())) {
+  if (!(await isAdminRequest(req))) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 

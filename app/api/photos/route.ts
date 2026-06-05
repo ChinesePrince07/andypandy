@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { isAdmin } from "@/lib/admin-auth";
+import { isAdminRequest } from "@/lib/admin-auth";
 import { getAllPhotos, createPhoto } from "@/lib/photos";
 
 // GET — list all photos
@@ -10,7 +10,7 @@ export async function GET() {
 
 // POST — create a photo (admin only)
 export async function POST(req: NextRequest) {
-  if (!(await isAdmin())) {
+  if (!(await isAdminRequest(req))) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 

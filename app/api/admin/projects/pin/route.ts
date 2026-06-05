@@ -1,5 +1,5 @@
 import { revalidateTag } from "next/cache";
-import { isAdmin } from "@/lib/admin-auth";
+import { isAdminRequest } from "@/lib/admin-auth";
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN!;
 const REPO = "ChinesePrince07/personal-site";
@@ -24,7 +24,7 @@ async function getFileData(): Promise<{ sha: string; slugs: string[] } | null> {
 
 // POST — toggle pin for a project
 export async function POST(req: Request) {
-  if (!(await isAdmin())) {
+  if (!(await isAdminRequest(req))) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 

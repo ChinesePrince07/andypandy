@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { isAdmin } from "@/lib/admin-auth";
+import { isAdminRequest } from "@/lib/admin-auth";
 import { getPhotoBySlug, updatePhoto, deletePhoto } from "@/lib/photos";
 
 // GET — single photo
@@ -18,7 +18,7 @@ export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
-  if (!(await isAdmin())) {
+  if (!(await isAdminRequest(req))) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -36,10 +36,10 @@ export async function PUT(
 
 // DELETE — delete photo (admin only)
 export async function DELETE(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
-  if (!(await isAdmin())) {
+  if (!(await isAdminRequest(req))) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 

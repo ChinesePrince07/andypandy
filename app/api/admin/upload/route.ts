@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
-import { isAdmin } from "@/lib/admin-auth";
+import { isAdminRequest } from "@/lib/admin-auth";
 
 const SITE_URL = process.env.SITE_URL || "https://andypandy.org";
 
@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
       body,
       request: req,
       onBeforeGenerateToken: async () => {
-        if (!(await isAdmin())) {
+        if (!(await isAdminRequest(req))) {
           throw new Error("Unauthorized");
         }
         return {
