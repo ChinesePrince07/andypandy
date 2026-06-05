@@ -12,11 +12,23 @@ export const dynamic = "force-dynamic";
 const PUBLIC_BASE = (process.env.R2_PUBLIC_BASE_URL || "").trim().replace(/\/$/, "");
 const DEPLOY_HOOK = (process.env.AFILMORY_DEPLOY_HOOK || "").trim();
 
+function originFromRequest(req: NextRequest): string {
+  try {
+    return new URL(req.url).origin;
+  } catch {
+    return "";
+  }
+}
+
 const IMAGE_EXT = /\.(jpe?g|png|gif|webp|heic|heif|tiff?|bmp|avif)$/i;
 
-function publicUrl(key: string): string {
-  if (!PUBLIC_BASE) return "";
-  return `${PUBLIC_BASE}/${encodeURI(key)}`;
+// Returns a fetchable absolute URL. Prefers a configured public R2 domain;
+// otherwise routes through the in-app `/api/r2/<key>/` streaming proxy so
+// browsers and the iOS app can render images without R2 being public.
+function publicUrl(key: string, origin: string): string {
+  if (PUBLIC_BASE) return `${PUBLIC_BASE}/${encodeURI(key)}`;
+  const encoded = key.split("/").map(encodeURIComponent).join("/");
+  return `${origin}/api/r2/${encoded}/`;
 }
 
 async function triggerDeploy(): Promise<boolean> {
@@ -52,13 +64,14 @@ export async function GET(req: NextRequest) {
     token = res.IsTruncated ? res.NextContinuationToken : undefined;
   } while (token);
 
+  const origin = originFromRequest(req);
   const photos = objects
     .filter((o) => o.Key && IMAGE_EXT.test(o.Key))
     .map((o) => ({
       key: o.Key!,
       size: o.Size ?? 0,
       lastModified: o.LastModified?.toISOString() ?? null,
-      url: publicUrl(o.Key!),
+      url: publicUrl(o.Key!, origin),
     }));
 
   return Response.json({ photos, prefix: prefix ?? "" });
