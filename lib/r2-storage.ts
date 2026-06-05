@@ -121,8 +121,8 @@ export function r2PublicUrl(key: string): string {
   if (PUBLIC_BASE) return `${PUBLIC_BASE}/${encodeURI(key)}`;
   // Streaming proxy lives at app/api/uploads/[...path]/route.ts — only works
   // for keys that start with "uploads/". For other prefixes, callers must
-  // set R2_PUBLIC_BASE_URL.
-  return `/api/uploads/${encodeURI(key.replace(/^uploads\//, ""))}/`;
+  // set R2_PUBLIC_BASE_URL. No trailing slash so Next doesn't 308.
+  return `/api/uploads/${encodeURI(key.replace(/^uploads\//, ""))}`;
 }
 
 /** Returns an absolute URL even when r2PublicUrl produces a server-relative path. */

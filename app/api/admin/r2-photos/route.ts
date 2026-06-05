@@ -28,7 +28,10 @@ const IMAGE_EXT = /\.(jpe?g|png|gif|webp|heic|heif|tiff?|bmp|avif)$/i;
 function publicUrl(key: string, origin: string): string {
   if (PUBLIC_BASE) return `${PUBLIC_BASE}/${encodeURI(key)}`;
   const encoded = key.split("/").map(encodeURIComponent).join("/");
-  return `${origin}/api/r2/${encoded}/`;
+  // No trailing slash — Next 308-redirects catch-all binary routes that end in
+  // a file extension back to the no-slash form, and URLSession on iOS may drop
+  // headers (or stall) following that hop.
+  return `${origin}/api/r2/${encoded}`;
 }
 
 async function triggerDeploy(): Promise<boolean> {
