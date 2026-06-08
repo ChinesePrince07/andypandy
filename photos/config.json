@@ -1,0 +1,19 @@
+{
+  "name": "Andy's Photos",
+  "title": "Andy's Photos",
+  "description": "Moments captured through my lens.",
+  "url": "https://pics.andypandy.org/",
+  "accentColor": "#e879a8",
+  "author": {
+    "name": "Andy",
+    "url": "https://andypandy.org/"
+  },
+  "social": {
+    "github": ""
+  },
+  "map": [
+    "maplibre"
+  ],
+  "mapStyle": "builtin",
+  "mapProjection": "mercator"
+}
