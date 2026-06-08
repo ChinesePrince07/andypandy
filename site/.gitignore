@@ -1,0 +1,9 @@
+node_modules/
+.next/
+.DS_Store
+.obsidian/
+*.swp
+*.swo
+.vercel
+.env*.local
+tsconfig.tsbuildinfo
