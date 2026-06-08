@@ -1,0 +1,6 @@
+# Dependencies / build output live inside each subproject's own ignore rules.
+.DS_Store
+*.log
+.vercel
+.env
+.env.local
