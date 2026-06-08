@@ -3,4 +3,4 @@ Flask-Cors>=3.0.0
 numpy>=1.23.0
 opencv-python-headless>=4.6.0
 Pillow>=9.5.0
-pypotrace>=0.3
+potracer>=0.0.4
