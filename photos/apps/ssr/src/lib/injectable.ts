@@ -1,0 +1,36 @@
+import siteConfig from '@config'
+import type { AfilmoryManifest } from '@afilmory/typing'
+import type { DOMParser } from 'linkedom'
+
+type HtmlElement = ReturnType<typeof DOMParser.prototype.parseFromString>
+type OnlyHTMLDocument = HtmlElement extends infer T ? (T extends { [key: string]: any; head: any } ? T : never) : never
+export const injectConfigToDocument = (document: OnlyHTMLDocument) => {
+  const $config = document.head.querySelector('#config')
+  const injectConfigBase = {
+    useApi: false,
+    useNext: true,
+  }
+  if ($config) {
+    $config.innerHTML = `window.__CONFIG__ = ${JSON.stringify(injectConfigBase)};window.__SITE_CONFIG__ = ${JSON.stringify(siteConfig)};`
+  }
+  return document
+}
+
+export const injectManifestToDocument = (document: OnlyHTMLDocument, manifest: AfilmoryManifest) => {
+  const $manifest = document.head.querySelector('#manifest')
+  if ($manifest) {
+    $manifest.innerHTML = `window.__MANIFEST__ = ${JSON.stringify(manifest)};`
+  }
+  return document
+}
+
+export const injectAdminButton = (document: OnlyHTMLDocument) => {
+  const head = document.head || document.querySelector('head')
+  if (head) {
+    const script = document.createElement('script')
+    script.setAttribute('id', 'admin-flag')
+    script.innerHTML = `window.__IS_ADMIN__ = true;`
+    head.appendChild(script)
+  }
+  return document
+}
