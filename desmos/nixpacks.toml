@@ -1,0 +1,8 @@
+[phases.setup]
+nixPkgs = ["python311", "potrace", "libagg", "pkg-config", "zlib"]
+
+[phases.install]
+cmds = ["pip install --upgrade pip", "pip install -r requirements.txt"]
+
+[start]
+cmd = "python backend.py --yes --no-browser"

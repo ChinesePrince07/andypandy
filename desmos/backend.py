@@ -1,0 +1,287 @@
+import json
+from flask import Flask, jsonify, request, render_template, redirect
+from flask_cors import CORS
+from werkzeug.utils import secure_filename
+
+from PIL import Image
+import numpy as np
+import potrace
+import cv2
+
+from time import time
+import os
+import sys
+import getopt
+import traceback
+import webbrowser
+from threading import Timer
+
+
+app = Flask(__name__, template_folder='frontend')
+CORS(app)
+PORT = int(os.environ.get('PORT', 5001))
+HOST = os.environ.get('HOST', '127.0.0.1')
+
+
+FRAME_DIR = 'frames' # The folder where the frames are stored relative to this file
+
+# Ensure frames directory exists at startup
+os.makedirs(FRAME_DIR, exist_ok=True)
+FILE_EXT = 'png' # Extension for frame files
+COLOUR = '#2464b4' # Hex value of colour for graph output	
+SCREENSHOT_SIZE = [ None, None ] # [width, height] for downloaded images
+SCREENSHOT_FORMAT = 'png' # Format to use when downloading images
+OPEN_BROWSER = True # Open default browser automatically
+
+BILATERAL_FILTER = False # Reduce number of lines with bilateral filter
+DOWNLOAD_IMAGES = False # Download each rendered frame automatically (works best in firefox)
+USE_L2_GRADIENT = False # Creates less edges but is still accurate (leads to faster renders)
+SHOW_GRID = True # Show the grid in the background while rendering
+
+height = 480
+width = 640
+
+
+def help():
+    print('backend.py -f <source> -e <extension> -c <colour> -b -d -l -g --yes --no-browser --size <widthxheight> --format <extension>\n')
+    print('\t-h\t\t\tGet help\n')
+    print('-Options\n')
+    print('\t-f <source>\t\tThe directory from which the frames are stored (e.g. frames)')
+    print('\t-e <extension>\t\tThe extension of the frame files (e.g. png)')
+    print('\t-c <colour>\t\tThe colour of the lines to be drawn (e.g. #2464b4)')
+    print('\t-b\t\t\tReduce number of lines with bilateral filter for simpler renders')
+    print('\t-d\t\t\tDownload rendered frames automatically')
+    print('\t-l\t\t\tReduce number of lines with L2 gradient for quicker renders')
+    print('\t-g\t\t\tHide the grid in the background of the graph\n')
+    print('\t--yes\t\t\tAgree to EULA without input prompt')
+    print('\t--no-browser\t\tRun renderer server without opening a web browser')
+    print('\t--size <widthxheight>\tDimensions for downloaded images (e.g. 3840x2160)')
+    print('\t--format <extension>\tSpecify format when downloading frames: "svg" or "png" (default is "png")')
+
+
+def get_contours(filename, nudge = .33):
+    image = cv2.imread(filename)
+
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    if BILATERAL_FILTER:
+        median = max(10, min(245, np.median(gray)))
+        lower = int(max(0, (1 - nudge) * median))
+        upper = int(min(255, (1 + nudge) * median))
+        filtered = cv2.bilateralFilter(gray, 5, 50, 50)
+        edged = cv2.Canny(filtered, lower, upper, L2gradient = USE_L2_GRADIENT)
+    else:
+        edged = cv2.Canny(gray, 30, 200)
+
+    global height, width
+    height = max(height, image.shape[0])
+    width = max(width, image.shape[1])
+
+    return edged[::-1]
+
+
+def get_trace(data):
+    for i in range(len(data)):
+        data[i][data[i] > 1] = 1
+    bmp = potrace.Bitmap(data)
+    path = bmp.trace(2, potrace.TURNPOLICY_MINORITY, 1.0, 1, .5)
+    return path
+
+
+def get_latex(filename):
+    latex = []
+    path = get_trace(get_contours(filename))
+
+    for curve in path.curves:
+        segments = curve.segments
+        start = curve.start_point
+        for segment in segments:
+            x0, y0 = start
+            if segment.is_corner:
+                x1, y1 = segment.c
+                x2, y2 = segment.end_point
+                latex.append('((1-t)%f+t%f,(1-t)%f+t%f)' % (x0, x1, y0, y1))
+                latex.append('((1-t)%f+t%f,(1-t)%f+t%f)' % (x1, x2, y1, y2))
+            else:
+                x1, y1 = segment.c1
+                x2, y2 = segment.c2
+                x3, y3 = segment.end_point
+                latex.append('((1-t)((1-t)((1-t)%f+t%f)+t((1-t)%f+t%f))+t((1-t)((1-t)%f+t%f)+t((1-t)%f+t%f)),\
+                (1-t)((1-t)((1-t)%f+t%f)+t((1-t)%f+t%f))+t((1-t)((1-t)%f+t%f)+t((1-t)%f+t%f)))' % \
+                (x0, x1, x1, x2, x1, x2, x2, x3, y0, y1, y1, y2, y1, y2, y2, y3))
+            start = segment.end_point
+    return latex
+
+
+def get_expressions(frame):
+    exprid = 0
+    exprs = []
+    for expr in get_latex(FRAME_DIR + '/frame%d.%s' % (frame+1, FILE_EXT)):
+        exprid += 1
+        exprs.append({'id': 'expr-' + str(exprid), 'latex': expr, 'color': COLOUR, 'secret': True})
+    return exprs
+
+
+@app.route('/health')
+def health():
+    return jsonify({'status': 'ok'})
+
+
+@app.route('/')
+def index():
+    # If no frame parameter, redirect to calculator
+    if 'frame' not in request.args:
+        return redirect('/calculator')
+
+    try:
+        frame_num = int(request.args.get('frame', 0))
+        frame_files = [f for f in os.listdir(FRAME_DIR) if not f.startswith('.')]
+        if frame_num >= len(frame_files):
+            return jsonify({'result': None})
+
+        # Recompute frame on-the-fly to allow dynamic updates
+        return jsonify({'result': get_expressions(frame_num)})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route("/calculator")
+def client():
+    try:
+        frame_files = [f for f in os.listdir(FRAME_DIR) if not f.startswith('.')]
+        return render_template('index.html', api_key='dcb31709b452b1cf9dc26972add0fda6', # Development-only API_key. See https://www.desmos.com/api/v1.8/docs/index.html#document-api-keys
+                height=height, width=width, total_frames=len(frame_files), download_images=DOWNLOAD_IMAGES, show_grid=SHOW_GRID, screenshot_size=SCREENSHOT_SIZE, screenshot_format=SCREENSHOT_FORMAT)
+    except Exception as e:
+        return f"Error: {str(e)}", 500
+
+
+@app.route("/upload", methods=['POST'])
+def upload():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file provided'}), 400
+
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No file selected'}), 400
+
+    # Check file extension
+    allowed_extensions = {'png', 'jpg', 'jpeg', 'gif', 'bmp'}
+    ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
+    if ext not in allowed_extensions:
+        return jsonify({'error': 'Invalid file type. Use PNG, JPG, GIF, or BMP'}), 400
+
+    # Get frame number from request or default to 1
+    frame_num = request.form.get('frame', 1, type=int)
+
+    # Save file
+    filename = f'frame{frame_num}.{FILE_EXT}'
+    filepath = os.path.join(FRAME_DIR, filename)
+    file.save(filepath)
+
+    # Update dimensions
+    global height, width
+    img = cv2.imread(filepath)
+    if img is not None:
+        height = max(height, img.shape[0])
+        width = max(width, img.shape[1])
+
+    return jsonify({'success': True, 'filename': filename, 'frame': frame_num})
+
+
+@app.route("/frames", methods=['GET'])
+def list_frames():
+    frame_files = sorted([f for f in os.listdir(FRAME_DIR) if not f.startswith('.') and f.startswith('frame')])
+    return jsonify({'frames': frame_files, 'total': len(frame_files)})
+
+
+if __name__ == '__main__':
+
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "hf:e:c:bdlg", ['static', 'block=', 'maxpblock=', 'yes', 'no-browser', 'size=', 'format='])
+
+    except getopt.GetoptError:
+        print('Error: Invalid argument(s)\n')
+        help()
+        sys.exit(2)
+
+    eula = ''
+
+    try:
+        for opt, arg in opts:
+            if opt == '-h':
+                help()
+                sys.exit()
+            elif opt == '-f':
+                FRAME_DIR = arg
+            elif opt == '-e':
+                FILE_EXT = arg
+            elif opt == '-c':
+                COLOUR = arg
+            elif opt == '-b':
+                BILATERAL_FILTER = True
+            elif opt == '-d':
+                DOWNLOAD_IMAGES = True
+            elif opt == '-l':
+                USE_L2_GRADIENT = True
+            elif opt == '-g':
+                SHOW_GRID = False
+            elif opt == '--yes':
+                eula = 'y'
+            elif opt == '--no-browser':
+                OPEN_BROWSER = False
+            elif opt == '--size':
+                SCREENSHOT_SIZE = [ int(n) for n in arg.split('x', maxsplit=1) ]
+
+                if len(SCREENSHOT_SIZE) != 2:
+                    raise ValueError
+            elif opt == '--format':
+                if arg not in ('svg', 'png'):
+                    raise ValueError
+                SCREENSHOT_FORMAT = arg
+
+    except (TypeError, ValueError):
+        print('Error: Invalid argument(s)\n')
+        help()
+        sys.exit(2)
+
+    # Ensure frames directory exists
+    os.makedirs(FRAME_DIR, exist_ok=True)
+
+    print(r'''  _____
+ |  __ \
+ | |  | | ___  ___ _ __ ___   ___  ___
+ | |  | |/ _ \/ __| '_ ` _ \ / _ \/ __|
+ | |__| |  __/\__ \ | | | | | (_) \__ \
+ |_____/ \___||___/_| |_| |_|\___/|___/
+''')
+    print('                   BEZIER RENDERER')
+    print('Andy 2025')
+    print('https://github.com/ChinesePrince07/DesmosBezierRenderer-mac')
+
+    print('''
+ = COPYRIGHT =
+©Copyright Andy 2025. This program is licensed under the MIT License.
+
+ = EULA =
+By using Desmos Bezier Renderer, you agree to comply to the Desmos Terms of Service (https://www.desmos.com/terms).
+''')
+
+    while eula != 'y':
+        eula = input('                                      Agree (y/n)? ')
+        if eula == 'n':
+            quit()
+
+    print('-----------------------------')
+    print('Server starting... Frames will be processed on-demand.')
+    print('\t\t===========================================================================')
+    print('\t\t|| GO CHECK OUT YOUR RENDER NOW AT:\t\t\t\t\t ||')
+    print('\t\t||\t\t\thttp://127.0.0.1:%d/calculator\t\t ||' % PORT)
+    print('\t\t===========================================================================\n')
+
+    if OPEN_BROWSER:
+        def open_browser():
+            webbrowser.open('http://127.0.0.1:%d/calculator' % PORT)
+        Timer(1, open_browser).start()
+
+    # Use 0.0.0.0 in production (Railway), 127.0.0.1 locally
+    app.run(host='0.0.0.0', port=PORT)
