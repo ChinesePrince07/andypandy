@@ -1,6 +1,7 @@
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN!;
-const REPO = "ChinesePrince07/personal-site";
-const FILE_PATH = "content/about.json";
+import { unstable_cache } from "next/cache";
+import { r2GetText, r2Put } from "./r2-storage";
+
+const ABOUT_KEY = "content/about.json";
 
 export interface EducationEntry {
   school: string;
@@ -73,66 +74,28 @@ const defaultAbout: AboutData = {
   ],
 };
 
+const loadAbout = unstable_cache(
+  async (): Promise<AboutData> => {
+    try {
+      const text = await r2GetText(ABOUT_KEY);
+      if (!text) return defaultAbout;
+      return JSON.parse(text) as AboutData;
+    } catch {
+      return defaultAbout;
+    }
+  },
+  ["about-data"],
+  { tags: ["about"], revalidate: 60 },
+);
+
 export async function getAboutData(): Promise<AboutData> {
-  try {
-    const res = await fetch(
-      `https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`,
-      {
-        headers: {
-          Authorization: `token ${GITHUB_TOKEN}`,
-          "User-Agent": "personal-site",
-          Accept: "application/vnd.github.v3+json",
-        },
-        next: { tags: ["about"], revalidate: 60 },
-      },
-    );
-    if (!res.ok) return defaultAbout;
-    const data = await res.json();
-    const decoded = Buffer.from(data.content, "base64").toString("utf8");
-    return JSON.parse(decoded);
-  } catch {
-    return defaultAbout;
-  }
+  return loadAbout();
 }
 
 export async function saveAboutData(about: AboutData): Promise<void> {
-  // Get current file SHA
-  const existing = await fetch(
-    `https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`,
-    {
-      headers: {
-        Authorization: `token ${GITHUB_TOKEN}`,
-        "User-Agent": "personal-site",
-        Accept: "application/vnd.github.v3+json",
-      },
-    },
+  await r2Put(
+    ABOUT_KEY,
+    JSON.stringify(about, null, 2),
+    "application/json; charset=utf-8",
   );
-
-  const body: Record<string, string> = {
-    message: "update about page content",
-    content: Buffer.from(JSON.stringify(about, null, 2)).toString("base64"),
-  };
-
-  if (existing.ok) {
-    const data = await existing.json();
-    body.sha = data.sha;
-  }
-
-  const res = await fetch(
-    `https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`,
-    {
-      method: "PUT",
-      headers: {
-        Authorization: `token ${GITHUB_TOKEN}`,
-        "User-Agent": "personal-site",
-        Accept: "application/vnd.github.v3+json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    },
-  );
-
-  if (!res.ok) {
-    throw new Error(`GitHub API error: ${res.status}`);
-  }
 }

@@ -1,3 +1,6 @@
+import { unstable_cache } from "next/cache";
+import { r2GetText } from "./r2-storage";
+
 export interface Project {
   name: string;
   slug: string;
@@ -106,30 +109,24 @@ export const projects: Project[] = [
   },
 ];
 
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN!;
-const REPO = "ChinesePrince07/personal-site";
-const CONFIG_PATH = "content/pinned-projects.json";
+export const PINNED_KEY = "content/pinned-projects.json";
+
+const loadPinnedSlugs = unstable_cache(
+  async (): Promise<string[]> => {
+    try {
+      const text = await r2GetText(PINNED_KEY);
+      if (!text) return [];
+      return JSON.parse(text) as string[];
+    } catch {
+      return [];
+    }
+  },
+  ["pinned-projects-slugs"],
+  { tags: ["pinned-projects"], revalidate: 60 },
+);
 
 export async function getPinnedSlugs(): Promise<string[]> {
-  try {
-    const res = await fetch(
-      `https://api.github.com/repos/${REPO}/contents/${CONFIG_PATH}`,
-      {
-        headers: {
-          Authorization: `token ${GITHUB_TOKEN}`,
-          "User-Agent": "personal-site",
-          Accept: "application/vnd.github.v3+json",
-        },
-        next: { tags: ["pinned-projects"], revalidate: 60 },
-      },
-    );
-    if (!res.ok) return [];
-    const data = await res.json();
-    const decoded = Buffer.from(data.content, "base64").toString("utf8");
-    return JSON.parse(decoded);
-  } catch {
-    return [];
-  }
+  return loadPinnedSlugs();
 }
 
 export async function getProjectsWithPins(): Promise<Project[]> {
