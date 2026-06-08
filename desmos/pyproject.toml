@@ -1,0 +1,15 @@
+[project]
+name = "desmos-bezier-renderer"
+version = "1.0.0"
+requires-python = ">=3.12"
+dependencies = [
+    "Flask>=2.2.0",
+    "Flask-Cors>=3.0.0",
+    "numpy>=1.23.0",
+    "opencv-python-headless>=4.6.0",
+    "Pillow>=9.5.0",
+    "potracer>=0.0.4",
+]
+
+[tool.vercel]
+entrypoint = "backend:app"
