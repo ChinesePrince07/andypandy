@@ -1030,7 +1030,7 @@ git commit -m "ti84: chat history in R2; /solve fully in-memory"
 
 - [ ] **Step 1: Replace firmware.mjs**
 
-Overwrite `ti84/server/routes/firmware.mjs` with (same endpoints/behaviour; storage = R2 keys under `ti84/firmware/`):
+Overwrite `ti84/server/routes/firmware.mjs` with (same endpoints/behaviour; storage = R2 keys under `ti84/firmware/`). NOTE (added during execution after the local smoke test): every handler is wrapped in `try/catch` returning 500 — without it, an R2 error in an async handler is an unhandled rejection that crashes the function (Node ≥15). The committed version below reflects this:
 ```js
 import express from "express";
 import { r2GetBuffer, r2GetText, r2PutBuffer, r2PutText } from "../lib/r2.mjs";
