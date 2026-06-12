@@ -98,6 +98,12 @@ export default function PostList({
         >
           Upload Photos
         </Link>
+        <Link
+          href="/apps"
+          className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium hover:bg-gray-50"
+        >
+          iOS Apps
+        </Link>
       </div>
 
       {/* Posts */}
