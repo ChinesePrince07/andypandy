@@ -6,6 +6,7 @@ import exifr from "exifr";
 import piexif from "piexifjs";
 import { isAdminRequest } from "@/lib/admin-auth";
 import { r2Get, r2Put } from "@/lib/r2-storage";
+import { updateAfilmoryPhoto, idFromKey } from "@/lib/afilmory";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -146,6 +147,20 @@ export async function PATCH(req: NextRequest) {
   // Read back to confirm.
   const verified = await exifr.parse(updated, { gps: true, pick: ["DateTimeOriginal"] }).catch(() => null);
 
+  // Rewriting the R2 bytes alone is invisible on the live site — afilmory renders
+  // date/location from its Blob manifest, not by re-reading the image. Push the
+  // same edit into the manifest so the gallery actually reflects it.
+  const lat = body.latitude !== undefined ? Number(body.latitude) : undefined;
+  const lon = body.longitude !== undefined ? Number(body.longitude) : undefined;
+  const location =
+    lat !== undefined && lon !== undefined && Number.isFinite(lat) && Number.isFinite(lon)
+      ? { latitude: lat, longitude: lon }
+      : undefined;
+  const manifestUpdate = await updateAfilmoryPhoto(idFromKey(key), {
+    dateTaken: body.date ?? undefined,
+    location,
+  });
+
   const deployTriggered = body?.triggerDeploy === false ? false : await triggerDeploy();
   return Response.json({
     key,
@@ -153,6 +168,8 @@ export async function PATCH(req: NextRequest) {
     latitude: fromLatlonOr(exif, "GPSLatitude", "GPSLatitudeRef"),
     longitude: fromLatlonOr(exif, "GPSLongitude", "GPSLongitudeRef"),
     deployTriggered,
+    manifestUpdated: manifestUpdate.ok,
+    manifestError: manifestUpdate.ok ? undefined : manifestUpdate.error,
   });
 }
 

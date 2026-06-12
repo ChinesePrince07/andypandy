@@ -6,6 +6,12 @@ import {
 } from "@aws-sdk/client-s3";
 import { isAdminRequest } from "@/lib/admin-auth";
 import { r2Client as s3, R2_BUCKET as BUCKET } from "@/lib/r2-storage";
+import {
+  fetchAfilmoryManifest,
+  fetchAfilmoryManifestList,
+  deleteAfilmoryPhoto,
+  idFromKey,
+} from "@/lib/afilmory";
 
 export const dynamic = "force-dynamic";
 
@@ -64,16 +70,56 @@ function stemOf(key: string, prefix: string): string {
   return key.slice(prefix.length).replace(/\.[^.]+$/, "");
 }
 
-// GET — list "photo" units. Each unit pairs an afilmory original with its
-// matching thumbnail. Root-level files act as their own thumbnail.
+type Photo = {
+  key: string;
+  thumbnailKey: string | null;
+  size: number;
+  lastModified: string | null;
+  url: string;
+  thumbnailUrl: string;
+  // Capture date + intrinsic dimensions from afilmory's manifest. Null/0 when
+  // the photo isn't in the manifest yet (R2-fallback path only).
+  dateTaken: string | null;
+  width: number;
+  height: number;
+};
+
+const sortNewestFirst = (a: Photo, b: Photo) =>
+  (b.dateTaken ?? b.lastModified ?? "").localeCompare(a.dateTaken ?? a.lastModified ?? "");
+
+// GET — list photos. Primary source is afilmory's manifest, so the app shows
+// exactly the same set the live gallery shows. Falls back to a raw R2 object
+// listing only when the manifest is unreachable.
 export async function GET(req: NextRequest) {
   if (!(await isAdminRequest(req))) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const prefix = req.nextUrl.searchParams.get("prefix") || undefined;
-  const objects = await listAll(prefix);
   const origin = originFromRequest(req);
+
+  // Primary: the manifest is the source of truth for the gallery.
+  const manifestList = await fetchAfilmoryManifestList();
+  if (manifestList) {
+    const photos: Photo[] = manifestList
+      .filter((p) => p.s3Key && (!prefix || p.s3Key.startsWith(prefix)))
+      .map((p) => ({
+        key: p.s3Key,
+        thumbnailKey: null,
+        size: p.size ?? 0,
+        lastModified: p.lastModified ?? p.dateTaken ?? null,
+        url: p.originalUrl ?? publicUrl(p.s3Key, origin),
+        thumbnailUrl: p.thumbnailUrl || p.originalUrl || publicUrl(p.s3Key, origin),
+        dateTaken: p.dateTaken ?? null,
+        width: p.width ?? 0,
+        height: p.height ?? 0,
+      }));
+    photos.sort(sortNewestFirst);
+    return Response.json({ photos, prefix: prefix ?? "", source: "manifest" });
+  }
+
+  // Fallback: raw R2 listing (manifest unreachable).
+  const objects = await listAll(prefix);
 
   // Build lookup of thumbnails by stem so we can pair with originals.
   const thumbsByStem = new Map<string, _Object>();
@@ -83,14 +129,8 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  type Photo = {
-    key: string;
-    thumbnailKey: string | null;
-    size: number;
-    lastModified: string | null;
-    url: string;
-    thumbnailUrl: string;
-  };
+  // Enrich the raw R2 objects with any manifest metadata we can still reach.
+  const manifest = await fetchAfilmoryManifest();
 
   const photos: Photo[] = [];
 
@@ -105,6 +145,7 @@ export async function GET(req: NextRequest) {
     }
 
     const url = publicUrl(o.Key, origin);
+    const meta = manifest.get(idFromKey(o.Key));
     photos.push({
       key: o.Key,
       thumbnailKey,
@@ -112,13 +153,14 @@ export async function GET(req: NextRequest) {
       lastModified: o.LastModified?.toISOString() ?? null,
       url,
       thumbnailUrl: thumbnailKey ? publicUrl(thumbnailKey, origin) : url,
+      dateTaken: meta?.dateTaken ?? null,
+      width: meta?.width ?? 0,
+      height: meta?.height ?? 0,
     });
   }
 
-  // Sort newest first
-  photos.sort((a, b) => (b.lastModified ?? "").localeCompare(a.lastModified ?? ""));
-
-  return Response.json({ photos, prefix: prefix ?? "" });
+  photos.sort(sortNewestFirst);
+  return Response.json({ photos, prefix: prefix ?? "", source: "r2" });
 }
 
 // DELETE — remove originals + matching thumbnails. Body: { keys: string[], triggerDeploy?: boolean }
@@ -157,6 +199,13 @@ export async function DELETE(req: NextRequest) {
   const deleted = (result.Deleted ?? []).map((d) => d.Key).filter((k): k is string => !!k);
   const failed = (result.Errors ?? []).map((e) => ({ key: e.Key, code: e.Code, message: e.Message }));
 
+  // Also drop the entries from afilmory's manifest so they disappear from the
+  // live gallery, not just from R2. Keyed by the R2 key stem. Best-effort.
+  const manifestResults = await Promise.all(
+    keys.map((k) => deleteAfilmoryPhoto(idFromKey(k)))
+  );
+  const manifestRemoved = manifestResults.filter((r) => r.ok).length;
+
   const deployTriggered = body?.triggerDeploy === false ? false : (deleted.length > 0 ? await triggerDeploy() : false);
-  return Response.json({ deleted: deleted.length, failed, deployTriggered });
+  return Response.json({ deleted: deleted.length, failed, manifestRemoved, deployTriggered });
 }
