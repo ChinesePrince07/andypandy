@@ -59,6 +59,9 @@ export const PageHeaderRight = () => {
         {/* Upload */}
         <ActionIconButton icon="i-mingcute-upload-2-line" title="Upload" href="/admin/upload" />
 
+        {/* Workout calendar */}
+        <ActionIconButton icon="i-mingcute-calendar-line" title="Workout Log" href="/workout" />
+
         {/* Desktop only: Map Link */}
         {!isMobile && (
           <ActionIconButton
