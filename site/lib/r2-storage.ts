@@ -23,6 +23,13 @@ const s3 = new S3Client({
     accessKeyId: envTrim("R2_ACCESS_KEY_ID"),
     secretAccessKey: envTrim("R2_SECRET_ACCESS_KEY"),
   },
+  // AWS SDK v3 (>=3.729) defaults to "WHEN_SUPPORTED", which bakes an
+  // x-amz-checksum-* header into *presigned* PUT signatures. The iOS client
+  // PUTs with only Content-Type, so R2 rejects the signature and uploads fail
+  // (direct SDK calls are unaffected because they send the checksum). Forcing
+  // WHEN_REQUIRED keeps presigned URLs clean for our S3-compatible R2 store.
+  requestChecksumCalculation: "WHEN_REQUIRED",
+  responseChecksumValidation: "WHEN_REQUIRED",
 });
 
 const BUCKET = envTrim("R2_BUCKET_NAME") || "afilmory-photos";
