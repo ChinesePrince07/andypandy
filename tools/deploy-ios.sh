@@ -115,8 +115,8 @@ print(json.dumps({
     "sizeBytes": int(os.environ["SIZE"]),
     "hasIcon": os.environ["HAS_ICON"] == "true",
 }))')"
-curl -fsSL -X POST "$SITE/api/admin/ios/register" \
+REGISTER_RESP="$(curl -fsSL -X POST "$SITE/api/admin/ios/register" \
   -H "Authorization: Bearer $IOS_UPLOAD_TOKEN" -H 'Content-Type: application/json' \
-  -d "$REGISTER_BODY" >/dev/null
+  -d "$REGISTER_BODY")" || { echo "==> Register failed (ipa is in storage but catalog not updated): $REGISTER_RESP"; exit 1; }
 
 echo "==> Done. Install at: $SITE/apps  (open in Safari on your iPhone)"
