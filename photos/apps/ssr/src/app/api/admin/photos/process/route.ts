@@ -45,7 +45,15 @@ export async function POST(req: NextRequest) {
       return handleFixThumbHash()
     }
 
-    const { id, key, filename, tags: userTags, title: userTitle, isWorkout } = body
+    const { id, key, filename, tags: userTags, title: userTitle, isWorkout, dateTaken: userDate } = body
+
+    // Optional explicit calendar day (YYYY-MM-DD) from the uploader; anchored
+    // to noon Asia/Shanghai so it buckets onto that exact /workout square.
+    let userDateIso: string | null = null
+    if (typeof userDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(userDate)) {
+      const d = new Date(`${userDate}T12:00:00+08:00`)
+      if (!Number.isNaN(d.getTime())) userDateIso = d.toISOString()
+    }
     if (!id || !key || !filename) {
       return Response.json({ error: 'Missing id, key, or filename' }, { status: 400 })
     }
@@ -223,7 +231,7 @@ export async function POST(req: NextRequest) {
       id,
       title: finalTitle,
       description: '',
-      dateTaken: dateTaken || new Date().toISOString(),
+      dateTaken: userDateIso || dateTaken || new Date().toISOString(),
       tags: finalTags,
       originalUrl: publicUrl(storedKey),
       thumbnailUrl,
