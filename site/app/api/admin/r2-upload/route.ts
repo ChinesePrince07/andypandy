@@ -4,17 +4,15 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { isAdminRequest } from "@/lib/admin-auth";
 import { r2Client as s3, R2_BUCKET as BUCKET } from "@/lib/r2-storage";
 
-const DEPLOY_HOOK = (process.env.AFILMORY_DEPLOY_HOOK || "").trim();
-
 // POST with JSON body — returns presigned URLs for each file
 export async function POST(req: NextRequest) {
   if (!(await isAdminRequest(req))) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { files, triggerDeploy } = await req.json();
+  const { files } = await req.json();
 
-  // Allow an empty files array if all the caller wants is to fire the deploy hook.
+  // An empty files array is permitted (no-op, returns no URLs).
   if (files === undefined) {
     return Response.json({ error: "Missing files array" }, { status: 400 });
   }
@@ -34,16 +32,6 @@ export async function POST(req: NextRequest) {
     urls.push({ name: file.name, url });
   }
 
-  // Trigger afilmory rebuild if requested
-  let deployTriggered = false;
-  if (triggerDeploy && DEPLOY_HOOK) {
-    try {
-      await fetch(DEPLOY_HOOK, { method: "POST" });
-      deployTriggered = true;
-    } catch {
-      // non-critical
-    }
-  }
-
-  return Response.json({ urls, deployTriggered });
+  // Note: no rebuild needed — the afilmory manifest is read from R2 at request time.
+  return Response.json({ urls, deployTriggered: false });
 }

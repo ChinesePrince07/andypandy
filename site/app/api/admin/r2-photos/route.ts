@@ -16,7 +16,6 @@ import {
 export const dynamic = "force-dynamic";
 
 const PUBLIC_BASE = (process.env.R2_PUBLIC_BASE_URL || "").trim().replace(/\/$/, "");
-const DEPLOY_HOOK = (process.env.AFILMORY_DEPLOY_HOOK || "").trim();
 
 const IMAGE_EXT = /\.(jpe?g|png|gif|webp|heic|heif|tiff?|bmp|avif)$/i;
 const ORIGINAL_PREFIX = "photos/original/";
@@ -36,16 +35,6 @@ function publicUrl(key: string, origin: string): string {
   if (PUBLIC_BASE) return `${PUBLIC_BASE}/${encodeURI(key)}`;
   const encoded = key.split("/").map(encodeURIComponent).join("/");
   return `${origin}/api/r2/${encoded}`;
-}
-
-async function triggerDeploy(): Promise<boolean> {
-  if (!DEPLOY_HOOK) return false;
-  try {
-    await fetch(DEPLOY_HOOK, { method: "POST" });
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 async function listAll(prefix?: string): Promise<_Object[]> {
@@ -163,7 +152,7 @@ export async function GET(req: NextRequest) {
   return Response.json({ photos, prefix: prefix ?? "", source: "r2" });
 }
 
-// DELETE — remove originals + matching thumbnails. Body: { keys: string[], triggerDeploy?: boolean }
+// DELETE — remove originals + matching thumbnails. Body: { keys: string[] }
 export async function DELETE(req: NextRequest) {
   if (!(await isAdminRequest(req))) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
@@ -206,6 +195,6 @@ export async function DELETE(req: NextRequest) {
   );
   const manifestRemoved = manifestResults.filter((r) => r.ok).length;
 
-  const deployTriggered = body?.triggerDeploy === false ? false : (deleted.length > 0 ? await triggerDeploy() : false);
+  const deployTriggered = false;
   return Response.json({ deleted: deleted.length, failed, manifestRemoved, deployTriggered });
 }

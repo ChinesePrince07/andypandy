@@ -11,18 +11,6 @@ import { updateAfilmoryPhoto, idFromKey } from "@/lib/afilmory";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-const DEPLOY_HOOK = (process.env.AFILMORY_DEPLOY_HOOK || "").trim();
-
-async function triggerDeploy(): Promise<boolean> {
-  if (!DEPLOY_HOOK) return false;
-  try {
-    await fetch(DEPLOY_HOOK, { method: "POST" });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 function ensureJpeg(key: string): boolean {
   return /\.jpe?g$/i.test(key);
 }
@@ -78,7 +66,7 @@ export async function GET(req: NextRequest) {
 }
 
 // PATCH — rewrite EXIF date/GPS on the JPEG and replace the R2 object.
-// Body: { key, date?: ISO string, latitude?: number, longitude?: number, triggerDeploy?: boolean }
+// Body: { key, date?: ISO string, latitude?: number, longitude?: number }
 export async function PATCH(req: NextRequest) {
   if (!(await isAdminRequest(req))) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
@@ -161,7 +149,7 @@ export async function PATCH(req: NextRequest) {
     location,
   });
 
-  const deployTriggered = body?.triggerDeploy === false ? false : await triggerDeploy();
+  const deployTriggered = false;
   return Response.json({
     key,
     date: verified?.DateTimeOriginal instanceof Date ? verified.DateTimeOriginal.toISOString() : null,
