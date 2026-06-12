@@ -91,10 +91,21 @@ describe('filterManifestForViewer', () => {
       data: [photo('pub1')],
       cameras: [],
       lenses: [],
-      albums: [],
+      albums: [
+        {
+          id: 'a1',
+          name: 'All Public',
+          description: '',
+          photoIds: ['pub1'],
+          coverPhotoId: 'pub1',
+          createdAt: '2026-06-01T00:00:00.000Z',
+        } satisfies AlbumInfo,
+      ],
     }
     const out = filterManifestForViewer(allPublic, false)
     expect(out).not.toBe(allPublic)
     expect(out).toEqual(allPublic)
+    expect(out.albums).not.toBe(allPublic.albums)
+    expect(out.albums![0].photoIds).not.toBe(allPublic.albums![0].photoIds)
   })
 })
