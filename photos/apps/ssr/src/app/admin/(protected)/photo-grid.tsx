@@ -248,6 +248,11 @@ export function PhotoGrid({ initialPhotos }: { initialPhotos: PhotoManifestItem[
                           className="object-cover"
                           sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                         />
+                        {photo.isHidden && (
+                          <span className="absolute bottom-2 left-2 z-10 rounded bg-amber-500/80 px-1.5 py-0.5 text-[10px] font-medium text-black">
+                            private
+                          </span>
+                        )}
                       </div>
                       <div className="p-3">
                         <p className="truncate text-sm font-medium text-white">{photo.title || 'Untitled'}</p>
@@ -283,6 +288,11 @@ export function PhotoGrid({ initialPhotos }: { initialPhotos: PhotoManifestItem[
                           className="object-cover transition-transform group-hover/card:scale-105"
                           sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                         />
+                        {photo.isHidden && (
+                          <span className="absolute bottom-2 left-2 z-10 rounded bg-amber-500/80 px-1.5 py-0.5 text-[10px] font-medium text-black">
+                            private
+                          </span>
+                        )}
                       </div>
                       <div className="p-3">
                         <p className="truncate text-sm font-medium text-white">{photo.title || 'Untitled'}</p>

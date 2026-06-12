@@ -46,9 +46,12 @@ export function rebuildLenses(photos: PhotoManifestItem[]): LensInfo[] {
 export function filterManifestForViewer(manifest: AfilmoryManifest, isAdmin: boolean): AfilmoryManifest {
   if (isAdmin) return manifest
   const visible = manifest.data.filter((p) => !p.isHidden)
-  // Return a shallow copy even when nothing is hidden — callers must not hold
-  // the canonical manifest reference on the viewer path.
-  if (visible.length === manifest.data.length) return { ...manifest }
+  // Return a deep-enough copy even when nothing is hidden — callers must not
+  // hold the canonical manifest reference on the viewer path, and albums/photoIds
+  // arrays must also be independent so mutations don't bleed back to the input.
+  if (visible.length === manifest.data.length) {
+    return { ...manifest, albums: (manifest.albums ?? []).map((a) => ({ ...a, photoIds: [...a.photoIds] })) }
+  }
 
   const visibleIds = new Set(visible.map((p) => p.id))
   return {
