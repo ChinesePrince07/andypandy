@@ -2,46 +2,17 @@ import type { NextRequest } from 'next/server'
 
 import { rgbaToThumbHash } from 'thumbhash'
 
-import type { CameraInfo, LensInfo, LocationInfo, PickedExif, PhotoManifestItem } from '@afilmory/typing'
+import type { LocationInfo, PickedExif, PhotoManifestItem } from '@afilmory/typing'
 
 import { reverseGeocode } from '~/lib/ai'
 import { requireAdmin } from '~/lib/admin-auth'
 import { getManifest, saveManifest } from '~/lib/manifest'
+import { rebuildCameras, rebuildLenses } from '~/lib/manifest-view'
 import { listR2, uploadToR2 } from '~/lib/r2'
 
 export const maxDuration = 300
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
-
-function rebuildCameras(photos: PhotoManifestItem[]): CameraInfo[] {
-  const seen = new Map<string, CameraInfo>()
-  for (const photo of photos) {
-    const make = photo.exif?.Make
-    const model = photo.exif?.Model
-    if (make && model) {
-      const key = `${make}|||${model}`
-      if (!seen.has(key)) {
-        seen.set(key, { make, model, displayName: `${make} ${model}` })
-      }
-    }
-  }
-  return Array.from(seen.values())
-}
-
-function rebuildLenses(photos: PhotoManifestItem[]): LensInfo[] {
-  const seen = new Map<string, LensInfo>()
-  for (const photo of photos) {
-    const model = photo.exif?.LensModel
-    if (model) {
-      const make = photo.exif?.LensMake
-      const key = `${make || ''}|||${model}`
-      if (!seen.has(key)) {
-        seen.set(key, { make: make || undefined, model, displayName: make ? `${make} ${model}` : model })
-      }
-    }
-  }
-  return Array.from(seen.values())
-}
 
 /**
  * POST /api/admin/recover
