@@ -1,11 +1,11 @@
-import { buildInstallPlist, getApp } from '@/lib/ios-apps'
+import { buildInstallPlist, getApp, slugify } from '@/lib/ios-apps'
 import { r2PublicUrl } from '@/lib/r2-storage'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(_req: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const app = await getApp(slug)
+  const app = await getApp(slugify(slug))
   if (!app) {
     return new Response('Not found', { status: 404 })
   }

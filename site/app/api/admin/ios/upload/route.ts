@@ -21,10 +21,10 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const slug = slugify(body.slug || '')
-  if (!body.slug) {
-    return Response.json({ error: 'Missing slug' }, { status: 400 })
+  if (!body.slug || !/[a-z0-9]/i.test(body.slug)) {
+    return Response.json({ error: 'Missing or invalid slug' }, { status: 400 })
   }
+  const slug = slugify(body.slug)
 
   const ipaKey = `apps/${slug}/App.ipa`
   const iconKey = `apps/${slug}/icon.png`
@@ -42,5 +42,5 @@ export async function POST(req: NextRequest) {
       )
     : null
 
-  return Response.json({ slug, ipaKey, iconKey, ipaUploadUrl, iconUploadUrl })
+  return Response.json({ slug, ipaKey, iconKey: iconUploadUrl ? iconKey : null, ipaUploadUrl, iconUploadUrl })
 }
