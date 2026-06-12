@@ -52,7 +52,11 @@ export async function DELETE(req: NextRequest) {
   if (!bearerTokenMatches(req.headers.get('authorization'), TOKEN)) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
-  const slug = slugify(new URL(req.url).searchParams.get('slug') || '')
+  const raw = new URL(req.url).searchParams.get('slug') || ''
+  if (!raw) {
+    return Response.json({ error: 'Missing slug' }, { status: 400 })
+  }
+  const slug = slugify(raw)
   const manifest = await readAppsManifest()
   await writeAppsManifest({ version: 1, apps: manifest.apps.filter((a) => a.slug !== slug) })
   return Response.json({ ok: true, removed: slug })
