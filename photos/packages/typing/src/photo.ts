@@ -73,6 +73,8 @@ export interface PhotoManifestItem extends PhotoInfo {
   toneAnalysis: ToneAnalysis | null // 影调分析结果
   location: LocationInfo | null // 地理位置信息（反向地理编码）
   isHDR?: boolean
+  /** Private photo — excluded from the manifest served to non-admin viewers. */
+  isHidden?: boolean
   // Video source (Live Photo or Motion Photo)
   video?: VideoSource
 }
