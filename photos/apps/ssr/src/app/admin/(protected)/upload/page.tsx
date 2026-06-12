@@ -11,6 +11,7 @@ interface UploadFile {
   status: FileStatus
   error?: string
   tags: string[]
+  isPrivate: boolean
 }
 
 export default function UploadPage() {
@@ -32,6 +33,7 @@ export default function UploadPage() {
       previewUrl: URL.createObjectURL(file),
       status: 'pending' as const,
       tags: [],
+      isPrivate: false,
     }))
 
     setFiles((prev) => [...prev, ...uploadFiles])
@@ -106,6 +108,17 @@ export default function UploadPage() {
     setFiles((prev) => prev.map((f, i) => (i === index ? { ...f, tags } : f)))
   }, [])
 
+  const toggleFilePrivate = useCallback((index: number) => {
+    setFiles((prev) => prev.map((f, i) => (i === index ? { ...f, isPrivate: !f.isPrivate } : f)))
+  }, [])
+
+  const toggleAllPrivate = useCallback(() => {
+    setFiles((prev) => {
+      const anyPublicPending = prev.some((f) => f.status === 'pending' && !f.isPrivate)
+      return prev.map((f) => (f.status === 'pending' ? { ...f, isPrivate: anyPublicPending } : f))
+    })
+  }, [])
+
   const applyBatchTags = useCallback(() => {
     const tags = batchTagInput
       .split(',')
@@ -165,6 +178,7 @@ export default function UploadPage() {
             key,
             filename: uploadFile.file.name,
             tags: uploadFile.tags.length > 0 ? uploadFile.tags : undefined,
+            isHidden: uploadFile.isPrivate || undefined,
           }),
         })
 
@@ -343,6 +357,12 @@ export default function UploadPage() {
                 className="rounded-lg bg-neutral-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-neutral-600 disabled:opacity-40"
               >
                 Apply to All
+              </button>
+              <button
+                onClick={toggleAllPrivate}
+                className="rounded-lg border border-neutral-700 px-4 py-2 text-sm font-medium text-neutral-300 transition-colors hover:border-neutral-500 hover:text-white"
+              >
+                {files.some((f) => f.status === 'pending' && !f.isPrivate) ? 'Mark All Private' : 'Mark All Public'}
               </button>
             </div>
           )}
@@ -525,11 +545,23 @@ export default function UploadPage() {
                           }
                         }}
                       />
+                      <label className="mt-2 flex cursor-pointer items-center gap-1.5 text-[11px] text-neutral-400">
+                        <input
+                          type="checkbox"
+                          checked={uploadFile.isPrivate}
+                          onChange={() => toggleFilePrivate(index)}
+                          className="h-3 w-3 accent-white"
+                        />
+                        Private (only visible to you)
+                      </label>
                     </div>
                   )}
                   {/* Show tags for done/uploading photos */}
-                  {uploadFile.status !== 'pending' && uploadFile.tags.length > 0 && (
+                  {uploadFile.status !== 'pending' && (uploadFile.tags.length > 0 || uploadFile.isPrivate) && (
                     <div className="mt-1.5 flex flex-wrap gap-1">
+                      {uploadFile.isPrivate && (
+                        <span className="rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] text-amber-400">private</span>
+                      )}
                       {uploadFile.tags.map((tag) => (
                         <span key={tag} className="rounded bg-neutral-800 px-1.5 py-0.5 text-[10px] text-neutral-500">
                           {tag}
