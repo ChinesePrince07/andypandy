@@ -12,6 +12,12 @@ interface UploadFile {
   error?: string
   tags: string[]
   isWorkout: boolean
+  /** YYYY-MM-DD override for the calendar day; '' = automatic (EXIF/upload time) */
+  date: string
+}
+
+function localToday(): string {
+  return new Date().toLocaleDateString('en-CA')
 }
 
 export default function UploadPage() {
@@ -34,6 +40,7 @@ export default function UploadPage() {
       status: 'pending' as const,
       tags: [],
       isWorkout: false,
+      date: localToday(),
     }))
 
     setFiles((prev) => [...prev, ...uploadFiles])
@@ -112,6 +119,10 @@ export default function UploadPage() {
     setFiles((prev) => prev.map((f, i) => (i === index ? { ...f, isWorkout: !f.isWorkout } : f)))
   }, [])
 
+  const updateFileDate = useCallback((index: number, date: string) => {
+    setFiles((prev) => prev.map((f, i) => (i === index ? { ...f, date } : f)))
+  }, [])
+
   const toggleAllWorkout = useCallback(() => {
     setFiles((prev) => {
       const anyPublicPending = prev.some((f) => f.status === 'pending' && !f.isWorkout)
@@ -179,6 +190,7 @@ export default function UploadPage() {
             filename: uploadFile.file.name,
             tags: uploadFile.tags.length > 0 ? uploadFile.tags : undefined,
             isWorkout: uploadFile.isWorkout || undefined,
+            dateTaken: uploadFile.isWorkout && uploadFile.date ? uploadFile.date : undefined,
           }),
         })
 
@@ -554,6 +566,17 @@ export default function UploadPage() {
                         />
                         Workout (shows on calendar, not in gallery)
                       </label>
+                      {uploadFile.isWorkout && (
+                        <label className="mt-1.5 flex items-center gap-1.5 text-[11px] text-neutral-500">
+                          Day
+                          <input
+                            type="date"
+                            value={uploadFile.date}
+                            onChange={(e) => updateFileDate(index, e.target.value)}
+                            className="flex-1 rounded border border-neutral-800 bg-transparent px-2 py-1 text-[11px] text-neutral-300 outline-none focus:border-neutral-600 [color-scheme:dark]"
+                          />
+                        </label>
+                      )}
                     </div>
                   )}
                   {/* Show tags for done/uploading photos */}
