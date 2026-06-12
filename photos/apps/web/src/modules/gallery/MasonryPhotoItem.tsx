@@ -194,15 +194,15 @@ export const MasonryPhotoItem = memo(({ data, width }: { data: PhotoManifest; wi
         />
       )}
 
-      {data.isHidden && (
+      {data.isWorkout && (
         <div
           className="absolute right-2 top-2 z-10 rounded-full bg-black/60 p-1.5 backdrop-blur-sm"
-          title="Private — only you can see this"
+          title="Workout — on the /workout calendar, not in the public gallery"
         >
           <svg className="h-3 w-3 text-white" viewBox="0 0 20 20" fill="currentColor">
             <path
               fillRule="evenodd"
-              d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z"
+              d="M5.75 2a.75.75 0 0 1 .75.75V4h7V2.75a.75.75 0 0 1 1.5 0V4h.25A2.75 2.75 0 0 1 18 6.75v8.5A2.75 2.75 0 0 1 15.25 18H4.75A2.75 2.75 0 0 1 2 15.25v-8.5A2.75 2.75 0 0 1 4.75 4H5V2.75A.75.75 0 0 1 5.75 2Zm-2.25 6v7.25c0 .69.56 1.25 1.25 1.25h10.5c.69 0 1.25-.56 1.25-1.25V8h-13Z"
               clipRule="evenodd"
             />
           </svg>

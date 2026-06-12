@@ -172,9 +172,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     photo.exif!.DateTimeOriginal = body.dateTaken
   }
   if (Array.isArray(body.tags)) photo.tags = body.tags
-  if (typeof body.isHidden === 'boolean') {
-    if (body.isHidden) photo.isHidden = true
-    else delete photo.isHidden
+  if (typeof body.isWorkout === 'boolean') {
+    if (body.isWorkout) photo.isWorkout = true
+    else delete photo.isWorkout
   }
 
   // Merge exif fields (don't replace entirely)

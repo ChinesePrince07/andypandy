@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
       return handleFixThumbHash()
     }
 
-    const { id, key, filename, tags: userTags, title: userTitle, isHidden } = body
+    const { id, key, filename, tags: userTags, title: userTitle, isWorkout } = body
     if (!id || !key || !filename) {
       return Response.json({ error: 'Missing id, key, or filename' }, { status: 400 })
     }
@@ -240,7 +240,7 @@ export async function POST(req: NextRequest) {
       toneAnalysis: null,
       location: gpsData,
       isHDR: false,
-      isHidden: isHidden === true ? true : undefined,
+      isWorkout: isWorkout === true ? true : undefined,
     }
 
     // Add photo to manifest. Vercel Blob put() is atomic — once it returns,
