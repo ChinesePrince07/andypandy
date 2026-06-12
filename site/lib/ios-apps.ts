@@ -1,4 +1,5 @@
 import crypto from 'node:crypto'
+import { r2GetText, r2Put } from './r2-storage'
 
 export interface IosApp {
   slug: string
@@ -88,4 +89,32 @@ export function bearerTokenMatches(authHeader: string | null, expected: string):
   const got = crypto.createHash('sha256').update(authHeader.slice(7)).digest()
   const want = crypto.createHash('sha256').update(expected).digest()
   return crypto.timingSafeEqual(got, want)
+}
+
+const APPS_MANIFEST_KEY = 'apps/manifest.json'
+
+const EMPTY_MANIFEST: AppsManifest = { version: 1, apps: [] }
+
+/** Read the apps catalog from R2; empty manifest if absent or unparseable. */
+export async function readAppsManifest(): Promise<AppsManifest> {
+  const text = await r2GetText(APPS_MANIFEST_KEY)
+  if (!text) return { ...EMPTY_MANIFEST, apps: [] }
+  try {
+    const parsed = JSON.parse(text) as AppsManifest
+    if (!parsed || !Array.isArray(parsed.apps)) return { ...EMPTY_MANIFEST, apps: [] }
+    return parsed
+  } catch {
+    return { ...EMPTY_MANIFEST, apps: [] }
+  }
+}
+
+/** Write the apps catalog to R2 (no-store JSON). */
+export async function writeAppsManifest(manifest: AppsManifest): Promise<void> {
+  await r2Put(APPS_MANIFEST_KEY, JSON.stringify(manifest), 'application/json')
+}
+
+/** Look up a single app by slug. */
+export async function getApp(slug: string): Promise<IosApp | null> {
+  const manifest = await readAppsManifest()
+  return manifest.apps.find((a) => a.slug === slug) ?? null
 }
