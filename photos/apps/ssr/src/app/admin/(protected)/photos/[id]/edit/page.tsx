@@ -134,7 +134,7 @@ interface PhotoData {
   description: string
   dateTaken: string
   tags: string[]
-  isHidden?: boolean
+  isWorkout?: boolean
   thumbnailUrl: string
   originalUrl: string
   location: {
@@ -175,7 +175,7 @@ export default function PhotoEditPage() {
   const [description, setDescription] = useState('')
   const [dateTaken, setDateTaken] = useState('')
   const [tags, setTags] = useState('')
-  const [isHidden, setIsHidden] = useState(false)
+  const [isWorkout, setIsHidden] = useState(false)
 
   // EXIF form state
   const [cameraMake, setCameraMake] = useState('')
@@ -214,7 +214,7 @@ export default function PhotoEditPage() {
       setDescription(data.description || '')
       setDateTaken(data.dateTaken ? toDatetimeLocal(data.dateTaken) : '')
       setTags((data.tags || []).join(', '))
-      setIsHidden(data.isHidden === true)
+      setIsHidden(data.isWorkout === true)
 
       // Populate EXIF
       setCameraMake(data.exif?.Make || '')
@@ -300,7 +300,7 @@ export default function PhotoEditPage() {
         description,
         dateTaken: dateTaken ? new Date(dateTaken).toISOString() : photo?.dateTaken,
         tags: parsedTags,
-        isHidden,
+        isWorkout,
       }
 
       // Send location update if coordinates changed
@@ -511,11 +511,11 @@ export default function PhotoEditPage() {
                   <label className="flex cursor-pointer items-center gap-2 text-sm text-neutral-400">
                     <input
                       type="checkbox"
-                      checked={isHidden}
+                      checked={isWorkout}
                       onChange={(e) => setIsHidden(e.target.checked)}
                       className="h-4 w-4 accent-white"
                     />
-                    Private — only visible to you (workout/progress photos)
+                    Workout — shows on the public /workout calendar, not in the gallery
                   </label>
                 </div>
               </div>

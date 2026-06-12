@@ -26,7 +26,7 @@ export default async function AdminProtectedLayout({ children }: { children: Rea
             <Link href="/admin/albums" className="text-sm text-neutral-400 hover:text-white transition-colors">
               Albums
             </Link>
-            <Link href="/admin/workout" className="text-sm text-neutral-400 hover:text-white transition-colors">
+            <Link href="/workout" className="text-sm text-neutral-400 hover:text-white transition-colors">
               Workout
             </Link>
           </div>

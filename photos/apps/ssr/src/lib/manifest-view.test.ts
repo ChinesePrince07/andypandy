@@ -34,7 +34,7 @@ const manifest: AfilmoryManifest = {
   data: [
     photo('pub1', { exif: { Make: 'FUJIFILM', Model: 'X-T5' } as PhotoManifestItem['exif'] }),
     photo('priv1', {
-      isHidden: true,
+      isWorkout: true,
       exif: { Make: 'Apple', Model: 'iPhone 15', LensModel: 'iPhone lens' } as PhotoManifestItem['exif'],
     }),
   ],
@@ -57,7 +57,7 @@ describe('filterManifestForViewer', () => {
     expect(filterManifestForViewer(manifest, true)).toBe(manifest)
   })
 
-  it('removes hidden photos for non-admins', () => {
+  it('removes workout photos for non-admins', () => {
     const out = filterManifestForViewer(manifest, false)
     expect(out.data.map((p) => p.id)).toEqual(['pub1'])
   })
@@ -68,12 +68,12 @@ describe('filterManifestForViewer', () => {
     expect(out.lenses).toEqual([])
   })
 
-  it('strips hidden photo ids from albums', () => {
+  it('strips workout photo ids from albums', () => {
     const out = filterManifestForViewer(manifest, false)
     expect(out.albums?.[0].photoIds).toEqual(['pub1'])
   })
 
-  it('nulls out coverPhotoId when it points at a hidden photo', () => {
+  it('nulls out coverPhotoId when it points at a workout photo', () => {
     const out = filterManifestForViewer(manifest, false)
     expect(out.albums?.[0].coverPhotoId).toBeNull()
   })
@@ -85,7 +85,7 @@ describe('filterManifestForViewer', () => {
     expect(manifest.albums?.[0].coverPhotoId).toBe('priv1')
   })
 
-  it('returns a copy (not the same reference) when no photos are hidden', () => {
+  it('returns a copy (not the same reference) when no photos are workout-flagged', () => {
     const allPublic: AfilmoryManifest = {
       version: 'v10',
       data: [photo('pub1')],

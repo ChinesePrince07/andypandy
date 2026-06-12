@@ -32,7 +32,7 @@ export async function getManifest(): Promise<AfilmoryManifest> {
 
 /**
  * Viewer-facing safe variant for SSR rendering: never throws, and strips
- * hidden photos unless the request carries a valid admin cookie.
+ * workout photos unless the request carries a valid admin cookie.
  * Admin API routes must keep using getManifest() (unfiltered).
  */
 export async function getManifestSafe(): Promise<AfilmoryManifest> {

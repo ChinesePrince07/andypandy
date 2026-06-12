@@ -40,13 +40,13 @@ export function rebuildLenses(photos: PhotoManifestItem[]): LensInfo[] {
 
 /**
  * Viewer-facing manifest projection. Admins see everything; everyone else
- * gets hidden photos stripped out, with camera/lens aggregates and album
+ * gets workout photos stripped out, with camera/lens aggregates and album
  * photo lists rebuilt from the visible set so nothing leaks via counts.
  */
 export function filterManifestForViewer(manifest: AfilmoryManifest, isAdmin: boolean): AfilmoryManifest {
   if (isAdmin) return manifest
-  const visible = manifest.data.filter((p) => !p.isHidden)
-  // Return a deep-enough copy even when nothing is hidden — callers must not
+  const visible = manifest.data.filter((p) => !p.isWorkout)
+  // Return a deep-enough copy even when nothing is filtered — callers must not
   // hold the canonical manifest reference on the viewer path, and albums/photoIds
   // arrays must also be independent so mutations don't bleed back to the input.
   if (visible.length === manifest.data.length) {
