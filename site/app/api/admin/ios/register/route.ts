@@ -25,6 +25,9 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  if (!/[a-z0-9]/i.test(body.slug as string)) {
+    return Response.json({ error: 'Invalid slug' }, { status: 400 })
+  }
   const slug = slugify(body.slug as string)
   const app: IosApp = {
     slug,
