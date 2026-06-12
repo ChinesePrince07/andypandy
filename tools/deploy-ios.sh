@@ -88,7 +88,7 @@ PRESIGN_BODY="$(SLUG="$SLUG" HAS_ICON="$HAS_ICON" /usr/bin/python3 -c '
 import json, os
 icon = "image/png" if os.environ["HAS_ICON"] == "true" else None
 print(json.dumps({"slug": os.environ["SLUG"], "ipaContentType": "application/octet-stream", "iconContentType": icon}))')"
-PRESIGN="$(curl -fsS -X POST "$SITE/api/admin/ios/upload" \
+PRESIGN="$(curl -fsSL -X POST "$SITE/api/admin/ios/upload" \
   -H "Authorization: Bearer $IOS_UPLOAD_TOKEN" -H 'Content-Type: application/json' \
   -d "$PRESIGN_BODY")"
 
@@ -115,7 +115,7 @@ print(json.dumps({
     "sizeBytes": int(os.environ["SIZE"]),
     "hasIcon": os.environ["HAS_ICON"] == "true",
 }))')"
-curl -fsS -X POST "$SITE/api/admin/ios/register" \
+curl -fsSL -X POST "$SITE/api/admin/ios/register" \
   -H "Authorization: Bearer $IOS_UPLOAD_TOKEN" -H 'Content-Type: application/json' \
   -d "$REGISTER_BODY" >/dev/null
 
