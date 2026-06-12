@@ -1,13 +1,13 @@
 import Link from 'next/link'
 
-import { getManifestSafe } from '~/lib/manifest'
+import { getManifest } from '~/lib/manifest'
 
 import { FixGPSButton } from './fix-gps-button'
 import { GenerateAIButton } from './generate-ai-button'
 import { PhotoGrid } from './photo-grid'
 
 export default async function AdminDashboardPage() {
-  const manifest = await getManifestSafe()
+  const manifest = await getManifest()
   const photos = manifest.data
 
   return (

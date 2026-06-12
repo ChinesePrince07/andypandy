@@ -2,9 +2,10 @@ import type { NextRequest } from 'next/server'
 
 import { requireAdmin } from '~/lib/admin-auth'
 import { getManifest, saveManifest } from '~/lib/manifest'
+import { rebuildCameras, rebuildLenses } from '~/lib/manifest-view'
 import { listR2, uploadToR2 } from '~/lib/r2'
 
-import type { CameraInfo, LensInfo, LocationInfo, PickedExif, PhotoManifestItem } from '@afilmory/typing'
+import type { LocationInfo, PickedExif, PhotoManifestItem } from '@afilmory/typing'
 
 export const maxDuration = 300
 export const dynamic = 'force-dynamic'
@@ -244,31 +245,8 @@ export async function POST(req: NextRequest) {
           new Date(b.dateTaken).getTime() - new Date(a.dateTaken).getTime(),
       )
 
-      const camerasSeen = new Map<string, CameraInfo>()
-      for (const photo of manifest.data) {
-        const make = photo.exif?.Make
-        const model = photo.exif?.Model
-        if (make && model) {
-          const key = `${make}|||${model}`
-          if (!camerasSeen.has(key)) {
-            camerasSeen.set(key, { make, model, displayName: `${make} ${model}` })
-          }
-        }
-      }
-      manifest.cameras = Array.from(camerasSeen.values())
-
-      const lensesSeen = new Map<string, LensInfo>()
-      for (const photo of manifest.data) {
-        const model = photo.exif?.LensModel
-        if (model) {
-          const make = photo.exif?.LensMake
-          const key = `${make || ''}|||${model}`
-          if (!lensesSeen.has(key)) {
-            lensesSeen.set(key, { make: make || undefined, model, displayName: make ? `${make} ${model}` : model })
-          }
-        }
-      }
-      manifest.lenses = Array.from(lensesSeen.values())
+      manifest.cameras = rebuildCameras(manifest.data)
+      manifest.lenses = rebuildLenses(manifest.data)
 
       await saveManifest(manifest)
     }

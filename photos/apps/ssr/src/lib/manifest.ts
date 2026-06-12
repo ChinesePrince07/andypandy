@@ -1,6 +1,8 @@
 import type { AfilmoryManifest } from '@afilmory/typing'
 
 import { getFromR2, uploadToR2 } from './r2'
+import { verifyAdmin } from './admin-auth'
+import { filterManifestForViewer } from './manifest-view'
 
 const MANIFEST_KEY = 'manifest.json'
 
@@ -28,10 +30,16 @@ export async function getManifest(): Promise<AfilmoryManifest> {
   return manifest
 }
 
-/** Read-only safe variant for SSR rendering: never throws. */
+/**
+ * Viewer-facing safe variant for SSR rendering: never throws, and strips
+ * hidden photos unless the request carries a valid admin cookie.
+ * Admin API routes must keep using getManifest() (unfiltered).
+ */
 export async function getManifestSafe(): Promise<AfilmoryManifest> {
   try {
-    return await getManifest()
+    const manifest = await getManifest()
+    const isAdmin = await verifyAdmin()
+    return filterManifestForViewer(manifest, isAdmin)
   } catch (error) {
     console.error('Failed to load manifest:', error)
     return emptyManifest()
