@@ -1,5 +1,6 @@
 import Link from "next/link";
 import ScrambleText from "@/components/scramble-text";
+import TypingRoles from "@/components/typing-roles";
 import AboutEditor from "@/components/about-editor";
 import { getAboutData } from "@/lib/about";
 import { isAdmin } from "@/lib/admin-auth";
@@ -11,42 +12,53 @@ const INSTAGRAM_URL = "https://www.instagram.com/andypandy0527/";
 const EMAIL = "zhangandy4321@gmail.com";
 
 const iconBtnClass =
-  "inline-flex items-center justify-center h-10 w-10 rounded-full border border-gray-200 bg-white text-gray-500 shadow-sm transition-all hover:border-gray-300 hover:text-gray-700 hover:shadow-md active:scale-95 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400 dark:hover:border-gray-600 dark:hover:text-gray-300";
+  "inline-flex items-center justify-center h-10 w-10 rounded-full border border-gray-200 bg-white text-gray-500 shadow-sm transition-all hover:border-accent/50 hover:text-accent-strong hover:shadow-md active:scale-95 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400 dark:hover:border-accent/50 dark:hover:text-accent";
 
 export default async function AboutPage() {
   const [about, admin] = await Promise.all([getAboutData(), isAdmin()]);
 
   return (
     <div className="space-y-12 animate-fade-in">
-      {/* Status pill */}
-      <div className="animate-fade-in" style={{ animationDelay: "100ms" }}>
-        <span className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs text-gray-500 shadow-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
-          <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
-          </span>
-          Available for projects
-        </span>
-      </div>
-
       {/* Hero */}
-      <div className="space-y-5" style={{ animationDelay: "200ms" }}>
-        <h1
-          className="text-5xl font-bold sm:text-6xl"
-          style={{ letterSpacing: "-0.04em" }}
+      <header className="hero-fx space-y-5">
+        {/* Status line */}
+        <div className="animate-fade-in" style={{ animationDelay: "100ms" }}>
+          <span className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white/80 px-3 py-1 font-mono text-xs text-gray-500 shadow-sm backdrop-blur dark:border-gray-800 dark:bg-gray-900/80 dark:text-gray-400">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
+            </span>
+            available for projects
+          </span>
+        </div>
+
+        <div
+          className="space-y-4 animate-fade-in"
+          style={{ animationDelay: "200ms" }}
         >
-          Hey, I&apos;m{" "}
-          <ScrambleText
-            text="Andy Zhang"
-            className="gradient-text"
-            interval={5000}
-          />
-        </h1>
-        <p className="text-lg text-gray-500 leading-relaxed max-w-lg dark:text-gray-400">
-          Developer, tinkerer, and builder of things — from embedded systems to
-          full-stack web apps.
-        </p>
-      </div>
+          <h1
+            className="text-5xl font-bold sm:text-6xl"
+            style={{ letterSpacing: "-0.04em" }}
+          >
+            Hey, I&apos;m{" "}
+            <ScrambleText
+              text="Andy Zhang"
+              className="gradient-text"
+              interval={5000}
+            />
+          </h1>
+          <p className="text-lg text-gray-500 leading-relaxed max-w-lg dark:text-gray-400">
+            Developer, tinkerer, and builder of things, from embedded systems to
+            full-stack web apps.
+          </p>
+          {/* Techy typing line */}
+          <p className="font-mono text-sm text-gray-400 dark:text-gray-500">
+            <span className="text-accent-strong dark:text-accent">&gt;</span>{" "}
+            currently into{" "}
+            <TypingRoles className="text-gray-700 dark:text-gray-200" />
+          </p>
+        </div>
+      </header>
 
       {/* Divider */}
       <div className="divider" />
@@ -121,7 +133,7 @@ export default async function AboutPage() {
         </a>
         <Link
           href="/blog"
-          className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm text-gray-600 shadow-sm transition-all hover:border-gray-300 hover:shadow-md active:scale-95 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-600"
+          className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm text-gray-600 shadow-sm transition-all hover:border-accent hover:text-accent-strong hover:shadow-md active:scale-95 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-accent dark:hover:text-accent"
         >
           Read the blog &rarr;
         </Link>
@@ -142,7 +154,7 @@ export default async function AboutPage() {
           {about.education.map((entry) => (
             <div
               key={entry.school}
-              className="rounded-xl border border-gray-200/80 bg-white p-5 shadow-sm dark:border-gray-800/80 dark:bg-gray-900"
+              className="rounded-xl border border-gray-200/80 bg-white p-5 shadow-sm transition-colors hover:border-accent/40 dark:border-gray-800/80 dark:bg-gray-900 dark:hover:border-accent/40"
             >
               <div className="flex items-center gap-4">
                 {entry.logo ? (
