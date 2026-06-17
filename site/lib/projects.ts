@@ -110,6 +110,7 @@ export const projects: Project[] = [
 ];
 
 export const PINNED_KEY = "content/pinned-projects.json";
+export const DELETED_KEY = "content/deleted-projects.json";
 
 const loadPinnedSlugs = unstable_cache(
   async (): Promise<string[]> => {
@@ -129,14 +130,55 @@ export async function getPinnedSlugs(): Promise<string[]> {
   return loadPinnedSlugs();
 }
 
+const loadDeletedSlugs = unstable_cache(
+  async (): Promise<string[]> => {
+    try {
+      const text = await r2GetText(DELETED_KEY);
+      if (!text) return [];
+      return JSON.parse(text) as string[];
+    } catch {
+      return [];
+    }
+  },
+  ["deleted-projects-slugs"],
+  { tags: ["deleted-projects"], revalidate: 60 },
+);
+
+export async function getDeletedSlugs(): Promise<string[]> {
+  return loadDeletedSlugs();
+}
+
+// Public projects: pinned first, with soft-deleted projects hidden.
 export async function getProjectsWithPins(): Promise<Project[]> {
-  const pinned = await getPinnedSlugs();
-  const withPins = projects.map((p) => ({
-    ...p,
-    pinned: pinned.includes(p.slug),
-  }));
+  const [pinned, deleted] = await Promise.all([
+    getPinnedSlugs(),
+    getDeletedSlugs(),
+  ]);
+  const withPins = projects
+    .filter((p) => !deleted.includes(p.slug))
+    .map((p) => ({ ...p, pinned: pinned.includes(p.slug) }));
   return [
     ...withPins.filter((p) => p.pinned),
     ...withPins.filter((p) => !p.pinned),
+  ];
+}
+
+// Admin view: every project with pinned + deleted flags (deleted shown last).
+export async function getProjectsForAdmin(): Promise<
+  (Project & { deleted: boolean })[]
+> {
+  const [pinned, deleted] = await Promise.all([
+    getPinnedSlugs(),
+    getDeletedSlugs(),
+  ]);
+  const all = projects.map((p) => ({
+    ...p,
+    pinned: pinned.includes(p.slug),
+    deleted: deleted.includes(p.slug),
+  }));
+  return [
+    ...all.filter((p) => p.pinned && !p.deleted),
+    ...all.filter((p) => !p.pinned && !p.deleted),
+    ...all.filter((p) => p.deleted),
   ];
 }

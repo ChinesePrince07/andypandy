@@ -17,6 +17,7 @@ interface ProjectItem {
   name: string;
   emoji: string;
   pinned: boolean;
+  deleted: boolean;
 }
 
 export default function PostList({
@@ -30,6 +31,7 @@ export default function PostList({
   const [deleting, setDeleting] = useState<string | null>(null);
   const [togglingPost, setTogglingPost] = useState<string | null>(null);
   const [togglingProject, setTogglingProject] = useState<string | null>(null);
+  const [deletingProject, setDeletingProject] = useState<string | null>(null);
 
   async function handleDelete(slug: string) {
     if (!confirm(`Delete "${slug}"?`)) return;
@@ -71,6 +73,33 @@ export default function PostList({
       router.refresh();
     }
     setTogglingProject(null);
+  }
+
+  async function handleToggleProjectDelete(
+    slug: string,
+    name: string,
+    currentlyDeleted: boolean,
+  ) {
+    if (
+      !currentlyDeleted &&
+      !confirm(
+        `Hide "${name}" from the projects page? You can restore it here anytime.`,
+      )
+    ) {
+      return;
+    }
+    setDeletingProject(slug);
+    const res = await fetch("/api/admin/projects/delete/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slug, deleted: !currentlyDeleted }),
+    });
+    if (res.ok) {
+      router.refresh();
+    } else {
+      alert("Failed to update project");
+    }
+    setDeletingProject(null);
   }
 
   async function handleLogout() {
@@ -175,37 +204,71 @@ export default function PostList({
         {projects.map((project) => (
           <div
             key={project.slug}
-            className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4"
+            className={`flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 ${
+              project.deleted ? "opacity-60" : ""
+            }`}
           >
             <div className="flex items-center gap-3 min-w-0 flex-1">
-              {project.pinned && (
+              {project.pinned && !project.deleted && (
                 <span className="h-1.5 w-1.5 rounded-full bg-gray-900 shrink-0" />
               )}
               <span className="text-lg">{project.emoji}</span>
               <Link
                 href={`/projects/${project.slug}`}
-                className="font-medium text-gray-900 hover:underline"
+                className={`font-medium hover:underline ${
+                  project.deleted
+                    ? "text-gray-400 line-through"
+                    : "text-gray-900"
+                }`}
               >
                 {project.name}
               </Link>
+              {project.deleted && (
+                <span className="shrink-0 rounded bg-red-50 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-red-400">
+                  Hidden
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-2 ml-4 shrink-0">
+              {!project.deleted && (
+                <button
+                  onClick={() =>
+                    handleToggleProjectPin(project.slug, project.pinned)
+                  }
+                  disabled={togglingProject === project.slug}
+                  className={`rounded-md border px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 ${
+                    project.pinned
+                      ? "border-gray-900 bg-gray-900 text-white hover:bg-gray-700"
+                      : "border-gray-200 text-gray-400 hover:border-gray-300 hover:text-gray-600"
+                  }`}
+                >
+                  {togglingProject === project.slug
+                    ? "..."
+                    : project.pinned
+                      ? "Pinned"
+                      : "Pin"}
+                </button>
+              )}
               <button
                 onClick={() =>
-                  handleToggleProjectPin(project.slug, project.pinned)
+                  handleToggleProjectDelete(
+                    project.slug,
+                    project.name,
+                    project.deleted,
+                  )
                 }
-                disabled={togglingProject === project.slug}
+                disabled={deletingProject === project.slug}
                 className={`rounded-md border px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 ${
-                  project.pinned
-                    ? "border-gray-900 bg-gray-900 text-white hover:bg-gray-700"
-                    : "border-gray-200 text-gray-400 hover:border-gray-300 hover:text-gray-600"
+                  project.deleted
+                    ? "border-emerald-300 text-emerald-600 hover:bg-emerald-50"
+                    : "border-red-200 text-red-500 hover:bg-red-50"
                 }`}
               >
-                {togglingProject === project.slug
+                {deletingProject === project.slug
                   ? "..."
-                  : project.pinned
-                    ? "Pinned"
-                    : "Pin"}
+                  : project.deleted
+                    ? "Restore"
+                    : "Delete"}
               </button>
             </div>
           </div>
