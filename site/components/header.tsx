@@ -21,7 +21,7 @@ export default function Header() {
       <nav className="flex items-center gap-3 rounded-full border border-gray-200/60 bg-white/70 px-3 py-1.5 shadow-sm backdrop-blur-xl sm:gap-6 sm:px-6 sm:py-2.5 dark:border-gray-800/60 dark:bg-gray-950/70">
         <Link
           href="/"
-          className="text-base font-bold tracking-tight gradient-text transition-opacity hover:opacity-80 sm:text-lg"
+          className="text-base font-bold tracking-tight gradient-text font-display transition-opacity hover:opacity-80 sm:text-lg"
         >
           <ScrambleText text="andy." interval={4000} />
         </Link>

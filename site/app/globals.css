@@ -5,10 +5,16 @@
 @theme {
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-display: var(--font-grotesk), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 }
 
 html {
   scroll-behavior: smooth;
+}
+
+/* Headings + logo use the display face (Space Grotesk) */
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
 }
 
 /* Selection */
