@@ -182,3 +182,75 @@ export async function updateAfilmoryPhoto(
     return { ok: false, status: 0, error: String(e) };
   }
 }
+
+// --- Album CRUD: proxy afilmory's /api/admin/albums*, mapping keys<->ids and
+// enriching responses with photoKeys/coverKey for the iOS app.
+
+type EnrichedAlbum = AlbumWire & { photoKeys: string[]; coverKey: string | null };
+
+async function idToKeyMap(): Promise<Map<string, string>> {
+  const byId = await fetchAfilmoryManifest();
+  const m = new Map<string, string>();
+  for (const [id, p] of byId) if (p.s3Key) m.set(id, p.s3Key);
+  return m;
+}
+
+export async function listAlbums(): Promise<EnrichedAlbum[]> {
+  const cookie = adminCookie();
+  if (!cookie) throw new Error("AFILMORY_ADMIN_PASSWORD not set");
+  const res = await fetch(`${SITE}/api/admin/albums`, { headers: { Cookie: cookie }, cache: "no-store" });
+  if (!res.ok) throw new Error(`afilmory albums ${res.status}`);
+  const albums = (await res.json()) as AlbumWire[];
+  const idToKey = await idToKeyMap();
+  return albums.map((a) => enrichAlbum(a, idToKey));
+}
+
+export async function createAlbum(input: {
+  name: string; description?: string; photoKeys?: string[]; coverKey?: string | null;
+}): Promise<EnrichedAlbum> {
+  const cookie = adminCookie();
+  if (!cookie) throw new Error("AFILMORY_ADMIN_PASSWORD not set");
+  const body = {
+    name: input.name,
+    description: input.description ?? "",
+    photoIds: input.photoKeys ? keysToIds(input.photoKeys) : [],
+    coverPhotoId: input.coverKey ? idFromKey(input.coverKey) : null,
+  };
+  const res = await fetch(`${SITE}/api/admin/albums`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Cookie: cookie },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`afilmory create album ${res.status}`);
+  return enrichAlbum((await res.json()) as AlbumWire, await idToKeyMap());
+}
+
+export async function updateAlbum(id: string, input: {
+  name?: string; description?: string; coverKey?: string | null; addKeys?: string[]; removeKeys?: string[];
+}): Promise<EnrichedAlbum> {
+  const cookie = adminCookie();
+  if (!cookie) throw new Error("AFILMORY_ADMIN_PASSWORD not set");
+  const body: Record<string, unknown> = {};
+  if (input.name !== undefined) body.name = input.name;
+  if (input.description !== undefined) body.description = input.description;
+  if (input.coverKey !== undefined) body.coverPhotoId = input.coverKey ? idFromKey(input.coverKey) : null;
+  if (input.addKeys) body.addPhotoIds = keysToIds(input.addKeys);
+  if (input.removeKeys) body.removePhotoIds = keysToIds(input.removeKeys);
+  const res = await fetch(`${SITE}/api/admin/albums/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", Cookie: cookie },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`afilmory update album ${res.status}`);
+  return enrichAlbum((await res.json()) as AlbumWire, await idToKeyMap());
+}
+
+export async function deleteAlbum(id: string): Promise<void> {
+  const cookie = adminCookie();
+  if (!cookie) throw new Error("AFILMORY_ADMIN_PASSWORD not set");
+  const res = await fetch(`${SITE}/api/admin/albums/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+    headers: { Cookie: cookie },
+  });
+  if (!res.ok) throw new Error(`afilmory delete album ${res.status}`);
+}
