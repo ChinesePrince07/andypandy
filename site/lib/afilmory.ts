@@ -45,6 +45,34 @@ export function idFromKey(key: string): string {
   return base.replace(/\.[^.]+$/, "");
 }
 
+// --- Albums: the app deals in photo keys; afilmory deals in photoIds. All
+// key<->id mapping lives here so the iOS app never computes idFromKey itself.
+
+export type AlbumWire = {
+  id: string;
+  name: string;
+  description: string;
+  photoIds: string[];
+  coverPhotoId: string | null;
+  createdAt: string;
+};
+
+export function keysToIds(keys: string[]): string[] {
+  return keys.map(idFromKey);
+}
+
+/** Enrich an afilmory album with the R2 keys the app needs (photoIds it can't map). */
+export function enrichAlbum(
+  album: AlbumWire,
+  idToKey: Map<string, string>,
+): AlbumWire & { photoKeys: string[]; coverKey: string | null } {
+  const photoKeys = album.photoIds
+    .map((id) => idToKey.get(id))
+    .filter((k): k is string => typeof k === "string");
+  const coverKey = (album.coverPhotoId && idToKey.get(album.coverPhotoId)) || null;
+  return { ...album, photoKeys, coverKey };
+}
+
 /**
  * Fetch afilmory's public manifest projection as a flat list (gallery order).
  * Best-effort: returns null on failure so callers can fall back gracefully.
