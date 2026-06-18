@@ -71,6 +71,13 @@ export const PageHeaderRight = () => {
           />
         )}
 
+        {/* The Archive — 3D photo museum (separate deployment) */}
+        <ActionIconButton
+          icon="i-mingcute-bank-line"
+          title="The Archive · 3D museum"
+          href="https://museum-sooty.vercel.app"
+        />
+
         {isMobile ? (
           <MobileViewButton
             icon="i-mingcute-layout-grid-line"
