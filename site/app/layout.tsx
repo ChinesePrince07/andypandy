@@ -43,7 +43,7 @@ export default function RootLayout({
       <body className="noise min-h-screen flex flex-col bg-white text-gray-900 antialiased dark:bg-gray-950 dark:text-gray-100 transition-colors duration-300">
         <div className="relative flex flex-col min-h-screen">
           <Header />
-          <main className="flex-1 mx-auto w-full max-w-2xl px-6 py-16">
+          <main className="flex-1 mx-auto w-full max-w-2xl px-6 py-5">
             {children}
           </main>
           <Footer />

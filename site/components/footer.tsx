@@ -18,8 +18,11 @@ export default function Footer() {
   return (
     <footer>
       <div className="divider" />
-      <div className="mx-auto flex max-w-2xl items-center justify-between px-6 py-8 text-sm text-gray-400 dark:text-gray-500">
-        <p className="mono">&copy; {new Date().getFullYear()} Andy Zhang</p>
+      <div className="mx-auto flex max-w-2xl items-center justify-between px-6 py-5 text-sm text-gray-400 dark:text-gray-500">
+        <div className="mono flex flex-col gap-0.5">
+          <p>Made with <span className="text-rose-500">Love</span>, <span className="text-amber-500">Coffee</span> and a bit of <span className="text-violet-500">Opus</span></p>
+          <p>&copy; {new Date().getFullYear()} Andy Zhang</p>
+        </div>
         <div className="flex items-center gap-4">
           {/* GitHub */}
           <a

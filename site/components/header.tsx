@@ -9,16 +9,16 @@ import LiveClock from "./live-clock";
 const links = [
   { href: "/", label: "About" },
   { href: "/projects", label: "Projects" },
-  { href: "https://pics.andypandy.org", label: "Photos" },
   { href: "/blog", label: "Blog" },
+  { href: "https://pics.andypandy.org", label: "Photos" },
 ];
 
 export default function Header() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-50 flex justify-center px-2 pt-3 sm:px-4 sm:pt-4">
-      <nav className="flex items-center gap-3 rounded-full border border-gray-200/60 bg-white/70 px-3 py-1.5 shadow-sm backdrop-blur-xl sm:gap-6 sm:px-6 sm:py-2.5 dark:border-gray-800/60 dark:bg-gray-950/70">
+    <header className="sticky top-0 z-50 flex justify-center px-2 pt-2 sm:px-4 sm:pt-2.5">
+      <nav className="flex items-center gap-3 rounded-full border border-gray-200/60 bg-white/70 px-3 py-1.5 shadow-sm backdrop-blur-xl sm:gap-6 sm:px-6 sm:py-2 dark:border-gray-800/60 dark:bg-gray-950/70">
         <Link
           href="/"
           className="text-base font-bold tracking-tight gradient-text font-display transition-opacity hover:opacity-80 sm:text-lg"
