@@ -1,0 +1,12 @@
+[submodule "desmos"]
+	path = desmos
+	url = https://github.com/ChinesePrince07/andypandy-desmos.git
+[submodule "ti84"]
+	path = ti84
+	url = https://github.com/ChinesePrince07/andypandy-ti84.git
+[submodule "photos"]
+	path = photos
+	url = https://github.com/ChinesePrince07/andypandy-photos.git
+[submodule "site"]
+	path = site
+	url = https://github.com/ChinesePrince07/andypandy-site.git

@@ -1,14 +1,34 @@
 # andypandy
 
-Monorepo for everything behind [andypandy.org](https://andypandy.org).
+Umbrella repo for everything behind [andypandy.org](https://andypandy.org). Each
+project is its **own standalone repository**, referenced here as a git submodule.
+Each one builds and deploys independently (its own Vercel project), so a change in
+one never rebuilds the others.
 
-| Folder | Project | Deploys to |
-|--------|---------|-----------|
-| [`site/`](site) | Personal site & blog (Next.js) | andypandy.org |
-| [`photos/`](photos) | Afilmory photo gallery (Next.js) | pics.andypandy.org |
-| [`desmos/`](desmos) | Image → Desmos Bezier renderer (Flask) | desmos.andypandy.org |
-| [`ti84/`](ti84) | TI-84 GPT hardware mod + API server (Express) | api.andypandy.org |
+| Path | Repo | Deploys to | Visibility |
+|------|------|-----------|-----------|
+| [`site`](site)     | [andypandy-site](https://github.com/ChinesePrince07/andypandy-site)     | andypandy.org        | public  |
+| [`photos`](photos) | [andypandy-photos](https://github.com/ChinesePrince07/andypandy-photos) | pics.andypandy.org   | private |
+| [`desmos`](desmos) | [andypandy-desmos](https://github.com/ChinesePrince07/andypandy-desmos) | desmos.andypandy.org | public  |
+| [`ti84`](ti84)     | [andypandy-ti84](https://github.com/ChinesePrince07/andypandy-ti84)     | api.andypandy.org    | public  |
 
-Each folder is a self-contained project with its own build and its own Vercel
-project (Root Directory = the folder). See `docs/superpowers/` for the design
-and implementation plan.
+## Working with the submodules
+
+```bash
+# Clone everything at once (the private `photos` submodule is skipped if you
+# lack access to it):
+git clone --recurse-submodules https://github.com/ChinesePrince07/andypandy.git
+
+# In an existing clone, fetch/populate the submodules:
+git submodule update --init --recursive
+
+# Pull the latest commit of each project:
+git submodule update --remote
+```
+
+Develop inside each submodule like a normal repo (commit and push within
+`site/`, `photos/`, etc.). To record a new project version in this umbrella,
+commit the updated submodule pointer here after pushing the submodule.
+
+See `docs/superpowers/` for the design and implementation plan behind this
+structure.
