@@ -13,23 +13,5 @@ one never rebuilds the others.
 | [`ti84`](ti84)     | [andypandy-ti84](https://github.com/ChinesePrince07/andypandy-ti84)     | api.andypandy.org    | public  |
 | [`suffield-drive`](suffield-drive) | [andypandy-suffield-drive](https://github.com/ChinesePrince07/andypandy-suffield-drive) | study.andypandy.org | public |
 
-## Working with the submodules
-
-```bash
-# Clone everything at once (the private `photos` submodule is skipped if you
-# lack access to it):
-git clone --recurse-submodules https://github.com/ChinesePrince07/andypandy.git
-
-# In an existing clone, fetch/populate the submodules:
-git submodule update --init --recursive
-
-# Pull the latest commit of each project:
-git submodule update --remote
-```
-
-Develop inside each submodule like a normal repo (commit and push within
-`site/`, `photos/`, etc.). To record a new project version in this umbrella,
-commit the updated submodule pointer here after pushing the submodule.
-
 See `docs/superpowers/` for the design and implementation plan behind this
 structure.
