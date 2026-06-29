@@ -10,3 +10,6 @@
 [submodule "site"]
 	path = site
 	url = https://github.com/ChinesePrince07/andypandy-site.git
+[submodule "suffield-drive"]
+	path = suffield-drive
+	url = https://github.com/ChinesePrince07/andypandy-suffield-drive.git
