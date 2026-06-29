@@ -1,9 +1,3 @@
-[submodule "desmos"]
-	path = desmos
-	url = https://github.com/ChinesePrince07/andypandy-desmos.git
-[submodule "ti84"]
-	path = ti84
-	url = https://github.com/ChinesePrince07/andypandy-ti84.git
 [submodule "photos"]
 	path = photos
 	url = https://github.com/ChinesePrince07/andypandy-photos.git
@@ -13,3 +7,9 @@
 [submodule "suffield-drive"]
 	path = suffield-drive
 	url = https://github.com/ChinesePrince07/andypandy-suffield-drive.git
+[submodule "desmos"]
+	path = desmos
+	url = https://github.com/ChinesePrince07/DesmosBezierRenderer-mac.git
+[submodule "ti84"]
+	path = ti84
+	url = https://github.com/ChinesePrince07/TI-84-GPT-HACK.git
