@@ -4,3 +4,5 @@
 .vercel
 .env
 .env.local
+*.tsbuildinfo
+.superpowers/
