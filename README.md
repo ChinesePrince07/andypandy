@@ -1,9 +1,6 @@
 # andypandy
 
-Umbrella repo for everything behind [andypandy.org](https://andypandy.org). Each
-project is its **own standalone repository**, referenced here as a git submodule.
-Each one builds and deploys independently (its own Vercel project), so a change in
-one never rebuilds the others.
+Umbrella repo for everything behind [andypandy.org](https://andypandy.org).
 
 | Path | Repo | Deploys to | What it is |
 |------|------|-----------|-----------|
